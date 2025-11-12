@@ -6,6 +6,9 @@ import '../../controllers/trip_controller.dart';
 import '../results/bus_list_screen.dart';
 import '../admin/admin_dashboard.dart';
 import '../../utils/app_constants.dart';
+import '../placeholder/my_tickets_screen.dart';
+import '../placeholder/cancellations_screen.dart';
+import '../placeholder/support_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -178,6 +181,8 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
+  // lib/views/home/home_screen.dart
+
   Widget _buildQuickActions(BuildContext context, ThemeData theme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -189,9 +194,34 @@ class HomeScreen extends StatelessWidget {
             theme,
             Icons.confirmation_number,
             'My Tickets',
+            // 1. ADD this onTap function
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyTicketsScreen()),
+            ),
           ),
-          _quickActionButton(context, theme, Icons.cancel, 'Cancellations'),
-          _quickActionButton(context, theme, Icons.support_agent, 'Support'),
+          _quickActionButton(
+            context,
+            theme,
+            Icons.cancel,
+            'Cancellations',
+            // 2. ADD this onTap function
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CancellationsScreen()),
+            ),
+          ),
+          _quickActionButton(
+            context,
+            theme,
+            Icons.support_agent,
+            'Support',
+            // 3. ADD this onTap function
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SupportScreen()),
+            ),
+          ),
         ],
       ),
     );
@@ -202,18 +232,12 @@ class HomeScreen extends StatelessWidget {
     ThemeData theme,
     IconData icon,
     String label,
+    VoidCallback onTap, // 4. ADD this parameter
   ) {
     return InkWell(
-      // <-- 1. WRAP with InkWell
-      onTap: () {
-        // <-- 2. ADD onTap
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$label is not implemented yet.')),
-        );
-      },
-      borderRadius: BorderRadius.circular(
-        40,
-      ), // <-- 3. (Optional) for ripple effect
+      // 5. CHANGE from Column to InkWell
+      onTap: onTap, // 6. USE the parameter here
+      borderRadius: BorderRadius.circular(40),
       child: Column(
         children: [
           CircleAvatar(
@@ -227,6 +251,7 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+  // ...
 
   Widget _buildPromotions(BuildContext context, ThemeData theme) {
     return Padding(

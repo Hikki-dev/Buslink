@@ -9,17 +9,38 @@ class FirestoreService {
   final String tripCollection = 'trips';
   final String ticketCollection = 'tickets';
 
+  // lib/services/firestore_service.dart
+
   Future<List<Trip>> searchTrips(
     String fromCity,
     String toCity,
     DateTime date,
   ) async {
+    // --- START OF NEW CODE ---
+    // Create a range for the whole day
+    final DateTime dayStart = DateTime(
+      date.year,
+      date.month,
+      date.day,
+    ); // 12:00 AM
+    final DateTime dayEnd = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      23,
+      59,
+      59,
+    ); // 11:59 PM
+
     final snapshot = await _db
         .collection(tripCollection)
         .where('fromCity', isEqualTo: fromCity)
         .where('toCity', isEqualTo: toCity)
-        // Add date query here if needed
+        // This is the new, correct query
+        .where('departureTime', isGreaterThanOrEqualTo: dayStart)
+        .where('departureTime', isLessThanOrEqualTo: dayEnd)
         .get();
+    // --- END OF NEW CODE ---
 
     if (snapshot.docs.isEmpty) {
       return [];
