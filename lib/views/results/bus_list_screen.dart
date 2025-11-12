@@ -1,242 +1,286 @@
+// lib/views/results/bus_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
-import '../../utils/app_theme.dart';
 import 'bus_details_screen.dart';
 
-/// BL-02: Available Bus List
-/// BL-12: Alternative Bus Suggestions
 class BusListScreen extends StatelessWidget {
   const BusListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("${controller.fromCity} ➔ ${controller.toCity}"),
-      ),
-      body: controller.searchResults.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.directions_bus_outlined,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 10),
-                  const Text("No buses found for this route."),
-                  const Text(
-                    "Try Colombo to Jaffna/Badulla for Demo.",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: controller.searchResults.length,
-              itemBuilder: (context, index) {
-                return _TripCard(trip: controller.searchResults[index]);
-              },
-            ),
-    );
-  }
-}
-
-class _TripCard extends StatelessWidget {
-  final Trip trip;
-  const _TripCard({required this.trip});
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = Provider.of<TripController>(context, listen: false);
-    final bool isDelayed = trip.status == TripStatus.delayed;
-    final bool isCancelled = trip.status == TripStatus.cancelled;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      trip.operatorName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      trip.busType,
-                      style: TextStyle(
-                        color: AppTheme.primaryBlue,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+            Text(
+              '${controller.fromCity} to ${controller.toCity}',
+              style: const TextStyle(fontSize: 18),
+            ),
+            if (controller.travelDate != null)
+              Text(
+                DateFormat('EEE, MMM d').format(controller.travelDate!),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
                 ),
-                // Status Badges
-                if (isCancelled)
-                  const Chip(
-                    label: Text(
-                      "CANCELLED",
-                      style: TextStyle(color: Colors.white, fontSize: 11),
-                    ),
-                    backgroundColor: Colors.red,
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                  )
-                else if (isDelayed)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.orange[100],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      "Delayed +${trip.delayMinutes} min",
-                      style: const TextStyle(
-                        color: Colors.deepOrange,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const Divider(height: 24),
-
-            // Times
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _timeColumn(trip.departureTime, trip.fromCity),
-                const Icon(Icons.arrow_forward, color: Colors.grey),
-                _timeColumn(trip.arrivalTime, trip.toCity),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Footer
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "LKR ${trip.price.toStringAsFixed(0)}",
-                  style: AppTheme.priceText,
-                ),
-
-                // Action Button
-                trip.isFull || isCancelled
-                    ? OutlinedButton(
-                        onPressed: () =>
-                            _showAlternatives(context, controller, trip),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
-                        ),
-                        child: Text(
-                          isCancelled ? "View Options" : "Full - Alternatives",
-                        ),
-                      )
-                    : ElevatedButton(
-                        onPressed: () {
-                          controller.selectTrip(trip);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const BusDetailsScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text("View Details"),
-                      ),
-              ],
-            ),
+              ),
           ],
         ),
       ),
+      body: Consumer<TripController>(
+        builder: (context, controller, child) {
+          if (controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (controller.searchResults.isEmpty) {
+            return const Center(
+              child: Text(
+                'No buses found for this route.',
+                style: TextStyle(fontSize: 16),
+              ),
+            );
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.all(8.0),
+            itemCount: controller.searchResults.length,
+            itemBuilder: (context, index) {
+              final trip = controller.searchResults[index];
+              return _buildBusCard(context, theme, controller, trip);
+            },
+          );
+        },
+      ),
     );
   }
 
-  Widget _timeColumn(DateTime time, String city) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          DateFormat('hh:mm a').format(time),
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  Widget _buildBusCard(
+    BuildContext context,
+    ThemeData theme,
+    TripController controller,
+    Trip trip,
+  ) {
+    bool isFull = trip.isFull;
+    bool isCancelled = trip.status == TripStatus.cancelled;
+    bool isDelayed = trip.status == TripStatus.delayed;
+    Color cardColor = isFull || isCancelled
+        ? Colors.grey.shade300
+        : theme.cardColor;
+    Color onCardColor = isFull || isCancelled
+        ? Colors.grey.shade600
+        : theme.colorScheme.onSurface;
+
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+      color: cardColor,
+      child: InkWell(
+        onTap: isFull || isCancelled
+            ? null
+            : () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BusDetailsScreen(trip: trip),
+                  ),
+                );
+              },
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCardHeader(theme, trip, onCardColor, isDelayed),
+              const Divider(height: 20),
+              _buildCardBody(theme, trip, onCardColor),
+              if (isDelayed)
+                _buildStatusWarning(
+                  'Delayed: ${trip.delayMinutes} mins',
+                  Colors.orange,
+                ),
+              if (isFull) _buildStatusWarning('This bus is full', Colors.red),
+              if (isCancelled)
+                _buildStatusWarning('This trip is cancelled', Colors.red),
+              if (isFull || isCancelled)
+                _buildAlternatives(context, controller, trip),
+            ],
+          ),
         ),
-        Text(city, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+      ),
+    );
+  }
+
+  Widget _buildCardHeader(
+    ThemeData theme,
+    Trip trip,
+    Color onCardColor,
+    bool isDelayed,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                trip.operatorName,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: onCardColor,
+                ),
+              ),
+              Text(
+                '${trip.busType} (${trip.busNumber})',
+                style: theme.textTheme.bodyMedium?.copyWith(color: onCardColor),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          'LKR ${trip.price.toStringAsFixed(0)}',
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: theme.primaryColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
 
-  void _showAlternatives(
+  Widget _buildCardBody(ThemeData theme, Trip trip, Color onCardColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildTimeColumn(
+          theme,
+          'Depart',
+          DateFormat('hh:mm a').format(trip.departureTime),
+          trip.fromCity,
+          onCardColor,
+        ),
+        Column(
+          children: [
+            Icon(Icons.directions_bus, color: onCardColor),
+            Text(
+              '${trip.arrivalTime.difference(trip.departureTime).inHours} hours',
+              style: theme.textTheme.bodySmall?.copyWith(color: onCardColor),
+            ),
+          ],
+        ),
+        _buildTimeColumn(
+          theme,
+          'Arrive',
+          DateFormat('hh:mm a').format(trip.arrivalTime),
+          trip.toCity,
+          onCardColor,
+        ),
+        Column(
+          children: [
+            Text(
+              'Seats',
+              style: theme.textTheme.bodyMedium?.copyWith(color: onCardColor),
+            ),
+            Text(
+              '${trip.totalSeats - trip.bookedSeats.length}',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: (trip.totalSeats - trip.bookedSeats.length) < 10
+                    ? Colors.red
+                    : Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimeColumn(
+    ThemeData theme,
+    String title,
+    String time,
+    String location,
+    Color onCardColor,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.bodyMedium?.copyWith(color: onCardColor),
+        ),
+        Text(
+          time,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: onCardColor,
+          ),
+        ),
+        Text(
+          location,
+          style: theme.textTheme.bodyMedium?.copyWith(color: onCardColor),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusWarning(String text, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12.0),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAlternatives(
     BuildContext context,
     TripController controller,
     Trip trip,
   ) {
-    final alternatives = controller.getAlternativeBuses(trip);
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              "Alternative Buses",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            if (alternatives.isEmpty)
-              const Text("No other buses found.")
-            else
-              ...alternatives.map(
-                (alt) => ListTile(
-                  title: Text(alt.operatorName),
-                  subtitle: Text(
-                    "${DateFormat('hh:mm a').format(alt.departureTime)} • LKR ${alt.price}",
-                  ),
-                  trailing: ElevatedButton(
-                    child: const Text("View"),
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      controller.selectTrip(alt);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const BusDetailsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+    // <-- FIX: Renamed to getAlternatives
+    final alternatives = controller.getAlternatives(trip);
+    if (alternatives.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Try these alternatives:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          ...alternatives.map((altTrip) {
+            return ListTile(
+              title: Text(altTrip.operatorName),
+              subtitle: Text(
+                'Departs: ${DateFormat('hh:mm a').format(altTrip.departureTime)}',
               ),
-          ],
-        ),
+              trailing: Text('LKR ${altTrip.price.toStringAsFixed(0)}'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BusDetailsScreen(trip: altTrip),
+                  ),
+                );
+              },
+            );
+          }),
+        ],
       ),
     );
   }

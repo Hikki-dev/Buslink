@@ -1,101 +1,110 @@
+// lib/views/admin/admin_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../controllers/bus_controller.dart';
+// <-- FIX: Import the new TripController
+import '../../controllers/trip_controller.dart';
+import '../../models/trip_model.dart';
 
-class AdminScreen extends StatelessWidget {
-  const AdminScreen({super.key});
+class AdminScreen extends StatefulWidget {
+  final Trip trip;
+  const AdminScreen({super.key, required this.trip});
+
+  @override
+  State<AdminScreen> createState() => _AdminScreenState();
+}
+
+class _AdminScreenState extends State<AdminScreen> {
+  late TextEditingController _platformController;
+  late TextEditingController _delayController;
+  TripStatus? _selectedStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _platformController = TextEditingController(
+      text: widget.trip.platformNumber,
+    );
+    _delayController = TextEditingController(
+      text: widget.trip.delayMinutes.toString(),
+    );
+    _selectedStatus = widget.trip.status;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Provider.of<BusController>(context);
+    // <-- FIX: Use the new TripController
+    final controller = Provider.of<TripController>(context, listen: false);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Staff Dashboard")),
-      body: ListView.builder(
-        itemCount: controller.searchResults.length,
-        itemBuilder: (ctx, i) {
-          final trip = controller.searchResults[i];
-          return ExpansionTile(
-            title: Text("${trip.busNumber} - ${trip.toCity}"),
-            subtitle: Text(
-              "Status: ${trip.status} | Platform: ${trip.platformNumber}",
+      appBar: AppBar(title: Text('Edit: ${widget.trip.busNumber}')),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          // Platform Update
+          TextField(
+            controller: _platformController,
+            decoration: const InputDecoration(
+              labelText: 'Platform Number',
+              border: OutlineInputBorder(),
             ),
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    // ADM-14: Platform Assignment
-                    TextFormField(
-                      initialValue: trip.platformNumber,
-                      decoration: const InputDecoration(
-                        labelText: "Update Platform",
-                      ),
-                      onFieldSubmitted: (val) {
-                        controller.updateTrip(
-                          trip.id,
-                          trip.status,
-                          trip.delayMinutes,
-                          val,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    // ADM-05: Delay/Cancel Panel
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                            ),
-                            onPressed: () => controller.updateTrip(
-                              trip.id,
-                              'onTime',
-                              0,
-                              trip.platformNumber,
-                            ),
-                            child: const Text("On Time"),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
-                            ),
-                            onPressed: () => controller.updateTrip(
-                              trip.id,
-                              'delayed',
-                              15,
-                              trip.platformNumber,
-                            ),
-                            child: const Text("Delay 15m"),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                            ),
-                            onPressed: () => controller.updateTrip(
-                              trip.id,
-                              'cancelled',
-                              0,
-                              trip.platformNumber,
-                            ),
-                            child: const Text("Cancel"),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // <-- FIX: Call the correct method
+              controller.updatePlatform(
+                widget.trip.id,
+                _platformController.text,
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('Update Platform'),
+          ),
+          const Divider(height: 30),
+
+          // Status Update
+          DropdownButtonFormField<TripStatus>(
+            value: _selectedStatus,
+            decoration: const InputDecoration(
+              labelText: 'Trip Status',
+              border: OutlineInputBorder(),
+            ),
+            items: TripStatus.values
+                .map(
+                  (status) =>
+                      DropdownMenuItem(value: status, child: Text(status.name)),
+                )
+                .toList(),
+            onChanged: (status) {
+              setState(() {
+                _selectedStatus = status;
+              });
+            },
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _delayController,
+            decoration: const InputDecoration(
+              labelText: 'Delay (minutes)',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.number,
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (_selectedStatus != null) {
+                final delay = int.tryParse(_delayController.text) ?? 0;
+                // <-- FIX: Call the correct method
+                controller.updateStatus(
+                  widget.trip.id,
+                  _selectedStatus!,
+                  delay,
+                );
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Update Status'),
+          ),
+        ],
       ),
     );
   }

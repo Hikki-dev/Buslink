@@ -1,30 +1,25 @@
 // lib/controllers/trip_controller.dart
 import 'package:flutter/material.dart';
 import '../models/trip_model.dart';
-import '../services/firestore_service.dart'; // <-- IMPORT THE SERVICE
+import '../services/firestore_service.dart';
 
 class TripController extends ChangeNotifier {
-  final FirestoreService _service = FirestoreService(); // <-- USE THE SERVICE
+  final FirestoreService _service = FirestoreService();
 
-  // --- STATE ---
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  // UI state
   String? fromCity;
   String? toCity;
   DateTime? travelDate;
 
-  // Data state
-  List<Trip> searchResults = []; // No mock data!
-  List<Trip> allTripsForAdmin = []; // For admin panel
+  List<Trip> searchResults = [];
+  List<Trip> allTripsForAdmin = [];
 
-  // Booking state
   Trip? selectedTrip;
   List<int> selectedSeats = [];
-  Ticket? currentTicket; // For the ticket screen
+  Ticket? currentTicket;
 
-  // Admin Toggle (ADM-01)
   bool isAdminMode = false;
 
   void _setLoading(bool loading) {
@@ -32,9 +27,6 @@ class TripController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- USER ACTIONS ---
-
-  // BL-01: Search Logic (Refactored)
   Future<void> searchTrips(BuildContext context) async {
     if (fromCity == null || toCity == null || travelDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -45,13 +37,14 @@ class TripController extends ChangeNotifier {
     _setLoading(true);
 
     try {
-      // Call the service!
       searchResults = await _service.searchTrips(
         fromCity!,
         toCity!,
         travelDate!,
       );
     } catch (e) {
+      // <-- FIX: Added mount check for async gap
+      if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
@@ -61,33 +54,30 @@ class TripController extends ChangeNotifier {
     _setLoading(false);
   }
 
-  // BL-19: Payment Mock (Refactored)
   Future<bool> processBooking(BuildContext context) async {
     if (selectedTrip == null || selectedSeats.isEmpty) return false;
 
     _setLoading(true);
     try {
-      // Call the service
       currentTicket = await _service.processBooking(
         selectedTrip!,
         selectedSeats,
-        "Saman Perera", // Mock user, get from auth later
+        "Saman Perera", // Mock user
       );
       _setLoading(false);
-      return true; // Success
+      return true;
     } catch (e) {
-      print("Booking Error: $e");
+      // <-- FIX: Removed print
+      // <-- FIX: Added mount check for async gap
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
       _setLoading(false);
-      return false; // Failed
+      return false;
     }
   }
 
-  // --- ADMIN ACTIONS (Refactored) ---
-
-  // Helper to get all trips for the admin panel
   Future<void> fetchAllTripsForAdmin() async {
     _setLoading(true);
     try {
@@ -98,11 +88,8 @@ class TripController extends ChangeNotifier {
     _setLoading(false);
   }
 
-  // ADM-14: Update Platform
   Future<void> updatePlatform(String tripId, String newPlatform) async {
     await _service.updatePlatform(tripId, newPlatform);
-
-    // Update local list to refresh UI
     final index = allTripsForAdmin.indexWhere((t) => t.id == tripId);
     if (index != -1) {
       allTripsForAdmin[index].platformNumber = newPlatform;
@@ -110,11 +97,8 @@ class TripController extends ChangeNotifier {
     }
   }
 
-  // ADM-05: Update Status
   Future<void> updateStatus(String tripId, TripStatus status, int delay) async {
     await _service.updateStatus(tripId, status, delay);
-
-    // Update local list
     final index = allTripsForAdmin.indexWhere((t) => t.id == tripId);
     if (index != -1) {
       allTripsForAdmin[index].status = status;
@@ -122,8 +106,6 @@ class TripController extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  // --- Local UI Helper Methods (These stay the same) ---
 
   void selectTrip(Trip trip) {
     selectedTrip = trip;
@@ -150,6 +132,7 @@ class TripController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // <-- FIX: Renamed this method
   void setDate(DateTime? date) {
     travelDate = date;
     notifyListeners();
@@ -158,12 +141,12 @@ class TripController extends ChangeNotifier {
   void toggleAdminMode() {
     isAdminMode = !isAdminMode;
     if (isAdminMode) {
-      fetchAllTripsForAdmin(); // Fetch admin data when mode is enabled
+      fetchAllTripsForAdmin();
     }
     notifyListeners();
   }
 
-  // BL-12: Alternative Suggestions
+  // <-- FIX: Renamed this method
   List<Trip> getAlternatives(Trip fullOrCancelledTrip) {
     return searchResults
         .where(

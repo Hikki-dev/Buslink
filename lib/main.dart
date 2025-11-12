@@ -1,24 +1,22 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart'; // <-- IMPORT
-import 'firebase_options.dart'; // <-- IMPORT THE FILE YOU GENERATED
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'controllers/trip_controller.dart';
 import 'utils/app_theme.dart';
 import 'views/home/home_screen.dart';
 
 void main() async {
-  // --- THIS IS THE FIX ---
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
-    print("Failed to initialize Firebase: $e");
-    // Handle initialization error
+    // FIX: Replaced print with debugPrint, which is safer
+    debugPrint("Failed to initialize Firebase: $e");
   }
-  // -------------------------
 
   runApp(
     ChangeNotifierProvider(
@@ -35,8 +33,8 @@ class BusLinkApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'BusLink',
-      theme: AppTheme.lightTheme, // Using your clean theme
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme, // <-- This will now work
       themeMode: ThemeMode.system,
       home: const HomeScreen(),
       debugShowCheckedModeBanner: false,
