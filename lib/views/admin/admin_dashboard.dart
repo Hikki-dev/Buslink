@@ -24,53 +24,77 @@ class AdminDashboard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("${trip.busNumber} - ${trip.toCity}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(
+                    "${trip.busNumber} - ${trip.toCity}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                   const Divider(),
-                  
+
                   // ADM-14: Platform Assignment
                   TextFormField(
                     initialValue: trip.platformNumber,
-                    decoration: const InputDecoration(labelText: "Platform No.", prefixIcon: Icon(Icons.signpost)),
+                    decoration: const InputDecoration(
+                      labelText: "Platform No.",
+                      prefixIcon: Icon(Icons.signpost),
+                    ),
                     onChanged: (val) => controller.updatePlatform(trip.id, val),
                   ),
                   const SizedBox(height: 16),
 
                   // ADM-05: Delay/Cancel Panel
-                  const Text("Trip Status:", style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    "Trip Status:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
                         child: _statusBtn(
-                          context, 
-                          "On Time", 
-                          Colors.green, 
+                          context,
+                          "On Time",
+                          Colors.green,
                           trip.status == TripStatus.onTime,
-                          () => controller.updateStatus(trip.id, TripStatus.onTime, 0)
+                          () => controller.updateStatus(
+                            trip.id,
+                            TripStatus.onTime,
+                            0,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: _statusBtn(
-                          context, 
-                          "Delay", 
-                          Colors.orange, 
+                          context,
+                          "Delay",
+                          Colors.orange,
                           trip.status == TripStatus.delayed,
-                          () => controller.updateStatus(trip.id, TripStatus.delayed, 30)
+                          () => controller.updateStatus(
+                            trip.id,
+                            TripStatus.delayed,
+                            30,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: _statusBtn(
-                          context, 
-                          "Cancel", 
-                          Colors.red, 
+                          context,
+                          "Cancel",
+                          Colors.red,
                           trip.status == TripStatus.cancelled,
-                          () => controller.updateStatus(trip.id, TripStatus.cancelled, 0)
+                          () => controller.updateStatus(
+                            trip.id,
+                            TripStatus.cancelled,
+                            0,
+                          ),
                         ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -80,7 +104,13 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _statusBtn(BuildContext context, String label, Color color, bool isActive, VoidCallback onTap) {
+  Widget _statusBtn(
+    BuildContext context,
+    String label,
+    Color color,
+    bool isActive,
+    VoidCallback onTap,
+  ) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: isActive ? color : Colors.grey.shade200,

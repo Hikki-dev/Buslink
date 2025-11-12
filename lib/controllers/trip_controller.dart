@@ -1,288 +1,178 @@
+// lib/controllers/trip_controller.dart
 import 'package:flutter/material.dart';
 import '../models/trip_model.dart';
-import '../models/user_model.dart';
+import '../services/firestore_service.dart'; // <-- IMPORT THE SERVICE
 
-/// Main Controller for Trip Management (MVC Pattern)
-/// Handles all business logic for searching, booking, and admin operations
 class TripController extends ChangeNotifier {
-  
-  // ==================== STATE ====================
-  
-  /// Loading state for async operations
+  final FirestoreService _service = FirestoreService(); // <-- USE THE SERVICE
+
+  // --- STATE ---
   bool _isLoading = false;
   bool get isLoading => _isLoading;
-  
-  /// All available trips (from Firebase or Mock)
-  List<Trip> _allTrips = [];
-  List<Trip> get allTrips => _allTrips;
-  
-  /// Search results after filtering
-  List<Trip> _searchResults = [];
-  List<Trip> get searchResults => _searchResults;
-  
-  /// Currently selected trip for booking
-  Trip? _selectedTrip;
-  Trip? get selectedTrip => _selectedTrip;
-  
-  /// Selected seats for booking
-  final List<int> _selectedSeats = [];
-  List<int> get selectedSeats => _selectedSeats;
-  
-  /// Last generated ticket
-  Ticket? _currentTicket;
-  Ticket? get currentTicket => _currentTicket;
-  
-  /// Current user (for authentication)
-  AppUser? _currentUser;
-  AppUser? get currentUser => _currentUser;
-  
-  /// Admin mode toggle
-  bool _isAdminMode = false;
-  bool get isAdminMode => _isAdminMode;
-  
-  // Search form inputs
-  String? _fromCity;
-  String? get fromCity => _fromCity;
-  
-  String? _toCity;
-  String? get toCity => _toCity;
-  
-  DateTime? _travelDate;
-  DateTime? get travelDate => _travelDate;
-  
-  // ==================== INITIALIZATION ====================
-  
-  /// Initialize controller with mock data
-  TripController() {
-    _loadMockData();
-  }
-  
-  void _loadMockData() {
-    _allTrips = Trip.getMockTrips();
+
+  // UI state
+  String? fromCity;
+  String? toCity;
+  DateTime? travelDate;
+
+  // Data state
+  List<Trip> searchResults = []; // No mock data!
+  List<Trip> allTripsForAdmin = []; // For admin panel
+
+  // Booking state
+  Trip? selectedTrip;
+  List<int> selectedSeats = [];
+  Ticket? currentTicket; // For the ticket screen
+
+  // Admin Toggle (ADM-01)
+  bool isAdminMode = false;
+
+  void _setLoading(bool loading) {
+    _isLoading = loading;
     notifyListeners();
   }
-  
-  // ==================== USER ACTIONS (BL-01, BL-02) ====================
-  
-  /// Update search form fields
-  void setFromCity(String? city) {
-    _fromCity = city;
-    notifyListeners();
-  }
-  
-  void setToCity(String? city) {
-    _toCity = city;
-    notifyListeners();
-  }
-  
-  void setTravelDate(DateTime? date) {
-    _travelDate = date;
-    notifyListeners();
-  }
-  
-  /// BL-01: Search for trips by origin, destination, date
+
+  // --- USER ACTIONS ---
+
+  // BL-01: Search Logic (Refactored)
   Future<void> searchTrips(BuildContext context) async {
-    // Validation
-    if (_fromCity == null || _toCity == null) {
-      _showError(context, "Please select both origin and destination cities");
+    if (fromCity == null || toCity == null || travelDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select cities and date")),
+      );
       return;
     }
-    
     _setLoading(true);
-    
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 800));
-    
-    // Filter trips
-    _searchResults = _allTrips.where((trip) {
-      bool matchesRoute = trip.fromCity == _fromCity && trip.toCity == _toCity;
-      
-      // For Sprint 1 demo, ignore date filter to show data
-      // In production: also check trip.departureTime.day == _travelDate.day
-      
-      return matchesRoute;
-    }).toList();
-    
+
+    try {
+      // Call the service!
+      searchResults = await _service.searchTrips(
+        fromCity!,
+        toCity!,
+        travelDate!,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
+      searchResults = [];
+    }
+
     _setLoading(false);
-    
-    if (_searchResults.isEmpty) {
-      _showInfo(context, "No buses found for this route. Try Colombo to Jaffna/Badulla for demo.");
+  }
+
+  // BL-19: Payment Mock (Refactored)
+  Future<bool> processBooking(BuildContext context) async {
+    if (selectedTrip == null || selectedSeats.isEmpty) return false;
+
+    _setLoading(true);
+    try {
+      // Call the service
+      currentTicket = await _service.processBooking(
+        selectedTrip!,
+        selectedSeats,
+        "Saman Perera", // Mock user, get from auth later
+      );
+      _setLoading(false);
+      return true; // Success
+    } catch (e) {
+      print("Booking Error: $e");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
+      _setLoading(false);
+      return false; // Failed
     }
   }
-  
-  /// BL-12: Get alternative buses when selected bus is full
-  List<Trip> getAlternativeBuses(Trip fullTrip) {
-    return _allTrips.where((trip) {
-      return trip.fromCity == fullTrip.fromCity &&
-             trip.toCity == fullTrip.toCity &&
-             trip.id != fullTrip.id &&
-             !trip.isFull;
-    }).take(3).toList();
+
+  // --- ADMIN ACTIONS (Refactored) ---
+
+  // Helper to get all trips for the admin panel
+  Future<void> fetchAllTripsForAdmin() async {
+    _setLoading(true);
+    try {
+      allTripsForAdmin = await _service.getAllTrips();
+    } catch (e) {
+      allTripsForAdmin = [];
+    }
+    _setLoading(false);
   }
-  
-  /// Select a trip for booking (BL-03)
+
+  // ADM-14: Update Platform
+  Future<void> updatePlatform(String tripId, String newPlatform) async {
+    await _service.updatePlatform(tripId, newPlatform);
+
+    // Update local list to refresh UI
+    final index = allTripsForAdmin.indexWhere((t) => t.id == tripId);
+    if (index != -1) {
+      allTripsForAdmin[index].platformNumber = newPlatform;
+      notifyListeners();
+    }
+  }
+
+  // ADM-05: Update Status
+  Future<void> updateStatus(String tripId, TripStatus status, int delay) async {
+    await _service.updateStatus(tripId, status, delay);
+
+    // Update local list
+    final index = allTripsForAdmin.indexWhere((t) => t.id == tripId);
+    if (index != -1) {
+      allTripsForAdmin[index].status = status;
+      allTripsForAdmin[index].delayMinutes = delay;
+      notifyListeners();
+    }
+  }
+
+  // --- Local UI Helper Methods (These stay the same) ---
+
   void selectTrip(Trip trip) {
-    _selectedTrip = trip;
-    _selectedSeats.clear();
+    selectedTrip = trip;
+    selectedSeats.clear();
     notifyListeners();
   }
-  
-  // ==================== SEAT SELECTION ====================
-  
-  /// Toggle seat selection
+
   void toggleSeat(int seatNumber) {
-    if (_selectedSeats.contains(seatNumber)) {
-      _selectedSeats.remove(seatNumber);
+    if (selectedSeats.contains(seatNumber)) {
+      selectedSeats.remove(seatNumber);
     } else {
-      _selectedSeats.add(seatNumber);
+      selectedSeats.add(seatNumber);
     }
     notifyListeners();
   }
-  
-  /// Clear all selected seats
-  void clearSeats() {
-    _selectedSeats.clear();
+
+  void setFromCity(String? city) {
+    fromCity = city;
     notifyListeners();
   }
-  
-  /// Check if seat is available
-  bool isSeatAvailable(int seatNumber) {
-    if (_selectedTrip == null) return false;
-    return !_selectedTrip!.bookedSeats.contains(seatNumber);
+
+  void setToCity(String? city) {
+    toCity = city;
+    notifyListeners();
   }
-  
-  // ==================== BOOKING & PAYMENT (BL-06, BL-19) ====================
-  
-  /// Process booking and payment
-  Future<bool> confirmBooking(BuildContext context) async {
-    if (_selectedTrip == null || _selectedSeats.isEmpty) {
-      _showError(context, "Please select at least one seat");
-      return false;
-    }
-    
-    _setLoading(true);
-    
-    // Simulate payment gateway
-    await Future.delayed(const Duration(seconds: 2));
-    
-    // Generate ticket (BL-06)
-    _currentTicket = Ticket(
-      ticketId: 'BL${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
-      trip: _selectedTrip!,
-      seatNumbers: List.from(_selectedSeats),
-      passengerName: _currentUser?.name ?? 'Demo Passenger',
-      passengerPhone: _currentUser?.phone ?? '+94771234567',
-      bookingTime: DateTime.now(),
-      totalAmount: _selectedTrip!.price * _selectedSeats.length,
-      paymentStatus: 'PAID',
-    );
-    
-    // Update booked seats (in real app, update Firebase)
-    _selectedTrip!.bookedSeats.addAll(_selectedSeats);
-    
-    _setLoading(false);
-    _showSuccess(context, "Booking confirmed! Your ticket is ready.");
-    
-    return true;
+
+  void setDate(DateTime? date) {
+    travelDate = date;
+    notifyListeners();
   }
-  
-  // ==================== ADMIN ACTIONS (ADM-02, ADM-05, ADM-14) ====================
-  
-  /// Toggle admin mode (ADM-01)
+
   void toggleAdminMode() {
-    _isAdminMode = !_isAdminMode;
-    notifyListeners();
-  }
-  
-  /// Set current user
-  void setCurrentUser(AppUser? user) {
-    _currentUser = user;
-    _isAdminMode = user?.isStaff ?? false;
-    notifyListeners();
-  }
-  
-  /// ADM-14: Update platform number
-  void updatePlatform(String tripId, String platformNumber) {
-    final index = _allTrips.indexWhere((t) => t.id == tripId);
-    if (index != -1) {
-      _allTrips[index].platformNumber = platformNumber;
-      notifyListeners();
-      
-      // In real app: Update Firebase
-      // await FirebaseFirestore.instance
-      //   .collection('trips')
-      //   .doc(tripId)
-      //   .update({'platformNumber': platformNumber});
+    isAdminMode = !isAdminMode;
+    if (isAdminMode) {
+      fetchAllTripsForAdmin(); // Fetch admin data when mode is enabled
     }
-  }
-  
-  /// ADM-05: Update trip status (delay/cancel)
-  void updateTripStatus(String tripId, TripStatus newStatus, int delayMinutes) {
-    final index = _allTrips.indexWhere((t) => t.id == tripId);
-    if (index != -1) {
-      _allTrips[index].status = newStatus;
-      _allTrips[index].delayMinutes = delayMinutes;
-      notifyListeners();
-      
-      // In real app: Update Firebase and send notifications
-      // await _sendStatusNotifications(tripId, newStatus, delayMinutes);
-    }
-  }
-  
-  /// ADM-02: Add new trip (for route management)
-  void addTrip(Trip newTrip) {
-    _allTrips.add(newTrip);
     notifyListeners();
   }
-  
-  /// ADM-02: Remove trip
-  void removeTrip(String tripId) {
-    _allTrips.removeWhere((t) => t.id == tripId);
-    notifyListeners();
-  }
-  
-  // ==================== HELPER METHODS ====================
-  
-  void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
-  }
-  
-  void _showError(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-  
-  void _showSuccess(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-  
-  void _showInfo(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.blue,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-  
-  /// Reset booking state
-  void resetBooking() {
-    _selectedTrip = null;
-    _selectedSeats.clear();
-    _currentTicket = null;
-    notifyListeners();
+
+  // BL-12: Alternative Suggestions
+  List<Trip> getAlternatives(Trip fullOrCancelledTrip) {
+    return searchResults
+        .where(
+          (t) =>
+              t.id != fullOrCancelledTrip.id &&
+              !t.isFull &&
+              t.status != TripStatus.cancelled,
+        )
+        .take(3)
+        .toList();
   }
 }

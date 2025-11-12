@@ -1,66 +1,45 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:firebase_core/firebase_core.dart'; // Uncomment when Firebase is configured
-
+import 'package:firebase_core/firebase_core.dart'; // <-- IMPORT
+import 'firebase_options.dart'; // <-- IMPORT THE FILE YOU GENERATED
 import 'controllers/trip_controller.dart';
-import 'views/home/home_screen.dart';
 import 'utils/app_theme.dart';
-import 'utils/app_constants.dart';
+import 'views/home/home_screen.dart';
 
 void main() async {
+  // --- THIS IS THE FIX ---
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    print("Failed to initialize Firebase: $e");
+    // Handle initialization error
+  }
+  // -------------------------
 
-  // ==================== FIREBASE INITIALIZATION ====================
-  // Uncomment after running: flutterfire configure
-  // try {
-  //   await Firebase.initializeApp(
-  //     options: DefaultFirebaseOptions.currentPlatform,
-  //   );
-  //   debugPrint('✅ Firebase initialized successfully');
-  // } catch (e) {
-  //   debugPrint('❌ Firebase initialization failed: $e');
-  //   debugPrint('📱 Running in DEMO MODE with mock data');
-  // }
-
-  runApp(const BusLinkApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => TripController(),
+      child: const BusLinkApp(),
+    ),
+  );
 }
 
-/// Main App Widget
 class BusLinkApp extends StatelessWidget {
   const BusLinkApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        // Main controller for trip management
-        ChangeNotifierProvider(create: (_) => TripController()),
-        // Add more controllers here as needed:
-        // ChangeNotifierProvider(create: (_) => AuthController()),
-        // ChangeNotifierProvider(create: (_) => BookingController()),
-      ],
-      child: MaterialApp(
-        // ==================== APP CONFIGURATION ====================
-        title: AppConstants.appName,
-        debugShowCheckedModeBanner: false,
-
-        // ==================== THEME ====================
-        theme: AppTheme.lightTheme,
-
-        // ==================== HOME SCREEN ====================
-        home: const HomeScreen(),
-
-        // ==================== NAVIGATION ====================
-        // You can add named routes here for cleaner navigation
-        // routes: {
-        //   '/home': (context) => const HomeScreen(),
-        //   '/search': (context) => const BusListScreen(),
-        //   '/details': (context) => const BusDetailsScreen(),
-        //   '/booking': (context) => const SeatSelectionScreen(),
-        //   '/ticket': (context) => const TicketScreen(),
-        //   '/admin': (context) => const AdminDashboard(),
-        // },
-      ),
+    return MaterialApp(
+      title: 'BusLink',
+      theme: AppTheme.lightTheme, // Using your clean theme
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      home: const HomeScreen(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

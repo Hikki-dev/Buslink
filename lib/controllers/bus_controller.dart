@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import '../models/trip_model.dart';
 
 class BusController extends ChangeNotifier {
-  
   // State
   bool isLoading = false;
-  List<Trip> allTrips = Trip.getMockTrips(); // Using Mock for Demo if DB not connected
+  List<Trip> allTrips =
+      Trip.getMockTrips(); // Using Mock for Demo if DB not connected
   List<Trip> searchResults = [];
-  
+
   // Inputs
   String? fromCity;
   String? toCity;
@@ -24,7 +24,9 @@ class BusController extends ChangeNotifier {
 
   Future<void> searchTrips(BuildContext context) async {
     if (fromCity == null || toCity == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select cities")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please select cities")));
       return;
     }
 
@@ -34,10 +36,9 @@ class BusController extends ChangeNotifier {
     await Future.delayed(const Duration(seconds: 1)); // Simulate API
 
     // BL-01: Search Logic
-    searchResults = allTrips.where((t) => 
-      t.fromCity == fromCity && 
-      t.toCity == toCity
-    ).toList();
+    searchResults = allTrips
+        .where((t) => t.fromCity == fromCity && t.toCity == toCity)
+        .toList();
 
     isLoading = false;
     notifyListeners();
@@ -45,12 +46,16 @@ class BusController extends ChangeNotifier {
 
   // BL-12: Alternative Suggestions
   List<Trip> getAlternatives(Trip fullTrip) {
-    return allTrips.where((t) => 
-      t.fromCity == fullTrip.fromCity && 
-      t.toCity == fullTrip.toCity && 
-      t.id != fullTrip.id &&
-      !t.isFull
-    ).take(3).toList();
+    return allTrips
+        .where(
+          (t) =>
+              t.fromCity == fullTrip.fromCity &&
+              t.toCity == fullTrip.toCity &&
+              t.id != fullTrip.id &&
+              !t.isFull,
+        )
+        .take(3)
+        .toList();
   }
 
   void selectTrip(Trip trip) {

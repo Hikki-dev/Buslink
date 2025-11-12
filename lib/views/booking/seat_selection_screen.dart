@@ -32,28 +32,48 @@ class SeatSelectionScreen extends StatelessWidget {
             child: GridView.builder(
               padding: const EdgeInsets.all(24),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4, crossAxisSpacing: 12, mainAxisSpacing: 12,
+                crossAxisCount: 4,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
               ),
               itemCount: trip.totalSeats,
               itemBuilder: (ctx, i) {
                 int seat = i + 1;
                 bool isBooked = trip.bookedSeats.contains(seat);
                 bool isSelected = controller.selectedSeats.contains(seat);
-                
+
                 if (i % 4 == 2) return const SizedBox(); // Aisle
 
                 return GestureDetector(
                   onTap: isBooked ? null : () => controller.toggleSeat(seat),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isBooked ? Colors.red.shade100 : isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
+                      color: isBooked
+                          ? Colors.red.shade100
+                          : isSelected
+                          ? Theme.of(context).primaryColor
+                          : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(8),
-                      border: isSelected ? Border.all(color: Colors.black12) : null,
+                      border: isSelected
+                          ? Border.all(color: Colors.black12)
+                          : null,
                     ),
                     child: Center(
-                      child: isBooked 
-                        ? Icon(Icons.close, size: 16, color: Colors.red.shade300)
-                        : Text("$seat", style: TextStyle(color: isSelected ? Colors.white : Colors.black54, fontWeight: FontWeight.bold)),
+                      child: isBooked
+                          ? Icon(
+                              Icons.close,
+                              size: 16,
+                              color: Colors.red.shade300,
+                            )
+                          : Text(
+                              "$seat",
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.white
+                                    : Colors.black54,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                 );
@@ -63,41 +83,74 @@ class SeatSelectionScreen extends StatelessWidget {
           // Checkout
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)]),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+            ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("${controller.selectedSeats.length} Seats", style: const TextStyle(fontSize: 16)),
-                    Text("LKR ${(controller.selectedSeats.length * trip.price).toStringAsFixed(0)}", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFFFA726))),
+                    Text(
+                      "${controller.selectedSeats.length} Seats",
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    Text(
+                      "LKR ${(controller.selectedSeats.length * trip.price).toStringAsFixed(0)}",
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFFFA726),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: controller.selectedSeats.isEmpty ? null : () async {
-                      // BL-19: Digital Payment
-                      bool success = await controller.processBooking();
-                      if (success && context.mounted) {
-                         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const TicketScreen()), (r) => false);
-                      }
-                    },
-                    child: controller.isLoading 
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white)) 
-                      : const Text("PAY NOW"),
+                    onPressed: controller.selectedSeats.isEmpty
+                        ? null
+                        : () async {
+                            // BL-19: Digital Payment
+                            bool success = await controller.processBooking();
+                            if (success && context.mounted) {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const TicketScreen(),
+                                ),
+                                (r) => false,
+                              );
+                            }
+                          },
+                    child: controller.isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text("PAY NOW"),
                   ),
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
   Widget _legend(Color color, String text) {
-    return Row(children: [Container(width: 16, height: 16, color: color), const SizedBox(width: 8), Text(text)]);
+    return Row(
+      children: [
+        Container(width: 16, height: 16, color: color),
+        const SizedBox(width: 8),
+        Text(text),
+      ],
+    );
   }
 }
