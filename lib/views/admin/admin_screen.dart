@@ -1,7 +1,6 @@
 // lib/views/admin/admin_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// <-- FIX: Import the new TripController
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 
@@ -32,7 +31,6 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // <-- FIX: Use the new TripController
     final controller = Provider.of<TripController>(context, listen: false);
 
     return Scaffold(
@@ -50,7 +48,6 @@ class _AdminScreenState extends State<AdminScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              // <-- FIX: Call the correct method
               controller.updatePlatform(
                 widget.trip.id,
                 _platformController.text,
@@ -63,7 +60,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
           // Status Update
           DropdownButtonFormField<TripStatus>(
-            value: _selectedStatus,
+            // FIX: Use initialValue instead of value
+            initialValue: _selectedStatus,
             decoration: const InputDecoration(
               labelText: 'Trip Status',
               border: OutlineInputBorder(),
@@ -93,7 +91,6 @@ class _AdminScreenState extends State<AdminScreen> {
             onPressed: () {
               if (_selectedStatus != null) {
                 final delay = int.tryParse(_delayController.text) ?? 0;
-                // <-- FIX: Call the correct method
                 controller.updateStatus(
                   widget.trip.id,
                   _selectedStatus!,

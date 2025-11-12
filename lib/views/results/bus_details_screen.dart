@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../models/trip_model.dart';
 import '../../controllers/trip_controller.dart';
-// <-- FIX: This import will now work
 import '../../utils/app_constants.dart';
 import '../booking/seat_selection_screen.dart';
 
@@ -63,23 +62,26 @@ class BusDetailsScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                trip.operatorName,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  trip.operatorName,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Text(
-                trip.busType,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.white.withAlpha(200),
+                Text(
+                  trip.busType,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.white.withAlpha(200),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           Text(
             'LKR ${trip.price.toStringAsFixed(0)}',
@@ -210,7 +212,6 @@ class BusDetailsScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // <-- FIX: This now works
                 Icon(
                   AppConstants.getBusFeatureIcon(feature),
                   size: 18,
@@ -254,11 +255,13 @@ class BusDetailsScreen extends StatelessWidget {
         ),
       ),
       child: ElevatedButton(
-        style: theme.elevatedButtonTheme.style?.copyWith(
-          minimumSize: MaterialStateProperty.all(
-            const Size(double.infinity, 50),
-          ),
-        ),
+        style: theme.elevatedButtonTheme.style
+            // FIX: Replaced 'MaterialStateProperty' with 'WidgetStateProperty'
+            ?.copyWith(
+              minimumSize: WidgetStateProperty.all(
+                const Size(double.infinity, 50),
+              ),
+            ),
         onPressed: () {
           controller.selectTrip(trip);
           Navigator.push(

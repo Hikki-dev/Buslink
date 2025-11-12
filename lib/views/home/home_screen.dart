@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../controllers/trip_controller.dart';
 import '../results/bus_list_screen.dart';
 import '../admin/admin_dashboard.dart';
-import '../../utils/app_constants.dart'; // <-- FIX: This import will now work
+import '../../utils/app_constants.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -86,17 +86,16 @@ class HomeScreen extends StatelessWidget {
                 icon: Icons.departure_board,
                 hint: 'From',
                 value: controller.fromCity,
-                // <-- FIX: This now works
                 items: AppConstants.cities,
                 onChanged: (val) => controller.setFromCity(val),
                 theme: theme,
               ),
               const SizedBox(height: 12),
               _buildDropdown(
-                icon: Icons.arrival_board,
+                // FIX: Changed 'Icons.arrival_board' to 'Icons.location_on'
+                icon: Icons.location_on,
                 hint: 'To',
                 value: controller.toCity,
-                // <-- FIX: This now works
                 items: AppConstants.cities.reversed.toList(),
                 onChanged: (val) => controller.setToCity(val),
                 theme: theme,
@@ -150,13 +149,17 @@ class HomeScreen extends StatelessWidget {
     TripController controller,
     ThemeData theme,
   ) {
+    // FIX: Use a Key and initialValue for proper state handling
     return TextFormField(
+      key: Key(controller.travelDate.toString()), // Rebuild when date changes
       readOnly: true,
+      // FIX: Use initialValue instead of hint
+      initialValue: controller.travelDate == null
+          ? null
+          : DateFormat('yyyy-MM-dd').format(controller.travelDate!),
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.calendar_today, color: theme.primaryColor),
-        hintText: controller.travelDate == null
-            ? 'Select Date'
-            : DateFormat('yyyy-MM-dd').format(controller.travelDate!),
+        hintText: 'Select Date',
       ),
       onTap: () => _selectDate(context, controller),
     );
@@ -173,7 +176,6 @@ class HomeScreen extends StatelessWidget {
       lastDate: DateTime.now().add(const Duration(days: 30)),
     );
     if (pickedDate != null) {
-      // <-- FIX: Renamed to setDate
       controller.setDate(pickedDate);
     }
   }

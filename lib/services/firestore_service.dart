@@ -1,5 +1,7 @@
 // lib/services/firestore_service.dart
-import 'package.cloud_firestore/cloud_firestore.dart';
+
+// FIX: Corrected the import path from 'package.' to 'package:'
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/trip_model.dart';
 
 class FirestoreService {
@@ -64,7 +66,6 @@ class FirestoreService {
       });
     });
 
-    // <-- FIX: This whole block is updated to match the new Ticket model
     final newTicket = Ticket(
       ticketId: ticketRef.id,
       tripId: trip.id,
@@ -75,7 +76,7 @@ class FirestoreService {
       totalAmount: trip.price * seats.length,
     );
 
-    await ticketRef.set(newTicket.toJson()); // <-- FIX: This will now work
+    await ticketRef.set(newTicket.toJson());
     return newTicket;
   }
 
