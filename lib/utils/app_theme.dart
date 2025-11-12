@@ -28,11 +28,11 @@ class AppTheme {
       secondary: actionOrange,
       onPrimary: Colors.white,
       onSecondary: Colors.black,
-      background: bgColor,
-      surface: Colors.white,
+      surface: bgColor, // <-- FIX: Was 'background'
+      surfaceContainerHighest: Colors.white, // <-- FIX: Was 'surfaceVariant'
       error: Colors.redAccent,
-      onBackground: darkText,
-      onSurface: darkText,
+      onSurface: darkText, // <-- FIX: Was 'onBackground'
+      onSurfaceVariant: darkText,
       onError: Colors.white,
     ),
     textTheme: const TextTheme(
@@ -86,14 +86,12 @@ class AppTheme {
       // <-- FIX: Was 'CardTheme'
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      // <-- FIX: Replaced deprecated 'withOpacity'
       color: Colors.white.withAlpha(230),
       shadowColor: magiyaBlue.withAlpha(26), // 0.1 opacity
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
     ),
   );
 
-  // <-- FIX: ADDED THIS ENTIRE STATIC GETTER
   static final ThemeData darkTheme = ThemeData(
     primaryColor: magiyaBlue,
     scaffoldBackgroundColor: const Color(0xFF121212),
@@ -113,11 +111,13 @@ class AppTheme {
       secondary: actionOrange,
       onPrimary: Colors.white,
       onSecondary: Colors.black,
-      background: Color(0xFF121212),
-      surface: Color(0xFF1E1E1E),
+      surface: Color(0xFF121212), // <-- FIX: Was 'background'
+      surfaceContainerHighest: Color(
+        0xFF1E1E1E,
+      ), // <-- FIX: Was 'surfaceVariant'
       error: Colors.redAccent,
-      onBackground: Colors.white70,
-      onSurface: Colors.white,
+      onSurface: Colors.white70, // <-- FIX: Was 'onBackground'
+      onSurfaceVariant: Colors.white,
       onError: Colors.black,
     ),
     textTheme: const TextTheme(
@@ -168,6 +168,7 @@ class AppTheme {
       hintStyle: TextStyle(color: Colors.grey.shade600),
     ),
     cardTheme: CardThemeData(
+      // <-- FIX: Was 'CardTheme'
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: const Color(0xFF1E1E1E),

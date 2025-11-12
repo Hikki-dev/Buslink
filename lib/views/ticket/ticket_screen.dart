@@ -1,7 +1,9 @@
+// lib/views/ticket/ticket_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import '../../controllers/bus_controller.dart';
+// FIX: Import the new TripController
+import '../../controllers/trip_controller.dart';
 import '../home/home_screen.dart';
 
 class TicketScreen extends StatelessWidget {
@@ -9,18 +11,24 @@ class TicketScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Provider.of<BusController>(context);
-    final trip = controller.currentTrip!;
+    // FIX: Use the new TripController
+    final controller = Provider.of<TripController>(context);
+    // FIX: Use selectedTrip and currentTicket
+    final trip = controller.selectedTrip!;
+    final ticket = controller.currentTicket!;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0056D2),
+      backgroundColor: theme.primaryColor,
       appBar: AppBar(
         elevation: 0,
+        backgroundColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pushReplacement(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const HomeScreen()),
+            (r) => false,
           ),
         ),
       ),
@@ -30,7 +38,7 @@ class TicketScreen extends StatelessWidget {
             margin: const EdgeInsets.all(20),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -38,25 +46,22 @@ class TicketScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.check_circle, color: Colors.green, size: 50),
                 const SizedBox(height: 10),
-                const Text(
+                Text(
                   "Booking Confirmed!",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+                  style: theme.textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 20),
 
                 // BL-06: QR Code
                 QrImageView(
-                  data: "${trip.id}-${controller.selectedSeats.join(',')}",
+                  data: ticket.ticketId, // Use the ticket ID for the QR
                   size: 180,
+                  backgroundColor: Colors.white,
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  "Ticket ID: BL-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}",
-                  style: const TextStyle(color: Colors.grey),
+                  "Ticket ID: ${ticket.ticketId}",
+                  style: theme.textTheme.bodyMedium,
                 ),
 
                 const Divider(height: 40),
@@ -71,13 +76,7 @@ class TicketScreen extends StatelessWidget {
                           "Bus Number",
                           style: TextStyle(color: Colors.grey),
                         ),
-                        Text(
-                          trip.busNumber,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Text(trip.busNumber, style: theme.textTheme.titleLarge),
                       ],
                     ),
                     // BL-13: Platform (Dynamic)
@@ -90,10 +89,8 @@ class TicketScreen extends StatelessWidget {
                         ),
                         Text(
                           trip.platformNumber,
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0056D2),
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            color: theme.primaryColor,
                           ),
                         ),
                       ],
@@ -101,9 +98,9 @@ class TicketScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-                _row("Route", "${trip.fromCity} ➔ ${trip.toCity}"),
-                _row("Seats", controller.selectedSeats.join(", ")),
-                _row("Passenger", "Saman Perera"), // Mock User
+                _row(theme, "Route", "${trip.fromCity} ➔ ${trip.toCity}"),
+                _row(theme, "Seats", ticket.seatNumbers.join(", ")),
+                _row(theme, "Passenger", ticket.passengerName),
 
                 const SizedBox(height: 20),
                 const Text(
@@ -118,14 +115,14 @@ class TicketScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String val) {
+  Widget _row(ThemeData theme, String label, String val) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
-          Text(val, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(label, style: theme.textTheme.bodyMedium),
+          Text(val, style: theme.textTheme.titleMedium),
         ],
       ),
     );

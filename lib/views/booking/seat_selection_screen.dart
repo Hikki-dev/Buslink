@@ -1,6 +1,7 @@
+// lib/views/booking/seat_selection_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../controllers/bus_controller.dart';
+import '../../controllers/trip_controller.dart';
 import '../ticket/ticket_screen.dart';
 
 class SeatSelectionScreen extends StatelessWidget {
@@ -8,14 +9,14 @@ class SeatSelectionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Provider.of<BusController>(context);
-    final trip = controller.currentTrip!;
+    final controller = Provider.of<TripController>(context);
+    final trip = controller.selectedTrip!;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(title: const Text("Select Seats")),
       body: Column(
         children: [
-          // Legend
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -23,7 +24,7 @@ class SeatSelectionScreen extends StatelessWidget {
               children: [
                 _legend(Colors.grey.shade300, "Available"),
                 _legend(Colors.red.shade100, "Booked"),
-                _legend(Theme.of(context).primaryColor, "Selected"),
+                _legend(theme.primaryColor, "Selected"),
               ],
             ),
           ),
@@ -32,26 +33,41 @@ class SeatSelectionScreen extends StatelessWidget {
             child: GridView.builder(
               padding: const EdgeInsets.all(24),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
+                crossAxisCount: 5, // 2 seats, aisle, 2 seats
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
-              itemCount: trip.totalSeats,
+              itemCount: trip.totalSeats + (trip.totalSeats ~/ 4), // Add aisles
               itemBuilder: (ctx, i) {
-                int seat = i + 1;
-                bool isBooked = trip.bookedSeats.contains(seat);
-                bool isSelected = controller.selectedSeats.contains(seat);
+                final int aisleIndex = 2; // Aisle position
+                final int itemsInRow = 5;
+                if (i % itemsInRow == aisleIndex) {
+                  return const Icon(
+                    Icons.event_seat,
+                    color: Colors.transparent,
+                  ); // Aisle
+                }
 
-                if (i % 4 == 2) return const SizedBox(); // Aisle
+                int seat = i - (i ~/ itemsInRow);
+                // FIX: Added curly braces
+                if (seat >= trip.totalSeats) {
+                  return const SizedBox();
+                }
+
+                int seatNumber = seat + 1;
+                bool isBooked = trip.bookedSeats.contains(seatNumber);
+                bool isSelected = controller.selectedSeats.contains(seatNumber);
 
                 return GestureDetector(
-                  onTap: isBooked ? null : () => controller.toggleSeat(seat),
+                  onTap: isBooked
+                      ? null
+                      : () => controller.toggleSeat(seatNumber),
                   child: Container(
                     decoration: BoxDecoration(
                       color: isBooked
                           ? Colors.red.shade100
                           : isSelected
-                          ? Theme.of(context).primaryColor
+                          ? theme.primaryColor
                           : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(8),
                       border: isSelected
@@ -66,7 +82,7 @@ class SeatSelectionScreen extends StatelessWidget {
                               color: Colors.red.shade300,
                             )
                           : Text(
-                              "$seat",
+                              "$seatNumber",
                               style: TextStyle(
                                 color: isSelected
                                     ? Colors.white
@@ -80,12 +96,13 @@ class SeatSelectionScreen extends StatelessWidget {
               },
             ),
           ),
-          // Checkout
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+              color: theme.cardColor,
+              boxShadow: [
+                BoxShadow(color: Colors.black.withAlpha(30), blurRadius: 10),
+              ],
             ),
             child: Column(
               children: [
@@ -94,14 +111,12 @@ class SeatSelectionScreen extends StatelessWidget {
                   children: [
                     Text(
                       "${controller.selectedSeats.length} Seats",
-                      style: const TextStyle(fontSize: 16),
+                      style: theme.textTheme.titleLarge,
                     ),
                     Text(
                       "LKR ${(controller.selectedSeats.length * trip.price).toStringAsFixed(0)}",
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFFFA726),
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: theme.colorScheme.secondary,
                       ),
                     ),
                   ],
@@ -110,11 +125,14 @@ class SeatSelectionScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
+                    style: theme.elevatedButtonTheme.style,
                     onPressed: controller.selectedSeats.isEmpty
                         ? null
                         : () async {
                             // BL-19: Digital Payment
-                            bool success = await controller.processBooking();
+                            bool success = await controller.processBooking(
+                              context,
+                            );
                             if (success && context.mounted) {
                               Navigator.pushAndRemoveUntil(
                                 context,

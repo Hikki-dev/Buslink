@@ -92,8 +92,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _buildDropdown(
-                // FIX: Changed 'Icons.arrival_board' to 'Icons.location_on'
-                icon: Icons.location_on,
+                icon: Icons.location_on, // Corrected Icon
                 hint: 'To',
                 value: controller.toCity,
                 items: AppConstants.cities.reversed.toList(),
@@ -149,11 +148,10 @@ class HomeScreen extends StatelessWidget {
     TripController controller,
     ThemeData theme,
   ) {
-    // FIX: Use a Key and initialValue for proper state handling
     return TextFormField(
-      key: Key(controller.travelDate.toString()), // Rebuild when date changes
+      key: Key(controller.travelDate.toString()),
       readOnly: true,
-      // FIX: Use initialValue instead of hint
+      // FIX: Use 'initialValue' instead of 'value'
       initialValue: controller.travelDate == null
           ? null
           : DateFormat('yyyy-MM-dd').format(controller.travelDate!),
