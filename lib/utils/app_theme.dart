@@ -1,6 +1,19 @@
 // lib/utils/app_theme.dart
 import 'package:flutter/material.dart';
 
+// --- 1. ADD THIS NEW CLASS ---
+// This class will manage and notify the app of theme changes
+class ThemeController extends ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode get themeMode => _themeMode;
+
+  void setTheme(ThemeMode mode) {
+    _themeMode = mode;
+    notifyListeners();
+  }
+}
+// --- END OF NEW CLASS ---
+
 class AppTheme {
   // Magiya.lk style colors
   static const Color magiyaBlue = Color(0xFF0056D2);
@@ -9,6 +22,7 @@ class AppTheme {
   static const Color lightText = Color(0xFF666666);
   static const Color bgColor = Color(0xFFF4F7FA);
 
+  // This is your existing lightTheme
   static final ThemeData lightTheme = ThemeData(
     primaryColor: magiyaBlue,
     scaffoldBackgroundColor: bgColor,
@@ -92,6 +106,7 @@ class AppTheme {
     ),
   );
 
+  // This is your existing darkTheme
   static final ThemeData darkTheme = ThemeData(
     primaryColor: magiyaBlue,
     scaffoldBackgroundColor: const Color(0xFF121212),
