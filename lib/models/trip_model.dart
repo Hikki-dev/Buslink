@@ -70,32 +70,56 @@ class Trip {
 
 class Ticket {
   final String ticketId;
-  final String tripId; // <-- FIX: Changed from 'Trip trip'
+  final String tripId;
+  final String userId; // <-- 1. ADD THIS FIELD
   final List<int> seatNumbers;
   final String passengerName;
-  final String passengerPhone; // <-- FIX: Kept this
+  final String passengerPhone;
   final DateTime bookingTime;
-  final double totalAmount; // <-- FIX: Changed from 'amountPaid'
+  final double totalAmount;
+
+  // --- 2. ADD 'tripData' FOR "MY TICKETS" PAGE ---
+  // This is a copy of the trip info, so we don't have to load it separately
+  final Map<String, dynamic> tripData;
 
   Ticket({
     required this.ticketId,
-    required this.tripId, // <-- FIX: Use tripId
+    required this.tripId,
+    required this.userId, // <-- 3. ADD TO CONSTRUCTOR
     required this.seatNumbers,
     required this.passengerName,
-    required this.passengerPhone, // <-- FIX: Add phone
+    required this.passengerPhone,
     required this.bookingTime,
-    required this.totalAmount, // <-- FIX: Use totalAmount
+    required this.totalAmount,
+    required this.tripData, // <-- 4. ADD TO CONSTRUCTOR
   });
 
-  // <-- FIX: ADDED THIS ENTIRE METHOD
   Map<String, dynamic> toJson() {
     return {
       'tripId': tripId,
+      'userId': userId, // <-- 5. ADD TO JSON
       'seatNumbers': seatNumbers,
       'passengerName': passengerName,
       'passengerPhone': passengerPhone,
       'bookingTime': Timestamp.fromDate(bookingTime),
       'totalAmount': totalAmount,
+      'tripData': tripData, // <-- 6. ADD TO JSON
     };
+  }
+
+  // --- 7. ADD A FACTORY FOR "MY TICKETS" PAGE ---
+  factory Ticket.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Ticket(
+      ticketId: doc.id,
+      tripId: data['tripId'] ?? '',
+      userId: data['userId'] ?? '',
+      seatNumbers: List<int>.from(data['seatNumbers'] ?? []),
+      passengerName: data['passengerName'] ?? '',
+      passengerPhone: data['passengerPhone'] ?? '',
+      bookingTime: (data['bookingTime'] as Timestamp).toDate(),
+      totalAmount: (data['totalAmount'] ?? 0).toDouble(),
+      tripData: Map<String, dynamic>.from(data['tripData'] ?? {}),
+    );
   }
 }

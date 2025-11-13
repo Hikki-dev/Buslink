@@ -1,7 +1,6 @@
 // lib/services/firestore_service.dart
-
-// FIX: Corrected the import path from 'package.' to 'package:'
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // <-- 1. IMPORT FIREBASE AUTH
 import '../models/trip_model.dart';
 
 class FirestoreService {
@@ -9,20 +8,12 @@ class FirestoreService {
   final String tripCollection = 'trips';
   final String ticketCollection = 'tickets';
 
-  // lib/services/firestore_service.dart
-
   Future<List<Trip>> searchTrips(
     String fromCity,
     String toCity,
     DateTime date,
   ) async {
-    // --- START OF NEW CODE ---
-    // Create a range for the whole day
-    final DateTime dayStart = DateTime(
-      date.year,
-      date.month,
-      date.day,
-    ); // 12:00 AM
+    final DateTime dayStart = DateTime(date.year, date.month, date.day);
     final DateTime dayEnd = DateTime(
       date.year,
       date.month,
@@ -30,17 +21,15 @@ class FirestoreService {
       23,
       59,
       59,
-    ); // 11:59 PM
+    );
 
     final snapshot = await _db
         .collection(tripCollection)
         .where('fromCity', isEqualTo: fromCity)
         .where('toCity', isEqualTo: toCity)
-        // This is the new, correct query
         .where('departureTime', isGreaterThanOrEqualTo: dayStart)
         .where('departureTime', isLessThanOrEqualTo: dayEnd)
         .get();
-    // --- END OF NEW CODE ---
 
     if (snapshot.docs.isEmpty) {
       return [];
@@ -48,6 +37,7 @@ class FirestoreService {
     return snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
   }
 
+  // ... (updatePlatform and updateStatus are unchanged) ...
   Future<void> updatePlatform(String tripId, String newPlatform) {
     return _db.collection(tripCollection).doc(tripId).update({
       'platformNumber': newPlatform,
@@ -61,10 +51,11 @@ class FirestoreService {
     });
   }
 
+  // --- 2. UPDATE THIS FUNCTION SIGNATURE ---
   Future<Ticket> processBooking(
     Trip trip,
     List<int> seats,
-    String passengerName,
+    User user, // <-- Use the User object
   ) async {
     final ticketRef = _db.collection(ticketCollection).doc();
     final tripRef = _db.collection(tripCollection).doc(trip.id);
@@ -87,14 +78,27 @@ class FirestoreService {
       });
     });
 
+    // --- 3. UPDATE TICKET CREATION ---
     final newTicket = Ticket(
       ticketId: ticketRef.id,
       tripId: trip.id,
+      userId: user.uid, // <-- Save the user's ID
       seatNumbers: seats,
-      passengerName: passengerName,
-      passengerPhone: "0771234567", // Mock phone, get from auth/UI later
+      passengerName:
+          user.displayName ?? user.email ?? 'Guest', // <-- Use user's name
+      passengerPhone:
+          user.phoneNumber ?? "N/A", // <-- Use user's phone if available
       bookingTime: DateTime.now(),
       totalAmount: trip.price * seats.length,
+      // Save a copy of the trip data for easy display on "My Tickets"
+      tripData: {
+        'fromCity': trip.fromCity,
+        'toCity': trip.toCity,
+        'operatorName': trip.operatorName,
+        'busNumber': trip.busNumber,
+        'departureTime': Timestamp.fromDate(trip.departureTime),
+        'arrivalTime': Timestamp.fromDate(trip.arrivalTime),
+      },
     );
 
     await ticketRef.set(newTicket.toJson());
@@ -107,5 +111,19 @@ class FirestoreService {
       return [];
     }
     return snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
+  }
+
+  // --- 4. ADD NEW FUNCTION TO GET USER'S TICKETS ---
+  Stream<List<Ticket>> getUserTickets(String userId) {
+    return _db
+        .collection(ticketCollection)
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+          if (snapshot.docs.isEmpty) {
+            return [];
+          }
+          return snapshot.docs.map((doc) => Ticket.fromFirestore(doc)).toList();
+        });
   }
 }

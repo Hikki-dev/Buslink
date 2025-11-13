@@ -43,3 +43,29 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ===== SENSITIVE FILES - DO NOT COMMIT =====
+
+# Firebase/Google configuration files (contain API keys and client IDs)
+**/google-services.json
+**/GoogleService-Info.plist
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+
+# Environment files (contain secrets, API keys, client IDs)
+.env
+.env.local
+.env.*.local
+**/.env
+
+# Keystore files (NEVER commit these!)
+*.keystore
+*.jks
+key.properties
+android/key.properties
+
+# iOS signing certificates and profiles
+*.mobileprovision
+*.p12
+*.cer

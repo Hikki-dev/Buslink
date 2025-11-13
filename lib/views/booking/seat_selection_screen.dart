@@ -1,8 +1,9 @@
 // lib/views/booking/seat_selection_screen.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
-import '../../models/trip_model.dart'; // Import the model
+import '../../models/trip_model.dart';
 import '../ticket/ticket_screen.dart';
 
 class SeatSelectionScreen extends StatelessWidget {
@@ -13,45 +14,36 @@ class SeatSelectionScreen extends StatelessWidget {
     final controller = Provider.of<TripController>(context);
     final trip = controller.selectedTrip!;
     final theme = Theme.of(context);
+    final user = Provider.of<User?>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(title: const Text("Select Seats")),
       body: Column(
         children: [
-          // This is your original, unchanged Legend
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _legend(theme.cardColor, "Available"),
-                _legend(Colors.red.shade100, "Booked"),
-                _legend(theme.primaryColor, "Selected"),
+                _legend(theme.cardColor, "Available", theme),
+                _legend(Colors.red.shade100, "Booked", theme),
+                _legend(theme.primaryColor, "Selected", theme),
               ],
             ),
           ),
           const Divider(),
-
-          // --- ALL FIXES ARE HERE ---
           Expanded(
-            // 1. Use InteractiveViewer to allow optional pinch-to-zoom
             child: InteractiveViewer(
               maxScale: 3.0,
               minScale: 1.0,
-              // 2. Center the grid in the middle of the screen (for web)
               child: Center(
-                // 3. Use a SingleChildScrollView to handle scrolling on small phones
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24.0),
-                  // 4. Build the simple, intuitive seat grid
                   child: _buildSeatGrid(context, trip),
                 ),
               ),
             ),
           ),
-          // --- END OF FIXES ---
-
-          // This is your original, unchanged Bottom Bar
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -85,9 +77,20 @@ class SeatSelectionScreen extends StatelessWidget {
                     onPressed: controller.selectedSeats.isEmpty
                         ? null
                         : () async {
+                            if (user == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text("Error: You are not logged in.")),
+                              );
+                              return;
+                            }
+
                             bool success = await controller.processBooking(
                               context,
+                              user,
                             );
+
                             if (success && context.mounted) {
                               Navigator.pushAndRemoveUntil(
                                 context,
@@ -99,11 +102,11 @@ class SeatSelectionScreen extends StatelessWidget {
                             }
                           },
                     child: controller.isLoading
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: theme.colorScheme.onSecondary,
                             ),
                           )
                         : const Text("PAY NOW"),
@@ -117,53 +120,64 @@ class SeatSelectionScreen extends StatelessWidget {
     );
   }
 
-  // Helper widget to build the seat grid
   Widget _buildSeatGrid(BuildContext context, Trip trip) {
-    // Calculate the number of rows needed (e.g., 40 seats / 4 per row = 10 rows)
     final int numRows = (trip.totalSeats / 4).ceil();
 
     return Column(
-      mainAxisSize: MainAxisSize.min, // Make column wrap its children
-      children: List.generate(numRows, (rowIndex) {
-        // e.g., 10 rows
-        // Calculate seat numbers for this row
-        int seatL1 = (rowIndex * 4) + 1; // Left 1: 1, 5, 9...
-        int seatL2 = (rowIndex * 4) + 2; // Left 2: 2, 6, 10...
-        int seatR1 = (rowIndex * 4) + 3; // Right 1: 3, 7, 11...
-        int seatR2 = (rowIndex * 4) + 4; // Right 2: 4, 8, 12...
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16.0),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 250,
+          padding: const EdgeInsets.all(10),
+          margin: const EdgeInsets.only(bottom: 25, top: 5),
+          decoration: BoxDecoration(
+            border: Border(
+                bottom: BorderSide(color: Colors.grey.shade300, width: 2)),
+          ),
           child: Row(
-            mainAxisSize: MainAxisSize.min, // Keep rows compact
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Left Side (Seats 1 & 2)
-              Row(
-                children: [
-                  _Seat(seatNumber: seatL1),
-                  const SizedBox(width: 12),
-                  _Seat(seatNumber: seatL2),
-                ],
-              ),
-
-              const SizedBox(width: 30), // The Aisle
-              // Right Side (Seats 3 & 4)
-              Row(
-                children: [
-                  _Seat(seatNumber: seatR1),
-                  const SizedBox(width: 12),
-                  _Seat(seatNumber: seatR2),
-                ],
-              ),
+              Text("Driver",
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
+              Icon(Icons.bus_alert, color: Colors.grey.shade600, size: 28),
             ],
           ),
-        );
-      }),
+        ),
+        ...List.generate(numRows, (rowIndex) {
+          int seatL1 = (rowIndex * 4) + 1;
+          int seatL2 = (rowIndex * 4) + 2;
+          int seatR1 = (rowIndex * 4) + 3;
+          int seatR2 = (rowIndex * 4) + 4;
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    _Seat(seatNumber: seatL1),
+                    const SizedBox(width: 12),
+                    _Seat(seatNumber: seatL2),
+                  ],
+                ),
+                const SizedBox(width: 30),
+                Row(
+                  children: [
+                    _Seat(seatNumber: seatR1),
+                    const SizedBox(width: 12),
+                    _Seat(seatNumber: seatR2),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 
-  // Unchanged legend widget
-  Widget _legend(Color color, String text) {
+  Widget _legend(Color color, String text, ThemeData theme) {
     return Row(
       children: [
         Container(
@@ -171,7 +185,8 @@ class SeatSelectionScreen extends StatelessWidget {
           height: 16,
           decoration: BoxDecoration(
             color: color,
-            border: Border.all(color: Colors.grey.shade400, width: 1),
+            border: Border.all(
+                color: theme.colorScheme.onSurface.withAlpha(51), width: 1),
             borderRadius: BorderRadius.circular(4),
           ),
         ),
@@ -181,9 +196,6 @@ class SeatSelectionScreen extends StatelessWidget {
     );
   }
 }
-
-// --- NEW WIDGET FOR A SINGLE SEAT ---
-// This handles its own state (booked, selected, available)
 
 class _Seat extends StatelessWidget {
   const _Seat({required this.seatNumber});
@@ -195,19 +207,18 @@ class _Seat extends StatelessWidget {
     final trip = controller.selectedTrip!;
     final theme = Theme.of(context);
 
-    // Stop building if we're past the total number of seats
     if (seatNumber > trip.totalSeats) {
-      return Container(width: 50, height: 50); // Empty placeholder
+      // --- FIX: Linter Warning ---
+      // Replaced Container with SizedBox
+      return const SizedBox(width: 50, height: 50);
+      // --- END OF FIX ---
     }
 
-    // Check seat status
     final bool isBooked = trip.bookedSeats.contains(seatNumber);
     final bool isSelected = controller.selectedSeats.contains(seatNumber);
 
     return GestureDetector(
-      onTap: isBooked
-          ? null // Can't tap if booked
-          : () => controller.toggleSeat(seatNumber),
+      onTap: isBooked ? null : () => controller.toggleSeat(seatNumber),
       child: Container(
         width: 50,
         height: 50,
@@ -215,22 +226,27 @@ class _Seat extends StatelessWidget {
           color: isBooked
               ? Colors.red.shade100
               : isSelected
-              ? theme.primaryColor
-              : theme.cardColor, // Use theme color
+                  ? theme.primaryColor
+                  : theme.cardColor,
           borderRadius: BorderRadius.circular(8),
           border: isSelected
-              ? Border.all(color: theme.primaryColor.withOpacity(0.5))
-              : Border.all(color: Colors.grey.shade400, width: 1),
+              ? Border.all(color: theme.primaryColor.withAlpha(128))
+              : Border.all(
+                  color: theme.colorScheme.onSurface.withAlpha(51), width: 1),
         ),
         child: Center(
           child: isBooked
-              ? Icon(Icons.close, size: 16, color: Colors.red.shade900)
+              ? Icon(
+                  Icons.close,
+                  size: 16,
+                  color: Colors.red.shade900,
+                )
               : Text(
                   "$seatNumber",
                   style: TextStyle(
                     color: isSelected
                         ? theme.colorScheme.onPrimary
-                        : theme.textTheme.bodyMedium!.color,
+                        : theme.colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

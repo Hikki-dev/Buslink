@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../controllers/trip_controller.dart';
+import '../../services/auth_service.dart'; 
 import '../results/bus_list_screen.dart';
 import '../admin/admin_dashboard.dart';
 import '../../utils/app_constants.dart';
+import '../../utils/app_theme.dart';
 import '../placeholder/my_tickets_screen.dart';
 import '../placeholder/cancellations_screen.dart';
 import '../placeholder/support_screen.dart';
@@ -17,6 +19,10 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
     final theme = Theme.of(context);
+    final authService = Provider.of<AuthService>(
+      context,
+      listen: false,
+    ); // <-- 3. GET AUTH SERVICE
 
     return Scaffold(
       appBar: AppBar(
@@ -28,12 +34,37 @@ class HomeScreen extends StatelessWidget {
         ),
         centerTitle: true,
         actions: [
+          // Theme Toggle Button
+          Consumer<ThemeController>(
+            builder: (context, themeController, child) {
+              bool isDark =
+                  themeController.themeMode == ThemeMode.dark ||
+                  (themeController.themeMode == ThemeMode.system &&
+                      MediaQuery.of(context).platformBrightness ==
+                          Brightness.dark);
+
+              return IconButton(
+                icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+                tooltip: "Toggle Theme",
+                onPressed: () {
+                  if (isDark) {
+                    themeController.setTheme(ThemeMode.light);
+                  } else {
+                    themeController.setTheme(ThemeMode.dark);
+                  }
+                },
+              );
+            },
+          ),
+
+          // Admin Panel Button
           IconButton(
             icon: Icon(
               controller.isAdminMode
                   ? Icons.person
                   : Icons.admin_panel_settings,
             ),
+            tooltip: "Admin Panel",
             onPressed: () {
               controller.toggleAdminMode();
               if (controller.isAdminMode) {
@@ -44,9 +75,21 @@ class HomeScreen extends StatelessWidget {
               }
             },
           ),
+
+          // --- 4. ADD LOGOUT BUTTON ---
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: "Log Out",
+            onPressed: () {
+              authService.signOut(); // <-- This fixes the "unused import"
+            },
+          ),
+          // --- END OF LOGOUT BUTTON ---
         ],
       ),
       body: SingleChildScrollView(
+        // ... (rest of the file is unchanged)
+        // ... (The rest of your home_screen.dart file is correct)
         child: Column(
           children: [
             _buildSearchHeader(context, controller, theme),
@@ -154,7 +197,6 @@ class HomeScreen extends StatelessWidget {
     return TextFormField(
       key: Key(controller.travelDate.toString()),
       readOnly: true,
-      // FIX: Use 'initialValue' instead of 'value'
       initialValue: controller.travelDate == null
           ? null
           : DateFormat('yyyy-MM-dd').format(controller.travelDate!),
@@ -174,14 +216,12 @@ class HomeScreen extends StatelessWidget {
       context: context,
       initialDate: controller.travelDate ?? DateTime.now(),
       firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 30)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (pickedDate != null) {
       controller.setDate(pickedDate);
     }
   }
-
-  // lib/views/home/home_screen.dart
 
   Widget _buildQuickActions(BuildContext context, ThemeData theme) {
     return Container(
@@ -194,7 +234,6 @@ class HomeScreen extends StatelessWidget {
             theme,
             Icons.confirmation_number,
             'My Tickets',
-            // 1. ADD this onTap function
             () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MyTicketsScreen()),
@@ -205,7 +244,6 @@ class HomeScreen extends StatelessWidget {
             theme,
             Icons.cancel,
             'Cancellations',
-            // 2. ADD this onTap function
             () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CancellationsScreen()),
@@ -216,7 +254,6 @@ class HomeScreen extends StatelessWidget {
             theme,
             Icons.support_agent,
             'Support',
-            // 3. ADD this onTap function
             () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SupportScreen()),
@@ -232,11 +269,10 @@ class HomeScreen extends StatelessWidget {
     ThemeData theme,
     IconData icon,
     String label,
-    VoidCallback onTap, // 4. ADD this parameter
+    VoidCallback onTap,
   ) {
     return InkWell(
-      // 5. CHANGE from Column to InkWell
-      onTap: onTap, // 6. USE the parameter here
+      onTap: onTap,
       borderRadius: BorderRadius.circular(40),
       child: Column(
         children: [
@@ -251,7 +287,6 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-  // ...
 
   Widget _buildPromotions(BuildContext context, ThemeData theme) {
     return Padding(

@@ -1,4 +1,5 @@
 // lib/controllers/trip_controller.dart
+import 'package:firebase_auth/firebase_auth.dart'; // <-- 1. IMPORT FIREBASE AUTH
 import 'package:flutter/material.dart';
 import '../models/trip_model.dart';
 import '../services/firestore_service.dart';
@@ -43,7 +44,6 @@ class TripController extends ChangeNotifier {
         travelDate!,
       );
     } catch (e) {
-      // <-- FIX: Added mount check for async gap
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -54,7 +54,8 @@ class TripController extends ChangeNotifier {
     _setLoading(false);
   }
 
-  Future<bool> processBooking(BuildContext context) async {
+  // --- 2. UPDATE THIS FUNCTION SIGNATURE ---
+  Future<bool> processBooking(BuildContext context, User user) async {
     if (selectedTrip == null || selectedSeats.isEmpty) return false;
 
     _setLoading(true);
@@ -62,13 +63,11 @@ class TripController extends ChangeNotifier {
       currentTicket = await _service.processBooking(
         selectedTrip!,
         selectedSeats,
-        "Saman Perera", // Mock user
+        user, // <-- Pass the user object
       );
       _setLoading(false);
       return true;
     } catch (e) {
-      // <-- FIX: Removed print
-      // <-- FIX: Added mount check for async gap
       if (!context.mounted) return false;
       ScaffoldMessenger.of(
         context,
@@ -78,6 +77,12 @@ class TripController extends ChangeNotifier {
     }
   }
 
+  // --- 3. ADD NEW FUNCTION TO GET USER'S TICKETS ---
+  Stream<List<Ticket>> getUserTickets(String userId) {
+    return _service.getUserTickets(userId);
+  }
+
+  // ... (rest of the file is unchanged) ...
   Future<void> fetchAllTripsForAdmin() async {
     _setLoading(true);
     try {
@@ -132,7 +137,6 @@ class TripController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // <-- FIX: Renamed this method
   void setDate(DateTime? date) {
     travelDate = date;
     notifyListeners();
@@ -146,7 +150,6 @@ class TripController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // <-- FIX: Renamed this method
   List<Trip> getAlternatives(Trip fullOrCancelledTrip) {
     return searchResults
         .where(
