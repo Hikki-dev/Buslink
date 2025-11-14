@@ -1,5 +1,6 @@
 // lib/controllers/trip_controller.dart
-import 'package:firebase_auth/firebase_auth.dart'; // <-- 1. IMPORT FIREBASE AUTH
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/trip_model.dart';
 import '../services/firestore_service.dart';
@@ -22,6 +23,9 @@ class TripController extends ChangeNotifier {
   Ticket? currentTicket;
 
   bool isAdminMode = false;
+
+  // --- 1. NEW PROPERTY FOR CONDUCTOR ---
+  Trip? conductorSelectedTrip;
 
   void _setLoading(bool loading) {
     _isLoading = loading;
@@ -54,7 +58,6 @@ class TripController extends ChangeNotifier {
     _setLoading(false);
   }
 
-  // --- 2. UPDATE THIS FUNCTION SIGNATURE ---
   Future<bool> processBooking(BuildContext context, User user) async {
     if (selectedTrip == null || selectedSeats.isEmpty) return false;
 
@@ -63,7 +66,7 @@ class TripController extends ChangeNotifier {
       currentTicket = await _service.processBooking(
         selectedTrip!,
         selectedSeats,
-        user, // <-- Pass the user object
+        user,
       );
       _setLoading(false);
       return true;
@@ -77,12 +80,41 @@ class TripController extends ChangeNotifier {
     }
   }
 
-  // --- 3. ADD NEW FUNCTION TO GET USER'S TICKETS ---
   Stream<List<Ticket>> getUserTickets(String userId) {
     return _service.getUserTickets(userId);
   }
 
-  // ... (rest of the file is unchanged) ...
+  Future<void> updateTripDetails(
+    BuildContext context,
+    String tripId,
+    Map<String, dynamic> data,
+  ) async {
+    _setLoading(true);
+    try {
+      data['departureTime'] = Timestamp.fromDate(data['departureTime']);
+      data['arrivalTime'] = Timestamp.fromDate(data['arrivalTime']);
+
+      await _service.updateTripDetails(tripId, data);
+
+      // Add mounted check
+      if (!context.mounted) return;
+      await searchTrips(context); // This re-runs the search
+
+      // Add another mounted check
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Trip updated successfully!")),
+      );
+      Navigator.pop(context); // Go back from AdminScreen
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error updating trip: ${e.toString()}")),
+      );
+    }
+    _setLoading(false);
+  }
+
   Future<void> fetchAllTripsForAdmin() async {
     _setLoading(true);
     try {
@@ -93,22 +125,63 @@ class TripController extends ChangeNotifier {
     _setLoading(false);
   }
 
-  Future<void> updatePlatform(String tripId, String newPlatform) async {
-    await _service.updatePlatform(tripId, newPlatform);
-    final index = allTripsForAdmin.indexWhere((t) => t.id == tripId);
-    if (index != -1) {
-      allTripsForAdmin[index].platformNumber = newPlatform;
-      notifyListeners();
+  // --- 2. NEW METHOD FOR CONDUCTOR TO FIND THEIR BUS ---
+  Future<bool> findTripByBusNumber(
+      BuildContext context, String busNumber) async {
+    if (busNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a bus number")),
+      );
+      return false;
+    }
+    _setLoading(true);
+    try {
+      conductorSelectedTrip = await _service.getTripByBusNumber(busNumber);
+      _setLoading(false);
+      if (conductorSelectedTrip == null) {
+        if (!context.mounted) return false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("No active trip found for that bus number.")),
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _setLoading(false);
+      if (!context.mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+      return false;
     }
   }
 
-  Future<void> updateStatus(String tripId, TripStatus status, int delay) async {
-    await _service.updateStatus(tripId, status, delay);
-    final index = allTripsForAdmin.indexWhere((t) => t.id == tripId);
-    if (index != -1) {
-      allTripsForAdmin[index].status = status;
-      allTripsForAdmin[index].delayMinutes = delay;
-      notifyListeners();
+  // --- 3. NEW METHOD FOR CONDUCTOR TO UPDATE STATUS (WITH FEEDBACK) ---
+  Future<void> updateTripStatusAsConductor(
+      BuildContext context, Trip trip, TripStatus status, int delay) async {
+    _setLoading(true);
+    try {
+      await _service.updateStatus(trip.id, status, delay);
+
+      // Update the local copy for the UI
+      conductorSelectedTrip?.status = status;
+      conductorSelectedTrip?.delayMinutes = delay;
+
+      _setLoading(false);
+      if (!context.mounted) return;
+
+      // This is the feedback for the conductor
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Success! Trip status set to ${status.name}.")),
+      );
+      notifyListeners(); // Update the UI on the management screen
+    } catch (e) {
+      _setLoading(false);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
     }
   }
 

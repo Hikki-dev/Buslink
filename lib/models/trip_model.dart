@@ -1,7 +1,8 @@
 // lib/models/trip_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum TripStatus { onTime, delayed, cancelled }
+// 1. ADD 'departed' and 'arrived' here
+enum TripStatus { onTime, delayed, cancelled, departed, arrived }
 
 class Trip {
   final String id;
@@ -71,43 +72,39 @@ class Trip {
 class Ticket {
   final String ticketId;
   final String tripId;
-  final String userId; // <-- 1. ADD THIS FIELD
+  final String userId;
   final List<int> seatNumbers;
   final String passengerName;
   final String passengerPhone;
   final DateTime bookingTime;
   final double totalAmount;
-
-  // --- 2. ADD 'tripData' FOR "MY TICKETS" PAGE ---
-  // This is a copy of the trip info, so we don't have to load it separately
   final Map<String, dynamic> tripData;
 
   Ticket({
     required this.ticketId,
     required this.tripId,
-    required this.userId, // <-- 3. ADD TO CONSTRUCTOR
+    required this.userId,
     required this.seatNumbers,
     required this.passengerName,
     required this.passengerPhone,
     required this.bookingTime,
     required this.totalAmount,
-    required this.tripData, // <-- 4. ADD TO CONSTRUCTOR
+    required this.tripData,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'tripId': tripId,
-      'userId': userId, // <-- 5. ADD TO JSON
+      'userId': userId,
       'seatNumbers': seatNumbers,
       'passengerName': passengerName,
       'passengerPhone': passengerPhone,
       'bookingTime': Timestamp.fromDate(bookingTime),
       'totalAmount': totalAmount,
-      'tripData': tripData, // <-- 6. ADD TO JSON
+      'tripData': tripData,
     };
   }
 
-  // --- 7. ADD A FACTORY FOR "MY TICKETS" PAGE ---
   factory Ticket.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Ticket(

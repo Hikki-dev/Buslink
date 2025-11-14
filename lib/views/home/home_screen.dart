@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../controllers/trip_controller.dart';
-import '../../services/auth_service.dart'; 
+import '../../services/auth_service.dart';
 import '../results/bus_list_screen.dart';
-import '../admin/admin_dashboard.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/app_theme.dart';
 import '../placeholder/my_tickets_screen.dart';
@@ -22,7 +21,7 @@ class HomeScreen extends StatelessWidget {
     final authService = Provider.of<AuthService>(
       context,
       listen: false,
-    ); // <-- 3. GET AUTH SERVICE
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -34,11 +33,10 @@ class HomeScreen extends StatelessWidget {
         ),
         centerTitle: true,
         actions: [
-          // Theme Toggle Button
+          // 2. FIX: ADDED THE MISSING 'builder' PROPERTY
           Consumer<ThemeController>(
             builder: (context, themeController, child) {
-              bool isDark =
-                  themeController.themeMode == ThemeMode.dark ||
+              bool isDark = themeController.themeMode == ThemeMode.dark ||
                   (themeController.themeMode == ThemeMode.system &&
                       MediaQuery.of(context).platformBrightness ==
                           Brightness.dark);
@@ -57,39 +55,17 @@ class HomeScreen extends StatelessWidget {
             },
           ),
 
-          // Admin Panel Button
-          IconButton(
-            icon: Icon(
-              controller.isAdminMode
-                  ? Icons.person
-                  : Icons.admin_panel_settings,
-            ),
-            tooltip: "Admin Panel",
-            onPressed: () {
-              controller.toggleAdminMode();
-              if (controller.isAdminMode) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdminDashboard()),
-                );
-              }
-            },
-          ),
-
-          // --- 4. ADD LOGOUT BUTTON ---
+          // This logout button code is correct.
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: "Log Out",
             onPressed: () {
-              authService.signOut(); // <-- This fixes the "unused import"
+              authService.signOut();
             },
           ),
-          // --- END OF LOGOUT BUTTON ---
         ],
       ),
       body: SingleChildScrollView(
-        // ... (rest of the file is unchanged)
-        // ... (The rest of your home_screen.dart file is correct)
         child: Column(
           children: [
             _buildSearchHeader(context, controller, theme),

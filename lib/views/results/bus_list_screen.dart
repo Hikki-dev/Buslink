@@ -69,21 +69,25 @@ class BusListScreen extends StatelessWidget {
     bool isFull = trip.isFull;
     bool isCancelled = trip.status == TripStatus.cancelled;
     bool isDelayed = trip.status == TripStatus.delayed;
-    Color cardColor = isFull || isCancelled
-        ? Colors.grey.shade300
-        : theme.cardColor;
+    Color cardColor =
+        isFull || isCancelled ? Colors.grey.shade300 : theme.cardColor;
     Color onCardColor = isFull || isCancelled
         ? Colors.grey.shade600
         : theme.colorScheme.onSurface;
 
+    // 1. REMOVED THE OUTER INKWELL
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
       color: cardColor,
-      child: InkWell(
-        onTap: isFull || isCancelled
-            ? null
-            : () {
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 2. ADDED AN INKWELL HERE to keep the info section tappable
+            InkWell(
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -91,26 +95,47 @@ class BusListScreen extends StatelessWidget {
                   ),
                 );
               },
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildCardHeader(theme, trip, onCardColor, isDelayed),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildCardHeader(theme, trip, onCardColor, isDelayed),
+                  const Divider(height: 20),
+                  _buildCardBody(theme, trip, onCardColor),
+                ],
+              ),
+            ),
+
+            // 3. ADDED THE "BOOK NOW" BUTTON
+            if (!isFull && !isCancelled) ...[
               const Divider(height: 20),
-              _buildCardBody(theme, trip, onCardColor),
-              if (isDelayed)
-                _buildStatusWarning(
-                  'Delayed: ${trip.delayMinutes} mins',
-                  Colors.orange,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BusDetailsScreen(trip: trip),
+                      ),
+                    );
+                  },
+                  child: const Text('Book Now'),
                 ),
-              if (isFull) _buildStatusWarning('This bus is full', Colors.red),
-              if (isCancelled)
-                _buildStatusWarning('This trip is cancelled', Colors.red),
-              if (isFull || isCancelled)
-                _buildAlternatives(context, controller, trip),
+              ),
             ],
-          ),
+
+            // --- (Your existing status warnings are unchanged) ---
+            if (isDelayed)
+              _buildStatusWarning(
+                'Delayed: ${trip.delayMinutes} mins',
+                Colors.orange,
+              ),
+            if (isFull) _buildStatusWarning('This bus is full', Colors.red),
+            if (isCancelled)
+              _buildStatusWarning('This trip is cancelled', Colors.red),
+            if (isFull || isCancelled)
+              _buildAlternatives(context, controller, trip),
+          ],
         ),
       ),
     );

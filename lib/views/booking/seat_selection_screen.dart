@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
-import '../ticket/ticket_screen.dart';
+import 'payment_screen.dart';
 
 class SeatSelectionScreen extends StatelessWidget {
   const SeatSelectionScreen({super.key});
@@ -14,7 +14,8 @@ class SeatSelectionScreen extends StatelessWidget {
     final controller = Provider.of<TripController>(context);
     final trip = controller.selectedTrip!;
     final theme = Theme.of(context);
-    final user = Provider.of<User?>(context, listen: false);
+    // 3. REMOVE UNUSED USER VARIABLE
+    // final user = Provider.of<User?>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(title: const Text("Select Seats")),
@@ -74,42 +75,20 @@ class SeatSelectionScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: theme.elevatedButtonTheme.style,
+                    // 4. UPDATE onPressed TO GO TO PAYMENT SCREEN
                     onPressed: controller.selectedSeats.isEmpty
                         ? null
-                        : () async {
-                            if (user == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                        Text("Error: You are not logged in.")),
-                              );
-                              return;
-                            }
-
-                            bool success = await controller.processBooking(
+                        : () {
+                            // This now navigates to your payment summary screen
+                            Navigator.push(
                               context,
-                              user,
+                              MaterialPageRoute(
+                                builder: (_) => const PaymentScreen(),
+                              ),
                             );
-
-                            if (success && context.mounted) {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const TicketScreen(),
-                                ),
-                                (r) => false,
-                              );
-                            }
                           },
-                    child: controller.isLoading
-                        ? SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: theme.colorScheme.onSecondary,
-                            ),
-                          )
-                        : const Text("PAY NOW"),
+                    // 5. UPDATE BUTTON TEXT
+                    child: const Text("Proceed to Pay"),
                   ),
                 ),
               ],

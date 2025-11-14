@@ -1,108 +1,98 @@
 // lib/services/auth_service.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb; // We need this
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
-  // In v7, GoogleSignIn must be accessed through instance and initialized
-  GoogleSignInAccount? _googleUser;
-  
-  // Getters for auth state
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance; // Instance
+
+  AuthService(); // Constructor is now empty
+
   Stream<User?> get user => _auth.authStateChanges();
   User? get currentUser => _auth.currentUser;
-  GoogleSignInAccount? get googleUser => _googleUser;
 
-  // Initialize GoogleSignIn - call this in main.dart
-  Future<void> initializeGoogleSignIn() async {
-    try {
-      await GoogleSignIn.instance.initialize();
-      
-      // Listen to authentication events
-      GoogleSignIn.instance.authenticationEvents.listen((event) {
-        switch (event) {
-          case GoogleSignInAuthenticationEventSignIn():
-            _googleUser = event.user;
-            break;
-          case GoogleSignInAuthenticationEventSignOut():
-            _googleUser = null;
-            break;
-          default:
-            _googleUser = null;
-        }
-      });
-    } catch (e) {
-      debugPrint('Error initializing Google Sign-In: $e');
-    }
+  // This is now correctly called from main.dart *before* runApp
+  Future<void> initializeGoogleSignIn() {
+    return _googleSignIn.initialize();
   }
 
   Future<UserCredential?> signInWithGoogle(BuildContext context) async {
     try {
-      // Step 1: Trigger the authentication flow
-      await GoogleSignIn.instance.authenticate();
-      
-      // Step 2: Get the signed-in user from the authentication events
-      // The _googleUser will be set by the authentication event listener
-      if (_googleUser == null) {
-        if (!context.mounted) return null;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Sign-in was cancelled")),
+      UserCredential? userCredential;
+
+      if (kIsWeb) {
+        // --- WEB FLOW ---
+        // This is correct. Web uses Firebase's popup.
+        GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        userCredential = await _auth.signInWithPopup(googleProvider);
+      } else {
+        // --- MOBILE FLOW (Android/iOS) ---
+
+        // 1. *** THIS IS THE FIX ***
+        // As your guides correctly pointed out, v7 uses 'authenticate()'.
+        final GoogleSignInAccount? googleUser =
+            await _googleSignIn.authenticate(scopeHint: ['email']);
+
+        if (googleUser == null) {
+          if (!context.mounted) return null;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Sign-in was cancelled")),
+          );
+          return null;
+        }
+
+        final GoogleSignInClientAuthorization? authorization =
+            await googleUser.authorizationClient.authorizationForScopes(
+          ['email', 'profile'],
         );
-        return null;
+
+        if (authorization == null) {
+          if (!context.mounted) return null;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Authorization failed")),
+          );
+          return null;
+        }
+
+        // This is also correct (no 'await')
+        final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+
+        final OAuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: authorization.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        userCredential = await _auth.signInWithCredential(credential);
       }
 
-      // Step 3: Get authorization for required scopes
-      final GoogleSignInClientAuthorization? authorization = 
-          await _googleUser!.authorizationClient.authorizationForScopes(
-        ['email', 'profile'],
-      );
-
-      if (authorization == null) {
-        if (!context.mounted) return null;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Authorization failed")),
-        );
-        return null;
+      // --- COMMON LOGIC: Create user doc if new ---
+      final user = userCredential.user;
+      if (user != null &&
+          userCredential.additionalUserInfo?.isNewUser == true) {
+        await _db.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'email': user.email,
+          'displayName': user.displayName,
+          'role': 'customer', // Default role
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       }
 
-      // Step 4: Get the ID token
-      final GoogleSignInAuthentication googleAuth = await _googleUser!.authentication;
-
-      // Step 5: Create credential for Firebase
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: authorization.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      
-      // Step 6: Sign in to Firebase
-      return await _auth.signInWithCredential(credential);
-      
-    } on GoogleSignInException catch (e) {
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
       if (!context.mounted) return null;
-      
-      String errorMessage = 'Error signing in with Google';
-      switch (e.code.name) {
-        case 'canceled':
-          errorMessage = 'Sign-in was cancelled';
-          break;
-        case 'interrupted':
-          errorMessage = 'Sign-in was interrupted';
-          break;
-        case 'clientConfigurationError':
-          errorMessage = 'Configuration error. Please check Firebase setup and SHA-1';
-          break;
-        case 'platformError':
-          errorMessage = 'Platform error. Check your google-services.json file';
-          break;
-        default:
-          errorMessage = 'Error: ${e.code.name}';
+      String errorMessage = "An error occurred. Please try again.";
+      if (e.code == 'popup-closed-by-user' || e.code == 'cancelled') {
+        errorMessage = "Sign-in was cancelled.";
       }
-      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMessage)),
       );
-      debugPrint('Google Sign-In Error: ${e.code.name}');
+      debugPrint('Firebase Auth Error: ${e.code}');
       return null;
     } catch (e) {
       if (!context.mounted) return null;
@@ -117,10 +107,22 @@ class AuthService {
   Future<UserCredential?> signUpWithEmail(
       BuildContext context, String email, String password) async {
     try {
-      return await _auth.createUserWithEmailAndPassword(
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+      final user = userCredential.user;
+
+      if (user != null) {
+        await _db.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'email': user.email,
+          'role': 'customer', // Default role
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      return userCredential;
     } on FirebaseAuthException catch (e) {
       if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -145,7 +147,7 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    await GoogleSignIn.instance.signOut();
+    await _googleSignIn.signOut();
     await _auth.signOut();
   }
 }
