@@ -34,7 +34,7 @@ class AuthService {
 
         // 1. *** THIS IS THE FIX ***
         // As your guides correctly pointed out, v7 uses 'authenticate()'.
-        final GoogleSignInAccount? googleUser =
+        final GoogleSignInAccount googleUser =
             await _googleSignIn.authenticate(scopeHint: ['email']);
 
         if (googleUser == null) {
