@@ -23,7 +23,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String? _clientSecret;
   bool _isLoadingSecret = true;
   bool _isProcessing = false;
-  // PaymentElement does not require manual card tracking details in state for the same way CardField does
+
+  // Re-added for CardField validation
+  CardFieldInputDetails? _cardDetails;
 
   final PaymentService _paymentService = PaymentService();
 
@@ -53,7 +55,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
 
       // If Mobile, Initialize Sheet immediately
-      // If Web, PaymentElement needs the secret to be ready before rendering, so we just wait for state update
       if (!kIsWeb) {
         await Stripe.instance.initPaymentSheet(
           paymentSheetParameters: SetupPaymentSheetParameters(
@@ -89,23 +90,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     try {
       if (kIsWeb) {
-        // WEB: Confirm Payment using PaymentElement
-        // With PaymentElement, data is collected by the element itself.
-        // We often pass PaymentMethodParams.paymentElement or similar.
-        // If that specific factory is not found in older/mixed versions, we can rely on standard confirmPayment
-        // where it uses the mounted element.
+        // WEB: Confirm Payment using CardField data
+        // Validate first
+        if (_cardDetails == null || _cardDetails?.complete == false) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text("Please enter complete card details.")));
+          setState(() => _isProcessing = false);
+          return;
+        }
 
         await Stripe.instance.confirmPayment(
           paymentIntentClientSecret: _clientSecret!,
           data: const PaymentMethodParams.card(
-              paymentMethodData: PaymentMethodData()),
-          // Note: While .card() seems specific to CardField, for some flutter_stripe versions this is the generic bucket
-          // or we check if there is a specific one.
-          // However, to be safe against the previous "undefined" error for .paymentElement(),
-          // I will stick to what allows compilation, knowing that on Web `stripe.js` usually handles the element confirmation automatically if mounted.
-          // BUT - The User wants the INBUILT UI.
-          // Let's try the proper way if possible. If the analyzer fails, we fix.
-          // For now, I will use params that I know exist.
+            paymentMethodData: PaymentMethodData(),
+          ),
         );
       } else {
         // MOBILE: Present Sheet
@@ -392,7 +390,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 24),
 
-        // WEB: Use PaymentElement
+        // WEB: Styled CardField (Reverted for stability and "card-only" req)
         if (kIsWeb)
           Container(
             padding: const EdgeInsets.all(24),
@@ -413,25 +411,42 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                        "Pay with Card", // Label matching user expectation for clean UI
+                    Text("Card Information", // Clean Label
                         style: GoogleFonts.inter(
                             fontSize: 14,
                             color: Colors.black87,
                             fontWeight: FontWeight.w600)),
-                    const Icon(Icons.lock, size: 16, color: Colors.grey),
+                    const Icon(Icons.credit_card,
+                        size: 24, color: AppTheme.primaryColor),
                   ],
                 ),
                 const SizedBox(height: 20),
-                // PaymentElement Widget
-                // Note: We deliberately use PaymentElement here. If compilation fails, we fallback.
-                PaymentElement(
-                  autofocus: true,
-                  enablePostalCode: true,
-                  onCardChanged: (details) {
-                    // Update any local state if needed
-                    // In PaymentElement for web, this callback might be less detailed than CardField
-                  },
+                Container(
+                  height: 55,
+                  decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white),
+                  alignment: Alignment.center,
+                  child: CardField(
+                    autofocus: true,
+                    enablePostalCode: true,
+                    onCardChanged: (card) {
+                      setState(() {
+                        _cardDetails = card;
+                      });
+                    },
+                    style: TextStyle(
+                        fontFamily: GoogleFonts.inter().fontFamily,
+                        fontSize: 16,
+                        color: Colors.black),
+                    decoration: InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 16),
+                        hintText: "Card Details",
+                        hintStyle: TextStyle(color: Colors.grey.shade400)),
+                  ),
                 ),
               ],
             ),
