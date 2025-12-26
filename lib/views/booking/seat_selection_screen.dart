@@ -217,34 +217,39 @@ class SeatSelectionScreen extends StatelessWidget {
                         ],
                       ),
                       padding: const EdgeInsets.symmetric(
-                          vertical: 24, horizontal: 40),
+                          vertical: 24, horizontal: 24), // Reduced padding
                       child: Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 1200),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text("${selectedSeats.length} Seats Selected",
-                                      style: GoogleFonts.inter(
-                                          color: Colors.grey.shade600,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500)),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                      "LKR ${(trip.price * selectedSeats.length).toStringAsFixed(0)}",
-                                      style: GoogleFonts.outfit(
-                                          fontSize: 28,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black)),
-                                  Text(selectedSeats.join(", "),
-                                      style: GoogleFonts.outfit(
-                                          color: AppTheme.primaryColor))
-                                ],
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                        "${selectedSeats.length} Seats Selected",
+                                        style: GoogleFonts.inter(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500)),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                        "LKR ${(trip.price * selectedSeats.length).toStringAsFixed(0)}",
+                                        style: GoogleFonts.outfit(
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black)),
+                                    Text(selectedSeats.join(", "),
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.outfit(
+                                            color: AppTheme.primaryColor))
+                                  ],
+                                ),
                               ),
+                              const SizedBox(width: 16),
                               ElevatedButton(
                                 onPressed: () {
                                   Navigator.push(
@@ -256,7 +261,8 @@ class SeatSelectionScreen extends StatelessWidget {
                                 style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.primaryColor,
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 48, vertical: 20),
+                                        horizontal: 32,
+                                        vertical: 20), // Reduced btn padding
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(12))),

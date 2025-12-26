@@ -282,10 +282,6 @@ class _BusListScreenState extends State<BusListScreen> {
         elevation: 0,
         actions: const [RouteFavoriteButton()],
         // Using info header in mobile too, maybe simplified?
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100),
-          child: _buildInfoHeader(context, controller, isMobile: true),
-        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showMobileFilterModal(context),
@@ -295,9 +291,14 @@ class _BusListScreenState extends State<BusListScreen> {
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: trips.length,
+        itemCount: trips.length + 1, // +1 for Header
         separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (_, index) => _BusTicketCard(trip: trips[index]),
+        itemBuilder: (_, index) {
+          if (index == 0) {
+            return _buildInfoHeader(context, controller, isMobile: true);
+          }
+          return _BusTicketCard(trip: trips[index - 1]);
+        },
       ),
     );
   }
