@@ -20,27 +20,210 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
+  String? _clientSecret;
+  bool _isLoadingSecret = true;
   bool _isProcessing = false;
   CardFieldInputDetails? _cardDetails;
 
+  final PaymentService _paymentService = PaymentService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPaymentIntent();
+  }
+
+  Future<void> _loadPaymentIntent() async {
+    try {
+      final tripController =
+          Provider.of<TripController>(context, listen: false);
+      final trip = tripController.selectedTrip!;
+      final seats = tripController.selectedSeats;
+      final totalAmount = (trip.price * seats.length).toStringAsFixed(2);
+
+      // Create Payment Intent immediately (Eager Load)
+      final secret =
+          await _paymentService.createPaymentIntent(totalAmount, "LKR");
+
+      if (mounted) {
+        setState(() {
+          _clientSecret = secret;
+          _isLoadingSecret = false;
+        });
+      }
+
+      // If Mobile, Initialize Sheet immediately
+      if (!kIsWeb) {
+        await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
+            paymentIntentClientSecret: secret,
+            merchantDisplayName: 'BusLink',
+            style: ThemeMode.light,
+            appearance: const PaymentSheetAppearance(
+              colors: PaymentSheetAppearanceColors(primary: Color(0xFFD32F2F)),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("Error loading payment: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Setup Error: ${e.toString()}")));
+        setState(() => _isLoadingSecret = false);
+      }
+    }
+  }
+
+  Future<void> _handlePay() async {
+    setState(() => _isProcessing = true);
+    final user = Provider.of<User?>(context, listen: false);
+
+    if (user == null) {
+      setState(() => _isProcessing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please log in to continue")));
+      return;
+    }
+
+    try {
+      if (kIsWeb) {
+        // WEB: Confirm Payment using CardField data
+        if (_cardDetails == null || _cardDetails?.complete == false) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text("Please enter complete card details.")));
+          setState(() => _isProcessing = false);
+          return;
+        }
+
+        await Stripe.instance.confirmPayment(
+          paymentIntentClientSecret: _clientSecret!,
+          data: const PaymentMethodParams.card(
+            paymentMethodData: PaymentMethodData(),
+          ),
+        );
+      } else {
+        // MOBILE: Present Sheet
+        await Stripe.instance.presentPaymentSheet();
+      }
+
+      // Success Handling
+      _onPaymentSuccess();
+    } on StripeException catch (e) {
+      setState(() => _isProcessing = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment Failed: ${e.error.localizedMessage}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _isProcessing = false);
+      debugPrint("Payment Execution Error: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _onPaymentSuccess() async {
+    final controller = Provider.of<TripController>(context, listen: false);
+    final user = Provider.of<User?>(context, listen: false);
+
+    // Record Booking in Firestore
+    final bookingSuccess = await controller.processBooking(context, user!);
+
+    if (bookingSuccess && mounted) {
+      setState(() => _isProcessing = false);
+      _showSuccessDialog();
+    } else {
+      setState(() => _isProcessing = false);
+    }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_rounded,
+                    color: Colors.green, size: 40),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "Payment Successful!",
+                style: GoogleFonts.outfit(
+                    fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Your ticket has been booked successfully.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close Dialog
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TicketScreen()),
+                        (route) => false);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text("View Ticket",
+                      style: GoogleFonts.outfit(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_clientSecret == null && _isLoadingSecret) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final controller = Provider.of<TripController>(context);
-    final user = Provider.of<User?>(context);
     final trip = controller.selectedTrip!;
     final seats = controller.selectedSeats;
-    final isDesktop = MediaQuery.of(context).size.width > 800;
-
-    // Bulk Logic Calculation
-    final double singleTripPrice = trip.price * seats.length;
-    final double totalAmount = controller.isBulkBooking
-        ? singleTripPrice * controller.bulkDuration
-        : singleTripPrice;
+    final totalAmount = trip.price * seats.length;
+    final isDesktop = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: isDesktop
-          ? null // No AppBar on desktop if using NavBar
+          ? null
           : AppBar(
               title: Text("Secure Checkout",
                   style: GoogleFonts.outfit(
@@ -57,11 +240,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 selectedIndex: -1, onTap: (i) => Navigator.pop(context)),
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets
-                  .zero, // Padding handled inside for full width background
+              padding: EdgeInsets.zero,
               child: Column(
                 children: [
-                  // Main Content Area
                   Container(
                     width: double.infinity,
                     padding: isDesktop
@@ -74,7 +255,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         constraints: const BoxConstraints(maxWidth: 1100),
                         child: Column(
                           children: [
-                            // Page Title (Moved here for better spacing)
                             if (isDesktop) ...[
                               Text("Secure Checkout",
                                   style: GoogleFonts.outfit(
@@ -83,43 +263,37 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       color: Colors.black87)),
                               const SizedBox(height: 40),
                             ],
-
+                            // Adaptive Layout
                             if (isDesktop) ...[
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Expanded(
-                                      flex: 7, // Slightly wider summary
+                                      flex: 7,
                                       child: _buildOrderSummary(
                                           trip, seats, totalAmount)),
-                                  const SizedBox(width: 48), // More spacing
+                                  const SizedBox(width: 48),
                                   Expanded(
                                       flex: 5,
-                                      child: _buildPaymentSection(context,
-                                          controller, user, totalAmount)),
+                                      child: _buildPaymentSection(
+                                          context, totalAmount)),
                                 ],
                               ),
                             ] else ...[
                               _buildOrderSummary(trip, seats, totalAmount),
                               const SizedBox(height: 32),
-                              _buildPaymentSection(
-                                  context, controller, user, totalAmount),
+                              _buildPaymentSection(context, totalAmount),
                             ],
                           ],
                         ),
                       ),
                     ),
                   ),
-
-                  // Footer appended at the end of scroll view
                   const AppFooter(),
                 ],
               ),
             ),
           ),
-          // Footer was here, but moving it inside ScrollView allows it to be pushed down
-          // actually, keeping it outside or inside depends on sticky vs scroll behavior.
-          // User wants it "nicer", usually means normal scroll flow.
         ],
       ),
     );
@@ -189,20 +363,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildPaymentSection(BuildContext context, TripController controller,
-      User? user, double totalAmount) {
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: GoogleFonts.inter(color: Colors.grey.shade500)),
+          Text(value,
+              style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600, color: Colors.black87)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentSection(BuildContext context, double totalAmount) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("Payment Details",
-            style: GoogleFonts.outfit(
-                fontSize: 22, fontWeight: FontWeight.bold)), // Larger font
+            style:
+                GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 24),
 
-        // WEB: Show CardField explicitly
+        // WEB: Styled CardField
         if (kIsWeb)
           Container(
-            padding: const EdgeInsets.all(24), // More padding
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
@@ -225,24 +413,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             fontSize: 14,
                             color: Colors.black87,
                             fontWeight: FontWeight.w600)),
-                    Row(
-                      children: [
-                        _cardIcon(Icons.credit_card, Colors.blue),
-                        const SizedBox(width: 8),
-                        _cardIcon(Icons.credit_card, Colors.orange),
-                      ],
-                    )
+                    const Icon(Icons.credit_card,
+                        size: 24, color: AppTheme.primaryColor),
                   ],
                 ),
                 const SizedBox(height: 20),
-
-                // Card Field with explicit constraint
                 Container(
-                  height: 50, // Explicit height for Web
+                  height: 55,
                   decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey.shade300),
                       borderRadius: BorderRadius.circular(12),
-                      color: Colors.grey.shade50),
+                      color: Colors.white),
                   alignment: Alignment.center,
                   child: CardField(
                     onCardChanged: (card) {
@@ -255,11 +436,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         fontSize: 16,
                         color: Colors.black),
                     decoration: InputDecoration(
-                        border: InputBorder
-                            .none, // Remove default border as we have container
+                        border: InputBorder.none,
                         contentPadding:
                             const EdgeInsets.symmetric(horizontal: 16),
-                        hintText: "Card Number",
+                        hintText: "Card Details",
                         hintStyle: TextStyle(color: Colors.grey.shade400)),
                   ),
                 ),
@@ -267,9 +447,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
           )
         else
-          // MOBILE: Visual Indicator
+          // MOBILE: Visual Indicator of Stripe Sheet
           Container(
-            // ... existing mobile code ...
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
                 color: Colors.white,
@@ -286,7 +465,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Text("Credit / Debit Card",
                           style:
                               GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                      Text("Standard Stripe Checkout",
+                      Text("Click Pay to open Secure Checkout",
                           style: GoogleFonts.inter(
                               fontSize: 12, color: Colors.grey)),
                     ],
@@ -298,25 +477,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
           ),
 
-        // ... rest of the section
-
         const SizedBox(height: 32),
-
-        // Terms & Conditions Section
         _buildTermsAndConditions(),
-
         const SizedBox(height: 24),
 
         SizedBox(
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: _isProcessing
-                ? null
-                : () => _handlePayment(
-                    context, controller, user, totalAmount.toString()),
+            onPressed: _isProcessing ? null : _handlePay,
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black, // Sleek black for premium feel
+                backgroundColor: Colors.black,
                 shadowColor: Colors.black26,
                 elevation: 8,
                 shape: RoundedRectangleBorder(
@@ -350,17 +521,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         const SizedBox(height: 24),
         _buildSecurityBadges(),
       ],
-    );
-  }
-
-  Widget _cardIcon(IconData icon, Color color) {
-    return Container(
-      width: 30,
-      height: 20,
-      decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(4)),
-      child: Center(child: Icon(icon, size: 14, color: color)),
     );
   }
 
@@ -435,70 +595,5 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: Text(text,
             style:
                 GoogleFonts.inter(fontSize: 10, color: Colors.grey.shade500)));
-  }
-
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: GoogleFonts.inter(color: Colors.grey.shade500)),
-          Text(value,
-              style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w600, color: Colors.black87)),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handlePayment(BuildContext context, TripController controller,
-      User? user, String amount) async {
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please log in to continue")));
-      return;
-    }
-
-    // WEB Check: Ensure card details entered
-    if (kIsWeb && (_cardDetails == null || _cardDetails?.complete == false)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please enter complete card details.")));
-      return;
-    }
-
-    setState(() => _isProcessing = true);
-
-    final paymentService = PaymentService();
-    bool success = false;
-
-    if (kIsWeb) {
-      success = await paymentService.processPaymentWeb(context,
-          amount: amount, currency: 'lkr');
-    } else {
-      success = await paymentService.processPaymentMobile(context,
-          amount: amount, currency: 'lkr');
-    }
-
-    if (success) {
-      if (!context.mounted) return;
-
-      // Create Booking Record in Firestore
-      final bookingSuccess = await controller.processBooking(context, user);
-
-      if (bookingSuccess && context.mounted) {
-        Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const TicketScreen()),
-            (route) => false);
-      } else {
-        setState(() => _isProcessing = false);
-      }
-    } else {
-      if (context.mounted) {
-        setState(() => _isProcessing = false);
-        // Error snackbar is handled in service
-      }
-    }
   }
 }
