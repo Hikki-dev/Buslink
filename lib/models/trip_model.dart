@@ -21,6 +21,9 @@ class Trip {
   final List<int> bookedSeats;
   final int totalSeats;
   final List<String> features;
+  final String via;
+  final String duration;
+  final List<String> operatingDays;
 
   Trip({
     required this.id,
@@ -39,6 +42,9 @@ class Trip {
     required this.bookedSeats,
     this.totalSeats = 40,
     this.features = const [],
+    this.via = '',
+    this.duration = '',
+    this.operatingDays = const [],
   });
 
   bool get isFull => bookedSeats.length >= totalSeats;
@@ -65,6 +71,9 @@ class Trip {
       bookedSeats: List<int>.from(data['bookedSeats'] ?? []),
       totalSeats: data['totalSeats'] ?? 40,
       features: List<String>.from(data['features'] ?? []),
+      via: data['via'] ?? '',
+      duration: data['duration'] ?? '',
+      operatingDays: List<String>.from(data['operatingDays'] ?? []),
     );
   }
 }

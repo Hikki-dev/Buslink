@@ -1,146 +1,149 @@
 // lib/views/placeholder/my_tickets_screen.dart
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // <-- 1. ADD THIS IMPORT
-import '../../controllers/trip_controller.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/trip_model.dart';
 
-class MyTicketsScreen extends StatefulWidget {
+class MyTicketsScreen extends StatelessWidget {
   const MyTicketsScreen({super.key});
-
-  @override
-  State<MyTicketsScreen> createState() => _MyTicketsScreenState();
-}
-
-class _MyTicketsScreenState extends State<MyTicketsScreen> {
-  User? _user;
-
-  @override
-  void initState() {
-    super.initState();
-    _user = Provider.of<User?>(context, listen: false);
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final controller = Provider.of<TripController>(context);
+
+    // --- STATIC DATA ---
+    final List<Ticket> staticTickets = [
+      Ticket(
+        ticketId: "TKT-8859-STATIC",
+        tripId: "TRIP-001",
+        userId: "static_user",
+        seatNumbers: [12, 13],
+        passengerName: "John Doe",
+        passengerPhone: "0771234567",
+        bookingTime: DateTime.now().subtract(const Duration(days: 2)),
+        totalAmount: 3000.0,
+        tripData: {
+          'fromCity': 'Colombo',
+          'toCity': 'Kandy',
+          'operatorName': 'SuperLine Express',
+          'busNumber': 'NP-1234',
+          'departureTime': Timestamp.fromDate(
+              DateTime.now().add(const Duration(days: 1, hours: 4))),
+          'arrivalTime': Timestamp.fromDate(
+              DateTime.now().add(const Duration(days: 1, hours: 7))),
+        },
+      ),
+      Ticket(
+        ticketId: "TKT-9921-STATIC",
+        tripId: "TRIP-002",
+        userId: "static_user",
+        seatNumbers: [5],
+        passengerName: "John Doe",
+        passengerPhone: "0771234567",
+        bookingTime: DateTime.now().subtract(const Duration(days: 10)),
+        totalAmount: 1500.0,
+        tripData: {
+          'fromCity': 'Galle',
+          'toCity': 'Matara',
+          'operatorName': 'Southern Star',
+          'busNumber': 'SP-5678',
+          'departureTime': Timestamp.fromDate(
+              DateTime.now().subtract(const Duration(days: 5))),
+          'arrivalTime': Timestamp.fromDate(
+              DateTime.now().subtract(const Duration(days: 5, minutes: -45))),
+        },
+      ),
+    ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Tickets')),
-      body: _user == null
-          ? const Center(
-              child: Text(
-                'You must be logged in to see your tickets.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            )
-          : StreamBuilder<List<Ticket>>(
-              stream: controller.getUserTickets(_user!.uid),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text("Error: ${snapshot.error}"));
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'You have no booked tickets.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  );
-                }
+      appBar: AppBar(title: const Text('My Tickets (Static)')),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: staticTickets.length,
+        itemBuilder: (context, index) {
+          final ticket = staticTickets[index];
+          final tripData = ticket.tripData;
 
-                final tickets = snapshot.data!;
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: tickets.length,
-                  itemBuilder: (context, index) {
-                    final ticket = tickets[index];
-                    final tripData = ticket.tripData;
-
-                    // Handle cases where tripData might be null or empty
-                    if (tripData.isEmpty || tripData['departureTime'] == null) {
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(
-                            "Ticket data is incomplete for ID: ${ticket.ticketId}",
-                          ),
-                        ),
-                      );
-                    }
-
-                    return Card(
-                      elevation: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "${tripData['fromCity']} ➔ ${tripData['toCity']}",
-                              style: theme.textTheme.titleLarge,
-                            ),
-                            Text(
-                              tripData['operatorName'] ?? 'BusLink',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.primaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const Divider(height: 20),
-                            _buildTicketInfoRow(
-                              theme,
-                              Icons.calendar_today,
-                              "Date",
-                              // --- 2. 'Timestamp' IS NOW RECOGNIZED ---
-                              DateFormat('EEE, MMM d, yyyy').format(
-                                (tripData['departureTime'] as Timestamp)
-                                    .toDate(),
-                              ),
-                            ),
-                            _buildTicketInfoRow(
-                              theme,
-                              Icons.access_time,
-                              "Depart",
-                              // --- 3. 'Timestamp' IS NOW RECOGNIZED ---
-                              DateFormat('hh:mm a').format(
-                                (tripData['departureTime'] as Timestamp)
-                                    .toDate(),
-                              ),
-                            ),
-                            _buildTicketInfoRow(
-                              theme,
-                              Icons.event_seat,
-                              "Seats",
-                              ticket.seatNumbers.join(", "),
-                            ),
-                            _buildTicketInfoRow(
-                              theme,
-                              Icons.person,
-                              "Passenger",
-                              ticket.passengerName,
-                            ),
-                            _buildTicketInfoRow(
-                              theme,
-                              Icons.confirmation_number_outlined,
-                              "Ticket ID",
-                              ticket.ticketId,
-                            ),
-                          ],
-                        ),
+          return Card(
+            elevation: 4,
+            margin: const EdgeInsets.only(bottom: 16),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "${tripData['fromCity']} ➔ ${tripData['toCity']}",
+                        style: theme.textTheme.titleLarge,
                       ),
-                    );
-                  },
-                );
-              },
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: theme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          "Confirmed",
+                          style: TextStyle(
+                              color: theme.primaryColor,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    tripData['operatorName'] ?? 'BusLink',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Divider(height: 20),
+                  _buildTicketInfoRow(
+                    theme,
+                    Icons.calendar_today,
+                    "Date",
+                    DateFormat('EEE, MMM d, yyyy').format(
+                      (tripData['departureTime'] as Timestamp).toDate(),
+                    ),
+                  ),
+                  _buildTicketInfoRow(
+                    theme,
+                    Icons.access_time,
+                    "Depart",
+                    DateFormat('hh:mm a').format(
+                      (tripData['departureTime'] as Timestamp).toDate(),
+                    ),
+                  ),
+                  _buildTicketInfoRow(
+                    theme,
+                    Icons.event_seat,
+                    "Seats",
+                    ticket.seatNumbers.join(", "),
+                  ),
+                  _buildTicketInfoRow(
+                    theme,
+                    Icons.person,
+                    "Passenger",
+                    ticket.passengerName,
+                  ),
+                  _buildTicketInfoRow(
+                    theme,
+                    Icons.confirmation_number_outlined,
+                    "Ticket ID",
+                    ticket.ticketId,
+                  ),
+                ],
+              ),
             ),
+          );
+        },
+      ),
     );
   }
 

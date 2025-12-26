@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/trip_model.dart';
 
+import 'package:flutter/foundation.dart';
+
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String tripCollection = 'trips';
@@ -42,10 +44,21 @@ class FirestoreService {
     return snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
   }
 
+  Future<List<Trip>> getTripsByDate(DateTime start, DateTime end) async {
+    final snapshot = await _db
+        .collection(tripCollection)
+        .where('departureTime', isGreaterThanOrEqualTo: start)
+        .where('departureTime', isLessThanOrEqualTo: end)
+        .orderBy('departureTime')
+        .get();
+
+    if (snapshot.docs.isEmpty) return [];
+    return snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
+  }
+
   // --- NEW: Method to find a trip by its bus number ---
   Future<Trip?> getTripByBusNumber(String busNumber) async {
     final now = DateTime.now();
-    // Look for a bus that departed in the last 6 hours or is departing in the next 12
     final dayStart = now.subtract(const Duration(hours: 6));
     final dayEnd = now.add(const Duration(hours: 12));
 
@@ -54,7 +67,7 @@ class FirestoreService {
         .where('busNumber', isEqualTo: busNumber)
         .where('departureTime', isGreaterThanOrEqualTo: dayStart)
         .where('departureTime', isLessThanOrEqualTo: dayEnd)
-        .orderBy('departureTime') // Find the one closest to now
+        .orderBy('departureTime')
         .limit(1)
         .get();
 
@@ -66,6 +79,16 @@ class FirestoreService {
 
   Future<void> updateTripDetails(String tripId, Map<String, dynamic> data) {
     return _db.collection(tripCollection).doc(tripId).update(data);
+  }
+
+  // --- ADDED: Create Trip ---
+  Future<void> addTrip(Map<String, dynamic> data) {
+    return _db.collection(tripCollection).add(data);
+  }
+
+  // --- ADDED: Delete Trip ---
+  Future<void> deleteTrip(String tripId) {
+    return _db.collection(tripCollection).doc(tripId).delete();
   }
 
   Future<void> updatePlatform(String tripId, String newPlatform) {
@@ -130,8 +153,15 @@ class FirestoreService {
     return newTicket;
   }
 
+  // --- ADDED: Route Handling ---
+  final String routeCollection = 'routes';
+
+  Future<DocumentReference> addRoute(Map<String, dynamic> data) {
+    return _db.collection(routeCollection).add(data);
+  }
+
   Future<List<Trip>> getAllTrips() async {
-    final snapshot = await _db.collection(tripCollection).limit(20).get();
+    final snapshot = await _db.collection(tripCollection).limit(50).get();
     if (snapshot.docs.isEmpty) {
       return [];
     }
@@ -149,5 +179,132 @@ class FirestoreService {
       }
       return snapshot.docs.map((doc) => Ticket.fromFirestore(doc)).toList();
     });
+  }
+
+  // --- ADDED: Get Single Ticket by ID ---
+  Future<Ticket?> getTicket(String ticketId) async {
+    final doc = await _db.collection(ticketCollection).doc(ticketId).get();
+    if (doc.exists) {
+      return Ticket.fromFirestore(doc);
+    }
+    return null;
+  }
+
+  // --- FAVORITES ---
+  final String favoritesCollection = 'favorites';
+
+  Future<void> toggleFavorite(String userId, Trip trip) async {
+    final docRef = _db
+        .collection(userCollection)
+        .doc(userId)
+        .collection(favoritesCollection)
+        .doc(trip.id);
+    final docSnap = await docRef.get();
+
+    if (docSnap.exists) {
+      await docRef.delete();
+    } else {
+      // Save minimal trip info for favorites list
+      await docRef.set({
+        'fromCity': trip.fromCity,
+        'toCity': trip.toCity,
+        'operatorName': trip.operatorName,
+        'price': trip.price,
+        'addedAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  Future<void> toggleRouteFavorite(
+      String userId, String fromCity, String toCity) async {
+    try {
+      final safeFrom = fromCity.replaceAll('/', '-');
+      final safeTo = toCity.replaceAll('/', '-');
+      final routeId = "${safeFrom}_$safeTo";
+
+      final docRef = _db
+          .collection(userCollection)
+          .doc(userId)
+          .collection('favorite_routes')
+          .doc(routeId);
+      final docSnap = await docRef.get();
+
+      if (docSnap.exists) {
+        await docRef.delete();
+      } else {
+        await docRef.set({
+          'fromCity': fromCity,
+          'toCity': toCity,
+          'addedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      debugPrint("Error toggling route favorite: $e");
+    }
+  }
+
+  Future<bool> isTripFavorite(String userId, String tripId) async {
+    final doc = await _db
+        .collection(userCollection)
+        .doc(userId)
+        .collection(favoritesCollection)
+        .doc(tripId)
+        .get();
+    return doc.exists;
+  }
+
+  Future<bool> isRouteFavorite(
+      String userId, String fromCity, String toCity) async {
+    try {
+      // Sanitize ID to prevent path errors if cities contain '/'
+      final safeFrom = fromCity.replaceAll('/', '-');
+      final safeTo = toCity.replaceAll('/', '-');
+      final routeId = "${safeFrom}_$safeTo";
+
+      final doc = await _db
+          .collection(userCollection)
+          .doc(userId)
+          .collection('favorite_routes')
+          .doc(routeId)
+          .get();
+      return doc.exists;
+    } catch (e) {
+      debugPrint("Error checking route favorite: $e");
+      return false; // Fail safe
+    }
+  }
+
+  Stream<List<Map<String, dynamic>>> getUserFavorites(String userId) {
+    return _db
+        .collection(userCollection)
+        .doc(userId)
+        .collection(favoritesCollection)
+        .orderBy('addedAt', descending: true)
+        .snapshots()
+        .map(
+            (snap) => snap.docs.map((d) => {'id': d.id, ...d.data()}).toList());
+  }
+
+  Stream<List<Map<String, dynamic>>> getUserFavoriteRoutes(String userId) {
+    return _db
+        .collection(userCollection)
+        .doc(userId)
+        .collection('favorite_routes')
+        .orderBy('addedAt', descending: true)
+        .snapshots()
+        .map(
+            (snap) => snap.docs.map((d) => {'id': d.id, ...d.data()}).toList());
+  }
+
+  // --- User Management ---
+
+  Stream<List<Map<String, dynamic>>> getAllUsers() {
+    return _db.collection('users').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => doc.data()).toList();
+    });
+  }
+
+  Future<void> updateUserRole(String uid, String newRole) async {
+    await _db.collection('users').doc(uid).update({'role': newRole});
   }
 }

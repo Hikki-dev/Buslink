@@ -1,95 +1,277 @@
-// lib/views/booking/seat_selection_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
+import '../../utils/app_theme.dart';
 import 'payment_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../layout/desktop_navbar.dart';
+import '../layout/app_footer.dart';
 
 class SeatSelectionScreen extends StatelessWidget {
-  const SeatSelectionScreen({super.key});
+  final Trip trip;
+  const SeatSelectionScreen({super.key, required this.trip});
 
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
-    final trip = controller.selectedTrip!;
-    final theme = Theme.of(context);
-    // 3. REMOVE UNUSED USER VARIABLE
-    // final user = Provider.of<User?>(context, listen: false);
+    final isDesktop = MediaQuery.of(context).size.width > 900;
+    List<int> selectedSeats = controller.selectedSeats;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Select Seats")),
+      backgroundColor: Colors.white,
+      appBar: isDesktop
+          ? null
+          : AppBar(
+              title: Text("Select Seats",
+                  style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold, color: Colors.black)),
+              centerTitle: true,
+              backgroundColor: Colors.white,
+              elevation: 0,
+              iconTheme: const IconThemeData(color: Colors.black),
+            ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _legend(theme.cardColor, "Available", theme),
-                _legend(Colors.red.shade100, "Booked", theme),
-                _legend(theme.primaryColor, "Selected", theme),
-              ],
-            ),
-          ),
-          const Divider(),
+          if (isDesktop) const DesktopNavBar(),
           Expanded(
-            child: InteractiveViewer(
-              maxScale: 3.0,
-              minScale: 1.0,
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24.0),
-                  child: _buildSeatGrid(context, trip),
-                ),
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              boxShadow: [
-                BoxShadow(color: Colors.black.withAlpha(30), blurRadius: 10),
-              ],
-            ),
-            child: Column(
+            child: Stack(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "${controller.selectedSeats.length} Seats",
-                      style: theme.textTheme.titleLarge,
-                    ),
-                    Text(
-                      "LKR ${(controller.selectedSeats.length * trip.price).toStringAsFixed(0)}",
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: theme.colorScheme.secondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: theme.elevatedButtonTheme.style,
-                    // 4. UPDATE onPressed TO GO TO PAYMENT SCREEN
-                    onPressed: controller.selectedSeats.isEmpty
-                        ? null
-                        : () {
-                            // This now navigates to your payment summary screen
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const PaymentScreen(),
+                // Scrollable Content
+                SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 140),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 40),
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1200),
+                          child: Column(
+                            children: [
+                              _buildHeader(trip),
+                              const SizedBox(height: 40),
+                              _buildLegend(),
+                              const SizedBox(height: 40),
+
+                              // The Bus Visual
+                              Container(
+                                width: 340, // Fixed bus width
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 40),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(60),
+                                      bottom: Radius.circular(30)),
+                                  border: Border.all(
+                                      color: Colors.grey.shade200, width: 2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: Colors.black
+                                            .withValues(alpha: 0.08),
+                                        blurRadius: 30,
+                                        offset: const Offset(0, 10))
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    // Driver / Front
+                                    Container(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 20),
+                                      decoration: const BoxDecoration(
+                                          border: Border(
+                                              bottom: BorderSide(
+                                                  color: Colors.black12))),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Icon(Icons.exit_to_app,
+                                              color: Colors.grey),
+                                          Column(
+                                            children: [
+                                              const Icon(Icons.print,
+                                                  size: 20, color: Colors.grey),
+                                              const SizedBox(height: 8),
+                                              Image.asset(
+                                                  "assets/steering_wheel.png",
+                                                  width: 34,
+                                                  height: 34,
+                                                  errorBuilder: (_, __, ___) =>
+                                                      Icon(Icons.settings,
+                                                          size: 34,
+                                                          color: Colors
+                                                              .grey.shade400))
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+
+                                    // Seat Grid
+                                    ListView.builder(
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      shrinkWrap: true,
+                                      itemCount: (trip.totalSeats / 4).ceil(),
+                                      itemBuilder: (context, index) {
+                                        int rowStart = index * 4;
+                                        return Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 16),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              // Left
+                                              Row(
+                                                children: [
+                                                  _SeatItem(
+                                                      seatNum: rowStart + 1,
+                                                      trip: trip,
+                                                      isSelected: selectedSeats
+                                                          .contains(
+                                                              rowStart + 1)),
+                                                  const SizedBox(width: 14),
+                                                  _SeatItem(
+                                                      seatNum: rowStart + 2,
+                                                      trip: trip,
+                                                      isSelected: selectedSeats
+                                                          .contains(
+                                                              rowStart + 2)),
+                                                ],
+                                              ),
+                                              // Aisle text periodically?
+                                              if (index == 4)
+                                                const Text("EXIT",
+                                                    style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: Colors.red,
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+
+                                              // Right
+                                              Row(
+                                                children: [
+                                                  _SeatItem(
+                                                      seatNum: rowStart + 3,
+                                                      trip: trip,
+                                                      isSelected: selectedSeats
+                                                          .contains(
+                                                              rowStart + 3)),
+                                                  const SizedBox(width: 14),
+                                                  _SeatItem(
+                                                      seatNum: rowStart + 4,
+                                                      trip: trip,
+                                                      isSelected: selectedSeats
+                                                          .contains(
+                                                              rowStart + 4)),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+
+                                    const SizedBox(height: 20),
+                                    // Back of bus
+                                    Container(
+                                      height: 10,
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey.shade100,
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                    )
+                                  ],
+                                ),
                               ),
-                            );
-                          },
-                    // 5. UPDATE BUTTON TEXT
-                    child: const Text("Proceed to Pay"),
+
+                              const SizedBox(height: 100),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (isDesktop) const AppFooter(),
+                    ],
                   ),
                 ),
+
+                // Bottom Selection Bar
+                if (selectedSeats.isNotEmpty)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.white.withValues(alpha: 0.08),
+                              blurRadius: 30,
+                              offset: const Offset(0, -5))
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 24, horizontal: 40),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1200),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text("${selectedSeats.length} Seats Selected",
+                                      style: GoogleFonts.inter(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                      "LKR ${(trip.price * selectedSeats.length).toStringAsFixed(0)}",
+                                      style: GoogleFonts.outfit(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black)),
+                                  Text(selectedSeats.join(", "),
+                                      style: GoogleFonts.outfit(
+                                          color: AppTheme.primaryColor))
+                                ],
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const PaymentScreen()));
+                                },
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryColor,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 48, vertical: 20),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12))),
+                                child: Text("Proceed to Pay",
+                                    style: GoogleFonts.outfit(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.white)),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -98,136 +280,140 @@ class SeatSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSeatGrid(BuildContext context, Trip trip) {
-    final int numRows = (trip.totalSeats / 4).ceil();
-
+  Widget _buildHeader(Trip trip) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 250,
-          padding: const EdgeInsets.all(10),
-          margin: const EdgeInsets.only(bottom: 25, top: 5),
-          decoration: BoxDecoration(
-            border: Border(
-                bottom: BorderSide(color: Colors.grey.shade300, width: 2)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Driver",
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
-              Icon(Icons.bus_alert, color: Colors.grey.shade600, size: 28),
-            ],
-          ),
-        ),
-        ...List.generate(numRows, (rowIndex) {
-          int seatL1 = (rowIndex * 4) + 1;
-          int seatL2 = (rowIndex * 4) + 2;
-          int seatR1 = (rowIndex * 4) + 3;
-          int seatR2 = (rowIndex * 4) + 4;
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    _Seat(seatNumber: seatL1),
-                    const SizedBox(width: 12),
-                    _Seat(seatNumber: seatL2),
-                  ],
-                ),
-                const SizedBox(width: 30),
-                Row(
-                  children: [
-                    _Seat(seatNumber: seatR1),
-                    const SizedBox(width: 12),
-                    _Seat(seatNumber: seatR2),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }),
+        Text("${trip.operatorName} - ${trip.busType}",
+            style:
+                GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Text("${trip.fromCity} ➔ ${trip.toCity}",
+            style: GoogleFonts.inter(color: Colors.grey, fontSize: 16)),
       ],
     );
   }
 
-  Widget _legend(Color color, String text, ThemeData theme) {
+  Widget _buildLegend() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _legendItem(Colors.white, Colors.grey.shade300, "Available"),
+        const SizedBox(width: 30),
+        _legendItem(AppTheme.primaryColor, AppTheme.primaryColor, "Selected"),
+        const SizedBox(width: 30),
+        _legendItem(Colors.red.shade300, Colors.transparent, "Booked",
+            icon: Icons.close),
+      ],
+    );
+  }
+
+  Widget _legendItem(Color bg, Color border, String label, {IconData? icon}) {
     return Row(
       children: [
         Container(
-          width: 16,
-          height: 16,
+          width: 24,
+          height: 24,
           decoration: BoxDecoration(
-            color: color,
-            border: Border.all(
-                color: theme.colorScheme.onSurface.withAlpha(51), width: 1),
-            borderRadius: BorderRadius.circular(4),
-          ),
+              color: bg,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: border)),
+          child: icon != null ? Icon(icon, size: 16, color: Colors.grey) : null,
         ),
-        const SizedBox(width: 8),
-        Text(text),
+        const SizedBox(width: 10),
+        Text(label,
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500))
       ],
     );
   }
 }
 
-class _Seat extends StatelessWidget {
-  const _Seat({required this.seatNumber});
-  final int seatNumber;
+class _SeatItem extends StatefulWidget {
+  final int seatNum;
+  final Trip trip;
+  final bool isSelected;
+
+  const _SeatItem(
+      {required this.seatNum, required this.trip, required this.isSelected});
+
+  @override
+  State<_SeatItem> createState() => _SeatItemState();
+}
+
+class _SeatItemState extends State<_SeatItem> {
+  bool isHovered = false;
 
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
-    final trip = controller.selectedTrip!;
-    final theme = Theme.of(context);
+    final isBooked = widget.trip.bookedSeats.contains(widget.seatNum);
 
-    if (seatNumber > trip.totalSeats) {
-      // --- FIX: Linter Warning ---
-      // Replaced Container with SizedBox
-      return const SizedBox(width: 50, height: 50);
-      // --- END OF FIX ---
+    if (widget.seatNum > widget.trip.totalSeats) {
+      return const SizedBox(width: 44, height: 44);
     }
 
-    final bool isBooked = trip.bookedSeats.contains(seatNumber);
-    final bool isSelected = controller.selectedSeats.contains(seatNumber);
-
-    return GestureDetector(
-      onTap: isBooked ? null : () => controller.toggleSeat(seatNumber),
-      child: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          color: isBooked
-              ? Colors.red.shade100
-              : isSelected
-                  ? theme.primaryColor
-                  : theme.cardColor,
-          borderRadius: BorderRadius.circular(8),
-          border: isSelected
-              ? Border.all(color: theme.primaryColor.withAlpha(128))
-              : Border.all(
-                  color: theme.colorScheme.onSurface.withAlpha(51), width: 1),
-        ),
-        child: Center(
-          child: isBooked
-              ? Icon(
-                  Icons.close,
-                  size: 16,
-                  color: Colors.red.shade900,
-                )
-              : Text(
-                  "$seatNumber",
-                  style: TextStyle(
-                    color: isSelected
-                        ? theme.colorScheme.onPrimary
-                        : theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      cursor:
+          isBooked ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: isBooked ? null : () => controller.toggleSeat(widget.seatNum),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: isBooked
+                ? Colors.red.shade300 // Booked = Red
+                : widget.isSelected
+                    ? null
+                    : isHovered
+                        ? AppTheme.primaryColor.withValues(alpha: 0.1)
+                        : Colors.white,
+            gradient: widget.isSelected
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                        AppTheme.primaryColor,
+                        AppTheme.primaryColor.withValues(alpha: 0.8)
+                      ])
+                : null,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+                color: widget.isSelected
+                    ? AppTheme.primaryColor
+                    : isBooked
+                        ? Colors.transparent
+                        : isHovered
+                            ? AppTheme.primaryColor
+                            : Colors.grey.shade300,
+                width: widget.isSelected || isHovered ? 2 : 1),
+            boxShadow: widget.isSelected || isHovered
+                ? [
+                    BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4))
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: isBooked
+                ? const Icon(Icons.close, size: 16, color: Colors.grey)
+                : Text(
+                    "${widget.seatNum}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: widget.isSelected
+                          ? Colors.white
+                          : isHovered
+                              ? AppTheme.primaryColor
+                              : Colors.grey.shade700,
+                    ),
                   ),
-                ),
+          ),
         ),
       ),
     );

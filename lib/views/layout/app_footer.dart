@@ -1,0 +1,187 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../utils/app_theme.dart';
+
+class AppFooter extends StatelessWidget {
+  const AppFooter({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width > 900;
+
+    return Container(
+      color: const Color(0xFF0B090A),
+      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 40),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            children: [
+              if (isWide)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 2, child: _brandColumn()),
+                    Expanded(
+                        child: _linksColumn("Company",
+                            ["About Us", "Careers", "Blog", "Partners"])),
+                    Expanded(
+                        child: _linksColumn("Support", [
+                      "Help Center",
+                      "Terms of Service",
+                      "Privacy Policy",
+                      "FAQs"
+                    ])),
+                    Expanded(flex: 1, child: _contactColumn()),
+                  ],
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _brandColumn(),
+                    const SizedBox(height: 40),
+                    Wrap(
+                      spacing: 40,
+                      runSpacing: 40,
+                      children: [
+                        _linksColumn("Company",
+                            ["About Us", "Careers", "Blog", "Partners"]),
+                        _linksColumn("Support", [
+                          "Help Center",
+                          "Terms of Service",
+                          "Privacy Policy",
+                          "FAQs"
+                        ]),
+                        _contactColumn(),
+                      ],
+                    )
+                  ],
+                ),
+              const SizedBox(height: 60),
+              Divider(color: Colors.grey.shade800),
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("© 2024 BusLink. All rights reserved.",
+                      style: GoogleFonts.inter(
+                          color: Colors.grey.shade500, fontSize: 14)),
+                  Row(
+                    children: [
+                      Text("Made with ❤️ in Sri Lanka",
+                          style: GoogleFonts.inter(
+                              color: Colors.grey.shade500, fontSize: 14)),
+                    ],
+                  )
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _brandColumn() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.directions_bus, color: Colors.white, size: 30),
+            const SizedBox(width: 8),
+            Text("BusLink",
+                style: GoogleFonts.outfit(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          "Sri Lanka's #1 Bus Booking Platform.\nTravel with comfort and style.",
+          style: GoogleFonts.inter(color: Colors.grey.shade400, height: 1.6),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            _socialIcon(Icons.facebook),
+            _socialIcon(Icons.camera_alt),
+            _socialIcon(Icons.alternate_email),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _linksColumn(String title, List<String> links) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title,
+            style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
+        const SizedBox(height: 20),
+        ...links.map((icon) => _footerLink(icon)),
+      ],
+    );
+  }
+
+  Widget _contactColumn() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Contact",
+            style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
+        const SizedBox(height: 20),
+        _contactRow(Icons.email, "support@buslink.lk"),
+        _contactRow(Icons.phone, "+94 11 234 5678"),
+        _contactRow(Icons.location_on, "Colombo 03, Sri Lanka"),
+      ],
+    );
+  }
+
+  Widget _socialIcon(IconData icon) {
+    return Container(
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.1), shape: BoxShape.circle),
+      child: Icon(icon, color: Colors.white, size: 20),
+    );
+  }
+
+  Widget _footerLink(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(text,
+          style: GoogleFonts.inter(color: Colors.grey.shade400, fontSize: 14)),
+    );
+  }
+
+  Widget _contactRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: AppTheme.primaryColor, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text,
+                style: GoogleFonts.inter(
+                    color: Colors.grey.shade400, fontSize: 14, height: 1.2),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis),
+          ),
+        ],
+      ),
+    );
+  }
+}

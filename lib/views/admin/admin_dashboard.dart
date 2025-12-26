@@ -1,82 +1,139 @@
-// lib/views/admin/admin_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../controllers/trip_controller.dart';
-import '../../services/auth_service.dart';
+import '../../models/trip_model.dart';
 import '../../utils/app_constants.dart';
+import '../../utils/app_theme.dart';
 import 'admin_screen.dart';
+import 'layout/admin_navbar.dart';
+import 'layout/admin_footer.dart';
 
-class AdminDashboard extends StatelessWidget {
+class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
 
   @override
+  State<AdminDashboard> createState() => _AdminDashboardState();
+}
+
+class _AdminDashboardState extends State<AdminDashboard> {
+  @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
-    final theme = Theme.of(context);
+    final isDesktop = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Staff Dashboard"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: "Log Out",
-            onPressed: () {
-              Provider.of<AuthService>(context, listen: false).signOut();
-            },
-          ),
-        ],
-      ),
+      backgroundColor: Colors.grey.shade50,
       body: Column(
         children: [
-          _buildSearchCard(context, controller, theme),
+          // Admin Navbar
+          const AdminNavBar(selectedIndex: 0),
+
           Expanded(
-            child: Consumer<TripController>(
-              builder: (context, controller, child) {
-                if (controller.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (controller.searchResults.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Text(
-                        "Search for a route and date to see trips.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 40),
+
+                  // Title Section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1000),
+                      child: Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Route Management",
+                                  style: GoogleFonts.outfit(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.darkText)),
+                              Text(
+                                  "Manage bus schedules, fares, and availability.",
+                                  style: GoogleFonts.inter(
+                                      color: Colors.grey, fontSize: 16)),
+                            ],
+                          ),
+                          const Spacer(),
+                          if (isDesktop) _buildAddRouteButton(context)
+                        ],
                       ),
                     ),
-                  );
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: controller.searchResults.length,
-                  itemBuilder: (ctx, i) {
-                    final trip = controller.searchResults[i];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: ListTile(
-                        title: Text(
-                          "${trip.busNumber} - ${trip.fromCity} to ${trip.toCity}",
-                        ),
-                        subtitle: Text(
-                          "Departs: ${DateFormat('MMM d, hh:mm a').format(trip.departureTime)}",
-                        ),
-                        trailing: const Icon(Icons.edit),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AdminScreen(trip: trip),
-                            ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Mobile Add Button
+                  if (!isDesktop) ...[
+                    _buildAddRouteButton(context),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Search Section
+                  _buildSearchSection(context, controller, isDesktop),
+
+                  const SizedBox(height: 32),
+
+                  // Results Section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1000),
+                      child: Consumer<TripController>(
+                        builder: (context, ctl, _) {
+                          if (ctl.isLoading) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+
+                          // If search was performed and we have results
+                          // Note: ctl.searchResults might be empty initially or after search
+                          // We can check if filters are active or just show all/none.
+                          // Assuming search has been run or we show a default list.
+
+                          if (ctl.searchResults.isEmpty) {
+                            return Container(
+                              padding: const EdgeInsets.all(40),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.search_off,
+                                      size: 64, color: Colors.grey.shade300),
+                                  const SizedBox(height: 16),
+                                  Text("No routes found matching your criteria",
+                                      style: GoogleFonts.inter(
+                                          fontSize: 16, color: Colors.grey)),
+                                ],
+                              ),
+                            );
+                          }
+
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: ctl.searchResults.length,
+                            itemBuilder: (context, index) {
+                              return _buildResultRow(
+                                  context, ctl.searchResults[index], ctl);
+                            },
                           );
                         },
                       ),
-                    );
-                  },
-                );
-              },
+                    ),
+                  ),
+
+                  const SizedBox(height: 60),
+                  const AdminFooter(),
+                ],
+              ),
             ),
           ),
         ],
@@ -84,101 +141,319 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchCard(
-    BuildContext context,
-    TripController controller,
-    ThemeData theme,
-  ) {
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildDropdown(
-              icon: Icons.departure_board,
-              hint: 'From',
-              value: controller.fromCity,
-              items: AppConstants.cities,
-              onChanged: (val) => controller.setFromCity(val),
-              theme: theme,
-            ),
-            const SizedBox(height: 12),
-            _buildDropdown(
-              icon: Icons.location_on,
-              hint: 'To',
-              value: controller.toCity,
-              items: AppConstants.cities.reversed.toList(),
-              onChanged: (val) => controller.setToCity(val),
-              theme: theme,
-            ),
-            const SizedBox(height: 12),
-            _buildDatePicker(context, controller, theme),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => controller.searchTrips(context),
-              child: const Text('Search'),
-            ),
-          ],
+  Widget _buildAddRouteButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AdminScreen(trip: null)));
+      },
+      icon: const Icon(Icons.add),
+      label: const Text("Add New Route"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildSearchSection(
+      BuildContext context, TripController controller, bool isDesktop) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1000),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("FIND ROUTES",
+                  style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                      letterSpacing: 1)),
+              const SizedBox(height: 20),
+              if (isDesktop)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                        child: _buildSearchInput(context, controller, true)),
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => controller.searchTrips(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black87,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text("Search"),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Column(
+                  children: [
+                    _buildSearchInput(context, controller, false),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => controller.searchTrips(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black87,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text("Search"),
+                      ),
+                    ),
+                  ],
+                )
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDropdown({
-    required IconData icon,
-    required String hint,
-    String? value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-    required ThemeData theme,
-  }) {
-    return DropdownButtonFormField<String>(
-      // 1. FIX: Changed 'value' to 'initialValue'
-      initialValue: value,
-      decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: theme.primaryColor),
-        hintText: hint,
+  Widget _buildSearchInput(
+      BuildContext context, TripController controller, bool isDesktop) {
+    // Basic fields
+    final originField = _dropdown(
+        hint: "Origin",
+        value: controller.fromCity,
+        items: AppConstants.cities,
+        onChanged: (v) => controller.setFromCity(v));
+
+    final destField = _dropdown(
+        hint: "Destination",
+        value: controller.toCity,
+        items: AppConstants.cities,
+        onChanged: (v) => controller.setToCity(v));
+
+    final dateField = InkWell(
+      onTap: () async {
+        final DateTime? picked = await showDatePicker(
+          context: context,
+          initialDate: controller.travelDate ?? DateTime.now(),
+          firstDate: DateTime.now().subtract(const Duration(days: 365)),
+          lastDate: DateTime.now().add(const Duration(days: 365)),
+        );
+        if (picked != null) controller.setDate(picked);
+      },
+      child: Container(
+        height: 50,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+            const SizedBox(width: 12),
+            Text(
+              controller.travelDate != null
+                  ? DateFormat('yyyy-MM-dd').format(controller.travelDate!)
+                  : "Select Date",
+              style: GoogleFonts.inter(color: Colors.black87),
+            )
+          ],
+        ),
       ),
-      items: items.map((city) {
-        return DropdownMenuItem(value: city, child: Text(city));
-      }).toList(),
+    );
+
+    if (isDesktop) {
+      return Row(
+        children: [
+          Expanded(flex: 2, child: originField),
+          const SizedBox(width: 16),
+          Expanded(flex: 2, child: destField),
+          const SizedBox(width: 16),
+          Expanded(flex: 2, child: dateField),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          originField,
+          const SizedBox(height: 12),
+          destField,
+          const SizedBox(height: 12),
+          dateField,
+        ],
+      );
+    }
+  }
+
+  Widget _dropdown(
+      {required String hint,
+      required String? value,
+      required List<String> items,
+      required Function(String?) onChanged}) {
+    return DropdownButtonFormField<String>(
+      initialValue: items.contains(value) ? value : null,
+      decoration: InputDecoration(
+        labelText: hint,
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      items:
+          items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
       onChanged: onChanged,
     );
   }
 
-  Widget _buildDatePicker(
-    BuildContext context,
-    TripController controller,
-    ThemeData theme,
-  ) {
-    return TextFormField(
-      key: Key(controller.travelDate.toString()),
-      readOnly: true,
-      initialValue: controller.travelDate == null
-          ? null
-          : DateFormat('yyyy-MM-dd').format(controller.travelDate!),
-      decoration: InputDecoration(
-        prefixIcon: Icon(Icons.calendar_today, color: theme.primaryColor),
-        hintText: 'Select Date',
+  Widget _buildResultRow(
+      BuildContext context, Trip trip, TripController controller) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
       ),
-      onTap: () => _selectDate(context, controller),
+      child: Row(
+        children: [
+          // Bus Icon
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child:
+                const Icon(Icons.directions_bus, color: AppTheme.primaryColor),
+          ),
+          const SizedBox(width: 20),
+
+          // Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      "${trip.fromCity} ➝ ${trip.toCity}",
+                      style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(4)),
+                      child: Text(trip.busType,
+                          style: GoogleFonts.inter(
+                              fontSize: 10, fontWeight: FontWeight.bold)),
+                    )
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Departs: ${DateFormat('HH:mm').format(trip.departureTime)} • Arrives: ${DateFormat('HH:mm').format(trip.arrivalTime)}",
+                  style: GoogleFonts.inter(color: Colors.grey.shade600),
+                ),
+                if (trip.via.isNotEmpty)
+                  Text(
+                    "Via: ${trip.via}",
+                    style: GoogleFonts.inter(
+                        color: Colors.grey.shade500, fontSize: 12),
+                  ),
+              ],
+            ),
+          ),
+
+          // Actions
+          if (MediaQuery.of(context).size.width > 600) ...[
+            OutlinedButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => AdminScreen(trip: trip)));
+                },
+                child: const Text("Edit Route")),
+            const SizedBox(width: 12),
+            IconButton(
+                onPressed: () => _confirmDelete(context, controller, trip.id),
+                icon: const Icon(Icons.delete_outline, color: Colors.red))
+          ] else ...[
+            PopupMenuButton(
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: 'edit', child: Text("Edit Route")),
+                const PopupMenuItem(
+                    value: 'delete',
+                    child: Text("Delete Bus",
+                        style: TextStyle(color: Colors.red))),
+              ],
+              onSelected: (val) {
+                if (val == 'edit') {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => AdminScreen(trip: trip)));
+                } else {
+                  _confirmDelete(context, controller, trip.id);
+                }
+              },
+            )
+          ]
+        ],
+      ),
     );
   }
 
-  Future<void> _selectDate(
-    BuildContext context,
-    TripController controller,
-  ) async {
-    final DateTime? pickedDate = await showDatePicker(
+  void _confirmDelete(
+      BuildContext context, TripController controller, String tripId) {
+    showDialog(
       context: context,
-      initialDate: controller.travelDate ?? DateTime.now(),
-      firstDate: DateTime.now().subtract(const Duration(days: 30)),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Bus?"),
+        content: const Text(
+            "Are you sure you want to delete this route? This action cannot be undone."),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red, foregroundColor: Colors.white),
+              onPressed: () {
+                Navigator.pop(ctx);
+                controller.deleteTrip(context, tripId);
+              },
+              child: const Text("Delete")),
+        ],
+      ),
     );
-    if (pickedDate != null) {
-      controller.setDate(pickedDate);
-    }
   }
 }

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -18,15 +19,43 @@ import 'views/home/home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Warning: Failed to load .env file: $e");
+  }
+
+  // Initialize Stripe
+  // You must set your publishable key in your .env file
+  // STRIPE_PUBLISHABLE_KEY=pk_test_...
+  final stripeKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
+  if (stripeKey != null) {
+    try {
+      stripe.Stripe.publishableKey = stripeKey;
+      await stripe.Stripe.instance.applySettings();
+    } catch (e) {
+      debugPrint("Warning: Failed to initialize Stripe: $e");
+    }
+  } else {
+    debugPrint("STRIPE_PUBLISHABLE_KEY not found in .env");
+  }
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint("Critical: Firebase initialization failed: $e");
+    // We continue, but app might be broken.
+  }
 
   // Initialize Google Sign-In
-  // 1. FIX: Instantiate AuthService without parameters
   final authService = AuthService();
-  await authService.initializeGoogleSignIn();
+  try {
+    await authService.initializeGoogleSignIn();
+  } catch (e) {
+    debugPrint("Warning: Google Sign-In init failed: $e");
+  }
 
   runApp(
     MultiProvider(
@@ -89,12 +118,28 @@ class RoleDispatcher extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
-          return const HomeScreen();
+        if (snapshot.hasError) {
+          debugPrint("!!! FIRESTORE ERROR: ${snapshot.error}");
+          return const Scaffold(
+              body: Center(child: Text("Database Error. Check Console.")));
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          debugPrint("!!! USER DOCUMENT MISSING (UID: ${user.uid})");
+          return const HomeScreen(); // Fallback
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>?;
-        final String role = data?['role'] ?? 'customer';
+
+        if (data == null) {
+          debugPrint(
+              "User detected (UID: ${user.uid}) but NO DATA in Firestore 'users' collection.");
+          return const HomeScreen();
+        }
+
+        final String role = (data['role'] ?? 'customer').toString().trim();
+        debugPrint("User: ${user.email} (UID: ${user.uid})");
+        debugPrint("Firestore Data: $data");
+        debugPrint("Determined Role: $role");
 
         switch (role) {
           case 'admin':

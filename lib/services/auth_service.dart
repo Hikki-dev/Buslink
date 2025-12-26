@@ -37,14 +37,6 @@ class AuthService {
         final GoogleSignInAccount googleUser =
             await _googleSignIn.authenticate(scopeHint: ['email']);
 
-        if (googleUser == null) {
-          if (!context.mounted) return null;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Sign-in was cancelled")),
-          );
-          return null;
-        }
-
         final GoogleSignInClientAuthorization? authorization =
             await googleUser.authorizationClient.authorizationForScopes(
           ['email', 'profile'],
