@@ -10,7 +10,10 @@ import '../layout/app_footer.dart';
 
 class SeatSelectionScreen extends StatelessWidget {
   final Trip trip;
-  const SeatSelectionScreen({super.key, required this.trip});
+  final bool showBackButton;
+
+  const SeatSelectionScreen(
+      {super.key, required this.trip, this.showBackButton = false});
 
   @override
   Widget build(BuildContext context) {
@@ -18,11 +21,15 @@ class SeatSelectionScreen extends StatelessWidget {
     final isDesktop = MediaQuery.of(context).size.width > 900;
     List<int> selectedSeats = controller.selectedSeats;
 
+    // Determine if we need an AppBar
+    // - On Mobile: Yes (unless specific case?)
+    // - On Desktop: Only if showBackButton is true
+    final bool showAppBar = !isDesktop || showBackButton;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: isDesktop
-          ? null
-          : AppBar(
+      appBar: showAppBar
+          ? AppBar(
               title: Text("Select Seats",
                   style: GoogleFonts.outfit(
                       fontWeight: FontWeight.bold, color: Colors.black)),
@@ -30,7 +37,11 @@ class SeatSelectionScreen extends StatelessWidget {
               backgroundColor: Colors.white,
               elevation: 0,
               iconTheme: const IconThemeData(color: Colors.black),
-            ),
+              leading: showBackButton
+                  ? const BackButton()
+                  : null, // Default auto-leading is usually fine
+            )
+          : null,
       body: Column(
         children: [
           if (isDesktop) const DesktopNavBar(),
@@ -382,7 +393,8 @@ class _SeatItemState extends State<_SeatItem> {
       }
     } else {
       // Standard single trip check
-      isBooked = widget.trip.bookedSeats.contains(widget.seatNum);
+      isBooked = widget.trip.bookedSeats.contains(widget.seatNum) ||
+          (widget.trip.blockedSeats.contains(widget.seatNum));
     }
     // -------------------------------
 

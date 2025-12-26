@@ -132,4 +132,59 @@ class PaymentService {
       return false;
     }
   }
+
+  // 4. Stripe Checkout Session (Redirect Flow)
+  Future<String?> createCheckoutSession({
+    required String amount,
+    required String currency,
+    required String successUrl,
+    required String cancelUrl,
+    required String bookingId, // To track which booking this is for
+  }) async {
+    try {
+      final stripeSecretKey = dotenv.env['STRIPE_SECRET_KEY'];
+      if (stripeSecretKey == null || stripeSecretKey.isEmpty) {
+        throw Exception("Missing STRIPE_SECRET_KEY in .env");
+      }
+
+      final double amountVal = double.parse(amount);
+      final int amountCents = (amountVal * 100).toInt();
+
+      debugPrint("Creating Checkout Session... Success: $successUrl");
+
+      final response = await http.post(
+        Uri.parse('https://api.stripe.com/v1/checkout/sessions'),
+        headers: {
+          'Authorization': 'Bearer $stripeSecretKey',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: {
+          'payment_method_types[]':
+              'card', // Can add more like 'ideal', 'sepa_debit'
+          'mode': 'payment',
+          'success_url': successUrl,
+          'cancel_url': cancelUrl,
+          'line_items[0][price_data][currency]': currency.toLowerCase(),
+          'line_items[0][price_data][product_data][name]': 'Bus Ticket Booking',
+          'line_items[0][price_data][unit_amount]': amountCents.toString(),
+          'line_items[0][quantity]': '1',
+          'client_reference_id': bookingId, // Important: Link to our DB booking
+          // 'customer_email': userEmail, // Optional: Pre-fill email
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        return json['url']; // The Redirect URL
+      } else {
+        final error = jsonDecode(response.body)['error'];
+        final message = error?['message'] ?? response.body;
+        debugPrint("Stripe Checkout Error: $message");
+        throw Exception("Stripe Checkout Error: $message");
+      }
+    } catch (e) {
+      debugPrint("Checkout Session Create Failed: $e");
+      rethrow;
+    }
+  }
 }

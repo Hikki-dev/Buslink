@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // for kIsWeb
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_stripe/flutter_stripe.dart'; // Import Stripe widgets
+import 'package:url_launcher/url_launcher.dart'; // For Redirect
 
 import '../../controllers/trip_controller.dart';
 import '../../services/payment_service.dart';
 import '../../utils/app_theme.dart';
-import '../ticket/ticket_screen.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
 
@@ -20,66 +18,13 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  String? _clientSecret;
-  bool _isLoadingSecret = true;
   bool _isProcessing = false;
-
-  // Re-added for CardField validation
-  CardFieldInputDetails? _cardDetails;
-
   final PaymentService _paymentService = PaymentService();
 
-  @override
-  void initState() {
-    super.initState();
-    _loadPaymentIntent();
-  }
-
-  Future<void> _loadPaymentIntent() async {
-    try {
-      final tripController =
-          Provider.of<TripController>(context, listen: false);
-      final trip = tripController.selectedTrip!;
-      final seats = tripController.selectedSeats;
-      final totalAmount = (trip.price * seats.length).toStringAsFixed(2);
-
-      // Create Payment Intent immediately (Eager Load)
-      final secret =
-          await _paymentService.createPaymentIntent(totalAmount, "LKR");
-
-      if (mounted) {
-        setState(() {
-          _clientSecret = secret;
-          _isLoadingSecret = false;
-        });
-      }
-
-      // If Mobile, Initialize Sheet immediately
-      if (!kIsWeb) {
-        await Stripe.instance.initPaymentSheet(
-          paymentSheetParameters: SetupPaymentSheetParameters(
-            paymentIntentClientSecret: secret,
-            merchantDisplayName: 'BusLink',
-            style: ThemeMode.light,
-            appearance: const PaymentSheetAppearance(
-              colors: PaymentSheetAppearanceColors(primary: Color(0xFFD32F2F)),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint("Error loading payment: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Setup Error: ${e.toString()}")));
-        setState(() => _isLoadingSecret = false);
-      }
-    }
-  }
-
-  Future<void> _handlePay() async {
+  Future<void> _handleCheckoutRedirect() async {
     setState(() => _isProcessing = true);
     final user = Provider.of<User?>(context, listen: false);
+    final controller = Provider.of<TripController>(context, listen: false);
 
     if (user == null) {
       setState(() => _isProcessing = false);
@@ -89,134 +34,62 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
 
     try {
-      if (kIsWeb) {
-        // WEB: Confirm Payment using CardField data
-        // Validate first
-        if (_cardDetails == null || _cardDetails?.complete == false) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text("Please enter complete card details.")));
-          setState(() => _isProcessing = false);
-          return;
-        }
-
-        await Stripe.instance.confirmPayment(
-          paymentIntentClientSecret: _clientSecret!,
-          data: const PaymentMethodParams.card(
-            paymentMethodData: PaymentMethodData(),
-          ),
-        );
-      } else {
-        // MOBILE: Present Sheet
-        await Stripe.instance.presentPaymentSheet();
+      // 1. Create Pending Booking in DB (State Persistence)
+      final bookingId = await controller.createPendingBooking(user);
+      if (bookingId == null) {
+        throw Exception("Failed to initialize booking.");
       }
 
-      // Success Handling
-      _onPaymentSuccess();
-    } on StripeException catch (e) {
-      setState(() => _isProcessing = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment Failed: ${e.error.localizedMessage}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      // 2. Construct Dynamic Redirect URLs
+      // Use Uri.base to get the current domain (works for localhost & vercel)
+      String origin = Uri.base
+          .origin; // e.g., http://localhost:5000 or https://myapp.vercel.app
+
+      // Note: We use a hash-friendly pattern if HashRouting is used, or path if PathUrlStrategy.
+      // Default Flutter web uses Hash (#).
+      // Stripe Success URL: origin + /#/payment_success?session_id={CHECKOUT_SESSION_ID} ... but Stripe replaces {}
+      // We'll point to a clean route.
+      String successUrl =
+          "$origin/#/payment_success?booking_id=$bookingId&session_id={CHECKOUT_SESSION_ID}";
+      String cancelUrl = "$origin/#/";
+
+      final trip = controller.selectedTrip!;
+      final seats = controller.selectedSeats;
+      final totalAmount = (trip.price * seats.length).toStringAsFixed(2);
+
+      // 3. Create Stripe Checkout Session via API
+      final redirectUrl = await _paymentService.createCheckoutSession(
+        amount: totalAmount,
+        currency: "LKR",
+        successUrl: successUrl,
+        cancelUrl: cancelUrl,
+        bookingId: bookingId,
+      );
+
+      if (redirectUrl != null) {
+        // 4. Redirect User
+        final uri = Uri.parse(redirectUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri,
+              webOnlyWindowName: '_self'); // Redirect in same tab
+        } else {
+          throw Exception("Could not launch Stripe Checkout.");
+        }
       }
     } catch (e) {
       setState(() => _isProcessing = false);
-      debugPrint("Payment Execution Error: $e");
+      debugPrint("Checkout Error: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }
-  }
-
-  void _onPaymentSuccess() async {
-    final controller = Provider.of<TripController>(context, listen: false);
-    final user = Provider.of<User?>(context, listen: false);
-
-    // Record Booking in Firestore
-    final bookingSuccess = await controller.processBooking(context, user!);
-
-    if (bookingSuccess && mounted) {
-      setState(() => _isProcessing = false);
-      _showSuccessDialog();
-    } else {
-      setState(() => _isProcessing = false);
-    }
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check_rounded,
-                    color: Colors.green, size: 40),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                "Payment Successful!",
-                style: GoogleFonts.outfit(
-                    fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "Your ticket has been booked successfully.",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close Dialog
-                    Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const TicketScreen()),
-                        (route) => false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: Text("View Ticket",
-                      style: GoogleFonts.outfit(
-                          color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
+    // Note: If redirect happens, state generally dies here, which is why we saved PendingBooking.
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_clientSecret == null && _isLoadingSecret) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     final controller = Provider.of<TripController>(context);
     final trip = controller.selectedTrip!;
     final seats = controller.selectedSeats;
@@ -266,7 +139,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       color: Colors.black87)),
                               const SizedBox(height: 40),
                             ],
-                            // Adaptive Layout
+                            // Layout
                             if (isDesktop) ...[
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,14 +151,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   const SizedBox(width: 48),
                                   Expanded(
                                       flex: 5,
-                                      child: _buildPaymentSection(
+                                      child: _buildRedirectAction(
                                           context, totalAmount)),
                                 ],
                               ),
                             ] else ...[
                               _buildOrderSummary(trip, seats, totalAmount),
                               const SizedBox(height: 32),
-                              _buildPaymentSection(context, totalAmount),
+                              _buildRedirectAction(context, totalAmount),
                             ],
                           ],
                         ),
@@ -381,116 +254,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildPaymentSection(BuildContext context, double totalAmount) {
+  Widget _buildRedirectAction(BuildContext context, double totalAmount) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Payment Details",
+        Text("Finalize Payment",
             style:
                 GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 24),
-
-        // WEB: Styled CardField (Reverted for stability and "card-only" req)
-        if (kIsWeb)
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 20,
-                    offset: const Offset(0, 5))
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Card Information", // Clean Label
-                        style: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600)),
-                    const Icon(Icons.credit_card,
-                        size: 24, color: AppTheme.primaryColor),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  height: 55,
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(12),
-                      color: Colors.white),
-                  alignment: Alignment.center,
-                  child: CardField(
-                    autofocus: true,
-                    enablePostalCode: true,
-                    onCardChanged: (card) {
-                      setState(() {
-                        _cardDetails = card;
-                      });
-                    },
-                    style: TextStyle(
-                        fontFamily: GoogleFonts.inter().fontFamily,
-                        fontSize: 16,
-                        color: Colors.black),
-                    decoration: InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
-                        hintText: "Card Details",
-                        hintStyle: TextStyle(color: Colors.grey.shade400)),
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          // MOBILE: Visual Indicator of Stripe Sheet
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200)),
-            child: Row(
-              children: [
-                const Icon(Icons.credit_card, color: AppTheme.primaryColor),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Credit / Debit Card",
-                          style:
-                              GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                      Text("Click Pay to open Secure Checkout",
-                          style: GoogleFonts.inter(
-                              fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.check_circle,
-                    color: AppTheme.primaryColor, size: 20)
-              ],
-            ),
-          ),
-
+        const SizedBox(height: 16),
+        Text(
+          "You will be redirected to the secure Stripe Checkout page to complete your payment.",
+          style: GoogleFonts.inter(
+              fontSize: 14, color: Colors.grey.shade600, height: 1.5),
+        ),
         const SizedBox(height: 32),
-        _buildTermsAndConditions(),
-        const SizedBox(height: 24),
-
         SizedBox(
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: _isProcessing ? null : _handlePay,
+            onPressed: _isProcessing ? null : _handleCheckoutRedirect,
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 shadowColor: Colors.black26,
@@ -503,11 +285,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     height: 24,
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2))
-                : Text("Pay LKR ${totalAmount.toStringAsFixed(0)}",
-                    style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.white)),
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.lock, size: 18, color: Colors.white),
+                      const SizedBox(width: 10),
+                      Text("Proceed to Checkout",
+                          style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: Colors.white)),
+                    ],
+                  ),
           ),
         ),
         const SizedBox(height: 16),
@@ -526,38 +315,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         const SizedBox(height: 24),
         _buildSecurityBadges(),
       ],
-    );
-  }
-
-  Widget _buildTermsAndConditions() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Terms & Conditions",
-              style:
-                  GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
-          const SizedBox(height: 8),
-          Text(
-              "By clicking 'Pay', you agree to BusLink's cancellation policy. Tickets can be cancelled up to 24 hours before departure for a 90% refund. No refunds for same-day cancellations.",
-              style: GoogleFonts.inter(
-                  fontSize: 11, color: Colors.grey.shade600, height: 1.5)),
-          const SizedBox(height: 8),
-          Text(
-            "View full Terms of Service",
-            style: GoogleFonts.inter(
-                fontSize: 11,
-                color: AppTheme.primaryColor,
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline),
-          )
-        ],
-      ),
     );
   }
 
@@ -584,7 +341,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           children: [
             _badge("Powered by Stripe"),
             _badge("PCI DSS Compliant"),
-            _badge("3D Secure"),
+            _badge("Cards, Apple Pay, Google Pay"),
           ],
         )
       ],

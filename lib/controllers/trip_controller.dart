@@ -4,9 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/trip_model.dart';
 import '../services/firestore_service.dart';
+import '../services/auth_service.dart';
 
 class TripController extends ChangeNotifier {
   final FirestoreService _service = FirestoreService();
+  final AuthService _authService = AuthService();
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -302,44 +304,49 @@ class TripController extends ChangeNotifier {
     }
   }
 
+  // --- 8. Persistent Booking Flow (Stripe Redirect) ---
+  Future<String?> createPendingBooking(User user) async {
+    if (selectedTrip == null || selectedSeats.isEmpty) return null;
+    _setLoading(true);
+    try {
+      final bookingId = await _service.createPendingBooking(
+          selectedTrip!, selectedSeats, user);
+      return bookingId;
+    } catch (e) {
+      debugPrint("Error creating pending booking: $e");
+      return null;
+    } finally {
+      // Don't disable loading yet if we are redirecting...
+      // Actually, we can disable it, the UI will handle the redirect spinner.
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> confirmBooking(String bookingId) async {
+    _setLoading(true);
+    try {
+      currentTicket = await _service.confirmBooking(bookingId);
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      debugPrint("Error confirming booking: $e");
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  // Legacy (Direct) Method - Keeping for reference or fallback
   Future<bool> processBooking(BuildContext context, User user) async {
     if (selectedTrip == null || selectedSeats.isEmpty) return false;
 
     _setLoading(true);
     try {
-      if (isBulkBooking && bulkDuration > 1 && bulkSearchResults.isNotEmpty) {
-        // --- BULK BOOKING PROCESS ---
-
-        // We need to book for EACH day.
-        // We find the correct trip for each day based on the selected trip's bus details.
-
-        for (int i = 0; i < bulkDuration; i++) {
-          final dayTrips = bulkSearchResults[i];
-          final match = dayTrips.firstWhere(
-              (t) =>
-                  t.busNumber == selectedTrip!.busNumber &&
-                  t.operatorName == selectedTrip!.operatorName,
-              orElse: () =>
-                  throw Exception("Bus schedule mismatch for Day ${i + 1}"));
-
-          // Book current day ticket
-          // Note: `processBooking` returns a Ticket, we might want to store all of them?
-          // For now, storing the LAST one as `currentTicket` so the confirmation screen has something to show.
-          // In a real app, we'd pass a list of tickets to the confirmation screen.
-          currentTicket = await _service.processBooking(
-            match,
-            selectedSeats,
-            user,
-          );
-        }
-      } else {
-        // --- STANDARD SINGLE BOOKING ---
-        currentTicket = await _service.processBooking(
-          selectedTrip!,
-          selectedSeats,
-          user,
-        );
-      }
+      // Simple direct booking
+      currentTicket = await _service.processBooking(
+        selectedTrip!,
+        selectedSeats,
+        user,
+      );
       _setLoading(false);
       return true;
     } catch (e) {
@@ -574,5 +581,36 @@ class TripController extends ChangeNotifier {
   Future<void> updateUserRole(String uid, String newRole) async {
     await _service.updateUserRole(uid, newRole);
     notifyListeners();
+  }
+
+  Future<void> createUserProfile(Map<String, dynamic> userData) async {
+    await _service.createUserProfile(userData);
+    notifyListeners();
+  }
+
+  Future<void> deleteUserProfile(String uid) async {
+    await _service.deleteUserProfile(uid);
+    notifyListeners();
+  }
+
+  Future<void> registerUserAsAdmin({
+    required String email,
+    required String password,
+    required String displayName,
+    required String role,
+  }) async {
+    _setLoading(true);
+    try {
+      await _authService.registerUserAsAdmin(
+        email: email,
+        password: password,
+        displayName: displayName,
+        role: role,
+      );
+      // We don't need to manually refresh users as the stream will pick it up
+      // provided the document was created.
+    } finally {
+      _setLoading(false);
+    }
   }
 }

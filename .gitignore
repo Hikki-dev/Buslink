@@ -69,3 +69,4 @@ android/key.properties
 *.mobileprovision
 *.p12
 *.cer
+.vercel

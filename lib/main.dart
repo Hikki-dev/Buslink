@@ -15,6 +15,7 @@ import 'views/admin/admin_dashboard.dart';
 import 'views/auth/login_screen.dart';
 import 'views/conductor/conductor_dashboard.dart';
 import 'views/home/home_screen.dart';
+import 'views/booking/payment_success_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -77,7 +78,18 @@ void main() async {
             darkTheme: AppTheme.darkTheme,
             themeMode: themeController.themeMode,
             home: const AuthWrapper(),
+            routes: {
+              '/payment_success': (context) => const PaymentSuccessScreen(),
+            },
             debugShowCheckedModeBanner: false,
+            onGenerateRoute: (settings) {
+              // Handle deep links or manual URL typing if needed
+              if (settings.name?.startsWith('/payment_success') ?? false) {
+                return MaterialPageRoute(
+                    builder: (_) => const PaymentSuccessScreen());
+              }
+              return null;
+            },
           );
         },
       ),

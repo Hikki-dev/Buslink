@@ -1,5 +1,6 @@
 // lib/services/auth_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart'; // Required for Firebase.initializeApp
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
@@ -126,15 +127,83 @@ class AuthService {
   Future<UserCredential?> signInWithEmail(
       BuildContext context, String email, String password) async {
     try {
-      return await _auth.signInWithEmailAndPassword(
+      final credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      if (credential.user != null) {
+        await _ensureUserDocument(credential.user!);
+      }
+      return credential;
     } on FirebaseAuthException catch (e) {
       if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Sign in failed: ${e.message}")));
       return null;
+    }
+  }
+
+  Future<void> _ensureUserDocument(User user) async {
+    final docStats = await _db.collection('users').doc(user.uid).get();
+    if (!docStats.exists) {
+      await _db.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'email': user.email,
+        'displayName': user.displayName ?? user.email?.split('@')[0],
+        'role': 'customer',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  Future<void> registerUserAsAdmin({
+    required String email,
+    required String password,
+    required String displayName,
+    required String role,
+  }) async {
+    FirebaseApp? secondaryApp;
+    try {
+      // 1. Initialize a secondary app instance
+      // We need to use the same options as the default app
+      secondaryApp = await Firebase.initializeApp(
+        name: 'SecondaryApp',
+        options: Firebase.app().options,
+      );
+
+      // 2. Get Auth instance for this secondary app
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+
+      // 3. Create the user (this logs them in ONLY on the secondary auth instance)
+      final userCredential = await secondaryAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      final user = userCredential.user;
+      if (user != null) {
+        // 4. Create the Firestore document using the MAIN app's Firestore instance
+        // (We use the main instance because the admin is authenticated there and has permissions)
+        await _db.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'email': user.email,
+          'displayName': displayName,
+          'role': role,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Optional: Update the user's profile on the Auth object too
+        await user.updateDisplayName(displayName);
+      }
+
+      // 5. Cleanup
+      await secondaryAuth.signOut();
+    } catch (e) {
+      debugPrint("Error creating user as admin: $e");
+      rethrow;
+    } finally {
+      // Always delete the secondary app to free resources
+      await secondaryApp?.delete();
     }
   }
 

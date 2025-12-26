@@ -10,6 +10,7 @@ import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
 import '../layout/conductor_navbar.dart';
 import '../layout/app_footer.dart';
+import '../admin/layout/admin_bottom_nav.dart';
 import 'conductor_trip_management_screen.dart';
 
 class ConductorDashboard extends StatefulWidget {
@@ -104,41 +105,43 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
         return Scaffold(
           backgroundColor: Colors.grey.shade50,
           bottomNavigationBar: !isDesktop
-              ? Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -2),
+              ? widget.isAdminView
+                  ? const AdminBottomNav(selectedIndex: 2)
+                  : Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, -2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: NavigationBar(
-                    backgroundColor: Colors.white,
-                    elevation: 0,
-                    selectedIndex: _selectedIndex,
-                    onDestinationSelected: (idx) =>
-                        setState(() => _selectedIndex = idx),
-                    destinations: const [
-                      NavigationDestination(
-                          icon: Icon(Icons.dashboard_outlined),
-                          selectedIcon: Icon(Icons.dashboard),
-                          label: 'Home'),
-                      NavigationDestination(
-                          icon: Icon(Icons.qr_code_scanner), label: 'Scan'),
-                      NavigationDestination(
-                          icon: Icon(Icons.analytics_outlined),
-                          selectedIcon: Icon(Icons.analytics),
-                          label: 'Reports'),
-                      NavigationDestination(
-                          icon: Icon(Icons.person_outline),
-                          selectedIcon: Icon(Icons.person),
-                          label: 'Profile'),
-                    ],
-                  ),
-                )
+                      child: NavigationBar(
+                        backgroundColor: Colors.white,
+                        elevation: 0,
+                        selectedIndex: _selectedIndex,
+                        onDestinationSelected: (idx) =>
+                            setState(() => _selectedIndex = idx),
+                        destinations: const [
+                          NavigationDestination(
+                              icon: Icon(Icons.dashboard_outlined),
+                              selectedIcon: Icon(Icons.dashboard),
+                              label: 'Home'),
+                          NavigationDestination(
+                              icon: Icon(Icons.qr_code_scanner), label: 'Scan'),
+                          NavigationDestination(
+                              icon: Icon(Icons.analytics_outlined),
+                              selectedIcon: Icon(Icons.analytics),
+                              label: 'Reports'),
+                          NavigationDestination(
+                              icon: Icon(Icons.person_outline),
+                              selectedIcon: Icon(Icons.person),
+                              label: 'Profile'),
+                        ],
+                      ),
+                    )
               : null,
           body: Column(
             children: [
@@ -146,11 +149,32 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 Container(
                   width: double.infinity,
                   color: Colors.amber,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: const Text("Welcome Admin - Preview Mode",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.black)),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Welcome Admin - Preview Mode",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black)),
+                      const SizedBox(width: 16),
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12)),
+                          child: const Text("EXIT",
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               if (isDesktop)
                 ConductorNavBar(

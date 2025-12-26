@@ -309,11 +309,77 @@ class FirestoreService {
 
   Stream<List<Map<String, dynamic>>> getAllUsers() {
     return _db.collection('users').snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) => doc.data()).toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['uid'] = doc.id; // Ensure UID is available for updates
+        return data;
+      }).toList();
     });
   }
 
   Future<void> updateUserRole(String uid, String newRole) async {
     await _db.collection('users').doc(uid).update({'role': newRole});
+  }
+
+  Future<void> createUserProfile(Map<String, dynamic> userData) {
+    return _db.collection('users').doc(userData['uid']).set(userData);
+  }
+
+  Future<void> deleteUserProfile(String uid) {
+    return _db.collection('users').doc(uid).delete();
+  }
+
+  // --- 8. Pending Bookings (For Redirect Flows like Stripe Checkout) ---
+  Future<String> createPendingBooking(
+      Trip trip, List<int> seatNumbers, User user) async {
+    final bookingRef = _db.collection('tickets').doc();
+
+    final ticketData = {
+      'tripId': trip.id,
+      'userId': user.uid,
+      'userEmail': user.email,
+      'userName': user.displayName ?? "Traveler",
+      'seatNumbers': seatNumbers,
+      'totalAmount': trip.price * seatNumbers.length,
+      'bookingTime': FieldValue.serverTimestamp(),
+      'status': 'pending_payment', // Initial status
+      'tripData': trip.toMap(), // Snapshot of trip details
+    };
+
+    await bookingRef.set(ticketData);
+    return bookingRef.id;
+  }
+
+  Future<Ticket?> confirmBooking(String bookingId) async {
+    final bookingRef = _db.collection('tickets').doc(bookingId);
+    final snapshot = await bookingRef.get();
+
+    if (!snapshot.exists) {
+      throw Exception("Booking not found");
+    }
+
+    final data = snapshot.data();
+    if (data == null) throw Exception("Booking data empty");
+
+    // Check if already confirmed to avoid double-processing
+    if (data['status'] == 'confirmed') {
+      return Ticket.fromMap(data, bookingId);
+    }
+
+    // 1. Update Booking Status
+    await bookingRef.update({'status': 'confirmed'});
+
+    // 2. Update Trip Seats (Reserve them permanently)
+    final tripId = data['tripId'];
+    final List<dynamic> seats = data['seatNumbers'];
+
+    final tripRef = _db.collection('trips').doc(tripId);
+    await tripRef.update({
+      'bookedSeats': FieldValue.arrayUnion(seats),
+    });
+
+    // Return the updated ticket
+    final updatedSnapshot = await bookingRef.get();
+    return Ticket.fromMap(updatedSnapshot.data()!, bookingId);
   }
 }

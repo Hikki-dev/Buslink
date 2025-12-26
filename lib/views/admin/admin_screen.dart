@@ -79,7 +79,14 @@ class _AdminScreenState extends State<AdminScreen> {
       _durationController.text = t.duration;
       _departureTime = t.departureTime;
       _arrivalTime = t.arrivalTime;
-      _operatingDays.addAll(t.operatingDays);
+      // OperatingDays is List<int> in Model, but List<String> in UI state
+      // Model stores: [1, 2, ...] corresponding to Mon, Tue...
+      _operatingDays.addAll(t.operatingDays.map((d) {
+        if (d >= 1 && d <= _daysOfWeek.length) {
+          return _daysOfWeek[d - 1];
+        }
+        return "Monday"; // Fallback
+      }));
       _fareController.text = t.price.toStringAsFixed(0);
       _busNumberController.text = t.busNumber;
       _operatorController.text = t.operatorName;
@@ -87,6 +94,7 @@ class _AdminScreenState extends State<AdminScreen> {
       _platformController.text = t.platformNumber;
       _isRecurring = false;
       _tripDate = t.departureTime;
+      _blockedSeats.addAll(t.blockedSeats);
     }
   }
 
@@ -149,6 +157,7 @@ class _AdminScreenState extends State<AdminScreen> {
       'platformNumber':
           _platformController.text.isEmpty ? 'TBD' : _platformController.text,
       'features': ['AC', 'WiFi'], // default
+      'blockedSeats': _blockedSeats,
     };
 
     if (isEditing) {
@@ -249,6 +258,15 @@ class _AdminScreenState extends State<AdminScreen> {
                                 // Header
                                 Row(
                                   children: [
+                                    if (Navigator.canPop(context))
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(right: 16),
+                                        child: IconButton(
+                                            icon: const Icon(Icons.arrow_back),
+                                            onPressed: () =>
+                                                Navigator.pop(context)),
+                                      ),
                                     Container(
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
@@ -533,6 +551,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                 ],
 
                                 const SizedBox(height: 32),
+                                _buildSeatLayoutEditor(),
+                                const SizedBox(height: 32),
                                 _buildSectionHeader("C) Fare & Bus Info"),
 
                                 _buildTextField(
@@ -678,6 +698,175 @@ class _AdminScreenState extends State<AdminScreen> {
             icon != null ? Icon(icon, size: 20, color: Colors.grey) : null,
       ),
       validator: (v) => v == null || v.isEmpty ? "Required" : null,
+    );
+  }
+
+  // --- ADDED: Seat Layout Editor ---
+  // List of blocked seat IDs
+  final List<int> _blockedSeats = [];
+
+  Widget _buildSeatLayoutEditor() {
+    // 40 seats: 4 Columns x 10 Rows (plus aisle) => 5 columns visually
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text("Seat Layout (Manage Availability)",
+                style: GoogleFonts.outfit(
+                    fontSize: 18, fontWeight: FontWeight.bold)),
+            // Legend
+            Row(
+              children: [
+                _legendItem(Colors.white, "Available", Colors.grey),
+                const SizedBox(width: 12),
+                _legendItem(Colors.orange, "Blocked/Repair", null),
+                const SizedBox(width: 12),
+                _legendItem(Colors.red.shade100, "Booked", null),
+              ],
+            )
+          ],
+        ),
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Column(
+            children: [
+              // Driver
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(
+                        Icons
+                            .directions_bus, // steering_wheel not available in default set
+                        color: Colors.white,
+                        size: 20),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Grid
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: 10, // 10 Rows
+                itemBuilder: (context, rowIndex) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Left Side (2 Seats)
+                        _seatItem(rowIndex * 4 + 1),
+                        _seatItem(rowIndex * 4 + 2),
+                        // Aisle
+                        const SizedBox(width: 24),
+                        // Right Side (2 Seats)
+                        _seatItem(rowIndex * 4 + 3),
+                        _seatItem(rowIndex * 4 + 4),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _legendItem(Color color, String label, Color? borderColor) {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+            border: borderColor != null ? Border.all(color: borderColor) : null,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(label, style: GoogleFonts.inter(fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _seatItem(int seatNum) {
+    bool isBooked = false;
+    if (isEditing && widget.trip != null) {
+      isBooked = widget.trip!.bookedSeats.contains(seatNum);
+    }
+
+    // Check local blocked state first, then initial trip blocked state (if editing)
+    bool isBlocked = _blockedSeats.contains(seatNum);
+    // If we initialized _blockedSeats in initState, we don't need to check widget.trip.blockedSeats here explicitly
+    // because initState logic handles it (see below addition to initState).
+
+    Color bgColor = Colors.white;
+    Color? borderColor = Colors.grey.shade400;
+    Color textColor = Colors.black54;
+
+    if (isBooked) {
+      bgColor = Colors.red.shade100;
+      borderColor = Colors.red.shade200;
+      textColor = Colors.red.shade700;
+    } else if (isBlocked) {
+      bgColor = Colors.orange;
+      borderColor = Colors.orange.shade700;
+      textColor = Colors.white;
+    }
+
+    return InkWell(
+      onTap: () {
+        if (isBooked) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Cannot block a booked seat."),
+            duration: Duration(milliseconds: 1000),
+          ));
+          return;
+        }
+        setState(() {
+          if (_blockedSeats.contains(seatNum)) {
+            _blockedSeats.remove(seatNum);
+          } else {
+            _blockedSeats.add(seatNum);
+          }
+        });
+      },
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor),
+        ),
+        child: Center(
+          child: Text(
+            "$seatNum",
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.bold,
+              color: textColor,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

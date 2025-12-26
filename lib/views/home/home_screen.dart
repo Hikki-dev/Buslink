@@ -95,12 +95,33 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         width: double.infinity,
                         color: Colors.amber,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: const Text("Welcome Admin - Preview Mode",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black)),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text("Welcome Admin - Preview Mode",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black)),
+                            const SizedBox(width: 16),
+                            InkWell(
+                              onTap: () => Navigator.pop(context),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12)),
+                                child: const Text("EXIT",
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     DesktopNavBar(
                       selectedIndex: _selectedIndex,

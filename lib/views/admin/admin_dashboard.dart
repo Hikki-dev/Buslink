@@ -6,9 +6,11 @@ import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/app_theme.dart';
+import '../booking/seat_selection_screen.dart';
 import 'admin_screen.dart';
-import 'layout/admin_navbar.dart';
+import 'layout/admin_bottom_nav.dart';
 import 'layout/admin_footer.dart';
+import 'layout/admin_navbar.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -25,10 +27,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
+      bottomNavigationBar:
+          isDesktop ? null : const AdminBottomNav(selectedIndex: 0),
       body: Column(
         children: [
-          // Admin Navbar
-          const AdminNavBar(selectedIndex: 0),
+          // Desktop Nav (Hidden on Mobile inside widget)
+          if (isDesktop) const AdminNavBar(selectedIndex: 0),
+
+          // Mobile Header (If needed, or just use content)
+          // AdminNavBar handles both currently, but we want to strip the bottom nav items from it on mobile?
+          // The AdminNavBar currently has a popup menu for mobile.
+          // We should probably keep the top bar for Logo/Profile but REMOVE the navigation popup if we have bottom nav.
+          if (!isDesktop) const AdminNavBar(selectedIndex: 0),
 
           Expanded(
             child: SingleChildScrollView(
@@ -395,6 +405,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
           // Actions
           if (MediaQuery.of(context).size.width > 600) ...[
+            OutlinedButton.icon(
+                onPressed: () {
+                  // Navigate to Seat Selection as Admin
+                  // We need to pass the trip logic.
+                  // Assuming we can re-use search or pass trip directly
+                  // For now, let's navigate to seat selection.
+                  // But SeatSelection expects a Trip model and searches usually populate 'currentTrip'.
+                  // A cleaner way is to simply push the SeatSelectionScreen with the trip.
+                  // However, SeatSelectionScreen usually relies on `widget.trip`.
+
+                  // Import SeatSelectionScreen is needed.
+                  // We'll fix imports after.
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => SeatSelectionScreen(
+                                trip: trip,
+                                showBackButton: true,
+                              )));
+                },
+                icon: const Icon(Icons.event_seat, size: 18),
+                label: const Text("Book")),
+            const SizedBox(width: 12),
             OutlinedButton(
                 onPressed: () {
                   Navigator.push(
@@ -402,7 +435,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       MaterialPageRoute(
                           builder: (_) => AdminScreen(trip: trip)));
                 },
-                child: const Text("Edit Route")),
+                child: const Text("Edit")),
             const SizedBox(width: 12),
             IconButton(
                 onPressed: () => _confirmDelete(context, controller, trip.id),
@@ -410,6 +443,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ] else ...[
             PopupMenuButton(
               itemBuilder: (context) => [
+                const PopupMenuItem(
+                    value: 'book', child: Text("Book This Trip")), // NEW
                 const PopupMenuItem(value: 'edit', child: Text("Edit Route")),
                 const PopupMenuItem(
                     value: 'delete',
@@ -417,7 +452,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         style: TextStyle(color: Colors.red))),
               ],
               onSelected: (val) {
-                if (val == 'edit') {
+                if (val == 'book') {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => SeatSelectionScreen(
+                                trip: trip,
+                                showBackButton: true,
+                              )));
+                } else if (val == 'edit') {
                   Navigator.push(
                       context,
                       MaterialPageRoute(

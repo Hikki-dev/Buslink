@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
 import 'layout/admin_navbar.dart';
 import 'layout/admin_footer.dart';
+import 'layout/admin_bottom_nav.dart';
 
 class AdminUserManagementScreen extends StatefulWidget {
   const AdminUserManagementScreen({super.key});
@@ -32,9 +34,14 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
       final isDesktop = constraints.maxWidth > 800;
       return Scaffold(
         backgroundColor: Colors.grey.shade50,
+        bottomNavigationBar: isDesktop
+            ? null
+            : const AdminBottomNav(selectedIndex: 1), // Index 1 for Roles
         body: Column(
           children: [
-            const AdminNavBar(selectedIndex: 3), // Index 3 for Roles
+            if (isDesktop) const AdminNavBar(selectedIndex: 3), // Desktop Nav
+            if (!isDesktop)
+              const AdminNavBar(selectedIndex: 3), // Mobile Header
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
@@ -65,9 +72,27 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _buildHeaderTitle(),
-                                  _buildSearchBar(),
+                                  Row(
+                                    children: [
+                                      ElevatedButton.icon(
+                                        onPressed: () =>
+                                            _showAddUserDialog(context),
+                                        icon: const Icon(Icons.add),
+                                        label: const Text("Add User"),
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                AppTheme.primaryColor,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 20, vertical: 16)),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      _buildSearchBar(),
+                                    ],
+                                  ),
                                 ],
                               )
                             else
@@ -76,7 +101,24 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                                 children: [
                                   _buildHeaderTitle(),
                                   const SizedBox(height: 16),
-                                  _buildSearchBar(fullWidth: true),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                          child:
+                                              _buildSearchBar(fullWidth: true)),
+                                      const SizedBox(width: 8),
+                                      ElevatedButton(
+                                        onPressed: () =>
+                                            _showAddUserDialog(context),
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                AppTheme.primaryColor,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.all(16)),
+                                        child: const Icon(Icons.add),
+                                      ),
+                                    ],
+                                  )
                                 ],
                               ),
                             const SizedBox(height: 32),
@@ -146,20 +188,34 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "User Management",
-          style: GoogleFonts.outfit(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.darkText,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.of(context).pop(),
+              tooltip: "Back to Dashboard",
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "User Management",
+              style: GoogleFonts.outfit(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.darkText,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
-        Text(
-          "Manage roles and permissions for all users",
-          style: GoogleFonts.inter(
-            color: Colors.grey.shade500,
-            fontSize: 16,
+        Padding(
+          padding: const EdgeInsets.only(left: 48.0),
+          child: Text(
+            "Manage roles and permissions for all users",
+            style: GoogleFonts.inter(
+              color: Colors.grey.shade500,
+              fontSize: 16,
+            ),
           ),
         ),
       ],
@@ -228,6 +284,11 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
             icon: Icon(Icons.edit_outlined, color: Colors.grey.shade600),
             tooltip: "Edit Role",
             onPressed: () => _showEditRoleDialog(context, uid, name, role),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            tooltip: "Delete User Profile",
+            onPressed: () => _confirmDeleteUser(context, uid, name),
           ),
         ],
       ),
@@ -326,6 +387,125 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
           },
         );
       },
+    );
+  }
+
+  void _showAddUserDialog(BuildContext context) {
+    final controller = Provider.of<TripController>(context, listen: false);
+    final formKey = GlobalKey<FormState>();
+    final nameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final uidCtrl = TextEditingController();
+    String role = 'customer';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(builder: (context, setState) {
+        return AlertDialog(
+          title: const Text("Add User Profile"),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    color: Colors.amber.shade50,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline,
+                            color: Colors.amber, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                            child: Text(
+                                "Use this to manually add a user if they appear in Auth but not here. Copy UID from Firebase Console.",
+                                style: GoogleFonts.inter(fontSize: 12))),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: uidCtrl,
+                    decoration:
+                        const InputDecoration(labelText: "UID (Required)"),
+                    validator: (v) => v!.isEmpty ? "UID is required" : null,
+                  ),
+                  TextFormField(
+                    controller: nameCtrl,
+                    decoration:
+                        const InputDecoration(labelText: "Display Name"),
+                    validator: (v) => v!.isEmpty ? "Name is required" : null,
+                  ),
+                  TextFormField(
+                    controller: emailCtrl,
+                    decoration: const InputDecoration(labelText: "Email"),
+                    validator: (v) => v!.isEmpty ? "Email is required" : null,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: role,
+                    decoration: const InputDecoration(labelText: "Role"),
+                    items: ['customer', 'conductor', 'manager', 'admin']
+                        .map((r) => DropdownMenuItem(
+                            value: r, child: Text(r.toUpperCase())))
+                        .toList(),
+                    onChanged: (v) => setState(() => role = v!),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel")),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  final data = {
+                    'uid': uidCtrl.text.trim(),
+                    'displayName': nameCtrl.text.trim(),
+                    'email': emailCtrl.text.trim(),
+                    'role': role,
+                    'createdAt': FieldValue.serverTimestamp(),
+                  };
+                  controller.createUserProfile(data);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("User profile created locally.")));
+                }
+              },
+              child: const Text("Add User"),
+            )
+          ],
+        );
+      }),
+    );
+  }
+
+  void _confirmDeleteUser(BuildContext context, String uid, String name) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete User Profile?"),
+        content: Text(
+            "Are you sure you want to delete the profile for $name? This does NOT delete their text auth login, only their app data."),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () {
+              Provider.of<TripController>(context, listen: false)
+                  .deleteUserProfile(uid);
+              Navigator.pop(ctx);
+            },
+            child: const Text("Delete"),
+          )
+        ],
+      ),
     );
   }
 
