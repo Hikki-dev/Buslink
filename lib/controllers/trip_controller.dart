@@ -651,6 +651,10 @@ class TripController extends ChangeNotifier {
     return await _service.getTicket(ticketId);
   }
 
+  Future<Ticket?> getTicketById(String ticketId) async {
+    return await _service.getTicket(ticketId);
+  }
+
   Future<void> updateUserRole(String uid, String newRole) async {
     await _service.updateUserRole(uid, newRole);
     notifyListeners();

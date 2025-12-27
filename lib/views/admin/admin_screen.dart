@@ -43,8 +43,6 @@ class _AdminScreenState extends State<AdminScreen> {
   final TextEditingController _seatsController =
       TextEditingController(text: "40");
   final TextEditingController _platformController = TextEditingController();
-  final TextEditingController _busTypeController =
-      TextEditingController(text: "Access / Luxury");
 
   bool get isEditing => widget.trip != null;
 
@@ -153,10 +151,8 @@ class _AdminScreenState extends State<AdminScreen> {
       'busNumber': _busNumberController.text,
       'operatorName': _operatorController.text,
       'totalSeats': int.parse(_seatsController.text),
-      'busType': _busTypeController.text,
       'platformNumber':
           _platformController.text.isEmpty ? 'TBD' : _platformController.text,
-      'features': ['AC', 'WiFi'], // default
       'blockedSeats': _blockedSeats,
     };
 

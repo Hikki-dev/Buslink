@@ -24,6 +24,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   bool _isLoading = true;
   bool _isSuccess = false;
   String _message = "Verifying Payment...";
+  List<Ticket> _verifiedTickets = [];
 
   @override
   void initState() {
@@ -32,57 +33,39 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   }
 
   Future<void> _verifyBooking() async {
-    // 1. Extract params from URL
-    String? bookingId;
+    String? bookingIdParam;
 
-    // Strategy A: Check standard URL query parameters (Works for PathUrlStrategy)
+    // Strategy A: Check standard URL query parameters
     if (kIsWeb) {
-      bookingId = Uri.base.queryParameters['booking_id'];
+      bookingIdParam = Uri.base.queryParameters['booking_id'];
     }
 
-    // Strategy B: Check Flutter Route Name (Works for HashUrlStrategy & Deep Links)
-    // The route name often contains the path + query, e.g. "/payment_success?booking_id=123"
-    // This is checking if the previous check failed OR we want to be robust
-    if (bookingId == null) {
+    // Strategy B: Check Flutter Route Name
+    if (bookingIdParam == null) {
       final routeName = ModalRoute.of(context)?.settings.name;
       if (routeName != null) {
-        // Parse as a URI. We prepend a dummy scheme/host to ensure parsing works if it's just a path
         final uri = Uri.parse("https://dummy.com$routeName");
-        bookingId = uri.queryParameters['booking_id'];
+        bookingIdParam = uri.queryParameters['booking_id'];
       }
     }
 
-    // Strategy C: Direct Fragment Parsing (Web Hash Routing Fallback)
-    // If route settings failed (e.g. onGenerateRoute didn't pass them), try raw URL fragment
-    if (bookingId == null && kIsWeb && Uri.base.hasFragment) {
-      // Fragment usually looks like "/payment_success?booking_id=..."
+    // Strategy C: Fragment Parsing
+    if (bookingIdParam == null && kIsWeb && Uri.base.hasFragment) {
       final fragment = Uri.base.fragment;
-      // Handle cases where fragment might not start with /
       final safeFragment = fragment.startsWith('/') ? fragment : '/$fragment';
       final uri = Uri.parse("https://dummy.com$safeFragment");
-      bookingId = uri.queryParameters['booking_id'];
+      bookingIdParam = uri.queryParameters['booking_id'];
     }
 
-    // Strategy D: Brute Force Regex (Failsafe)
-    // If all else fails, look for booking_id=... pattern in the full URL string
-    if (bookingId == null && kIsWeb) {
-      final fullUrl = Uri.base.toString();
-      final regExp = RegExp(r'booking_id=([^&]*)');
-      final match = regExp.firstMatch(fullUrl);
-      if (match != null) {
-        bookingId = match.group(1);
-      }
-    }
-
-    // Fallback: Check arguments if passed directly (e.g. internal navigation)
-    if (bookingId == null) {
+    // Strategy D: Fallback Args
+    if (bookingIdParam == null) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map) {
-        bookingId = args['booking_id'];
+        bookingIdParam = args['booking_id'];
       }
     }
 
-    if (bookingId == null) {
+    if (bookingIdParam == null) {
       setState(() {
         _isLoading = false;
         _isSuccess = false;
@@ -91,14 +74,38 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       return;
     }
 
-    // 2. Confirm Booking via Controller
-    final controller = Provider.of<TripController>(context, listen: false);
-    final success = await controller.confirmBooking(bookingId);
+    // Handle comma-separated IDs for Bulk Booking
+    final List<String> bookingIds = bookingIdParam.split(',');
 
-    if (success && mounted) {
+    final controller = Provider.of<TripController>(context, listen: false);
+    bool allSuccess = true;
+    List<Ticket> tickets = [];
+
+    try {
+      for (final id in bookingIds) {
+        if (id.trim().isEmpty) continue;
+        final success = await controller.confirmBooking(id.trim());
+        if (!success) {
+          allSuccess = false;
+          break;
+        }
+        // Fetch the verified ticket details
+        // Note: confirmBooking updates currentTicket, but we need to collect them
+        final ticket = await controller.getTicketById(id.trim());
+        if (ticket != null) {
+          tickets.add(ticket);
+        }
+      }
+    } catch (e) {
+      allSuccess = false;
+      debugPrint("Error verifying bookings: $e");
+    }
+
+    if (allSuccess && tickets.isNotEmpty && mounted) {
       setState(() {
         _isLoading = false;
         _isSuccess = true;
+        _verifiedTickets = tickets;
         _message = "Payment Confirmed!";
       });
     } else {
@@ -106,15 +113,25 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         setState(() {
           _isLoading = false;
           _isSuccess = false;
-          _message = "Could not confirm booking. Please contact support.";
+          _message = "Could not verify all bookings. Please contact support.";
         });
       }
     }
   }
 
-  Future<void> _downloadPdf(
-      BuildContext context, Trip trip, Ticket ticket) async {
+  Future<void> _downloadPdf(Ticket ticket) async {
     final doc = pw.Document();
+
+    // Construct Trip from Ticket Data (Snapshot)
+    final tData = ticket.tripData;
+    final tripDate = tData['departureTime'] is Timestamp
+        ? (tData['departureTime'] as Timestamp).toDate()
+        : DateTime.parse(tData['departureTime'].toString());
+
+    final fromCity = tData['fromCity'] ?? '';
+    final toCity = tData['toCity'] ?? '';
+    final busNum = tData['busNumber'] ?? '';
+    final platform = tData['platformNumber'] ?? 'TBD';
 
     doc.addPage(
       pw.Page(
@@ -156,19 +173,18 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                                     style: pw.TextStyle(
                                         fontWeight: pw.FontWeight.bold)),
                                 pw.Text(
-                                    "Date: ${DateFormat('yyyy-MM-dd').format(trip.departureTime)}"),
+                                    "Date: ${DateFormat('yyyy-MM-dd').format(tripDate)}"),
                               ]),
                           pw.Divider(),
-                          pw.Text(
-                              "FROM: ${trip.fromCity}  ->  TO: ${trip.toCity}",
+                          pw.Text("FROM: $fromCity  ->  TO: $toCity",
                               style: pw.TextStyle(
                                   fontSize: 18,
                                   fontWeight: pw.FontWeight.bold)),
                           pw.SizedBox(height: 10),
-                          pw.Text("Bus: ${trip.busNumber}"),
+                          pw.Text("Bus: $busNum"),
                           pw.Text(
-                              "Departure: ${DateFormat('hh:mm a').format(trip.departureTime)}"),
-                          pw.Text("Platform: ${trip.platformNumber}"),
+                              "Departure: ${DateFormat('hh:mm a').format(tripDate)}"),
+                          pw.Text("Platform: $platform"),
                           pw.SizedBox(height: 10),
                           pw.Text("Passenger: ${ticket.passengerName}"),
                           pw.Text("Seats: ${ticket.seatNumbers.join(', ')}"),
@@ -206,49 +222,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Need access to controller for trip/ticket details
-    final controller = Provider.of<TripController>(context);
-    final ticket = controller.currentTicket;
-
-    // Attempt to recover Trip from Ticket if State was lost (Refresh/Redirect)
-    Trip? trip = controller.selectedTrip;
-
-    // If provider trip is missing but we have a ticket with data, reconstruct it
-    if (trip == null && ticket != null && ticket.tripData.isNotEmpty) {
-      try {
-        final tData = ticket.tripData;
-        trip = Trip(
-          id: ticket.tripId,
-          operatorName: tData['operatorName'] ?? 'Operator',
-          busNumber: tData['busNumber'] ?? '',
-          fromCity: tData['fromCity'] ?? '',
-          toCity: tData['toCity'] ?? '',
-          // Timestamp handling
-          departureTime: tData['departureTime'] is Timestamp
-              ? (tData['departureTime'] as Timestamp).toDate()
-              : DateTime.now(),
-          arrivalTime: tData['arrivalTime'] is Timestamp
-              ? (tData['arrivalTime'] as Timestamp).toDate()
-              : DateTime.now().add(const Duration(hours: 4)),
-          // Handle price safely (can be int or double)
-          price: (tData['price'] != null)
-              ? (tData['price'] as num).toDouble()
-              : 0.0,
-          totalSeats: 0,
-          platformNumber: tData['platformNumber'] ?? '',
-          bookedSeats: [],
-          stops: [],
-        );
-      } catch (e) {
-        debugPrint("Error reconstructing trip from ticket: $e");
-      }
-    }
-
     return Scaffold(
       body: Center(
         child: Container(
           padding: const EdgeInsets.all(32),
-          constraints: const BoxConstraints(maxWidth: 500),
+          constraints: const BoxConstraints(maxWidth: 600), // Slightly wider
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -259,172 +237,172 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                   offset: const Offset(0, 10))
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_isLoading) ...[
-                const CircularProgressIndicator(color: Colors.black),
-                const SizedBox(height: 24),
-                Text(_message,
-                    style: GoogleFonts.inter(fontSize: 16, color: Colors.grey)),
-              ] else if (_isSuccess && trip != null && ticket != null) ...[
-                // --- SUCCESS VIEW WITH QR & PDF ---
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check_rounded,
-                      color: Colors.green, size: 40),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  "Booking Confirmed!",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
-                      fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  "Your seat has been reserved.",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 800),
+            child: SingleChildScrollView(
+              // Allow scrolling for multiple tickets
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isLoading) ...[
+                    const CircularProgressIndicator(color: Colors.black),
+                    const SizedBox(height: 24),
+                    Text(_message,
+                        style: GoogleFonts.inter(
+                            fontSize: 16, color: Colors.grey)),
+                  ] else if (_isSuccess && _verifiedTickets.isNotEmpty) ...[
+                    // --- SUCCESS VIEW ---
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check_rounded,
+                          color: Colors.green, size: 40),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Booking Confirmed!",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                          fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      "HERE IS YOUR BOOKING QR\nSHOW THIS TO CONDUCTOR",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
+                          height: 1.2),
+                    ),
+                    const SizedBox(height: 24),
 
-                // QR Code
-                Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade200),
-                        borderRadius: BorderRadius.circular(12)),
-                    child: Column(
-                      children: [
-                        QrImageView(
-                          data: ticket.ticketId,
-                          version: QrVersions.auto,
-                          size: 150,
+                    // List of Tickets
+                    ..._verifiedTickets
+                        .map((ticket) => _buildTicketCard(ticket)),
+
+                    const SizedBox(height: 24),
+
+                    // Home Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const HomeScreen()),
+                              (route) => false);
+                        },
+                        child: Text("Back to Home",
+                            style: GoogleFonts.outfit(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    )
+                  ] else ...[
+                    // --- FAILURE VIEW ---
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.error_outline,
+                          color: Colors.red, size: 40),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Verification Failed",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                          fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _message,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const HomeScreen()),
+                              (route) => false);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey.shade200,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                            "Ticket ID: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
-                            style: GoogleFonts.inter(
-                                fontSize: 12, color: Colors.grey))
-                      ],
-                    )),
-                const SizedBox(height: 24),
-
-                Text(
-                  "HERE IS YOUR BOOKING QR\nSHOW THIS TO CONDUCTOR",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black,
-                      height: 1.2),
-                ),
-                const SizedBox(height: 24),
-
-                // Download Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _downloadPdf(context, trip!, ticket!),
-                    icon:
-                        const Icon(Icons.download_rounded, color: Colors.white),
-                    label: Text("Download PDF Ticket",
-                        style: GoogleFonts.outfit(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Home Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(builder: (_) => const HomeScreen()),
-                          (route) => false);
-                    },
-                    child: Text("Back to Home",
-                        style: GoogleFonts.outfit(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                )
-              ] else ...[
-                // --- FAILURE VIEW ---
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.error_outline,
-                      color: Colors.red, size: 40),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  "Verification Failed",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
-                      fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  _message,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 16),
-                // --- DEBUG INFO ---
-                if (kIsWeb)
-                  SelectableText(
-                    "DEBUG INFO:\nURL: ${Uri.base}\nFragment: ${Uri.base.fragment}\nRoute: ${ModalRoute.of(context)?.settings.name}\nArgs: ${ModalRoute.of(context)?.settings.arguments}",
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.sourceCodePro(
-                        fontSize: 10, color: Colors.grey.shade400),
-                  ),
-                // ------------------
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(builder: (_) => const HomeScreen()),
-                          (route) => false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade200,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text("Go Home",
-                        style: GoogleFonts.outfit(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                )
-              ]
-            ],
+                        child: Text("Go Home",
+                            style: GoogleFonts.outfit(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    )
+                  ]
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildTicketCard(Ticket ticket) {
+    // Extract date for display
+    final tData = ticket.tripData;
+    final dateStr = tData['departureTime'] is Timestamp
+        ? DateFormat('MMM d, yyyy')
+            .format((tData['departureTime'] as Timestamp).toDate())
+        : "Date unavailable";
+
+    return Container(
+        margin: const EdgeInsets.only(bottom: 24),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade200),
+            borderRadius: BorderRadius.circular(12)),
+        child: Column(
+          children: [
+            Text(dateStr,
+                style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold, fontSize: 16)),
+            Text("${tData['fromCity']} ➔ ${tData['toCity']}",
+                style: GoogleFonts.inter(fontSize: 14, color: Colors.grey)),
+            const SizedBox(height: 12),
+            QrImageView(
+              data: ticket.ticketId,
+              version: QrVersions.auto,
+              size: 150,
+            ),
+            const SizedBox(height: 8),
+            Text("Ticket ID: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
+                style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: OutlinedButton.icon(
+                onPressed: () => _downloadPdf(ticket),
+                icon: const Icon(Icons.download_rounded, size: 16),
+                label: const Text("Download PDF"),
+              ),
+            ),
+          ],
+        ));
   }
 }

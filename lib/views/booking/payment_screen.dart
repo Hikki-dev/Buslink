@@ -102,7 +102,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final controller = Provider.of<TripController>(context);
     final trip = controller.selectedTrip!;
     final seats = controller.selectedSeats;
-    final totalAmount = trip.price * seats.length;
+
+    // Calculate total: Price * Seats * Days
+    int days = 1;
+    if (controller.isBulkBooking && controller.bulkDates.isNotEmpty) {
+      days = controller.bulkDates.length;
+    }
+    final totalAmount = trip.price * seats.length * days;
+
     final isDesktop = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
@@ -155,8 +162,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 children: [
                                   Expanded(
                                       flex: 7,
-                                      child: _buildOrderSummary(
-                                          trip, seats, totalAmount)),
+                                      child: _buildOrderSummary(trip, seats,
+                                          totalAmount, controller)),
                                   const SizedBox(width: 48),
                                   Expanded(
                                       flex: 5,
@@ -165,7 +172,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ],
                               ),
                             ] else ...[
-                              _buildOrderSummary(trip, seats, totalAmount),
+                              _buildOrderSummary(
+                                  trip, seats, totalAmount, controller),
                               const SizedBox(height: 32),
                               _buildRedirectAction(context, totalAmount),
                             ],
@@ -184,7 +192,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildOrderSummary(dynamic trip, List<int> seats, double totalAmount) {
+  Widget _buildOrderSummary(dynamic trip, List<int> seats, double totalAmount,
+      TripController controller) {
+    final bool isBulk =
+        controller.isBulkBooking && controller.bulkDates.length > 1;
+
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -215,13 +227,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
           _infoRow("From", trip.fromCity),
           _infoRow("To", trip.toCity),
           const Divider(height: 32),
-          _infoRow("Date",
-              "${trip.departureTime.day}/${trip.departureTime.month}/${trip.departureTime.year}"),
+          if (isBulk) ...[
+            Text("Multi-Day Booking (${controller.bulkDates.length} Days)",
+                style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+            const SizedBox(height: 8),
+            // Show simplified range or list
+            _infoRow("Start Date",
+                "${controller.bulkDates.first.day}/${controller.bulkDates.first.month}/${controller.bulkDates.first.year}"),
+            _infoRow("End Date",
+                "${controller.bulkDates.last.day}/${controller.bulkDates.last.month}/${controller.bulkDates.last.year}"),
+            _infoRow("Total Days", "${controller.bulkDates.length}"),
+          ] else ...[
+            _infoRow("Date",
+                "${trip.departureTime.day}/${trip.departureTime.month}/${trip.departureTime.year}"),
+          ],
           _infoRow("Time",
               "${trip.departureTime.hour}:${trip.departureTime.minute.toString().padLeft(2, '0')}"),
           const Divider(height: 32),
-          _infoRow("Qty", "${seats.length}"),
-          _infoRow("Price per seat", "LKR ${trip.price.toStringAsFixed(0)}"),
+          _infoRow("Qty (Seats per trip)", "${seats.length}"),
+          _infoRow("Base Price", "LKR ${trip.price.toStringAsFixed(0)}"),
           _infoRow("Selected Seats", seats.join(", ")),
           const SizedBox(height: 24),
           Container(
