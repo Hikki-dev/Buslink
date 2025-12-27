@@ -27,6 +27,7 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
 
     setState(() => _isLoading = true);
 
+    // ignore: unused_local_variable
     final controller = Provider.of<TripController>(context, listen: false);
 
     // Create a Route Object (or pseudo-route)
@@ -47,10 +48,6 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
 
     // Simulate saving
     debugPrint("Saving Route Template: $routeData");
-
-    // ignore: unused_local_variable
-    final controller = Provider.of<TripController>(context,
-        listen: false); // ready for future use
 
     // We use a specific method for adding a "Defined Route" if it exists,
     // or we just reuse addRoute with empty recurrence to signify a template.
