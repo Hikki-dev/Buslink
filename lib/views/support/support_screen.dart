@@ -130,6 +130,33 @@ class _SupportScreenState extends State<SupportScreen> {
             ],
 
             const SizedBox(height: 32),
+            Text("Emergency Hotlines",
+                style: GoogleFonts.outfit(
+                    fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                _buildContactCard(
+                    context,
+                    Icons.local_police,
+                    "Police Emergency",
+                    "119",
+                    () => launchUrl(Uri.parse("tel:119"))),
+                _buildContactCard(
+                    context,
+                    Icons.medical_services,
+                    "Suwaseriya Ambulance",
+                    "1990",
+                    () => launchUrl(Uri.parse("tel:1990"))),
+                _buildContactCard(context, Icons.fire_truck, "Fire & Rescue",
+                    "110", () => launchUrl(Uri.parse("tel:110"))),
+                _buildContactCard(context, Icons.directions_bus, "NTC Hotline",
+                    "1955", () => launchUrl(Uri.parse("tel:1955"))),
+              ],
+            ),
+            const SizedBox(height: 32),
             Text("Contact Us Directly",
                 style: GoogleFonts.outfit(
                     fontSize: 20, fontWeight: FontWeight.bold)),

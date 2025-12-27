@@ -11,6 +11,7 @@ import 'admin_screen.dart';
 import 'layout/admin_bottom_nav.dart';
 import 'layout/admin_footer.dart';
 import 'layout/admin_navbar.dart';
+import 'admin_route_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -69,7 +70,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             ],
                           ),
                           const Spacer(),
-                          if (isDesktop) _buildAddRouteButton(context)
+                          if (isDesktop) ...[
+                            _buildAddRouteButton(context),
+                            const SizedBox(width: 16),
+                            _buildAddRouteSimpleButton(context)
+                          ]
                         ],
                       ),
                     ),
@@ -79,7 +84,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                   // Mobile Add Button
                   if (!isDesktop) ...[
-                    _buildAddRouteButton(context),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildAddRouteButton(context),
+                        const SizedBox(width: 16),
+                        _buildAddRouteSimpleButton(context),
+                      ],
+                    ),
                     const SizedBox(height: 24),
                   ],
 
@@ -161,6 +173,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
       label: const Text("Add New Trip"),
       style: ElevatedButton.styleFrom(
         backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildAddRouteSimpleButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AdminRouteScreen()));
+      },
+      icon: const Icon(Icons.alt_route),
+      label: const Text("New Route"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.black87,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
