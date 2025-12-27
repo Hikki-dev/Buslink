@@ -30,7 +30,23 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     if (kIsWeb) {
       final uri = Uri.base; // Current Browser URL
       bookingId = uri.queryParameters['booking_id'];
-      // final sessionId = uri.queryParameters['session_id']; // Can use for Stripe API verification if backend existed
+    } else {
+      // Mobile/Desktop Deep Link Handling
+      // The route name might look like: /payment_success?booking_id=123&session_id=...
+      final routeName = ModalRoute.of(context)?.settings.name;
+      if (routeName != null) {
+        final uri = Uri.parse(
+            "https://dummy.com$routeName"); // dummy scheme to parse query params
+        bookingId = uri.queryParameters['booking_id'];
+      }
+    }
+
+    // Fallback: Check arguments if passed directly
+    if (bookingId == null) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map) {
+        bookingId = args['booking_id'];
+      }
     }
 
     if (bookingId == null) {
