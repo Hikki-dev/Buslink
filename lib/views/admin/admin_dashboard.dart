@@ -249,18 +249,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildSearchInput(
       BuildContext context, TripController controller, bool isDesktop) {
-    // Basic fields
-    final originField = _dropdown(
-        hint: "Origin",
-        value: controller.fromCity,
-        items: AppConstants.cities,
-        onChanged: (v) => controller.setFromCity(v));
+    // Autocomplete fields
+    final originField = _buildAutocomplete(
+        "Origin", controller.fromCity, (v) => controller.setFromCity(v));
 
-    final destField = _dropdown(
-        hint: "Destination",
-        value: controller.toCity,
-        items: AppConstants.cities,
-        onChanged: (v) => controller.setToCity(v));
+    final destField = _buildAutocomplete(
+        "Destination", controller.toCity, (v) => controller.setToCity(v));
 
     final dateField = InkWell(
       onTap: () async {
@@ -317,25 +311,84 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  Widget _dropdown(
-      {required String hint,
-      required String? value,
-      required List<String> items,
-      required Function(String?) onChanged}) {
-    return DropdownButtonFormField<String>(
-      initialValue: items.contains(value) ? value : null,
-      decoration: InputDecoration(
-        labelText: hint,
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade300)),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
-      items:
-          items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-      onChanged: onChanged,
-    );
+  Widget _buildAutocomplete(
+      String label, String? initialValue, Function(String) onSelected) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return Autocomplete<String>(
+        initialValue: TextEditingValue(text: initialValue ?? ''),
+        optionsBuilder: (TextEditingValue textEditingValue) {
+          if (textEditingValue.text == '') {
+            return const Iterable<String>.empty();
+          }
+          return AppConstants.cities.where((String option) {
+            return option
+                .toLowerCase()
+                .contains(textEditingValue.text.toLowerCase());
+          });
+        },
+        onSelected: onSelected,
+        fieldViewBuilder:
+            (context, textEditingController, focusNode, onFieldSubmitted) {
+          // Sync controller if external value changes (simplified)
+          if (initialValue != null &&
+              textEditingController.text != initialValue &&
+              textEditingController.text.isEmpty) {
+            // textEditingController.text = initialValue;
+          }
+
+          return TextFormField(
+            controller: textEditingController,
+            focusNode: focusNode,
+            onFieldSubmitted: (String value) {
+              onFieldSubmitted();
+            },
+            onChanged: (val) {
+              onSelected(val);
+            },
+            decoration: InputDecoration(
+              labelText: label,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300)),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              suffixIcon:
+                  const Icon(Icons.search, size: 20, color: Colors.grey),
+            ),
+            validator: (v) => v == null || v.isEmpty ? "Required" : null,
+          );
+        },
+        optionsViewBuilder: (context, onSelected, options) {
+          return Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 4.0,
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: constraints.maxWidth,
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final String option = options.elementAt(index);
+                    return InkWell(
+                      onTap: () {
+                        onSelected(option);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(option),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    });
   }
 
   Widget _buildResultRow(
