@@ -136,8 +136,22 @@ class RoleDispatcher extends StatelessWidget {
               body: Center(child: Text("Database Error. Check Console.")));
         }
         if (!snapshot.hasData || !snapshot.data!.exists) {
-          debugPrint("!!! USER DOCUMENT MISSING (UID: ${user.uid})");
-          return const HomeScreen(); // Fallback
+          debugPrint(
+              "!!! USER DOCUMENT MISSING (UID: ${user.uid}) - Attempting Self-Healing");
+
+          // --- SELF-HEALING: Create the missing doc ---
+          firestoreService.createUserProfile({
+            'uid': user.uid,
+            'email': user.email,
+            'displayName':
+                user.displayName ?? user.email?.split('@')[0] ?? 'User',
+            'role': 'customer',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          // Show a temporary loading or fallback while it creates
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>?;

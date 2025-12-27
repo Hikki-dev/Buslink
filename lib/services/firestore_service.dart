@@ -317,8 +317,12 @@ class FirestoreService {
     });
   }
 
+  Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
+    await _db.collection('users').doc(uid).update(data);
+  }
+
   Future<void> updateUserRole(String uid, String newRole) async {
-    await _db.collection('users').doc(uid).update({'role': newRole});
+    await updateUserProfile(uid, {'role': newRole});
   }
 
   Future<void> createUserProfile(Map<String, dynamic> userData) {

@@ -1,8 +1,8 @@
 name: buslink
 description: "A new Flutter project."
-publish_to: "none"
 version: 1.0.0+1
 
+publish_to: "none" # Prevents accidental publishing to pub.dev
 environment:
   # FIX 1: Corrected the backtick to a single quote
   sdk: ">=3.0.0 <4.0.0"

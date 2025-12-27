@@ -583,6 +583,14 @@ class TripController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateUserProfile(String uid, String name, String role) async {
+    await _service.updateUserProfile(uid, {
+      'displayName': name,
+      'role': role,
+    });
+    notifyListeners();
+  }
+
   Future<void> createUserProfile(Map<String, dynamic> userData) async {
     await _service.createUserProfile(userData);
     notifyListeners();

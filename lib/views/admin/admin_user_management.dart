@@ -282,8 +282,8 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
           ),
           IconButton(
             icon: Icon(Icons.edit_outlined, color: Colors.grey.shade600),
-            tooltip: "Edit Role",
-            onPressed: () => _showEditRoleDialog(context, uid, name, role),
+            tooltip: "Edit User",
+            onPressed: () => _showEditUserDialog(context, uid, name, role),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -336,9 +336,10 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     );
   }
 
-  void _showEditRoleDialog(
-      BuildContext context, String uid, String name, String currentRole) {
+  void _showEditUserDialog(BuildContext context, String uid, String currentName,
+      String currentRole) {
     final controller = Provider.of<TripController>(context, listen: false);
+    final nameCtrl = TextEditingController(text: currentName);
     String selectedRole = currentRole;
 
     showDialog(
@@ -347,13 +348,20 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text("Manage Roles for $name"),
+              title: const Text("Edit User Profile"),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Assign a role to this user:"),
+                  TextField(
+                    controller: nameCtrl,
+                    decoration:
+                        const InputDecoration(labelText: "Display Name"),
+                  ),
                   const SizedBox(height: 16),
+                  const Text("Role:",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
                   _buildRadioTile("Customer", "customer", selectedRole,
                       (v) => setState(() => selectedRole = v!)),
                   _buildRadioTile("Conductor", "conductor", selectedRole,
@@ -371,10 +379,11 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    controller.updateUserRole(uid, selectedRole);
+                    controller.updateUserProfile(
+                        uid, nameCtrl.text.trim(), selectedRole);
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Role updated to $selectedRole")),
+                      const SnackBar(content: Text("User profile updated!")),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -395,88 +404,121 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
-    final uidCtrl = TextEditingController();
+    final passwordCtrl = TextEditingController();
     String role = 'customer';
+    bool isLoading = false;
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(builder: (context, setState) {
         return AlertDialog(
-          title: const Text("Add User Profile"),
-          content: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    color: Colors.amber.shade50,
-                    child: Row(
-                      children: [
-                        const Icon(Icons.info_outline,
-                            color: Colors.amber, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                            child: Text(
-                                "Use this to manually add a user if they appear in Auth but not here. Copy UID from Firebase Console.",
-                                style: GoogleFonts.inter(fontSize: 12))),
-                      ],
+          title: const Text("Create New User"),
+          content: Container(
+            width: 400,
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline,
+                              color: Colors.blue, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                              child: Text(
+                                  "Creates a NEW login in Firebase Auth + Database Profile.",
+                                  style: GoogleFonts.inter(fontSize: 12))),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: uidCtrl,
-                    decoration:
-                        const InputDecoration(labelText: "UID (Required)"),
-                    validator: (v) => v!.isEmpty ? "UID is required" : null,
-                  ),
-                  TextFormField(
-                    controller: nameCtrl,
-                    decoration:
-                        const InputDecoration(labelText: "Display Name"),
-                    validator: (v) => v!.isEmpty ? "Name is required" : null,
-                  ),
-                  TextFormField(
-                    controller: emailCtrl,
-                    decoration: const InputDecoration(labelText: "Email"),
-                    validator: (v) => v!.isEmpty ? "Email is required" : null,
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: role,
-                    decoration: const InputDecoration(labelText: "Role"),
-                    items: ['customer', 'conductor', 'manager', 'admin']
-                        .map((r) => DropdownMenuItem(
-                            value: r, child: Text(r.toUpperCase())))
-                        .toList(),
-                    onChanged: (v) => setState(() => role = v!),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: nameCtrl,
+                      decoration:
+                          const InputDecoration(labelText: "Display Name"),
+                      validator: (v) => v!.isEmpty ? "Name is required" : null,
+                    ),
+                    TextFormField(
+                      controller: emailCtrl,
+                      decoration: const InputDecoration(labelText: "Email"),
+                      validator: (v) => v!.isEmpty ? "Email is required" : null,
+                    ),
+                    TextFormField(
+                      controller: passwordCtrl,
+                      decoration:
+                          const InputDecoration(labelText: "Initial Password"),
+                      obscureText: true,
+                      validator: (v) => (v == null || v.length < 6)
+                          ? "Password must be at least 6 chars"
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: role,
+                      decoration: const InputDecoration(labelText: "Role"),
+                      items: ['customer', 'conductor', 'manager', 'admin']
+                          .map((r) => DropdownMenuItem(
+                              value: r, child: Text(r.toUpperCase())))
+                          .toList(),
+                      onChanged: (v) => setState(() => role = v!),
+                    ),
+                    if (isLoading)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 16.0),
+                        child: LinearProgressIndicator(),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: isLoading ? null : () => Navigator.pop(context),
                 child: const Text("Cancel")),
             ElevatedButton(
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  final data = {
-                    'uid': uidCtrl.text.trim(),
-                    'displayName': nameCtrl.text.trim(),
-                    'email': emailCtrl.text.trim(),
-                    'role': role,
-                    'createdAt': FieldValue.serverTimestamp(),
-                  };
-                  controller.createUserProfile(data);
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text("User profile created locally.")));
-                }
-              },
-              child: const Text("Add User"),
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      if (formKey.currentState!.validate()) {
+                        setState(() => isLoading = true);
+                        try {
+                          await controller.registerUserAsAdmin(
+                            email: emailCtrl.text.trim(),
+                            password: passwordCtrl.text.trim(),
+                            displayName: nameCtrl.text.trim(),
+                            role: role,
+                          );
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        "User account created successfully!")));
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text("Failed to create user: $e")));
+                          }
+                        } finally {
+                          if (context.mounted) {
+                            setState(() => isLoading = false);
+                          }
+                        }
+                      }
+                    },
+              child: const Text("Create User"),
             )
           ],
         );

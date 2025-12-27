@@ -64,15 +64,19 @@ class AuthService {
 
       // --- COMMON LOGIC: Create user doc if new ---
       final user = userCredential.user;
-      if (user != null &&
-          userCredential.additionalUserInfo?.isNewUser == true) {
-        await _db.collection('users').doc(user.uid).set({
-          'uid': user.uid,
-          'email': user.email,
-          'displayName': user.displayName,
-          'role': 'customer', // Default role
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+      if (user != null) {
+        if (userCredential.additionalUserInfo?.isNewUser == true) {
+          await _db.collection('users').doc(user.uid).set({
+            'uid': user.uid,
+            'email': user.email,
+            'displayName': user.displayName,
+            'role': 'customer', // Default role
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          // Ensure doc exists even for returning users (Self-healing)
+          await _ensureUserDocument(user);
+        }
       }
 
       return userCredential;
