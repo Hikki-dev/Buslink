@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/trip_model.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
+import '../ticket/ticket_screen.dart';
 
 class MyTripsScreen extends StatelessWidget {
   final bool showBackButton;
@@ -139,13 +140,18 @@ class _TripsList extends StatelessWidget {
           );
         }
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(24),
-          itemCount: tickets.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 20),
-          itemBuilder: (context, index) {
-            return _BoardingPassCard(ticket: tickets[index]);
-          },
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: ListView.separated(
+              padding: const EdgeInsets.all(24),
+              itemCount: tickets.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 20),
+              itemBuilder: (context, index) {
+                return _BoardingPassCard(ticket: tickets[index]);
+              },
+            ),
+          ),
         );
       },
     );
@@ -341,7 +347,25 @@ class _BoardingPassCard extends StatelessWidget {
                   child: SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        try {
+                          // Reconstruct trip from ticket data for display
+                          final trip =
+                              Trip.fromMap(ticket.tripData, ticket.tripId);
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TicketScreen(
+                                  ticketArg: ticket, tripArg: trip),
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Error opening ticket: $e")),
+                          );
+                        }
+                      },
                       style: OutlinedButton.styleFrom(
                           side: BorderSide(color: Colors.grey.shade300),
                           shape: RoundedRectangleBorder(

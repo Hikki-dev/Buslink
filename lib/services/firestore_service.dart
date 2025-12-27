@@ -442,4 +442,59 @@ class FirestoreService {
     final updatedSnapshot = await bookingRef.get();
     return Ticket.fromMap(updatedSnapshot.data()!, bookingId);
   }
+
+  // --- ADDED: Offline (Cash) Booking for Conductors ---
+  Future<Ticket> createOfflineBooking(
+      Trip trip, List<int> seats, String passengerName, User? conductor) async {
+    final ticketRef = _db.collection(ticketCollection).doc();
+    final tripRef = _db.collection(tripCollection).doc(trip.id);
+
+    return _db.runTransaction((transaction) async {
+      final freshTripSnap = await transaction.get(tripRef);
+      if (!freshTripSnap.exists) {
+        throw Exception("Trip does not exist!");
+      }
+
+      final freshTrip = Trip.fromFirestore(freshTripSnap);
+
+      // 1. Check Availability
+      for (int seat in seats) {
+        if (freshTrip.bookedSeats.contains(seat)) {
+          throw Exception('Seat $seat is already booked.');
+        }
+      }
+
+      // 2. Reserve Seats
+      transaction.update(tripRef, {
+        'bookedSeats': FieldValue.arrayUnion(seats),
+      });
+
+      // 3. Create Ticket
+      final ticketData = {
+        'ticketId': ticketRef.id,
+        'tripId': trip.id,
+        'userId': conductor?.uid ?? 'offline_admin', // Log who sold it
+        'passengerName': passengerName,
+        'passengerPhone': 'N/A', // Could add field for manual entry later
+        'userEmail': 'offline@buslink.com',
+        'seatNumbers': seats,
+        'totalAmount': trip.price * seats.length,
+        'bookingTime': FieldValue.serverTimestamp(),
+        'status': 'confirmed',
+        'paymentMethod': 'cash',
+        'issuedBy': conductor?.email ?? 'System',
+        'tripData': trip.toMap(),
+      };
+
+      transaction.set(ticketRef, ticketData);
+
+      // Return the created ticket object (approximated timestamps)
+      return Ticket.fromMap(ticketData, ticketRef.id);
+    });
+  }
+
+  // Feedback
+  Future<void> submitFeedback(Map<String, dynamic> feedbackData) async {
+    await _db.collection('feedback').add(feedbackData);
+  }
 }

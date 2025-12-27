@@ -36,41 +36,33 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
     // However, to be useful, we likely need price/duration or we just save a stub.
     // For now, we'll save a "Route" template.
 
+    // Actual implementation
     final routeData = {
       'fromCity': _originController.text,
       'toCity': _destinationController.text,
       'via': _viaController.text,
       'price': double.tryParse(_priceController.text) ?? 0.0,
       'duration': _durationController.text,
-      'operatorName': 'BusLink Official', // Default
-      'busNumber': 'TEMPLATE', // Default for route
+      'operatorName': 'BusLink Official',
+      'busNumber': 'TEMPLATE', // Indicates this is a route definition
+      'isRouteDefinition': true, // Flag to distinguish
     };
 
-    // Simulate saving
-    debugPrint("Saving Route Template: $routeData");
+    try {
+      // Save to 'routes' collection
+      await controller.saveRoute(routeData);
 
-    // We use a specific method for adding a "Defined Route" if it exists,
-    // or we just reuse addRoute with empty recurrence to signify a template.
-    // For this specific user request, we'll implement a simple "Add Route" logic
-    // that might just add it to a 'routes' collection or similar.
-    // Since we don't have a strict 'routes' collection separate from trips in the main logic,
-    // we will simulate this by adding a Trip with 'isTemplate: true' or similar,
-    // OR just use the existing addRoute but with a specific flag.
-
-    // Actually, looking at TripController, 'addRoute' creates trips.
-    // We will just show a success message for now as the user requirement is mainly visual UI "Simple Form".
-
-    // Real implementation:
-    // await controller.saveRouteTemplate(routeData);
-
-    // For now, we simulate success to satisfy the UI flow check.
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Route Added Successfully!")),
-      );
-      Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Route Added Successfully!")),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Error: $e")));
+      }
     }
 
     setState(() => _isLoading = false);
@@ -106,7 +98,7 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 10)
                         ]),
                     child: Column(

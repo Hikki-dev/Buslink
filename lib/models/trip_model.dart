@@ -113,6 +113,76 @@ class Trip {
       blockedSeats: List<int>.from(data['blockedSeats'] ?? []),
     );
   }
+
+  factory Trip.fromMap(Map<String, dynamic> data, String id) {
+    try {
+      return Trip(
+        id: id,
+        operatorName: data['operatorName'] ?? '',
+        busNumber: data['busNumber'] ?? '',
+        fromCity: data['fromCity'] ?? '',
+        toCity: data['toCity'] ?? '',
+        departureTime: (data['departureTime'] is Timestamp)
+            ? (data['departureTime'] as Timestamp).toDate()
+            : (data['departureTime'] is DateTime)
+                ? data['departureTime']
+                : DateTime.now(),
+        arrivalTime: (data['arrivalTime'] is Timestamp)
+            ? (data['arrivalTime'] as Timestamp).toDate()
+            : (data['arrivalTime'] is DateTime)
+                ? data['arrivalTime']
+                : DateTime.now(),
+        price: (data['price'] is num)
+            ? (data['price'] as num).toDouble()
+            : double.tryParse(data['price'].toString()) ?? 0.0,
+        totalSeats: (data['totalSeats'] is int)
+            ? data['totalSeats']
+            : int.tryParse(data['totalSeats'].toString()) ?? 0,
+        platformNumber: data['platformNumber'] ?? 'TBD',
+        status: TripStatus.values.firstWhere(
+          (e) => e.name == (data['status'] ?? 'scheduled'),
+          orElse: () => TripStatus.scheduled,
+        ),
+        delayMinutes: (data['delayMinutes'] is int)
+            ? data['delayMinutes']
+            : int.tryParse(data['delayMinutes'].toString()) ?? 0,
+        bookedSeats: (data['bookedSeats'] is List)
+            ? List<int>.from(data['bookedSeats']
+                .map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0))
+            : [],
+        stops: (data['stops'] is List)
+            ? List<String>.from(data['stops'].map((e) => e.toString()))
+            : [],
+        via: data['via'] ?? '',
+        duration: data['duration'] ?? '',
+        operatingDays: (data['operatingDays'] is List)
+            ? List<int>.from(data['operatingDays']
+                .map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0))
+            : [],
+        isGenerated: data['isGenerated'] ?? false,
+        routeId: data['routeId'],
+        blockedSeats: (data['blockedSeats'] is List)
+            ? List<int>.from(data['blockedSeats']
+                .map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0))
+            : [],
+      );
+    } catch (e) {
+      // Return a safer fallback trip if parsing fails completely
+      return Trip(
+          id: id,
+          operatorName: 'Parse Error',
+          busNumber: 'Err: $e', // Show error in UI
+          fromCity: 'Unknown',
+          toCity: 'Unknown',
+          departureTime: DateTime.now(),
+          arrivalTime: DateTime.now(),
+          price: 0,
+          totalSeats: 0,
+          platformNumber: '',
+          bookedSeats: [],
+          stops: []);
+    }
+  }
 }
 
 class Ticket {

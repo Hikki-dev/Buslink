@@ -7,13 +7,19 @@ import 'payment_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
+import '../../services/auth_service.dart';
+import 'payment_success_screen.dart';
 
 class SeatSelectionScreen extends StatelessWidget {
   final Trip trip;
   final bool showBackButton;
+  final bool isConductorMode;
 
   const SeatSelectionScreen(
-      {super.key, required this.trip, this.showBackButton = false});
+      {super.key,
+      required this.trip,
+      this.showBackButton = false,
+      this.isConductorMode = false});
 
   @override
   Widget build(BuildContext context) {
@@ -263,21 +269,31 @@ class SeatSelectionScreen extends StatelessWidget {
                               const SizedBox(width: 16),
                               ElevatedButton(
                                 onPressed: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (_) =>
-                                              const PaymentScreen()));
+                                  if (isConductorMode) {
+                                    _handleConductorBooking(
+                                        context, controller);
+                                  } else {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const PaymentScreen()));
+                                  }
                                 },
                                 style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.primaryColor,
+                                    backgroundColor: isConductorMode
+                                        ? Colors.green
+                                        : AppTheme.primaryColor,
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 32,
                                         vertical: 20), // Reduced btn padding
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(12))),
-                                child: Text("Proceed to Pay",
+                                child: Text(
+                                    isConductorMode
+                                        ? "Issue Ticket (Cash)"
+                                        : "Proceed to Pay",
                                     style: GoogleFonts.outfit(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
@@ -360,6 +376,86 @@ class SeatSelectionScreen extends StatelessWidget {
       ],
     );
   }
+
+  void _handleConductorBooking(
+      BuildContext context, TripController controller) {
+    // We need to resolve auth service here to get the 'Conductor' user
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = authService.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Conductor not logged in?")));
+      return;
+    }
+
+    final total = trip.price * controller.selectedSeats.length;
+    final TextEditingController nameController = TextEditingController();
+
+    showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+              title: Text("Issue Cash Ticket",
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Review Booking:",
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text("Seats: ${controller.selectedSeats.join(', ')}"),
+                  Text("Total Amount: LKR ${total.toStringAsFixed(0)}",
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                        labelText: "Passenger Name (Optional)",
+                        border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text("Collect cash before confirming.",
+                      style: TextStyle(color: Colors.red, fontSize: 12))
+                ],
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text("Cancel")),
+                ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      final String pName = nameController.text.isEmpty
+                          ? "Offline Passenger"
+                          : nameController.text;
+
+                      final success = await controller.createOfflineBooking(
+                          context, pName, user);
+
+                      if (success && context.mounted) {
+                        final ticket = controller.currentTicket;
+                        if (ticket != null) {
+                          Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const PaymentSuccessScreen(),
+                                  settings: RouteSettings(arguments: {
+                                    'booking_id': ticket.ticketId
+                                  })));
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white),
+                    child: const Text("Confirm & Print"))
+              ],
+            ));
+  }
 }
 
 class _SeatItem extends StatefulWidget {
@@ -384,6 +480,7 @@ class _SeatItemState extends State<_SeatItem> {
     // --- BULK AVAILABILITY LOGIC ---
     // If bulk mode is on, we must check if seat is booked in ANY of the qualifying trips
     bool isBooked = false;
+    bool isBlocked = false;
 
     if (controller.isBulkBooking &&
         controller.bulkSearchResults.isNotEmpty &&
@@ -405,13 +502,16 @@ class _SeatItemState extends State<_SeatItem> {
 
         if (match.bookedSeats.contains(widget.seatNum)) {
           isBooked = true;
-          break; // If booked on ANY day, it's unavailable for bulk
         }
+        if (match.blockedSeats.contains(widget.seatNum)) {
+          isBlocked = true;
+        }
+        if (isBooked || isBlocked) break; // Optimization
       }
     } else {
       // Standard single trip check
-      isBooked = widget.trip.bookedSeats.contains(widget.seatNum) ||
-          (widget.trip.blockedSeats.contains(widget.seatNum));
+      isBooked = widget.trip.bookedSeats.contains(widget.seatNum);
+      isBlocked = widget.trip.blockedSeats.contains(widget.seatNum);
     }
     // -------------------------------
 
@@ -419,25 +519,31 @@ class _SeatItemState extends State<_SeatItem> {
       return const SizedBox(width: 44, height: 44);
     }
 
+    final isUnavailable = isBooked || isBlocked;
+
     return MouseRegion(
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
-      cursor:
-          isBooked ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
+      cursor: isUnavailable
+          ? SystemMouseCursors.forbidden
+          : SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: isBooked ? null : () => controller.toggleSeat(widget.seatNum),
+        onTap:
+            isUnavailable ? null : () => controller.toggleSeat(widget.seatNum),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: isBooked
-                ? Colors.red.shade300 // Booked = Red
-                : widget.isSelected
-                    ? null
-                    : isHovered
-                        ? AppTheme.primaryColor.withValues(alpha: 0.1)
-                        : Colors.white,
+            color: isBlocked
+                ? Colors.amber // Blocked = Yellow
+                : isBooked
+                    ? Colors.red.shade300 // Booked = Red
+                    : widget.isSelected
+                        ? null
+                        : isHovered
+                            ? AppTheme.primaryColor.withValues(alpha: 0.1)
+                            : Colors.white,
             gradient: widget.isSelected
                 ? LinearGradient(
                     begin: Alignment.topLeft,
@@ -451,7 +557,7 @@ class _SeatItemState extends State<_SeatItem> {
             border: Border.all(
                 color: widget.isSelected
                     ? AppTheme.primaryColor
-                    : isBooked
+                    : isUnavailable
                         ? Colors.transparent
                         : isHovered
                             ? AppTheme.primaryColor
@@ -467,20 +573,22 @@ class _SeatItemState extends State<_SeatItem> {
                 : null,
           ),
           child: Center(
-            child: isBooked
-                ? const Icon(Icons.close, size: 16, color: Colors.grey)
-                : Text(
-                    "${widget.seatNum}",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: widget.isSelected
-                          ? Colors.white
-                          : isHovered
-                              ? AppTheme.primaryColor
-                              : Colors.grey.shade700,
-                    ),
-                  ),
+            child: isBlocked
+                ? const Icon(Icons.block, size: 16, color: Colors.black54)
+                : isBooked
+                    ? const Icon(Icons.close, size: 16, color: Colors.grey)
+                    : Text(
+                        "${widget.seatNum}",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: widget.isSelected
+                              ? Colors.white
+                              : isHovered
+                                  ? AppTheme.primaryColor
+                                  : Colors.grey.shade700,
+                        ),
+                      ),
           ),
         ),
       ),

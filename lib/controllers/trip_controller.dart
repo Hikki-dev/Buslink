@@ -106,7 +106,9 @@ class TripController extends ChangeNotifier {
         for (final startTrip in day0Trips) {
           // Check Day 0 capacity
           if ((startTrip.totalSeats - startTrip.bookedSeats.length) <
-              seatsPerTrip) continue;
+              seatsPerTrip) {
+            continue;
+          }
 
           bool isSeriesComplete = true;
 
@@ -141,10 +143,7 @@ class TripController extends ChangeNotifier {
       } else {
         // --- STANDARD SEARCH ---
         // Ensure travelDate is set if not bulk
-        if (travelDate == null) {
-          // Should not happen due to guard clause but safe check
-          travelDate = DateTime.now();
-        }
+        travelDate ??= DateTime.now();
         searchResults = await _service.searchTrips(
           fromCity!,
           toCity!,
@@ -311,6 +310,16 @@ class TripController extends ChangeNotifier {
     _setLoading(false);
   }
 
+  Future<void> saveRoute(Map<String, dynamic> routeData) async {
+    try {
+      await _service.addRoute(routeData);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error saving route: $e");
+      rethrow;
+    }
+  }
+
   // --- ADDED: Delete Trip ---
   Future<void> deleteTrip(BuildContext context, String tripId) async {
     try {
@@ -428,6 +437,33 @@ class TripController extends ChangeNotifier {
         context,
       ).showSnackBar(SnackBar(content: Text("Booking Error: ${e.toString()}")));
       _setLoading(false);
+      return false;
+    }
+  }
+
+  // --- ADDED: Offline Booking Wrapper ---
+  Future<bool> createOfflineBooking(
+      BuildContext context, String passengerName, User conductor) async {
+    if (selectedTrip == null || selectedSeats.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Select a trip and at least one seat.")));
+      return false;
+    }
+
+    _setLoading(true);
+    try {
+      currentTicket = await _service.createOfflineBooking(
+          selectedTrip!, selectedSeats, passengerName, conductor);
+
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _setLoading(false);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Offline Booking Failed: ${e.toString()}")),
+        );
+      }
       return false;
     }
   }
@@ -697,5 +733,14 @@ class TripController extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+  }
+
+  Future<void> submitFeedback(int rating, String comment, String userId) async {
+    await _service.submitFeedback({
+      'userId': userId,
+      'rating': rating,
+      'comment': comment,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
   }
 }

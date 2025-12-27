@@ -12,6 +12,7 @@ import '../layout/conductor_navbar.dart';
 import '../layout/app_footer.dart';
 import '../admin/layout/admin_bottom_nav.dart';
 import 'conductor_trip_management_screen.dart';
+import '../booking/seat_selection_screen.dart';
 
 class ConductorDashboard extends StatefulWidget {
   final bool isAdminView;
@@ -908,21 +909,52 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
   }
 
   Widget _updateButton(Trip trip) {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.push(
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ElevatedButton.icon(
+          onPressed: () {
+            final controller =
+                Provider.of<TripController>(context, listen: false);
+            controller
+                .selectTrip(trip); // Ensure trip is selected in controller
+            Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => ConductorTripManagementScreen(trip: trip)))
-            .then((_) => _loadTripsForDate(_selectedDate));
-      },
-      style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
-      child: Text("Update",
-          style: GoogleFonts.inter(
-              fontWeight: FontWeight.w600, color: Colors.white)),
+                    builder: (_) => SeatSelectionScreen(
+                        trip: trip, isConductorMode: true)));
+          },
+          icon: const Icon(Icons.confirmation_number, size: 16),
+          label: const Text("Sell Ticket"),
+          style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
+        ),
+        const SizedBox(width: 8),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            ConductorTripManagementScreen(trip: trip)))
+                .then((_) => _loadTripsForDate(_selectedDate));
+          },
+          style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
+          child: Text("Update",
+              style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600, color: Colors.white)),
+        ),
+      ],
     );
   }
 }

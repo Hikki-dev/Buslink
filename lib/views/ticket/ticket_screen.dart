@@ -497,6 +497,16 @@ class __FeedbackDialogState extends State<_FeedbackDialog> {
                           content: Text("Please provide a rating")));
                       return;
                     }
+
+                    final user =
+                        Provider.of<AuthService>(context, listen: false)
+                            .currentUser;
+                    if (user != null) {
+                      Provider.of<TripController>(context, listen: false)
+                          .submitFeedback(_rating,
+                              _commentController.text.trim(), user.uid);
+                    }
+
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text("Thank you for your feedback.")));
