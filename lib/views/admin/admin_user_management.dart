@@ -134,6 +134,17 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                                   return const Center(
                                       child: CircularProgressIndicator());
                                 }
+                                if (snapshot.hasError) {
+                                  return Center(
+                                      child: Padding(
+                                    padding: const EdgeInsets.all(40.0),
+                                    child: SelectableText(
+                                        "Error loading users:\n${snapshot.error}",
+                                        textAlign: TextAlign.center,
+                                        style:
+                                            const TextStyle(color: Colors.red)),
+                                  ));
+                                }
                                 if (!snapshot.hasData ||
                                     snapshot.data!.isEmpty) {
                                   return const Center(
@@ -451,7 +462,14 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                     TextFormField(
                       controller: emailCtrl,
                       decoration: const InputDecoration(labelText: "Email"),
-                      validator: (v) => v!.isEmpty ? "Email is required" : null,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return "Email is required";
+                        if (!RegExp(r"^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+                            .hasMatch(v)) {
+                          return "Enter a valid email address";
+                        }
+                        return null;
+                      },
                     ),
                     TextFormField(
                       controller: passwordCtrl,

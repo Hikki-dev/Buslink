@@ -13,6 +13,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLogin = true; // Toggles between Login and Sign Up
@@ -237,190 +238,201 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildAnimatedForm(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Simple fade-in animation logic could be added here,
-    // but for now we stick to a clean layout structure.
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (MediaQuery.of(context).size.width > 900) ...[
-          // Desktop Header inside form
-          Text(
-            'Hello Again! 👋',
-            style: GoogleFonts.outfit(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.darkText,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _isLogin
-                ? 'Welcome back, you\'ve been missed!'
-                : 'Join us and start your journey today.',
-            style: theme.textTheme.bodyMedium?.copyWith(fontSize: 16),
-          ),
-          const SizedBox(height: 48),
-        ] else ...[
-          // Mobile Title
-          Text(
-            _isLogin ? 'Welcome Back' : 'Create Account',
-            style: GoogleFonts.outfit(
-                fontSize: 28,
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (MediaQuery.of(context).size.width > 900) ...[
+            // Desktop Header inside form
+            Text(
+              'Hello Again! 👋',
+              style: GoogleFonts.outfit(
+                fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.darkText),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 40),
-        ],
-
-        // Email Field
-        _buildPremiumTextField(
-          controller: _emailController,
-          label: 'Email Address',
-          hint: 'name@example.com',
-          icon: Icons.email_outlined,
-          theme: theme,
-        ),
-        const SizedBox(height: 20),
-
-        // Password Field
-        _buildPremiumTextField(
-          controller: _passwordController,
-          label: 'Password',
-          hint: '••••••••',
-          icon: Icons.lock_outline,
-          isPassword: true,
-          theme: theme,
-          isPasswordVisible: _isPasswordVisible,
-          onVisibilityToggle: () {
-            setState(() {
-              _isPasswordVisible = !_isPasswordVisible;
-            });
-          },
-        ),
-
-        // Forgot Password?
-        if (_isLogin)
-          Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12.0),
-              child: TextButton(
-                onPressed: () {},
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(0, 0),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  foregroundColor: theme.primaryColor,
-                ),
-                child: const Text("Recovery Password"),
+                color: AppTheme.darkText,
               ),
             ),
-          ),
-
-        const SizedBox(height: 32),
-
-        // Sign In Button
-        if (_isLoading)
-          const Center(child: CircularProgressIndicator())
-        else ...[
-          SizedBox(
-            height: 56,
-            child: ElevatedButton(
-              onPressed: _submitAuthForm,
-              style: ElevatedButton.styleFrom(
-                elevation: 8,
-                shadowColor: theme.primaryColor.withValues(alpha: 0.4),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: Text(
-                _isLogin ? 'Sign In' : 'Sign Up',
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+            const SizedBox(height: 8),
+            Text(
+              _isLogin
+                  ? 'Welcome back, you\'ve been missed!'
+                  : 'Join us and start your journey today.',
+              style: theme.textTheme.bodyMedium?.copyWith(fontSize: 16),
             ),
-          ),
+            const SizedBox(height: 48),
+          ] else ...[
+            // Mobile Title
+            Text(
+              _isLogin ? 'Welcome Back' : 'Create Account',
+              style: GoogleFonts.outfit(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.darkText),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 40),
+          ],
 
-          const SizedBox(height: 32),
+          // Email Field
+          _buildPremiumTextField(
+              controller: _emailController,
+              label: 'Email Address',
+              hint: 'name@example.com',
+              icon: Icons.email_outlined,
+              theme: theme,
+              validator: (v) {
+                if (v == null || v.isEmpty) return "Email is required";
+                if (!RegExp(r"^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+                    .hasMatch(v)) {
+                  return "Enter a valid email address";
+                }
+                return null;
+              }),
+          const SizedBox(height: 20),
 
-          Row(
-            children: [
-              Expanded(
-                  child: Divider(color: Colors.grey.shade200, thickness: 2)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text("Or continue with",
-                    style: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontWeight: FontWeight.w600)),
-              ),
-              Expanded(
-                  child: Divider(color: Colors.grey.shade200, thickness: 2)),
-            ],
-          ),
+          // Password Field
+          _buildPremiumTextField(
+              controller: _passwordController,
+              label: 'Password',
+              hint: '••••••••',
+              icon: Icons.lock_outline,
+              isPassword: true,
+              theme: theme,
+              isPasswordVisible: _isPasswordVisible,
+              onVisibilityToggle: () {
+                setState(() {
+                  _isPasswordVisible = !_isPasswordVisible;
+                });
+              },
+              validator: (v) {
+                if (v == null || v.isEmpty) return "Password is required";
+                if (v.length < 6)
+                  return "Password must be at least 6 characters";
+                return null;
+              }),
 
-          const SizedBox(height: 32),
-
-          // Google Button
-          SizedBox(
-            height: 56,
-            child: OutlinedButton(
-              onPressed: _googleSignIn,
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.grey.shade200, width: 2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                foregroundColor: AppTheme.darkText,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'lib/assets/images/google.jpeg',
-                    height: 24.0,
+          // Recovery Password
+          if (_isLogin)
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12.0),
+                child: TextButton(
+                  onPressed: () {},
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 0),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    foregroundColor: theme.primaryColor,
                   ),
-                  const SizedBox(width: 12),
-                  const Text('Google Account',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ],
+                  child: const Text("Recovery Password"),
+                ),
               ),
             ),
-          ),
 
-          // NO DEV BUTTONS HERE - REMOVED AS REQUESTED
+          const SizedBox(height: 32),
 
-          const SizedBox(height: 48),
-
-          // Toggle Login/Signup
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(_isLogin ? "Not a member? " : "Already a member? ",
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w500)),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isLogin = !_isLogin;
-                  });
-                },
+          // Sign In Button
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else ...[
+            SizedBox(
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _submitAuthForm,
+                style: ElevatedButton.styleFrom(
+                  elevation: 8,
+                  shadowColor: theme.primaryColor.withValues(alpha: 0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
                 child: Text(
-                  _isLogin ? "Register now" : "Sign in",
-                  style: TextStyle(
-                    color: theme.primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  _isLogin ? 'Sign In' : 'Sign Up',
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
-            ],
-          ),
-        ]
-      ],
+            ),
+
+            const SizedBox(height: 32),
+
+            Row(
+              children: [
+                Expanded(
+                    child: Divider(color: Colors.grey.shade200, thickness: 2)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text("Or continue with",
+                      style: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontWeight: FontWeight.w600)),
+                ),
+                Expanded(
+                    child: Divider(color: Colors.grey.shade200, thickness: 2)),
+              ],
+            ),
+
+            const SizedBox(height: 32),
+
+            // Google Button
+            SizedBox(
+              height: 56,
+              child: OutlinedButton(
+                onPressed: _googleSignIn,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.grey.shade200, width: 2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  foregroundColor: AppTheme.darkText,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'lib/assets/images/google.jpeg',
+                      height: 24.0,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('Google Account',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 48),
+
+            // Toggle Login/Signup
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(_isLogin ? "Not a member? " : "Already a member? ",
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w500)),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isLogin = !_isLogin;
+                    });
+                  },
+                  child: Text(
+                    _isLogin ? "Register now" : "Sign in",
+                    style: TextStyle(
+                      color: theme.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ]
+        ],
+      ),
     );
   }
 
@@ -433,14 +445,11 @@ class _LoginScreenState extends State<LoginScreen> {
     bool isPassword = false,
     bool isPasswordVisible = false,
     VoidCallback? onVisibilityToggle,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label above field
-        /* Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.darkText)),
-        const SizedBox(height: 8), */
-
         Container(
           decoration: BoxDecoration(
             color: Colors.grey.shade50,
@@ -454,10 +463,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
-          child: TextField(
+          child: TextFormField(
             controller: controller,
             obscureText: isPassword ? !isPasswordVisible : false,
             style: const TextStyle(fontWeight: FontWeight.w600),
+            validator: validator,
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
