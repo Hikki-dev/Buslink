@@ -40,22 +40,36 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
+      // Variable to hold credential
+      dynamic cred;
+
       if (_isLogin) {
-        await authService.signInWithEmail(
+        cred = await authService.signInWithEmail(
           context,
           email,
           password,
         );
       } else {
-        await authService.signUpWithEmail(
+        cred = await authService.signUpWithEmail(
           context,
           email,
           password,
         );
       }
+
+      // Manual Navigation Fallback
+      if (cred != null && cred.user != null && mounted) {
+        // Stop loading first
+        setState(() => _isLoading = false);
+
+        await Future.delayed(const Duration(milliseconds: 200));
+        if (mounted) {
+          debugPrint("Manual navigation fallback triggered (Email)");
+          Navigator.of(context).pushReplacementNamed('/');
+        }
+        return; // Exit function so finally block doesn't mess with state if unmounted
+      }
     } catch (e) {
-      // Error handling is likely done in AuthService services showing Snackbars,
-      // but strictly we catch here to stop loading spinner.
       debugPrint("Auth Error: $e");
     } finally {
       if (mounted) {
