@@ -91,7 +91,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         }
         // Fetch the verified ticket details
         // Note: confirmBooking updates currentTicket, but we need to collect them
-        final ticket = await controller.getTicketById(id.trim());
+        final ticket = await controller.verifyTicket(id.trim());
         if (ticket != null) {
           tickets.add(ticket);
         }
