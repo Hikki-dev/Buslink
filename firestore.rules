@@ -5,7 +5,8 @@ service cloud.firestore {
     
     // Helper
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || 
+             request.auth.token.email == 'admin@buslink.com';
     }
 
     // User Profiles

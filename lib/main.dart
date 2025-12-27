@@ -140,12 +140,14 @@ class RoleDispatcher extends StatelessWidget {
               "!!! USER DOCUMENT MISSING (UID: ${user.uid}) - Attempting Self-Healing");
 
           // --- SELF-HEALING: Create the missing doc ---
+          final role =
+              (user.email == 'admin@buslink.com') ? 'admin' : 'customer';
           firestoreService.createUserProfile({
             'uid': user.uid,
             'email': user.email,
             'displayName':
                 user.displayName ?? user.email?.split('@')[0] ?? 'User',
-            'role': 'customer',
+            'role': role,
             'createdAt': FieldValue.serverTimestamp(),
           });
 
@@ -155,6 +157,14 @@ class RoleDispatcher extends StatelessWidget {
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>?;
+
+        // Force Admin Role if it's the master email but has wrong role
+        if (user.email == 'admin@buslink.com' && data?['role'] != 'admin') {
+          debugPrint("!!! FORCING ADMIN ROLE FOR MASTER EMAIL !!!");
+          firestoreService.updateUserRole(user.uid, 'admin');
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
+        }
 
         if (data == null) {
           debugPrint(
