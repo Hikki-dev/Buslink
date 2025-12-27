@@ -71,12 +71,29 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
     final authService = Provider.of<AuthService>(context, listen: false);
-    await authService.signInWithGoogle(context);
+
+    // 1. Attempt Sign In
+    final cred = await authService.signInWithGoogle(context);
 
     if (mounted) {
+      // 2. Stop Loading
       setState(() {
         _isLoading = false;
       });
+
+      // 3. Manual Fallback: If we have a user but UI didn't update, force a navigation
+      if (cred != null && cred.user != null) {
+        // We use a small delay to let StreamProvider update first if possible
+        await Future.delayed(const Duration(milliseconds: 200));
+
+        // If we are still on this screen (mounted), force a reload of the app root
+        if (mounted) {
+          debugPrint("Manual navigation fallback triggered");
+          // Navigator.of(context).popUntil((route) => route.isFirst);
+          // This triggers a rebuild of the route, hopefully firing AuthWrapper
+          Navigator.of(context).pushReplacementNamed('/');
+        }
+      }
     }
   }
 

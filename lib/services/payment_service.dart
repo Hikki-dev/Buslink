@@ -125,7 +125,11 @@ class PaymentService {
     } catch (e) {
       debugPrint('Web Error: $e');
       if (context.mounted) {
-        final message = e.toString().replaceAll("Exception: ", "");
+        String message = e.toString().replaceAll("Exception: ", "");
+        if (message.contains("XMLHttpRequest") ||
+            message.contains("ClientException")) {
+          message = "Network blocked: Please disable Ad Blockers.";
+        }
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(message), backgroundColor: Colors.red));
       }
@@ -184,6 +188,13 @@ class PaymentService {
       }
     } catch (e) {
       debugPrint("Checkout Session Create Failed: $e");
+      String errorMsg = e.toString();
+      if (errorMsg.contains('XMLHttpRequest') ||
+          errorMsg.contains('fetch') ||
+          errorMsg.contains('ClientException')) {
+        throw Exception(
+            "Network Error: Please disable Ad Blockers or Privacy Extensions which may be blocking Stripe.");
+      }
       rethrow;
     }
   }

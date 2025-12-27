@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
 import 'layout/admin_navbar.dart';
