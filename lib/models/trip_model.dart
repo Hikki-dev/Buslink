@@ -9,14 +9,14 @@ enum TripStatus {
   cancelled,
   completed,
   onTime,
-  arrived
+  arrived,
+  onWay
 }
 
 class Trip {
   final String id;
   final String operatorName;
   final String busNumber;
-  final String busType;
   final String fromCity;
   final String toCity;
   final DateTime departureTime;
@@ -27,20 +27,18 @@ class Trip {
   TripStatus status;
   int delayMinutes;
   final List<int> bookedSeats;
-  final List<String> features;
   final List<String> stops;
   final String via;
   final String duration;
   final List<int> operatingDays;
   final bool isGenerated;
   final String? routeId;
-  final List<int> blockedSeats; // SEATS UNDER REPAIR or BLOCKED
+  final List<int> blockedSeats;
 
   Trip({
     required this.id,
     required this.operatorName,
     required this.busNumber,
-    required this.busType,
     required this.fromCity,
     required this.toCity,
     required this.departureTime,
@@ -51,7 +49,6 @@ class Trip {
     this.status = TripStatus.scheduled,
     this.delayMinutes = 0,
     required this.bookedSeats,
-    required this.features,
     required this.stops,
     this.via = '',
     this.duration = '',
@@ -68,7 +65,6 @@ class Trip {
     return {
       'operatorName': operatorName,
       'busNumber': busNumber,
-      'busType': busType,
       'fromCity': fromCity,
       'toCity': toCity,
       'departureTime': Timestamp.fromDate(departureTime),
@@ -79,7 +75,6 @@ class Trip {
       'status': status.name,
       'delayMinutes': delayMinutes,
       'bookedSeats': bookedSeats,
-      'features': features,
       'stops': stops,
       'via': via,
       'duration': duration,
@@ -96,7 +91,6 @@ class Trip {
       id: doc.id,
       operatorName: data['operatorName'] ?? '',
       busNumber: data['busNumber'] ?? '',
-      busType: data['busType'] ?? '',
       fromCity: data['fromCity'] ?? '',
       toCity: data['toCity'] ?? '',
       departureTime: (data['departureTime'] as Timestamp).toDate(),
@@ -110,7 +104,6 @@ class Trip {
       ),
       delayMinutes: data['delayMinutes'] ?? 0,
       bookedSeats: List<int>.from(data['bookedSeats'] ?? []),
-      features: List<String>.from(data['features'] ?? []),
       stops: List<String>.from(data['stops'] ?? []),
       via: data['via'] ?? '',
       duration: data['duration'] ?? '',

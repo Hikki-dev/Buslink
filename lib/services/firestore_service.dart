@@ -336,6 +336,18 @@ class FirestoreService {
   // --- 8. Pending Bookings (For Redirect Flows like Stripe Checkout) ---
   Future<String> createPendingBooking(
       Trip trip, List<int> seatNumbers, User user) async {
+    final tripRef = _db.collection('trips').doc(trip.id);
+    final freshTripSnap = await tripRef.get();
+
+    if (freshTripSnap.exists) {
+      final freshTrip = Trip.fromFirestore(freshTripSnap);
+      for (int seat in seatNumbers) {
+        if (freshTrip.bookedSeats.contains(seat)) {
+          throw Exception("Seat(s) no longer available. Please reselect.");
+        }
+      }
+    }
+
     final bookingRef = _db.collection('tickets').doc();
 
     final ticketData = {
@@ -352,6 +364,50 @@ class FirestoreService {
 
     await bookingRef.set(ticketData);
     return bookingRef.id;
+  }
+
+  Future<List<String>> createBulkPendingBookings(
+      List<Trip> trips, List<int> seatNumbers, User user) async {
+    final WriteBatch batch = _db.batch();
+    final List<String> bookingIds = [];
+
+    // 1. Check Availability for ALL trips
+    for (final trip in trips) {
+      final tripRef = _db.collection('trips').doc(trip.id);
+      final freshTripSnap = await tripRef.get();
+      if (freshTripSnap.exists) {
+        final freshTrip = Trip.fromFirestore(freshTripSnap);
+        for (int seat in seatNumbers) {
+          if (freshTrip.bookedSeats.contains(seat)) {
+            throw Exception(
+                "Seat $seat is no longer available on bus ${trip.busNumber} for ${trip.departureTime.toString().split(' ')[0]}.");
+          }
+        }
+      }
+    }
+
+    // 2. Prepare Writes
+    for (final trip in trips) {
+      final bookingRef = _db.collection('tickets').doc();
+      bookingIds.add(bookingRef.id);
+
+      final ticketData = {
+        'tripId': trip.id,
+        'userId': user.uid,
+        'userEmail': user.email,
+        'userName': user.displayName ?? "Traveler",
+        'seatNumbers': seatNumbers,
+        'totalAmount': trip.price * seatNumbers.length,
+        'bookingTime': FieldValue.serverTimestamp(),
+        'status': 'pending_payment',
+        'tripData': trip.toMap(),
+      };
+      batch.set(bookingRef, ticketData);
+    }
+
+    // 3. Commit
+    await batch.commit();
+    return bookingIds;
   }
 
   Future<Ticket?> confirmBooking(String bookingId) async {

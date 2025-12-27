@@ -94,6 +94,15 @@ class ConductorTripManagementScreen extends StatelessWidget {
                 Colors.green.shade600,
                 Icons.departure_board),
             const SizedBox(height: 16),
+            _buildStatusButton(
+                context,
+                controller,
+                currentTrip,
+                "On Way",
+                TripStatus.onWay,
+                Colors.blue.shade600,
+                Icons.directions_bus_filled),
+            const SizedBox(height: 16),
             _buildStatusButton(context, controller, currentTrip, "Arrived",
                 TripStatus.arrived, Colors.green.shade800, Icons.check_circle),
             const SizedBox(height: 16),
@@ -129,6 +138,9 @@ class ConductorTripManagementScreen extends StatelessWidget {
     }
     if (status == TripStatus.arrived || status == TripStatus.departed) {
       return Colors.green;
+    }
+    if (status == TripStatus.onWay) {
+      return Colors.blue;
     }
     return Colors.grey;
   }

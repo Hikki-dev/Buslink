@@ -133,20 +133,9 @@ class _BusListScreenState extends State<BusListScreen> {
           "12 pm to 6 pm",
           "After 6 pm"
         ];
-        final typeOptions = ["AC", "Non-AC", "Sleeper", "Semi-Sleeper"];
-        final amenityOptions = [
-          "Wifi",
-          "Charging Point",
-          "Water Bottle",
-          "Blanket"
-        ];
 
         final selectedTimes =
             _selectedFilters.where((f) => timeOptions.contains(f)).toList();
-        final selectedTypes =
-            _selectedFilters.where((f) => typeOptions.contains(f)).toList();
-        final selectedAmenities =
-            _selectedFilters.where((f) => amenityOptions.contains(f)).toList();
 
         if (selectedTimes.isNotEmpty) {
           bool timeMatch = false;
@@ -166,20 +155,6 @@ class _BusListScreenState extends State<BusListScreen> {
             }
           }
           if (!timeMatch) return false;
-        }
-
-        if (selectedTypes.isNotEmpty) {
-          bool typeMatch = false;
-          for (final filter in selectedTypes) {
-            if (trip.busType.contains(filter)) typeMatch = true;
-          }
-          if (!typeMatch) return false;
-        }
-
-        if (selectedAmenities.isNotEmpty) {
-          for (final filter in selectedAmenities) {
-            if (!trip.features.contains(filter)) return false;
-          }
         }
 
         return true;
@@ -586,7 +561,7 @@ class _BusListScreenState extends State<BusListScreen> {
                       color: Colors.grey.shade700)),
               if (Provider.of<TripController>(context).isBulkBooking)
                 Text(
-                  "Showing valid options for ${Provider.of<TripController>(context).bulkDuration} Consecutive Days",
+                  "Showing valid options for ${Provider.of<TripController>(context).bulkDates.length} Consecutive Days",
                   style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -633,12 +608,6 @@ class _BusListScreenState extends State<BusListScreen> {
           const Divider(height: 32),
           _filterSection("Departure Time",
               ["Before 6 am", "6 am to 12 pm", "12 pm to 6 pm", "After 6 pm"]),
-          const SizedBox(height: 24),
-          _filterSection(
-              "Bus Type", ["AC", "Non-AC", "Sleeper", "Semi-Sleeper"]),
-          const SizedBox(height: 24),
-          _filterSection("Amenities",
-              ["Wifi", "Charging Point", "Water Bottle", "Blanket"]),
         ],
       ),
     );
@@ -778,11 +747,11 @@ class _BusTicketCardState extends State<_BusTicketCard> {
 
     // Bulk Logic
     final totalPrice = controller.isBulkBooking
-        ? trip.price * controller.bulkDuration
+        ? trip.price * controller.bulkDates.length
         : trip.price;
 
     final priceLabel = controller.isBulkBooking
-        ? "LKR ${totalPrice.toStringAsFixed(0)} (x${controller.bulkDuration} Days)"
+        ? "LKR ${totalPrice.toStringAsFixed(0)} (x${controller.bulkDates.length} Days)"
         : "LKR ${trip.price.toStringAsFixed(0)}";
 
     return MouseRegion(
@@ -944,9 +913,6 @@ class _BusTicketCardState extends State<_BusTicketCard> {
       children: [
         _amenityIcon(Icons.wifi, "Wifi"),
         _amenityIcon(Icons.power, "Outlet"),
-        const Spacer(),
-        Text(trip.busType,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
       ],
     );
   }

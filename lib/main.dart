@@ -86,6 +86,7 @@ void main() async {
               // Handle deep links or manual URL typing if needed
               if (settings.name?.startsWith('/payment_success') ?? false) {
                 return MaterialPageRoute(
+                    settings: settings,
                     builder: (_) => const PaymentSuccessScreen());
               }
               return null;

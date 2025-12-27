@@ -42,8 +42,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       // 2. Construct Dynamic Redirect URLs
       // Use Uri.base to get the current domain (works for localhost & vercel)
-      String origin = Uri.base
-          .origin; // e.g., http://localhost:5000 or https://myapp.vercel.app
+      String origin = Uri.base.origin;
+      // Normalize origin: remove trailing slash if present to avoid double slash with /#/
+      if (origin.endsWith('/')) {
+        origin = origin.substring(0, origin.length - 1);
+      }
 
       // Note: We use a hash-friendly pattern if HashRouting is used, or path if PathUrlStrategy.
       // Default Flutter web uses Hash (#).
@@ -83,6 +86,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
+        if (e.toString().contains("Seat(s) no longer available")) {
+          // Navigate back to seat selection after a brief delay
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) Navigator.pop(context);
+          });
+        }
       }
     }
     // Note: If redirect happens, state generally dies here, which is why we saved PendingBooking.

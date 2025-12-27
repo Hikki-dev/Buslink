@@ -90,12 +90,6 @@ class BusDetailsScreen extends StatelessWidget {
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  trip.busType,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: Colors.white.withAlpha(200),
-                  ),
-                ),
               ],
             ),
           ),

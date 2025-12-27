@@ -59,7 +59,7 @@ class SeatSelectionScreen extends StatelessWidget {
                           constraints: const BoxConstraints(maxWidth: 1200),
                           child: Column(
                             children: [
-                              _buildHeader(trip),
+                              _buildHeader(context, trip),
                               const SizedBox(height: 40),
                               _buildLegend(),
                               const SizedBox(height: 40),
@@ -297,10 +297,28 @@ class SeatSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(Trip trip) {
+  Widget _buildHeader(BuildContext context, Trip trip) {
+    final controller = Provider.of<TripController>(context);
+    final isBulk = controller.isBulkBooking && controller.bulkDates.length > 1;
+
     return Column(
       children: [
-        Text("${trip.operatorName} - ${trip.busType}",
+        if (isBulk)
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+                "Multi-Day Booking (${controller.bulkDates.length} Days)",
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold)),
+          ),
+        Text(trip.operatorName,
             style:
                 GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
@@ -369,7 +387,7 @@ class _SeatItemState extends State<_SeatItem> {
 
     if (controller.isBulkBooking &&
         controller.bulkSearchResults.isNotEmpty &&
-        controller.bulkDuration > 1) {
+        controller.bulkDates.length > 1) {
       // We need to find the "corresponding" trip in each day for the currently viewed trip.
       // The `widget.trip` is the "Day 0" trip.
 
@@ -378,13 +396,12 @@ class _SeatItemState extends State<_SeatItem> {
         final dayTrips = controller.bulkSearchResults[i];
 
         // Find matching bus
-        final match = dayTrips.firstWhere(
-            (t) =>
-                t.busNumber == widget.trip.busNumber &&
-                t.operatorName == widget.trip.operatorName,
-            orElse: () => widget
-                .trip // Fallback should ideally not happen due to previous filtering, but safe
-            );
+        final match = dayTrips
+                .where((t) =>
+                    t.busNumber == widget.trip.busNumber &&
+                    t.operatorName == widget.trip.operatorName)
+                .firstOrNull ??
+            widget.trip;
 
         if (match.bookedSeats.contains(widget.seatNum)) {
           isBooked = true;

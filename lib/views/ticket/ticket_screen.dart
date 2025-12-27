@@ -10,19 +10,27 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_theme.dart';
+import '../../services/auth_service.dart';
 import '../home/home_screen.dart';
 
-class TicketScreen extends StatelessWidget {
+class TicketScreen extends StatefulWidget {
   final Trip? tripArg;
   final Ticket? ticketArg;
 
   const TicketScreen({super.key, this.tripArg, this.ticketArg});
 
   @override
+  State<TicketScreen> createState() => _TicketScreenState();
+}
+
+class _TicketScreenState extends State<TicketScreen> {
+  @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
-    final trip = tripArg ?? controller.selectedTrip;
-    final ticket = ticketArg ?? controller.currentTicket;
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = authService.currentUser;
+    final trip = widget.tripArg ?? controller.selectedTrip;
+    final ticket = widget.ticketArg ?? controller.currentTicket;
 
     if (trip == null || ticket == null) {
       return Scaffold(
@@ -44,12 +52,39 @@ class TicketScreen extends StatelessWidget {
             (r) => false,
           ),
         ),
-        title: Text(
-            "Course", // "Course" or "Trip" - kept distinct as requested, maybe "Your Ticket" is better
+        title: Text("Course", // "Course" or "Trip"
             style: GoogleFonts.outfit(
                 color: Colors.black, fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
+          // --- FAVORITE HEART ---
+          if (user != null)
+            FutureBuilder<bool>(
+              future: controller.isRouteFavorite(
+                  user.uid, trip.fromCity, trip.toCity),
+              builder: (context, snapshot) {
+                final isFav = snapshot.data ?? false;
+                return IconButton(
+                  icon: Icon(
+                    isFav ? Icons.favorite : Icons.favorite_border,
+                    color: isFav ? Colors.red : Colors.black,
+                  ),
+                  onPressed: () async {
+                    await controller.toggleRouteFavorite(
+                        user.uid, trip.fromCity, trip.toCity);
+                    setState(() {}); // Refresh state to update icon
+                  },
+                );
+              },
+            ),
+
+          // --- FEEDBACK ---
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline, color: Colors.black),
+            onPressed: () => _showFeedbackDialog(context),
+            tooltip: "Give Feedback",
+          ),
+
           IconButton(
             icon: const Icon(Icons.download_rounded, color: Colors.black),
             onPressed: () => _downloadPdf(context, trip, ticket),
@@ -90,6 +125,13 @@ class TicketScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _showFeedbackDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => _FeedbackDialog(),
     );
   }
 
@@ -353,7 +395,7 @@ class TicketScreen extends StatelessWidget {
                                   fontSize: 18,
                                   fontWeight: pw.FontWeight.bold)),
                           pw.SizedBox(height: 10),
-                          pw.Text("Bus: ${trip.busNumber} (${trip.busType})"),
+                          pw.Text("Bus: ${trip.busNumber}"),
                           pw.Text(
                               "Departure: ${DateFormat('hh:mm a').format(trip.departureTime)}"),
                           pw.Text("Platform: ${trip.platformNumber}"),
@@ -390,5 +432,83 @@ class TicketScreen extends StatelessWidget {
     // Share/Print the PDF
     await Printing.sharePdf(
         bytes: await doc.save(), filename: 'ticket_${ticket.ticketId}.pdf');
+  }
+}
+
+class _FeedbackDialog extends StatefulWidget {
+  @override
+  __FeedbackDialogState createState() => __FeedbackDialogState();
+}
+
+class __FeedbackDialogState extends State<_FeedbackDialog> {
+  int _rating = 0;
+  final TextEditingController _commentController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Give Feedback",
+                  style: GoogleFonts.outfit(
+                      fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Text("Rate your experience",
+                  style: GoogleFonts.inter(color: Colors.grey)),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      index < _rating ? Icons.star : Icons.star_border,
+                      color: Colors.amber,
+                      size: 32,
+                    ),
+                    onPressed: () => setState(() => _rating = index + 1),
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
+              Text("Tell us more (Max 200 chars)",
+                  style: GoogleFonts.inter(color: Colors.grey)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _commentController,
+                maxLength: 200,
+                maxLines: 3,
+                decoration: InputDecoration(
+                    hintText: "Review...",
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12))),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_rating == 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text("Please provide a rating")));
+                      return;
+                    }
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Thank you for your feedback.")));
+                  },
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white),
+                  child: const Text("Submit Feedback"),
+                ),
+              )
+            ],
+          ),
+        ));
   }
 }

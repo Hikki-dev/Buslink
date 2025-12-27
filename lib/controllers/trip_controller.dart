@@ -35,71 +35,99 @@ class TripController extends ChangeNotifier {
 
   // --- Bulk Booking State ---
   bool isBulkBooking = false;
-  int bulkDuration = 1; // Default 1 day
-  List<List<Trip>> bulkSearchResults =
-      []; // List of days, each day has list of trips
+  List<DateTime> bulkDates = [];
+  int seatsPerTrip = 1;
+  List<List<Trip>> bulkSearchResults = []; // Matrix: [DayIndex][Trips]
 
   void setBulkMode(bool enabled) {
     isBulkBooking = enabled;
     if (enabled) {
-      if (bulkDuration < 2) bulkDuration = 2; // Default for bulk
-    } else {
-      bulkDuration = 1; // Reset for single
+      // Default to today and tomorrow if empty
+      if (bulkDates.isEmpty) {
+        final now = DateTime.now();
+        bulkDates = [now, now.add(const Duration(days: 1))];
+      }
     }
     notifyListeners();
   }
 
-  void setBulkDuration(int duration) {
-    bulkDuration = duration;
+  void setBulkDates(List<DateTime> dates) {
+    bulkDates = dates;
+    // Sort dates
+    bulkDates.sort();
+    notifyListeners();
+  }
+
+  void setSeatsPerTrip(int seats) {
+    seatsPerTrip = seats;
     notifyListeners();
   }
 
   Future<void> searchTrips(BuildContext context) async {
-    if (fromCity == null || toCity == null || travelDate == null) {
+    if (fromCity == null ||
+        toCity == null ||
+        (bulkDates.isEmpty && travelDate == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select cities and date")),
+        const SnackBar(content: Text("Please select cities and date(s)")),
       );
       return;
     }
     _setLoading(true);
 
     try {
-      if (isBulkBooking && bulkDuration > 1) {
+      if (isBulkBooking && bulkDates.isNotEmpty) {
         // --- BULK SEARCH LOGIC ---
         bulkSearchResults = [];
-        for (int i = 0; i < bulkDuration; i++) {
-          final targetDate = travelDate!.add(Duration(days: i));
+
+        // 1. Fetch trips for each date
+        for (final date in bulkDates) {
           final tripsForDay = await _service.searchTrips(
             fromCity!,
             toCity!,
-            targetDate,
+            date,
           );
           bulkSearchResults.add(tripsForDay);
         }
 
-        // Now we need to filter: Only show "Series" where a compatible bus exists on ALL days.
-        // A "Series" is defined by matching busNumber & operatorName & approx departure time.
-        // For simplicity, we'll just filter Day 0 trips that have matching counterparts in Day 1..N
+        if (bulkSearchResults.isEmpty) {
+          searchResults = [];
+          _setLoading(false);
+          return;
+        }
 
-        // However, the UI expects a flat list of "Options".
-        // We will store the full matrix in `bulkSearchResults` for later processing
-        // but populating `searchResults` with the "Day 1" trips that are valid candidates is a good strategy for the UI standard list.
+        // 2. Filter: Find "Series"
+        // A series matches if a bus with same Number & Operator exists on ALL dates
+        // AND has enough capacity (total - booked >= seatsPerTrip)
+        // AND isn't cancelled.
 
         final day0Trips = bulkSearchResults[0];
         final List<Trip> validSeriesStarters = [];
 
         for (final startTrip in day0Trips) {
+          // Check Day 0 capacity
+          if ((startTrip.totalSeats - startTrip.bookedSeats.length) <
+              seatsPerTrip) continue;
+
           bool isSeriesComplete = true;
 
-          for (int i = 1; i < bulkDuration; i++) {
+          for (int i = 1; i < bulkSearchResults.length; i++) {
             final dayTrips = bulkSearchResults[i];
-            // Find a matching trip based on Bus Number
-            // (Assuming Bus Number is unique per route/day or at least distinct enough)
-            final bool hasMatch = dayTrips.any((t) =>
-                t.busNumber == startTrip.busNumber &&
-                t.operatorName == startTrip.operatorName);
 
-            if (!hasMatch) {
+            // Find match
+            final matchingTrip = dayTrips
+                .where((t) =>
+                    t.busNumber == startTrip.busNumber &&
+                    t.operatorName == startTrip.operatorName)
+                .firstOrNull;
+
+            if (matchingTrip == null) {
+              isSeriesComplete = false;
+              break;
+            }
+
+            // Check capacity for matching trip
+            if ((matchingTrip.totalSeats - matchingTrip.bookedSeats.length) <
+                seatsPerTrip) {
               isSeriesComplete = false;
               break;
             }
@@ -112,6 +140,11 @@ class TripController extends ChangeNotifier {
         searchResults = validSeriesStarters;
       } else {
         // --- STANDARD SEARCH ---
+        // Ensure travelDate is set if not bulk
+        if (travelDate == null) {
+          // Should not happen due to guard clause but safe check
+          travelDate = DateTime.now();
+        }
         searchResults = await _service.searchTrips(
           fromCity!,
           toCity!,
@@ -236,7 +269,6 @@ class TripController extends ChangeNotifier {
           final Map<String, dynamic> tripMap = {
             'operatorName': routeData['operatorName'],
             'busNumber': routeData['busNumber'],
-            'busType': routeData['busType'],
             'fromCity': routeData['fromCity'],
             'toCity': routeData['toCity'],
             'departureTime': Timestamp.fromDate(tripDeparture),
@@ -247,7 +279,6 @@ class TripController extends ChangeNotifier {
             'status': 'onTime', // Default
             'delayMinutes': 0,
             'bookedSeats': [],
-            'features': routeData['features'],
             'stops': routeData['stops'],
             'via': routeData['via'] ?? '',
             'duration': routeData['duration'] ?? '',
@@ -309,15 +340,57 @@ class TripController extends ChangeNotifier {
     if (selectedTrip == null || selectedSeats.isEmpty) return null;
     _setLoading(true);
     try {
-      final bookingId = await _service.createPendingBooking(
-          selectedTrip!, selectedSeats, user);
-      return bookingId;
+      // --- TIME LIMIT CHECK (Only check Day 0 for simplicity, or all?) ---
+      // For bulk, Day 0 is closest.
+      final trip = selectedTrip!;
+      final timeDifference = trip.departureTime.difference(DateTime.now());
+
+      if (timeDifference.inHours < 2) {
+        final userDoc = await _service.getUserData(user.uid);
+        final role =
+            (userDoc.data() as Map<String, dynamic>?)?['role'] ?? 'customer';
+
+        if (role != 'conductor' && role != 'admin') {
+          throw Exception("Booking closes 2 hours before departure.");
+        }
+      }
+
+      if (isBulkBooking && bulkDates.length > 1) {
+        // --- BULK CREATION ---
+        final List<Trip> tripsToBook = [];
+
+        // Find matching trips in bulkSearchResults
+        // day0 is selectedTrip.
+        tripsToBook.add(selectedTrip!);
+
+        for (int i = 1; i < bulkSearchResults.length; i++) {
+          final dayTrips = bulkSearchResults[i];
+          final match = dayTrips
+              .where((t) =>
+                  t.busNumber == selectedTrip!.busNumber &&
+                  t.operatorName == selectedTrip!.operatorName)
+              .firstOrNull;
+
+          if (match != null) {
+            tripsToBook.add(match);
+          }
+        }
+
+        // Call service to batch create
+        final List<String> bookingIds = await _service
+            .createBulkPendingBookings(tripsToBook, selectedSeats, user);
+
+        return bookingIds.join(","); // Return comma separated IDs
+      } else {
+        // --- SINGLE CREATION ---
+        final bookingId = await _service.createPendingBooking(
+            selectedTrip!, selectedSeats, user);
+        return bookingId;
+      }
     } catch (e) {
       debugPrint("Error creating pending booking: $e");
-      return null;
+      rethrow;
     } finally {
-      // Don't disable loading yet if we are redirecting...
-      // Actually, we can disable it, the UI will handle the redirect spinner.
       _setLoading(false);
     }
   }

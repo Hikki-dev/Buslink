@@ -7,7 +7,9 @@ import '../../services/auth_service.dart';
 
 class FavoritesScreen extends StatelessWidget {
   final bool showBackButton;
-  const FavoritesScreen({super.key, this.showBackButton = true});
+  final VoidCallback? onBookNow;
+  const FavoritesScreen(
+      {super.key, this.showBackButton = true, this.onBookNow});
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +86,20 @@ class FavoritesScreen extends StatelessWidget {
                           );
                         }
                       },
+                      onBook: () {
+                        // 1. Pre-fill Search
+                        controller.setFromCity(fav['fromCity']);
+                        controller.setToCity(fav['toCity']);
+
+                        // 2. Navigate
+                        if (onBookNow != null) {
+                          onBookNow!();
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                              content: Text(
+                                  "Search criteria updated. Go to Home to search.")));
+                        }
+                      },
                     );
                   },
                 );
@@ -99,6 +115,7 @@ class _FavoriteItemCard extends StatelessWidget {
   final String operator;
   final String price;
   final VoidCallback onRemove;
+  final VoidCallback onBook;
 
   const _FavoriteItemCard({
     required this.from,
@@ -106,6 +123,7 @@ class _FavoriteItemCard extends StatelessWidget {
     required this.operator,
     required this.price,
     required this.onRemove,
+    required this.onBook,
   });
 
   @override
@@ -196,11 +214,7 @@ class _FavoriteItemCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text("Searching for this route...")));
-                      // Navigate to search
-                    },
+                    onPressed: onBook,
                     style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         shape: RoundedRectangleBorder(

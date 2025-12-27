@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final List<Widget> pages = [
       _HomeContent(isAdminView: widget.isAdminView),
       const MyTripsScreen(showBackButton: false),
-      const FavoritesScreen(showBackButton: false),
+      FavoritesScreen(showBackButton: false, onBookNow: () => _onItemTapped(0)),
       const ProfileScreen(),
     ];
 
@@ -553,9 +553,9 @@ class _SearchCardState extends State<_SearchCard>
   }
 
   void _selectDate(BuildContext context, TripController controller) async {
-    final DateTime? picked = await showDatePicker(
+    if (controller.isBulkBooking) {
+      final DateTimeRange? picked = await showDateRangePicker(
         context: context,
-        initialDate: DateTime.now(),
         firstDate: DateTime.now(),
         lastDate: DateTime.now().add(const Duration(days: 90)),
         builder: (context, child) {
@@ -566,9 +566,35 @@ class _SearchCardState extends State<_SearchCard>
             ),
             child: child!,
           );
-        });
-    if (picked != null) {
-      controller.setDate(picked);
+        },
+      );
+
+      if (picked != null) {
+        // Generate list of dates
+        List<DateTime> dates = [];
+        for (int i = 0; i <= picked.end.difference(picked.start).inDays; i++) {
+          dates.add(picked.start.add(Duration(days: i)));
+        }
+        controller.setBulkDates(dates);
+      }
+    } else {
+      final DateTime? picked = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime.now(),
+          lastDate: DateTime.now().add(const Duration(days: 90)),
+          builder: (context, child) {
+            return Theme(
+              data: ThemeData.light().copyWith(
+                colorScheme:
+                    ColorScheme.fromSeed(seedColor: AppTheme.primaryColor),
+              ),
+              child: child!,
+            );
+          });
+      if (picked != null) {
+        controller.setDate(picked);
+      }
     }
   }
 
@@ -635,26 +661,44 @@ class _SearchCardState extends State<_SearchCard>
                   ),
                   const Text("Bulk / Multi-day Booking",
                       style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: "Book the same bus for multiple days in one go.",
+                    child: Icon(Icons.info_outline,
+                        size: 16, color: Colors.grey.shade600),
+                  ),
                   if (controller.isBulkBooking) ...[
-                    const SizedBox(width: 16),
-                    Container(height: 20, width: 1, color: Colors.grey),
-                    const SizedBox(width: 16),
-                    Text("Duration:",
-                        style: TextStyle(color: Colors.grey.shade600)),
-                    const SizedBox(width: 8),
-                    DropdownButton<int>(
-                      value: controller.bulkDuration,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      underline: Container(),
-                      items: [2, 3, 4, 5, 6, 7].map((int value) {
-                        return DropdownMenuItem<int>(
-                          value: value,
-                          child: Text("$value Days"),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) controller.setBulkDuration(val);
-                      },
+                    const Spacer(),
+                    // Seats Selector
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300)),
+                      child: Row(
+                        children: [
+                          Icon(Icons.event_seat,
+                              size: 16, color: Colors.grey.shade600),
+                          const SizedBox(width: 8),
+                          DropdownButton<int>(
+                            value: controller.seatsPerTrip,
+                            underline: Container(),
+                            icon:
+                                const Icon(Icons.keyboard_arrow_down, size: 16),
+                            style: GoogleFonts.inter(
+                                fontSize: 14, color: Colors.black),
+                            items: [1, 2, 3, 4, 5, 10]
+                                .map((e) => DropdownMenuItem(
+                                      value: e,
+                                      child: Text("$e Seats"),
+                                    ))
+                                .toList(),
+                            onChanged: (v) =>
+                                controller.setSeatsPerTrip(v ?? 1),
+                          ),
+                        ],
+                      ),
                     )
                   ]
                 ],
@@ -868,13 +912,19 @@ class _SearchCardState extends State<_SearchCard>
                     size: 18, color: AppTheme.primaryColor),
                 const SizedBox(width: 12),
                 Text(
-                  controller.travelDate != null
-                      ? DateFormat('EEE, d MMM yyyy')
-                          .format(controller.travelDate!)
-                      : "Select Date",
+                  controller.isBulkBooking
+                      ? (controller.bulkDates.isNotEmpty
+                          ? "${DateFormat('MMM d').format(controller.bulkDates.first)} - ${DateFormat('MMM d').format(controller.bulkDates.last)}"
+                          : "Select Date Range")
+                      : (controller.travelDate != null
+                          ? DateFormat('EEE, d MMM yyyy')
+                              .format(controller.travelDate!)
+                          : "Select Date"),
                   style: GoogleFonts.inter(
                       fontWeight: FontWeight.w600,
-                      color: controller.travelDate != null
+                      color: (controller.isBulkBooking
+                              ? controller.bulkDates.isNotEmpty
+                              : controller.travelDate != null)
                           ? Colors.black
                           : Colors.grey.shade400),
                 ),
@@ -891,7 +941,8 @@ class _SearchCardState extends State<_SearchCard>
       onPressed: () {
         if (controller.fromCity == null ||
             controller.toCity == null ||
-            controller.travelDate == null) {
+            (!controller.isBulkBooking && controller.travelDate == null) ||
+            (controller.isBulkBooking && controller.bulkDates.isEmpty)) {
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Please fill all fields")));
           return;

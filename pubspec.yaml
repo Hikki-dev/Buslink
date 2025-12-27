@@ -24,7 +24,7 @@ dependencies:
   qr_flutter: ^4.1.0
   cupertino_icons: ^1.0.8
   google_fonts: ^6.3.3
-  url_launcher: ^6.3.1
+  url_launcher: ^6.3.2
   flutter_stripe: ^12.1.1
   flutter_stripe_web: ^7.1.1
   pdf: ^3.10.7

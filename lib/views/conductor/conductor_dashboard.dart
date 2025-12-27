@@ -489,6 +489,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   const SizedBox(height: 16),
                   _ticketDetailRow("Passenger", ticket.passengerName),
                   _ticketDetailRow("Seats", ticket.seatNumbers.join(", ")),
+                  _ticketDetailRow("Quantity", "${ticket.seatNumbers.length}"),
                   _ticketDetailRow(
                       "Bus No", ticket.tripData['busNumber'] ?? 'N/A'),
                   _ticketDetailRow(

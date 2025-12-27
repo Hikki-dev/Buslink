@@ -158,7 +158,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             MaterialPageRoute(builder: (_) => const AdminScreen(trip: null)));
       },
       icon: const Icon(Icons.add),
-      label: const Text("Add New Route"),
+      label: const Text("Add New Trip"),
       style: ElevatedButton.styleFrom(
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
@@ -375,17 +375,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       style: GoogleFonts.outfit(
                           fontWeight: FontWeight.bold, fontSize: 18),
                     ),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(4)),
-                      child: Text(trip.busType,
-                          style: GoogleFonts.inter(
-                              fontSize: 10, fontWeight: FontWeight.bold)),
-                    )
                   ],
                 ),
                 const SizedBox(height: 8),

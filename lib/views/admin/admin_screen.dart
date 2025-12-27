@@ -299,17 +299,15 @@ class _AdminScreenState extends State<AdminScreen> {
                                 Row(
                                   children: [
                                     Expanded(
-                                        child: _buildDropdown(
+                                        child: _buildCityAutocomplete(
                                             "From (Origin)",
                                             _fromCity,
-                                            AppConstants.cities,
                                             (v) => _fromCity = v)),
                                     const SizedBox(width: 16),
                                     Expanded(
-                                        child: _buildDropdown(
+                                        child: _buildCityAutocomplete(
                                             "To (Destination)",
                                             _toCity,
-                                            AppConstants.cities,
                                             (v) => _toCity = v)),
                                   ],
                                 ),
@@ -643,6 +641,74 @@ class _AdminScreenState extends State<AdminScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildCityAutocomplete(
+      String label, String? initialValue, Function(String) onSelected) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return Autocomplete<String>(
+        initialValue: TextEditingValue(text: initialValue ?? ''),
+        optionsBuilder: (TextEditingValue textEditingValue) {
+          if (textEditingValue.text == '') {
+            return const Iterable<String>.empty();
+          }
+          return AppConstants.cities.where((String option) {
+            return option
+                .toLowerCase()
+                .contains(textEditingValue.text.toLowerCase());
+          });
+        },
+        onSelected: onSelected,
+        fieldViewBuilder:
+            (context, textEditingController, focusNode, onFieldSubmitted) {
+          return TextFormField(
+            controller: textEditingController,
+            focusNode: focusNode,
+            onFieldSubmitted: (String value) {
+              onFieldSubmitted();
+            },
+            onChanged: (val) {
+              // Also update on change to support free text or ensure state capture if not selected from list
+              onSelected(val);
+            },
+            decoration: InputDecoration(
+              labelText: label,
+              border: const OutlineInputBorder(),
+              suffixIcon: const Icon(Icons.search),
+            ),
+            validator: (v) => v == null || v.isEmpty ? "Required" : null,
+          );
+        },
+        optionsViewBuilder: (context, onSelected, options) {
+          return Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 4.0,
+              child: SizedBox(
+                width: constraints.maxWidth,
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final String option = options.elementAt(index);
+                    return InkWell(
+                      onTap: () {
+                        onSelected(option);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(option),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    });
   }
 
   Widget _buildDropdown(String label, String? value, List<String> items,
