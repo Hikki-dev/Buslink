@@ -6,6 +6,9 @@ import '../../utils/app_theme.dart';
 import '../support/support_screen.dart';
 import '../home/home_screen.dart';
 import '../auth/login_screen.dart';
+import '../booking/my_trips_screen.dart';
+import '../favorites/favorites_screen.dart';
+import '../profile/profile_screen.dart';
 
 class DesktopNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -323,10 +326,33 @@ class DesktopNavBar extends StatelessWidget {
           if (onTap != null) {
             onTap!(index);
           } else {
-            Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const HomeScreen()),
-                (route) => false);
+            // Direct Navigation
+            Widget page;
+            switch (index) {
+              case 0:
+                page = const HomeScreen();
+                break;
+              case 1:
+                page = const MyTripsScreen();
+                break;
+              case 2:
+                // Check if Favorites exists, else placeholder or import
+                // Assuming it's imported above
+                page = const FavoritesScreen();
+                break;
+              case 3:
+                page = const ProfileScreen();
+                break;
+              default:
+                page = const HomeScreen();
+            }
+
+            if (index == 0) {
+              Navigator.pushAndRemoveUntil(context,
+                  MaterialPageRoute(builder: (_) => page), (route) => false);
+            } else {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+            }
           }
         },
         child: MouseRegion(
