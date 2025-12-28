@@ -102,10 +102,15 @@
           var loader = document.getElementById("loading-indicator");
           if (loader) {
             console.warn("Force removing spinner via Failsafe");
+
+            // Log BEFORE removing the element, because debug-log is a child of loader
+            var debugLog = document.getElementById("debug-log");
+            if (debugLog) {
+              debugLog.innerText += " | Timeout (Auto-Removed)";
+              debugLog.style.color = "orange";
+            }
+
             loader.remove();
-            document.getElementById("debug-log").innerText +=
-              " | Timeout (Auto-Removed)";
-            document.getElementById("debug-log").style.color = "orange";
           }
         }, 6000);
       });

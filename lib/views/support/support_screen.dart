@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../utils/app_theme.dart';
 import '../layout/desktop_navbar.dart';
@@ -22,16 +21,25 @@ class _SupportScreenState extends State<SupportScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Oop!",
-            style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
-        content: Text(message, style: const TextStyle(fontFamily: 'Inter', )),
+        backgroundColor: Theme.of(context).cardColor,
+        title: Text("Oops!",
+            style: TextStyle(
+                fontFamily: 'Outfit',
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface)),
+        content: Text(message,
+            style: TextStyle(
+                fontFamily: 'Inter',
+                color: Theme.of(context).colorScheme.onSurface)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text("Okay",
-                style: TextStyle(fontFamily: 'Outfit', 
-                    fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor)),
           )
         ],
       ),
@@ -74,11 +82,14 @@ class _SupportScreenState extends State<SupportScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
         title: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-        content: const Text(
+        content: Text(
           "Message Sent Successfully! We'll allow you to track it soon.",
           textAlign: TextAlign.center,
-          style: TextStyle(fontFamily: 'Inter', ),
+          style: TextStyle(
+              fontFamily: 'Inter',
+              color: Theme.of(context).colorScheme.onSurface),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
@@ -92,8 +103,10 @@ class _SupportScreenState extends State<SupportScreen> {
               _messageController.clear();
             },
             child: const Text("Great",
-                style: TextStyle(fontFamily: 'Outfit', 
-                    fontWeight: FontWeight.bold, color: Colors.green)),
+                style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green)),
           )
         ],
       ),
@@ -102,6 +115,9 @@ class _SupportScreenState extends State<SupportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth > 800;
@@ -130,9 +146,12 @@ class _SupportScreenState extends State<SupportScreen> {
             ],
 
             const SizedBox(height: 32),
-            const Text("Emergency Hotlines",
-                style: TextStyle(fontFamily: 'Outfit', 
-                    fontSize: 20, fontWeight: FontWeight.bold)),
+            Text("Emergency Hotlines",
+                style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textColor)),
             const SizedBox(height: 16),
             Wrap(
               spacing: 16,
@@ -157,9 +176,12 @@ class _SupportScreenState extends State<SupportScreen> {
               ],
             ),
             const SizedBox(height: 32),
-            const Text("Contact Us Directly",
-                style: TextStyle(fontFamily: 'Outfit', 
-                    fontSize: 20, fontWeight: FontWeight.bold)),
+            Text("Contact Us Directly",
+                style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textColor)),
             const SizedBox(height: 16),
             Wrap(
               spacing: 16,
@@ -217,15 +239,17 @@ class _SupportScreenState extends State<SupportScreen> {
         } else {
           // Mobile View
           return Scaffold(
-            backgroundColor: Colors.grey.shade50,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
-              title: const Text("Help & Support",
-                  style: TextStyle(fontFamily: 'Outfit', 
-                      color: Colors.black, fontWeight: FontWeight.bold)),
-              backgroundColor: Colors.white,
+              title: Text("Help & Support",
+                  style: TextStyle(
+                      fontFamily: 'Outfit',
+                      color: textColor,
+                      fontWeight: FontWeight.bold)),
+              backgroundColor: Theme.of(context).cardColor,
               centerTitle: true,
               elevation: 0,
-              leading: const BackButton(color: Colors.black),
+              iconTheme: IconThemeData(color: textColor),
             ),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -238,12 +262,18 @@ class _SupportScreenState extends State<SupportScreen> {
   }
 
   Widget _buildFAQSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Frequently Asked Questions",
-            style:
-                TextStyle(fontFamily: 'Outfit', fontSize: 20, fontWeight: FontWeight.bold)),
+        Text("Frequently Asked Questions",
+            style: TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: textColor)),
         const SizedBox(height: 16),
         _buildFAQItem(context, "How do I cancel a ticket?",
             "You can cancel your ticket from the 'My Trips' section up to 24 hours before departure."),
@@ -256,17 +286,24 @@ class _SupportScreenState extends State<SupportScreen> {
   }
 
   Widget _buildContactForm(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1E2126) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Send us a message",
-            style:
-                TextStyle(fontFamily: 'Outfit', fontSize: 20, fontWeight: FontWeight.bold)),
+        Text("Send us a message",
+            style: TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: textColor)),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -286,6 +323,8 @@ class _SupportScreenState extends State<SupportScreen> {
               TextField(
                 controller: _messageController,
                 maxLines: 4,
+                style: TextStyle(
+                    fontFamily: 'Inter', color: textColor), // Input text color
                 decoration: _inputDecoration("Describe your issue..."),
               ),
               const SizedBox(height: 16),
@@ -299,8 +338,10 @@ class _SupportScreenState extends State<SupportScreen> {
                         borderRadius: BorderRadius.circular(12)),
                     elevation: 0),
                 child: const Text("SEND MESSAGE",
-                    style: TextStyle(fontFamily: 'Outfit', 
-                        fontWeight: FontWeight.bold, color: Colors.white)),
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
               )
             ],
           ),
@@ -310,30 +351,41 @@ class _SupportScreenState extends State<SupportScreen> {
   }
 
   Widget _buildTextField(String hint, TextEditingController controller) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black;
+
     return TextField(
       controller: controller,
+      style:
+          TextStyle(fontFamily: 'Inter', color: textColor), // Input text color
       decoration: _inputDecoration(hint),
     );
   }
 
   InputDecoration _inputDecoration(String hint) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inputColor = isDark ? const Color(0xFF2B2D33) : Colors.grey.shade50;
+    final borderColor = isDark ? Colors.white10 : Colors.grey.shade200;
+    final hintColor = isDark ? Colors.grey.shade500 : Colors.grey.shade400;
+
     return InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade400),
+        hintStyle: TextStyle(fontFamily: 'Inter', color: hintColor),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade200)),
+            borderSide: BorderSide(color: borderColor)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade200)),
+            borderSide: BorderSide(color: borderColor)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: AppTheme.primaryColor)),
         filled: true,
-        fillColor: Colors.grey.shade50);
+        fillColor: inputColor);
   }
 
   Widget _buildHeader(BuildContext context, bool isDesktop) {
+    // Header stays Red, always.
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isDesktop ? 40 : 24),
@@ -351,13 +403,15 @@ class _SupportScreenState extends State<SupportScreen> {
           const Icon(Icons.headset_mic_rounded, size: 48, color: Colors.white),
           const SizedBox(height: 16),
           Text("How can we help you?",
-              style: TextStyle(fontFamily: 'Outfit', 
+              style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: isDesktop ? 32 : 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white)),
           const SizedBox(height: 8),
           Text("Our team is available 24/7 to assist you.",
-              style: TextStyle(fontFamily: 'Inter', 
+              style: TextStyle(
+                  fontFamily: 'Inter',
                   fontSize: isDesktop ? 16 : 14,
                   color: Colors.white.withValues(alpha: 0.9))),
         ],
@@ -366,25 +420,36 @@ class _SupportScreenState extends State<SupportScreen> {
   }
 
   Widget _buildFAQItem(BuildContext context, String question, String answer) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1E2126) : Colors.white;
+    final borderColor = isDark ? Colors.white10 : Colors.grey.shade200;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final answerColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200)),
+          border: Border.all(color: borderColor)),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           title: Text(question,
-              style:
-                  const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 15)),
+              style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: textColor)),
+          iconColor: textColor,
+          collapsedIconColor: textColor,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Text(answer,
-                  style: TextStyle(fontFamily: 'Inter', 
-                      color: Colors.grey.shade600, height: 1.5)),
+                  style: TextStyle(
+                      fontFamily: 'Inter', color: answerColor, height: 1.5)),
             )
           ],
         ),
@@ -394,13 +459,19 @@ class _SupportScreenState extends State<SupportScreen> {
 
   Widget _buildContactCard(BuildContext context, IconData icon, String title,
       String subtitle, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1E2126) : Colors.white;
+    final borderColor = isDark ? Colors.white10 : Colors.grey.shade200;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final subTextColor = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
+
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 250),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: borderColor),
         ),
         child: ListTile(
           leading: Container(
@@ -412,11 +483,13 @@ class _SupportScreenState extends State<SupportScreen> {
             child: Icon(icon, color: AppTheme.primaryColor),
           ),
           title: Text(title,
-              style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600)),
+              style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
+                  color: textColor)),
           subtitle: Text(subtitle,
-              style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade500)),
-          trailing:
-              const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+              style: TextStyle(fontFamily: 'Inter', color: subTextColor)),
+          trailing: Icon(Icons.chevron_right, size: 16, color: subTextColor),
           onTap: onTap,
         ),
       ),

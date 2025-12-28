@@ -11,6 +11,8 @@ import '../../utils/app_theme.dart';
 import '../ticket/ticket_screen.dart';
 import '../results/bus_list_screen.dart';
 import '../layout/desktop_navbar.dart';
+import '../layout/mobile_navbar.dart';
+import '../layout/custom_app_bar.dart';
 
 class MyTripsScreen extends StatelessWidget {
   final bool showBackButton;
@@ -27,20 +29,27 @@ class MyTripsScreen extends StatelessWidget {
       length: 2,
       child: Column(
         children: [
-          if (isDesktop) const DesktopNavBar(selectedIndex: 1),
+          if (isDesktop)
+            Material(
+              elevation: 4,
+              child: const DesktopNavBar(selectedIndex: 1),
+            ),
           Expanded(
             child: Scaffold(
-              backgroundColor: Colors.grey.shade50,
-              appBar: AppBar(
-                backgroundColor: Colors.white,
-                elevation: 0,
+              // REMOVED hardcoded grey.shade50
+              bottomNavigationBar:
+                  isDesktop ? null : const MobileBottomNav(selectedIndex: 1),
+              appBar: CustomAppBar(
+                hideActions: isDesktop,
                 leading: showBackButton && !isDesktop
-                    ? const BackButton(color: Colors.black)
+                    ? BackButton(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        onPressed: () => Navigator.pop(context))
                     : null,
-                title: const Text("My Trips",
+                title: Text("My Trips",
                     style: TextStyle(
                         fontFamily: 'Outfit',
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold)),
                 centerTitle: true,
                 bottom: const TabBar(

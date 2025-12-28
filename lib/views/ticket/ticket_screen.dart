@@ -121,7 +121,8 @@ class _TicketScreenState extends State<TicketScreen> {
                   icon: const Icon(Icons.picture_as_pdf),
                   label: const Text("Download PDF"),
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+                      backgroundColor: AppTheme
+                          .primaryColor, // Fixed: Red button for visibility
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 32, vertical: 20),
@@ -283,7 +284,7 @@ class _TicketScreenState extends State<TicketScreen> {
                       fontFamily: 'Outfit',
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      color: Colors.black,
+                      color: Colors.white, // Fixed: White text for visibility
                       height: 1.2),
                 ),
 

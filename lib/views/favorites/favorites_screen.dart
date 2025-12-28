@@ -7,6 +7,9 @@ import '../../services/auth_service.dart';
 import '../results/bus_list_screen.dart';
 import '../layout/desktop_navbar.dart';
 
+import '../layout/mobile_navbar.dart';
+import '../layout/custom_app_bar.dart';
+
 class FavoritesScreen extends StatelessWidget {
   final bool showBackButton;
   final VoidCallback? onBookNow;
@@ -22,19 +25,24 @@ class FavoritesScreen extends StatelessWidget {
 
     return Column(
       children: [
-        if (isDesktop) const DesktopNavBar(selectedIndex: 2),
+        if (isDesktop)
+          Material(
+            elevation: 4,
+            child: const DesktopNavBar(selectedIndex: 2),
+          ),
         Expanded(
           child: Scaffold(
+            bottomNavigationBar:
+                isDesktop ? null : const MobileBottomNav(selectedIndex: 2),
             // Use theme background
-            appBar: AppBar(
+            appBar: CustomAppBar(
+              hideActions: isDesktop,
               title: Text("My Favourites",
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.bold)),
               centerTitle: true,
-              elevation: 0,
-              // Remove manual background color to use theme
             ),
             body: user == null
                 ? Center(

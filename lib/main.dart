@@ -2,13 +2,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'dart:html'
-    as html; // ignore: avoid_web_libraries_in_flutter, deprecated_member_use
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'utils/platform/platform_utils.dart'; // Cross-platform utils
 
 import 'controllers/trip_controller.dart';
 import 'services/auth_service.dart';
@@ -137,25 +136,15 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
         setState(() {
           _isInitialized = true;
         });
-        _removeHtmlSpinner();
+        removeWebSpinner();
       }
     }
-  }
-
-  void _removeHtmlSpinner() {
-    try {
-      final loader = html.document.getElementById('loading-indicator');
-      if (loader != null) {
-        loader.remove();
-        debugPrint("Deleted HTML Spinner via Dart");
-      }
-    } catch (e) {}
   }
 
   @override
   Widget build(BuildContext context) {
     // Aggressive removal on build
-    _removeHtmlSpinner();
+    removeWebSpinner();
 
     if (!_isInitialized) {
       return MaterialApp(
@@ -173,9 +162,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
                 const CircularProgressIndicator(
                     color: AppTheme.primaryColor, strokeWidth: 6),
                 const SizedBox(height: 16),
-                Text(
-                    Translations.translate(_statusKey,
-                        html.window.navigator.language.split('-')[0]),
+                Text(Translations.translate(_statusKey, getPlatformLanguage()),
                     style: const TextStyle(
                         color: AppTheme.primaryColor,
                         fontSize: 24,
@@ -186,6 +173,9 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
         ),
       );
     }
+    // ...
+    // Inside RoleDispatcher build method (lines 353-360 in original) needs update too.
+    // Since this tool chunk ends here, I will make another call for RoleDispatcher.
 
     return MultiProvider(
       providers: [
@@ -351,13 +341,7 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
         debugPrint("Determined Role: $role");
 
         // Last chance to remove spinner
-        try {
-          final loader = html.document.getElementById('loading-indicator');
-          if (loader != null) {
-            loader.remove();
-            debugPrint("Deleted HTML Spinner via RoleDispatcher");
-          }
-        } catch (e) {}
+        removeWebSpinner();
 
         switch (role) {
           case 'admin':

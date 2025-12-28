@@ -104,6 +104,16 @@ class FirestoreService {
     });
   }
 
+  // --- ADDED: Stream for Real-time Trip Status ---
+  Stream<Trip> getTripStream(String tripId) {
+    return _db.collection(tripCollection).doc(tripId).snapshots().map((doc) {
+      if (!doc.exists) {
+        throw Exception("Trip not found");
+      }
+      return Trip.fromFirestore(doc);
+    });
+  }
+
   Future<Ticket> processBooking(
     Trip trip,
     List<int> seats,

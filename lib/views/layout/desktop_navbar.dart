@@ -76,7 +76,7 @@ class DesktopNavBar extends StatelessWidget {
                 final name = user.displayName?.split(' ').first ??
                     user.email?.split('@').first ??
                     'Traveler';
-                final isDark = themeController.themeMode == ThemeMode.dark;
+                final isDark = Theme.of(context).brightness == Brightness.dark;
 
                 return PopupMenuButton<String>(
                   offset: const Offset(0, 50),
@@ -125,7 +125,7 @@ class DesktopNavBar extends StatelessWidget {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurface
-                                    .withOpacity(0.5))),
+                                    .withValues(alpha: 0.5))),
                       ),
                       const PopupMenuDivider(),
 

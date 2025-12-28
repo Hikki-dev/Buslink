@@ -1,74 +1,75 @@
 // lib/views/home/home_screen.dart
 import 'dart:async';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
+import '../../data/cities.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../models/trip_model.dart';
+import '../../services/firestore_service.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/language_provider.dart';
 import '../results/bus_list_screen.dart';
+import 'widgets/ongoing_trip_card.dart';
+import 'widgets/favorites_section.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
+import '../layout/mobile_navbar.dart';
+
+import '../layout/custom_app_bar.dart';
 
 // Mock Data for Popular Destinatinos
 final List<Map<String, dynamic>> _allDestinations = [
   {
     'city': 'Colombo',
-    'image':
-        'https://images.unsplash.com/photo-1578508479831-7e5088235288?auto=format&fit=crop&q=80',
-    'buses': 120,
-    'desc':
-        'The commercial capital with vibrant street life and colonial heritage.'
+    'image': 'https://loremflickr.com/800/600/colombo,srilanka',
+    'buses': 45,
+    'desc': 'Discover the vibrant Tamil culture and northern cuisine.'
   },
   {
     'city': 'Kandy',
-    'image':
-        'https://images.unsplash.com/photo-1596700773663-8328de8d3381?auto=format&fit=crop&q=80',
-    'buses': 85,
-    'desc': 'Home to the Temple of the Tooth Relic and scenic lake views.'
+    'image': 'https://loremflickr.com/800/600/kandy,temple',
+    'buses': 32,
+    'desc': 'Visit the Temple of the Tooth and scenic lake.'
   },
   {
     'city': 'Galle',
-    'image':
-        'https://images.unsplash.com/photo-1550955217-08709d7cf744?auto=format&fit=crop&q=80',
+    'image': 'https://loremflickr.com/800/600/galle,fort',
     'buses': 64,
-    'desc': 'Famous for its 17th-century Dutch Fort and coastal charm.'
+    'desc': 'Explore the historic Dutch Fort and beaches.'
   },
   {
     'city': 'Ella',
-    'image':
-        'https://images.unsplash.com/photo-1566838029562-b13c77d54406?auto=format&fit=crop&q=80',
-    'buses': 42,
-    'desc': 'A hill country paradise known for hiking and the Nine Arch Bridge.'
+    'image': 'https://loremflickr.com/800/600/ella,srilanka',
+    'buses': 18,
+    'desc': 'Hiking trails, waterfalls and the Nine Arch Bridge.'
   },
   {
     'city': 'Nuwara Eliya',
-    'image':
-        'https://images.unsplash.com/photo-1546708773-e57c8d352dbd?auto=format&fit=crop&q=80',
-    'buses': 30,
-    'desc': 'Little England of Sri Lanka, surrounded by tea plantations.'
+    'image': 'https://loremflickr.com/800/600/nuwaraeliya,tea',
+    'buses': 24,
+    'desc': 'Little England of Sri Lanka with cool climate.'
   },
   {
     'city': 'Sigiriya',
-    'image':
-        'https://images.unsplash.com/photo-1625992983637-25e4c0dde47e?auto=format&fit=crop&q=80',
+    'image': 'https://loremflickr.com/800/600/sigiriya,rock',
     'buses': 25,
-    'desc': 'Ancient rock fortress and a UNESCO World Heritage site.'
+    'desc': 'The ancient rock fortress and palace ruins.'
   },
   {
     'city': 'Jaffna',
-    'image':
-        'https://images.unsplash.com/photo-1620202860822-4c9197c369fc?auto=format&fit=crop&q=80',
-    'buses': 45,
-    'desc': 'Cultural hub of the north with unique Hindu traditions.'
+    'image': 'https://loremflickr.com/800/600/jaffna,temple',
+    'buses': 20,
+    'desc': 'Rich history and unique northern culture.'
   },
   {
     'city': 'Trincomalee',
-    'image':
-        'https://images.unsplash.com/photo-1587595431973-160d0d94add1?auto=format&fit=crop&q=80',
+    'image': 'https://loremflickr.com/800/600/trincomalee,beach',
     'buses': 35,
-    'desc': 'Home to Nilaveli Beach and Koneswaram Temple.'
+    'desc': 'Beautiful beaches and diving spots.'
   }
 ];
 
@@ -83,6 +84,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _originController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
+  final FocusNode _originFocusNode = FocusNode();
+  final FocusNode _destinationFocusNode = FocusNode();
   DateTime _selectedDate = DateTime.now();
   final ScrollController _scrollController = ScrollController();
   bool _isRoundTrip = false;
@@ -97,6 +100,16 @@ class _HomeScreenState extends State<HomeScreen> {
     var list = List<Map<String, dynamic>>.from(_allDestinations);
     list.shuffle();
     _currentDestinations = list.take(4).toList();
+  }
+
+  @override
+  void dispose() {
+    _originController.dispose();
+    _destinationController.dispose();
+    _originFocusNode.dispose();
+    _destinationFocusNode.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _searchBuses() {
@@ -155,7 +168,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isDesktop = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: isDesktop
+          ? null
+          : CustomAppBar(isAdminView: widget.isAdminView), // Use CustomAppBar
+      // Actions moved to CustomAppBar
+      bottomNavigationBar:
+          isDesktop ? null : const MobileBottomNav(selectedIndex: 0),
       body: Column(
         children: [
           if (widget.isAdminView)
@@ -177,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12)),
                       child: const Text("EXIT",
                           style: TextStyle(
@@ -199,6 +219,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     isDesktop: isDesktop,
                     originController: _originController,
                     destinationController: _destinationController,
+                    originFocusNode: _originFocusNode,
+                    destinationFocusNode: _destinationFocusNode,
                     selectedDate: _selectedDate,
                     onDateTap: () => _selectDate(context),
                     onSearchTap: _searchBuses,
@@ -210,8 +232,88 @@ class _HomeScreenState extends State<HomeScreen> {
                         setState(() => _isBulkBooking = val),
                   ),
                 ),
+                // --- ONGOING TRIPS & FAVORITES SECTION ---
+                StreamBuilder<User?>(
+                    stream: FirebaseAuth.instance.authStateChanges(),
+                    builder: (context, snapshot) {
+                      final user = snapshot.data;
+                      if (user == null) return const SliverToBoxAdapter();
+
+                      return SliverList(
+                        delegate: SliverChildListDelegate([
+                          // 1. Ongoing/Upcoming Trip
+                          StreamBuilder<List<Ticket>>(
+                            stream: Provider.of<FirestoreService>(context,
+                                    listen: false)
+                                .getUserTickets(user.uid),
+                            builder: (context, ticketSnap) {
+                              if (!ticketSnap.hasData ||
+                                  ticketSnap.data!.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+
+                              // Filter logic: Find active or future trips
+                              // For simplicity, take the last booked item that isn't 'cancelled'
+                              // A better logic would be: Sort by time, pick nearest future or currently active
+                              final tickets = ticketSnap.data!
+                                  .where((t) => t.status != 'cancelled')
+                                  .toList();
+
+                              if (tickets.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+
+                              // Sort by booking time (desc) or trip time?
+                              // Let's grab the most relevant one.
+                              final activeTicket = tickets.last;
+                              // In real app: Compare activeTicket.tripData['departureTime'] with now
+
+                              return StreamBuilder<Trip>(
+                                stream: Provider.of<FirestoreService>(context,
+                                        listen: false)
+                                    .getTripStream(activeTicket.tripId),
+                                builder: (context, tripSnap) {
+                                  if (!tripSnap.hasData) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return OngoingTripCard(
+                                    trip: tripSnap.data!,
+                                    seatCount: activeTicket.seatNumbers.length,
+                                    paidAmount: activeTicket.totalAmount,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+
+                          // 2. Favorites
+                          StreamBuilder<List<Map<String, dynamic>>>(
+                            stream: Provider.of<FirestoreService>(context,
+                                    listen: false)
+                                .getUserFavorites(user.uid),
+                            builder: (context, favSnap) {
+                              if (!favSnap.hasData || favSnap.data!.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+                              return FavoritesSection(
+                                favorites: favSnap.data!,
+                                onTap: (fav) {
+                                  // Quick search or navigation logic
+                                  setState(() {
+                                    _originController.text = fav['fromCity'];
+                                    _destinationController.text = fav['toCity'];
+                                    _searchBuses();
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                        ]),
+                      );
+                    }),
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(vertical: 60),
+                  padding: const EdgeInsets.symmetric(vertical: 20),
                   sliver: SliverToBoxAdapter(
                     child: _FeaturesSection(isDesktop: isDesktop),
                   ),
@@ -237,6 +339,8 @@ class _HeroSection extends StatefulWidget {
   final bool isDesktop;
   final TextEditingController originController;
   final TextEditingController destinationController;
+  final FocusNode originFocusNode;
+  final FocusNode destinationFocusNode;
   final DateTime selectedDate;
   final VoidCallback onDateTap;
   final VoidCallback onSearchTap;
@@ -249,6 +353,8 @@ class _HeroSection extends StatefulWidget {
     required this.isDesktop,
     required this.originController,
     required this.destinationController,
+    required this.originFocusNode,
+    required this.destinationFocusNode,
     required this.selectedDate,
     required this.onDateTap,
     required this.onSearchTap,
@@ -316,14 +422,12 @@ class _HeroSectionState extends State<_HeroSection> {
 
   @override
   Widget build(BuildContext context) {
-    final lp = Provider.of<LanguageProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      height: widget.isDesktop ? 600 : 500,
-      width: double.infinity,
+    return SizedBox(
       child: Stack(
         children: [
-          // Background Image with AnimatedSwitcher
+          // Background Image
           Positioned.fill(
             child: AnimatedSwitcher(
               duration: const Duration(seconds: 2),
@@ -347,53 +451,152 @@ class _HeroSectionState extends State<_HeroSection> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.4),
-                    Colors.black.withOpacity(0.7),
+                    Colors.black.withValues(alpha: 0.3),
+                    Colors.black.withValues(alpha: 0.7),
                   ],
                 ),
               ),
             ),
           ),
+
           // Content
           Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1000),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      lp.translate('find_bus'),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Outfit',
-                        fontSize: widget.isDesktop ? 64 : 42,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Animated Subtitle Text
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 500),
-                      child: Text(
-                        _heroData[_currentImageIndex]["subtitle"] ?? "",
-                        key:
-                            ValueKey(_heroData[_currentImageIndex]["subtitle"]),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: widget.isDesktop ? 18 : 16,
-                          color: Colors.white.withOpacity(0.9),
+            child: Container(
+              constraints: BoxConstraints(
+                minHeight: widget.isDesktop ? 600 : 550,
+              ),
+              padding: EdgeInsets.only(
+                  top: widget.isDesktop ? 100 : 140, // INCREASED TOP PADDING
+                  bottom: 40,
+                  left: 20,
+                  right: 20),
+              width: double.infinity,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Find Your Bus Ticket",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'AudioWide',
+                      fontSize:
+                          widget.isDesktop ? 48 : 32, // Responsive Font Size
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          offset: const Offset(2, 2),
+                          blurRadius: 4,
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 48),
-                    // Search Bar
-                    _buildSearchCard(context, lp),
-                  ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _heroData[_currentImageIndex]["subtitle"]!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 18,
+                      color: Colors.white,
+                      height: 1.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  widget.isDesktop
+                      ? _buildDesktopSearch(isDark)
+                      : _buildMobileSearch(isDark),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopSearch(bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF161821) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          )
+        ],
+        border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: _buildSearchInput(
+              controller: widget.originController,
+              focusNode: widget.originFocusNode,
+              icon: Icons.location_on,
+              label: 'From',
+              hint: 'Enter origin',
+              isLast: false,
+              isDark: isDark,
+            ),
+          ),
+          Container(
+              height: 40,
+              width: 1,
+              color: isDark ? Colors.white12 : Colors.black12),
+          Expanded(
+            flex: 2,
+            child: _buildSearchInput(
+              controller: widget.destinationController,
+              focusNode: widget.destinationFocusNode,
+              icon: Icons.navigation,
+              label: 'To',
+              hint: 'Enter destination',
+              isLast: false,
+              isDark: isDark,
+            ),
+          ),
+          Container(
+              height: 40,
+              width: 1,
+              color: isDark ? Colors.white12 : Colors.black12),
+          Expanded(
+            flex: 1,
+            child: InkWell(
+              onTap: widget.onDateTap,
+              child: _buildSearchDisplay(
+                icon: Icons.calendar_today,
+                label: 'Date',
+                value: DateFormat('EEE, d MMM').format(widget.selectedDate),
+                isDark: isDark,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SizedBox(
+              height: 50,
+              width: 150,
+              child: ElevatedButton(
+                onPressed: widget.onSearchTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Search',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -403,287 +606,278 @@ class _HeroSectionState extends State<_HeroSection> {
     );
   }
 
-  Widget _buildSearchCard(BuildContext context, LanguageProvider lp) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    Widget buildTabButton(String text, bool isActive, VoidCallback onTap) {
-      return InkWell(
-        onTap: onTap,
-        child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+  Widget _buildMobileSearch(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(12), // REDUCED PADDING
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF161821) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: buildTabButton("One Way", !widget.isRoundTrip,
+                    () => widget.onRoundTripChanged(false), isDark),
+              ),
+              const SizedBox(width: 12), // Added Spacing
+              Expanded(
+                child: buildTabButton("Round Trip", widget.isRoundTrip,
+                    () => widget.onRoundTripChanged(true), isDark),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-                border: Border(
-                    bottom: BorderSide(
-                        color: isActive
-                            ? AppTheme.primaryColor
-                            : Colors.transparent,
-                        width: 2))),
-            child: Text(text,
-                style: TextStyle(
-                    color:
-                        isActive ? AppTheme.primaryColor : Colors.grey.shade600,
-                    fontWeight: FontWeight.bold))),
-      );
-    }
-
-    if (widget.isDesktop) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF161821) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.3 : 0.2),
-              blurRadius: 30,
-              offset: const Offset(0, 15),
+              color: AppTheme.primaryColor.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(8),
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 24),
+            child: Row(
+              children: [
+                SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: Checkbox(
+                    value: widget.isBulkBooking,
+                    activeColor: AppTheme.primaryColor,
+                    onChanged: (v) => widget.onBulkBookingChanged(v!),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text("Bulk / Multi-day Booking",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                )
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildSearchInput(
+            controller: widget.originController,
+            icon: Icons.location_on,
+            label: 'From',
+            hint: 'Origin City',
+            focusNode: widget.originFocusNode,
+            isLast: false,
+            isDark: isDark,
+          ),
+          const SizedBox(height: 16),
+          _buildSearchInput(
+            controller: widget.destinationController,
+            icon: Icons.navigation,
+            label: 'To',
+            hint: 'Destination City',
+            focusNode: widget.destinationFocusNode,
+            isLast: false,
+            isDark: isDark,
+          ),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: widget.onDateTap,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border:
+                    Border.all(color: isDark ? Colors.white24 : Colors.black12),
+              ),
               child: Row(
                 children: [
-                  buildTabButton("One Way", !widget.isRoundTrip,
-                      () => widget.onRoundTripChanged(false)),
-                  const SizedBox(width: 16),
-                  buildTabButton("Round Trip", widget.isRoundTrip,
-                      () => widget.onRoundTripChanged(true)),
-                  const Spacer(),
-                  Row(
+                  const Icon(Icons.calendar_today,
+                      color: AppTheme.primaryColor),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Checkbox(
-                        value: widget.isBulkBooking,
-                        activeColor: AppTheme.primaryColor,
-                        onChanged: (v) => widget.onBulkBookingChanged(v!),
-                      ),
-                      Text("Bulk / Multi-day Booking",
+                      Text("Departure Date",
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? const Color.fromARGB(255, 255, 255, 255)
+                                  : const Color.fromARGB(255, 0, 0, 0))),
+                      Text(
+                          DateFormat('EEE, d MMMM').format(widget.selectedDate),
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black87)),
+                              fontSize: 16,
+                              color: isDark
+                                  ? const Color.fromARGB(255, 255, 255, 255)
+                                  : const Color.fromARGB(255, 0, 0, 0))),
                     ],
                   ),
                 ],
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
-                borderRadius: BorderRadius.circular(16),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: widget.onSearchTap,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 4,
+                shadowColor: AppTheme.primaryColor.withValues(alpha: 0.4),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildSearchInput(
-                      controller: widget.originController,
-                      icon: Icons.location_on_outlined,
-                      label: 'From',
-                      hint: 'Enter origin',
-                    ),
-                  ),
-                  Container(
-                      height: 40,
-                      width: 1,
-                      color:
-                          isDark ? Colors.grey.shade800 : Colors.grey.shade200),
-                  Expanded(
-                    child: _buildSearchInput(
-                      controller: widget.destinationController,
-                      icon: Icons.navigation_outlined,
-                      label: 'To',
-                      hint: 'Enter destination',
-                    ),
-                  ),
-                  Container(
-                      height: 40,
-                      width: 1,
-                      color:
-                          isDark ? Colors.grey.shade800 : Colors.grey.shade200),
-                  Expanded(
-                    child: InkWell(
-                      onTap: widget.onDateTap,
-                      child: _buildSearchDisplay(
-                        icon: Icons.calendar_today_outlined,
-                        label: 'Date',
-                        value: DateFormat('EEE, d MMM')
-                            .format(widget.selectedDate),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    height: 64,
-                    width: 150,
-                    child: ElevatedButton(
-                      onPressed: widget.onSearchTap,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        'Search',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              child: const Text("SEARCH BUSES",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
-          ],
-        ),
-      );
-    } else {
-      // Mobile Search Card
-      return Container(
-        padding: const EdgeInsets.all(24),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildTabButton(
+      String text, bool isActive, VoidCallback onTap, bool isDark) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF161821) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
+          color: isActive
+              ? AppTheme.primaryColor
+              : (isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5)),
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: buildTabButton("One Way", !widget.isRoundTrip,
-                      () => widget.onRoundTripChanged(false)),
-                ),
-                Expanded(
-                  child: buildTabButton("Round Trip", widget.isRoundTrip,
-                      () => widget.onRoundTripChanged(true)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: Checkbox(
-                      value: widget.isBulkBooking,
-                      activeColor: AppTheme.primaryColor,
-                      onChanged: (v) => widget.onBulkBookingChanged(v!),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text("Bulk / Multi-day Booking",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            color: isDark ? Colors.white : Colors.black87)),
-                  ),
-                  const Icon(Icons.info_outline, size: 16, color: Colors.grey)
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildSearchInput(
-              controller: widget.originController,
-              icon: Icons.location_on_outlined,
-              label: 'From',
-              hint: 'Enter origin',
-            ),
-            const Divider(height: 32),
-            _buildSearchInput(
-              controller: widget.destinationController,
-              icon: Icons.navigation_outlined,
-              label: 'To',
-              hint: 'Enter destination',
-            ),
-            const Divider(height: 32),
-            InkWell(
-              onTap: widget.onDateTap,
-              child: _buildSearchDisplay(
-                icon: Icons.calendar_today_outlined,
-                label: 'Date',
-                value: DateFormat('EEE, d MMM').format(widget.selectedDate),
-              ),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: widget.onSearchTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Text('Search Buses',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isActive
+                ? Colors.white
+                : (isDark ? Colors.white38 : Colors.black38),
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      );
-    }
+      ),
+    );
   }
 
   Widget _buildSearchInput({
     required TextEditingController controller,
     required IconData icon,
-    required String label,
     required String hint,
+    required String label,
+    required bool isLast,
+    required bool isDark,
+    required FocusNode focusNode,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(
+          horizontal: widget.isDesktop ? 16 : 0,
+          vertical: 8), // Responsive Padding
       child: Row(
+        crossAxisAlignment:
+            CrossAxisAlignment.center, // Align icon with text field
         children: [
-          Icon(icon, color: AppTheme.primaryColor, size: 24),
+          Icon(icon, color: isDark ? Colors.white70 : Colors.black87, size: 20),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextField(
-                  controller: controller,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    hintStyle: TextStyle(color: Colors.grey.shade400),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                  ),
+                Text(label,
+                    style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                        fontWeight: FontWeight.w600)),
+                RawAutocomplete<String>(
+                  textEditingController: controller,
+                  focusNode: focusNode, // Use provided FocusNode
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      return const Iterable<String>.empty();
+                    }
+                    return kSriLankanCities.where((String option) {
+                      return option
+                          .toLowerCase()
+                          .contains(textEditingValue.text.toLowerCase());
+                    });
+                  },
+                  fieldViewBuilder: (BuildContext context,
+                      TextEditingController fieldTextEditingController,
+                      FocusNode fieldFocusNode,
+                      VoidCallback onFieldSubmitted) {
+                    return TextField(
+                      controller: fieldTextEditingController,
+                      focusNode: fieldFocusNode,
+                      style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black),
+                      decoration: InputDecoration(
+                        hintText: hint,
+                        hintStyle: TextStyle(
+                            color: isDark ? Colors.white38 : Colors.black38),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onSubmitted: (String value) {
+                        onFieldSubmitted();
+                      },
+                    );
+                  },
+                  optionsViewBuilder: (BuildContext context,
+                      AutocompleteOnSelected<String> onSelected,
+                      Iterable<String> options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4.0,
+                        color: isDark ? const Color(0xFF1E2129) : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                              maxHeight: 200, maxWidth: 280),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: options.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final String option = options.elementAt(index);
+                              return InkWell(
+                                onTap: () {
+                                  onSelected(option);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Text(
+                                    option,
+                                    style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.w500,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black87),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -697,36 +891,33 @@ class _HeroSectionState extends State<_HeroSection> {
     required IconData icon,
     required String label,
     required String value,
+    required bool isDark,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Icon(icon, color: AppTheme.primaryColor, size: 24),
+          Icon(icon, color: isDark ? Colors.white70 : Colors.black87, size: 20),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  color: Colors.grey.shade500,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(label,
+                    style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                        fontWeight: FontWeight.w600)),
+                Text(value,
+                    style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: isDark ? Colors.white : Colors.black)),
+              ],
+            ),
           ),
         ],
       ),
@@ -745,39 +936,44 @@ class _FeaturesSection extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 1200),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              if (isDesktop) {
-                return Row(
+          child: isDesktop
+              ? Row(
                   children: [
-                    _FeatureItem(
-                      icon: Icons.bolt,
-                      title: 'Fast Booking',
-                      description:
-                          'Book your seats in less than 60 seconds with our streamlined flow.',
+                    Expanded(
+                      child: _FeatureItem(
+                        icon: Icons.bolt,
+                        title: 'Fast Booking',
+                        description:
+                            'Book your seats in less than 60 seconds with our streamlined flow.',
+                      ),
                     ),
-                    _FeatureItem(
-                      icon: Icons.shield_outlined,
-                      title: 'Secure Payments',
-                      description:
-                          'Your transactions are protected with industry-standard encryption.',
+                    Expanded(
+                      child: _FeatureItem(
+                        icon: Icons.shield_outlined,
+                        title: 'Secure Payments',
+                        description:
+                            'Your transactions are protected with industry-standard encryption.',
+                      ),
                     ),
-                    _FeatureItem(
-                      icon: Icons.location_on_outlined,
-                      title: 'Live Tracking',
-                      description:
-                          'Track your bus in real-time and never miss your ride again.',
+                    Expanded(
+                      child: _FeatureItem(
+                        icon: Icons.location_on_outlined,
+                        title: 'Live Tracking',
+                        description:
+                            'Track your bus in real-time and never miss your ride again.',
+                      ),
                     ),
-                    _FeatureItem(
-                      icon: Icons.support_agent,
-                      title: '24/7 Support',
-                      description:
-                          'Our dedicated team is always here to help with your journey.',
+                    Expanded(
+                      child: _FeatureItem(
+                        icon: Icons.support_agent,
+                        title: '24/7 Support',
+                        description:
+                            'Our dedicated team is always here to help with your journey.',
+                      ),
                     ),
                   ],
-                );
-              } else {
-                return Column(
+                )
+              : Column(
                   children: [
                     _FeatureItem(
                       icon: Icons.bolt,
@@ -798,10 +994,7 @@ class _FeaturesSection extends StatelessWidget {
                       description: 'Track your bus in real-time on our map.',
                     ),
                   ],
-                );
-              }
-            },
-          ),
+                ),
         ),
       ),
     );
@@ -821,50 +1014,47 @@ class _FeatureItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      flex: 1,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: AppTheme.primaryColor, size: 32),
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
           ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontFamily: 'Outfit',
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+          child: Icon(icon, color: AppTheme.primaryColor, size: 32),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'Outfit',
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              description,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                color: Colors.grey.shade600,
-                height: 1.5,
-              ),
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            description,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: Colors.grey.shade600,
+              height: 1.5,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
 class _PopularDestinationsGrid extends StatelessWidget {
   final bool isDesktop;
-  final List<Map<String, dynamic>> destinations;
+  final List destinations; // Relaxed type
 
   const _PopularDestinationsGrid({
     required this.isDesktop,
@@ -941,120 +1131,127 @@ class _DestinationCardState extends State<_DestinationCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),
       onExit: (_) => setState(() => _isHovering = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: _isHovering
-              ? [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10))
-                ]
-              : [],
-        ),
-        child: Stack(
-          children: [
-            // Image
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.network(
-                  widget.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey.shade900,
-                      child: const Center(
-                        child: Icon(Icons.broken_image_outlined,
-                            color: Colors.white24, size: 40),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            // Gradient
-            Positioned.fill(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                decoration: BoxDecoration(
+      child: GestureDetector(
+        onTap: () {
+          // On mobile/touch devices, tap to toggle hover state
+          setState(() => _isHovering = !_isHovering);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: _isHovering
+                ? [
+                    BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10))
+                  ]
+                : [],
+          ),
+          child: Stack(
+            children: [
+              // Image
+              Positioned.fill(
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(_isHovering ? 0.95 : 0.8),
-                    ],
-                    stops: const [0.3, 1.0],
+                  child: Image.network(
+                    widget.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey.shade900,
+                        child: const Center(
+                          child: Icon(Icons.broken_image_outlined,
+                              color: Colors.white24, size: 40),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
-            ),
-            // Text Content
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.city,
-                    style: const TextStyle(
-                      fontFamily: 'Outfit',
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              // Gradient
+              Positioned.fill(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black
+                            .withValues(alpha: _isHovering ? 0.95 : 0.8),
+                      ],
+                      stops: const [0.3, 1.0],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  AnimatedCrossFade(
-                    firstChild: Text(
-                      '${widget.busCount} Buses Daily',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.8),
+                ),
+              ),
+              // Text Content
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.city,
+                      style: const TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
-                    secondChild: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${widget.busCount} Buses Daily',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.9),
-                            fontWeight: FontWeight.bold,
-                          ),
+                    const SizedBox(height: 4),
+                    AnimatedCrossFade(
+                      firstChild: Text(
+                        '${widget.busCount} Buses Daily',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          widget.description,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12,
-                            color: Colors.white.withOpacity(0.9),
-                            height: 1.4,
+                      ),
+                      secondChild: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${widget.busCount} Buses Daily',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 14,
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.description,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.9),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                      crossFadeState: _isHovering
+                          ? CrossFadeState.showSecond
+                          : CrossFadeState.showFirst,
+                      duration: const Duration(milliseconds: 300),
                     ),
-                    crossFadeState: _isHovering
-                        ? CrossFadeState.showSecond
-                        : CrossFadeState.showFirst,
-                    duration: const Duration(milliseconds: 300),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

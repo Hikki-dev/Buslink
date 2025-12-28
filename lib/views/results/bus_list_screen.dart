@@ -56,7 +56,8 @@ class _BusListScreenState extends State<BusListScreen> {
 
   Future<void> _fetchWeather() async {
     final controller = Provider.of<TripController>(context, listen: false);
-    final city = controller.fromCity ?? "Colombo";
+    // Prioritize destination for weather as it's more relevant for travelers
+    final city = controller.toCity ?? controller.fromCity ?? "Colombo";
     // Fallback if env not loaded
     final apiKey = dotenv.env['OPENWEATHER_API_KEY'];
 
@@ -282,6 +283,9 @@ class _BusListScreenState extends State<BusListScreen> {
   // --- NEW: Info Header with Weather, Time & Map ---
   Widget _buildInfoHeader(BuildContext context, TripController controller,
       {bool isMobile = false}) {
+    // Determine which city's weather is being shown
+    final weatherCity = controller.toCity ?? controller.fromCity ?? "Colombo";
+
     return Container(
       width: double.infinity,
       color: Colors.white,
@@ -310,7 +314,7 @@ class _BusListScreenState extends State<BusListScreen> {
                                     fontFamily: 'Outfit',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18)),
-                            Text(controller.fromCity ?? "Current Location",
+                            Text(weatherCity,
                                 style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
@@ -358,7 +362,7 @@ class _BusListScreenState extends State<BusListScreen> {
                                     fontFamily: 'Outfit',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18)),
-                            Text(controller.fromCity ?? "Current Location",
+                            Text(weatherCity,
                                 style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
