@@ -33,6 +33,20 @@ class TripController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // --- Round Trip State ---
+  bool isRoundTrip = false;
+  DateTime? returnDate;
+
+  void setRoundTrip(bool enabled) {
+    isRoundTrip = enabled;
+    notifyListeners();
+  }
+
+  void setReturnDate(DateTime date) {
+    returnDate = date;
+    notifyListeners();
+  }
+
   // --- Bulk Booking State ---
   bool isBulkBooking = false;
   List<DateTime> bulkDates = [];

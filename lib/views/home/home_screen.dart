@@ -11,6 +11,67 @@ import '../results/bus_list_screen.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
 
+// Mock Data for Popular Destinatinos
+final List<Map<String, dynamic>> _allDestinations = [
+  {
+    'city': 'Colombo',
+    'image':
+        'https://images.unsplash.com/photo-1578508479831-7e5088235288?auto=format&fit=crop&q=80',
+    'buses': 120,
+    'desc':
+        'The commercial capital with vibrant street life and colonial heritage.'
+  },
+  {
+    'city': 'Kandy',
+    'image':
+        'https://images.unsplash.com/photo-1596700773663-8328de8d3381?auto=format&fit=crop&q=80',
+    'buses': 85,
+    'desc': 'Home to the Temple of the Tooth Relic and scenic lake views.'
+  },
+  {
+    'city': 'Galle',
+    'image':
+        'https://images.unsplash.com/photo-1550955217-08709d7cf744?auto=format&fit=crop&q=80',
+    'buses': 64,
+    'desc': 'Famous for its 17th-century Dutch Fort and coastal charm.'
+  },
+  {
+    'city': 'Ella',
+    'image':
+        'https://images.unsplash.com/photo-1566838029562-b13c77d54406?auto=format&fit=crop&q=80',
+    'buses': 42,
+    'desc': 'A hill country paradise known for hiking and the Nine Arch Bridge.'
+  },
+  {
+    'city': 'Nuwara Eliya',
+    'image':
+        'https://images.unsplash.com/photo-1546708773-e57c8d352dbd?auto=format&fit=crop&q=80',
+    'buses': 30,
+    'desc': 'Little England of Sri Lanka, surrounded by tea plantations.'
+  },
+  {
+    'city': 'Sigiriya',
+    'image':
+        'https://images.unsplash.com/photo-1625992983637-25e4c0dde47e?auto=format&fit=crop&q=80',
+    'buses': 25,
+    'desc': 'Ancient rock fortress and a UNESCO World Heritage site.'
+  },
+  {
+    'city': 'Jaffna',
+    'image':
+        'https://images.unsplash.com/photo-1620202860822-4c9197c369fc?auto=format&fit=crop&q=80',
+    'buses': 45,
+    'desc': 'Cultural hub of the north with unique Hindu traditions.'
+  },
+  {
+    'city': 'Trincomalee',
+    'image':
+        'https://images.unsplash.com/photo-1587595431973-160d0d94add1?auto=format&fit=crop&q=80',
+    'buses': 35,
+    'desc': 'Home to Nilaveli Beach and Koneswaram Temple.'
+  }
+];
+
 class HomeScreen extends StatefulWidget {
   final bool isAdminView;
   const HomeScreen({super.key, this.isAdminView = false});
@@ -27,6 +88,17 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isRoundTrip = false;
   bool _isBulkBooking = false;
 
+  List<Map<String, dynamic>> _currentDestinations = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Shuffle and pick 4
+    var list = List<Map<String, dynamic>>.from(_allDestinations);
+    list.shuffle();
+    _currentDestinations = list.take(4).toList();
+  }
+
   void _searchBuses() {
     if (_originController.text.isEmpty || _destinationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -39,6 +111,8 @@ class _HomeScreenState extends State<HomeScreen> {
     tripController.setFromCity(_originController.text);
     tripController.setToCity(_destinationController.text);
     tripController.setDate(_selectedDate);
+    tripController.setRoundTrip(_isRoundTrip);
+    tripController.setBulkMode(_isBulkBooking);
 
     // Trigger the actual Firestore search
     tripController.searchTrips(context);
@@ -143,7 +217,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: _PopularDestinationsGrid(isDesktop: isDesktop),
+                  child: _PopularDestinationsGrid(
+                    isDesktop: isDesktop,
+                    destinations: _currentDestinations,
+                  ),
                 ),
                 const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
                 if (isDesktop) const SliverToBoxAdapter(child: AppFooter()),
@@ -787,7 +864,12 @@ class _FeatureItem extends StatelessWidget {
 
 class _PopularDestinationsGrid extends StatelessWidget {
   final bool isDesktop;
-  const _PopularDestinationsGrid({required this.isDesktop});
+  final List<Map<String, dynamic>> destinations;
+
+  const _PopularDestinationsGrid({
+    required this.isDesktop,
+    required this.destinations,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -817,32 +899,14 @@ class _PopularDestinationsGrid extends StatelessWidget {
                 mainAxisSpacing: 24,
                 crossAxisSpacing: 24,
                 childAspectRatio: 0.8,
-                children: const [
-                  _DestinationCard(
-                    city: 'Colombo',
-                    imageUrl:
-                        'https://images.unsplash.com/photo-1578508479831-7e5088235288?auto=format&fit=crop&q=80',
-                    busCount: 120,
-                  ),
-                  _DestinationCard(
-                    city: 'Kandy',
-                    imageUrl:
-                        'https://images.unsplash.com/photo-1596700773663-8328de8d3381?auto=format&fit=crop&q=80',
-                    busCount: 85,
-                  ),
-                  _DestinationCard(
-                    city: 'Galle',
-                    imageUrl:
-                        'https://images.unsplash.com/photo-1550955217-08709d7cf744?auto=format&fit=crop&q=80',
-                    busCount: 64,
-                  ),
-                  _DestinationCard(
-                    city: 'Ella',
-                    imageUrl:
-                        'https://images.unsplash.com/photo-1566838029562-b13c77d54406?auto=format&fit=crop&q=80',
-                    busCount: 42,
-                  ),
-                ],
+                children: destinations.map((dest) {
+                  return _DestinationCard(
+                    city: dest['city'],
+                    imageUrl: dest['image'],
+                    busCount: dest['buses'],
+                    description: dest['desc'],
+                  );
+                }).toList(),
               ),
             ],
           ),
@@ -852,90 +916,147 @@ class _PopularDestinationsGrid extends StatelessWidget {
   }
 }
 
-class _DestinationCard extends StatelessWidget {
+class _DestinationCard extends StatefulWidget {
   final String city;
   final String imageUrl;
   final int busCount;
+  final String description;
 
   const _DestinationCard({
     required this.city,
     required this.imageUrl,
     required this.busCount,
+    this.description = '',
   });
 
   @override
+  State<_DestinationCard> createState() => _DestinationCardState();
+}
+
+class _DestinationCardState extends State<_DestinationCard> {
+  bool _isHovering = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Image.network(
-              imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey.shade900,
-                  child: const Center(
-                    child: Icon(Icons.broken_image_outlined,
-                        color: Colors.white24, size: 40),
-                  ),
-                );
-              },
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  color: Colors.grey.shade900,
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white24),
-                  ),
-                );
-              },
-            ),
-          ),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: _isHovering
+              ? [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10))
+                ]
+              : [],
         ),
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.9), // Darker gradient at bottom
-                ],
-                stops: const [0.5, 1.0],
+        child: Stack(
+          children: [
+            // Image
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.network(
+                  widget.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey.shade900,
+                      child: const Center(
+                        child: Icon(Icons.broken_image_outlined,
+                            color: Colors.white24, size: 40),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  city,
-                  style: const TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+            // Gradient
+            Positioned.fill(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(_isHovering ? 0.95 : 0.8),
+                    ],
+                    stops: const [0.3, 1.0],
                   ),
                 ),
-                Text(
-                  '$busCount Buses Daily',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.8),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            // Text Content
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.city,
+                    style: const TextStyle(
+                      fontFamily: 'Outfit',
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  AnimatedCrossFade(
+                    firstChild: Text(
+                      '${widget.busCount} Buses Daily',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                    secondChild: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${widget.busCount} Buses Daily',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.9),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.description,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.9),
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                    crossFadeState: _isHovering
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 300),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

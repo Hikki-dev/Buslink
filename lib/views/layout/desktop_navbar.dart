@@ -112,122 +112,152 @@ class DesktopNavBar extends StatelessWidget {
                       ],
                     ),
                   ),
-                  itemBuilder: (context) => [
-                    // Header
-                    PopupMenuItem(
-                      enabled: false,
-                      child: Text("Signed in as ${user.email ?? name}",
-                          style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withValues(alpha: 0.5))),
-                    ),
-                    const PopupMenuDivider(),
-
-                    // Profile
-                    const PopupMenuItem(
-                      value: 'profile',
-                      child: Row(
-                        children: [
-                          Icon(Icons.person, size: 20, color: Colors.grey),
-                          SizedBox(width: 12),
-                          Text("Profile",
-                              style: TextStyle(
+                  itemBuilder: (BuildContext context) {
+                    return [
+                      // Header
+                      PopupMenuItem(
+                        enabled: false,
+                        child: Text("Signed in as ${user.email ?? name}",
+                            style: TextStyle(
                                 fontFamily: 'Inter',
-                              )),
-                        ],
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.5))),
                       ),
-                    ),
+                      const PopupMenuDivider(),
 
-                    // Favorites
-                    const PopupMenuItem(
-                      value: 'favorites',
-                      child: Row(
-                        children: [
-                          Icon(Icons.favorite, size: 20, color: Colors.grey),
-                          SizedBox(width: 12),
-                          Text("Favourites",
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                              )),
-                        ],
-                      ),
-                    ),
-
-                    // Settings
-                    const PopupMenuItem(
-                      value: 'settings',
-                      child: Row(
-                        children: [
-                          Icon(Icons.settings, size: 20, color: Colors.grey),
-                          SizedBox(width: 12),
-                          Text("Settings",
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                              )),
-                        ],
-                      ),
-                    ),
-
-                    const PopupMenuDivider(),
-
-                    // Theme Toggle
-                    PopupMenuItem(
-                      value: 'theme',
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(isDark ? Icons.light_mode : Icons.dark_mode,
-                                  size: 20, color: Colors.grey),
-                              const SizedBox(width: 12),
-                              Text(
-                                  isDark
-                                      ? "Switch to Light Mode"
-                                      : "Switch to Dark Mode",
-                                  style: const TextStyle(
-                                    fontFamily: 'Inter',
-                                  )),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const PopupMenuDivider(),
-
-                    // Logout
-                    PopupMenuItem(
-                      value: 'logout',
-                      child: Row(
-                        children: [
-                          Icon(Icons.logout,
-                              size: 20, color: Colors.red.shade400),
-                          const SizedBox(width: 12),
-                          Text("Logout",
-                              style: TextStyle(
+                      // Profile
+                      PopupMenuItem(
+                        value: 'profile',
+                        child: Row(
+                          children: [
+                            Icon(Icons.person,
+                                size: 20,
+                                color: isDark ? Colors.white : Colors.black54),
+                            const SizedBox(width: 12),
+                            Text("Profile",
+                                style: TextStyle(
                                   fontFamily: 'Inter',
-                                  color: Colors.red.shade400,
-                                  fontWeight: FontWeight.bold)),
-                        ],
+                                  color: isDark ? Colors.white : Colors.black87,
+                                )),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+
+                      // Favourites
+                      PopupMenuItem(
+                        value: 'favorites',
+                        child: Row(
+                          children: [
+                            Icon(Icons.favorite,
+                                size: 20,
+                                color: isDark ? Colors.white : Colors.black54),
+                            const SizedBox(width: 12),
+                            Text("Favourites",
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: isDark ? Colors.white : Colors.black87,
+                                )),
+                          ],
+                        ),
+                      ),
+
+                      // Settings
+                      PopupMenuItem(
+                        value: 'settings',
+                        child: Row(
+                          children: [
+                            Icon(Icons.settings,
+                                size: 20,
+                                color: isDark ? Colors.white : Colors.black54),
+                            const SizedBox(width: 12),
+                            Text("Settings",
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: isDark ? Colors.white : Colors.black87,
+                                )),
+                          ],
+                        ),
+                      ),
+
+                      const PopupMenuDivider(),
+
+                      // Theme Toggle
+                      PopupMenuItem(
+                        value: 'theme',
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                    isDark ? Icons.light_mode : Icons.dark_mode,
+                                    size: 20,
+                                    color:
+                                        isDark ? Colors.white : Colors.black54),
+                                const SizedBox(width: 12),
+                                Text(
+                                    isDark
+                                        ? "Switch to Light Mode"
+                                        : "Switch to Dark Mode",
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    )),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const PopupMenuDivider(),
+
+                      // Logout
+                      PopupMenuItem(
+                        value: 'logout',
+                        child: Row(
+                          children: [
+                            Icon(Icons.logout,
+                                size: 20, color: Colors.red.shade400),
+                            const SizedBox(width: 12),
+                            Text("Logout",
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    color: Colors.red.shade400,
+                                    fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ];
+                  },
                   onSelected: (value) async {
                     switch (value) {
                       case 'profile':
-                        if (onTap != null) onTap!(3);
+                        if (onTap != null) {
+                          onTap!(3);
+                        } else {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const ProfileScreen()));
+                        }
                         break;
                       case 'favorites':
-                        if (onTap != null) onTap!(2);
-                        break; // Favorites is index 2
+                        if (onTap != null) {
+                          onTap!(2);
+                        } else {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const FavoritesScreen()));
+                        }
+                        break;
                       case 'settings':
-                        // Placeholder
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text("Settings coming soon")));
@@ -239,8 +269,11 @@ class DesktopNavBar extends StatelessWidget {
                       case 'logout':
                         await authService.signOut();
                         if (context.mounted) {
-                          Navigator.pushNamedAndRemoveUntil(
-                              context, '/', (r) => false);
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const LoginScreen()),
+                              (r) => false);
                         }
                         break;
                     }
