@@ -23,7 +23,6 @@ dependencies:
   intl: ^0.20.2
   qr_flutter: ^4.1.0
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.3.3
   url_launcher: ^6.3.2
   flutter_stripe: ^12.1.1
   flutter_stripe_web: ^7.1.1
@@ -33,15 +32,26 @@ dependencies:
   http: ^1.6.0
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
+  firebase_messaging: ^16.1.0
+  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
 
   assets:
-    - lib/assets/images/
+    - assets/images/
+    - assets/fonts/
     - .env
+
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Variable.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf

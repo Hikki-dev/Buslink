@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
@@ -23,8 +23,8 @@ class ConductorTripManagementScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text("Update Status",
-            style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        title: const Text("Update Status",
+            style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         leading: const BackButton(color: Colors.black),
@@ -47,12 +47,12 @@ class ConductorTripManagementScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Trip T${currentTrip.id.substring(0, 4).toUpperCase()}",
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                           color: Colors.grey.shade500,
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text("${currentTrip.fromCity} ➔ ${currentTrip.toCity}",
-                      style: GoogleFonts.outfit(
+                      style: const TextStyle(fontFamily: 'Outfit', 
                           fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   Row(
@@ -63,14 +63,14 @@ class ConductorTripManagementScreen extends StatelessWidget {
                       Text(
                           DateFormat('hh:mm a')
                               .format(currentTrip.departureTime),
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(fontFamily: 'Inter', 
                               fontSize: 16, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 24),
                       const Icon(Icons.directions_bus,
                           size: 20, color: Colors.black54),
                       const SizedBox(width: 8),
                       Text(currentTrip.busNumber,
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(fontFamily: 'Inter', 
                               fontSize: 16, fontWeight: FontWeight.w600)),
                     ],
                   )
@@ -79,8 +79,8 @@ class ConductorTripManagementScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            Text("Update Trip Status",
-                style: GoogleFonts.outfit(
+            const Text("Update Trip Status",
+                style: TextStyle(fontFamily: 'Outfit', 
                     fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
 
@@ -120,7 +120,7 @@ class ConductorTripManagementScreen extends StatelessWidget {
             Center(
               child: Text(
                 "Current Status: ${currentTrip.status.name.toUpperCase()}",
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: _getStatusColor(currentTrip.status)),
@@ -204,7 +204,7 @@ class ConductorTripManagementScreen extends StatelessWidget {
         },
         icon: Icon(icon, color: Colors.white),
         label: Text(label,
-            style: GoogleFonts.inter(
+            style: const TextStyle(fontFamily: 'Inter', 
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white)),

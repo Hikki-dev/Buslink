@@ -1,7 +1,7 @@
 // lib/views/auth/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart'; // Add this import
+// // import 'package:google_fonts/google_fonts.dart'; // Add this import
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart'; // Import AppTheme to access colors directly if needed
 
@@ -115,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 900) {
@@ -127,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Expanded(
                   flex: 5,
                   child: Container(
-                    color: Colors.white,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     child: Center(
                       child: SingleChildScrollView(
                         child: ConstrainedBox(
@@ -179,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
@@ -226,7 +226,8 @@ class _LoginScreenState extends State<LoginScreen> {
       const SizedBox(height: 24),
       Text(
         'BusLink',
-        style: GoogleFonts.outfit(
+        style: TextStyle(
+          // fontFamily: 'Outfit',
           fontSize: 36,
           fontWeight: FontWeight.bold,
           color: Theme.of(context).primaryColor,
@@ -246,9 +247,10 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           if (MediaQuery.of(context).size.width > 900) ...[
             // Desktop Header inside form
-            Text(
+            const Text(
               'Hello Again! 👋',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.darkText,
@@ -266,7 +268,8 @@ class _LoginScreenState extends State<LoginScreen> {
             // Mobile Title
             Text(
               _isLogin ? 'Welcome Back' : 'Create Account',
-              style: GoogleFonts.outfit(
+              style: const TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.darkText),
@@ -393,8 +396,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      'lib/assets/images/google.jpeg',
+                    Image.network(
+                      'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png',
                       height: 24.0,
                     ),
                     const SizedBox(width: 12),
@@ -453,9 +456,15 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey.shade50,
+            color: Theme.of(context).inputDecorationTheme.fillColor ??
+                (Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey.shade900
+                    : Colors.grey.shade50),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey.shade800
+                    : Colors.grey.shade200),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.02),
@@ -538,16 +547,19 @@ class _LeftPanel extends StatelessWidget {
                   border:
                       Border.all(color: Colors.white.withValues(alpha: 0.3)),
                 ),
-                child: Text(
+                child: const Text(
                   "New Experience",
-                  style: GoogleFonts.inter(
-                      color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontFamily: 'Inter',
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: 24),
-              Text(
+              const Text(
                 "Travel with\nComfort & Style",
-                style: GoogleFonts.outfit(
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 56,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -557,7 +569,8 @@ class _LeftPanel extends StatelessWidget {
               const SizedBox(height: 24),
               Text(
                 "Join thousands of satisfied travelers who trust BusLink for their daily commutes and long-distance journeys.",
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                  fontFamily: 'Inter',
                   fontSize: 18,
                   color: Colors.white.withValues(alpha: 0.9),
                   height: 1.6,
@@ -586,12 +599,14 @@ class _LeftPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(value,
-            style: GoogleFonts.outfit(
+            style: const TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.white)),
         Text(label,
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.white70)),
+            style: const TextStyle(
+                fontFamily: 'Inter', fontSize: 14, color: Colors.white70)),
       ],
     );
   }

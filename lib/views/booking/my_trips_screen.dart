@@ -1,7 +1,7 @@
 // lib/views/booking/my_trips_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +9,7 @@ import '../../models/trip_model.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
 import '../ticket/ticket_screen.dart';
+import '../results/bus_list_screen.dart';
 
 class MyTripsScreen extends StatelessWidget {
   final bool showBackButton;
@@ -28,16 +29,19 @@ class MyTripsScreen extends StatelessWidget {
           elevation: 0,
           leading:
               showBackButton ? const BackButton(color: Colors.black) : null,
-          title: Text("My Trips",
-              style: GoogleFonts.outfit(
-                  color: Colors.black, fontWeight: FontWeight.bold)),
+          title: const Text("My Trips",
+              style: TextStyle(
+                  fontFamily: 'Outfit',
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold)),
           centerTitle: true,
-          bottom: TabBar(
+          bottom: const TabBar(
             labelColor: AppTheme.primaryColor,
             unselectedLabelColor: Colors.grey,
             indicatorColor: AppTheme.primaryColor,
-            labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-            tabs: const [
+            labelStyle:
+                TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold),
+            tabs: [
               Tab(text: "UPCOMING"),
               Tab(text: "HISTORY"),
             ],
@@ -68,8 +72,9 @@ class MyTripsScreen extends StatelessWidget {
         children: [
           Icon(Icons.lock_clock, size: 64, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          Text("Please sign in to view your trips",
-              style: GoogleFonts.inter(fontSize: 16, color: Colors.grey)),
+          const Text("Please sign in to view your trips",
+              style: TextStyle(
+                  fontFamily: 'Inter', fontSize: 16, color: Colors.grey)),
         ],
       ),
     );
@@ -134,7 +139,8 @@ class _TripsList extends StatelessWidget {
                     size: 64, color: Colors.grey.shade300),
                 const SizedBox(height: 16),
                 Text(isHistory ? "No past trips" : "No upcoming trips",
-                    style: GoogleFonts.inter(fontSize: 18, color: Colors.grey)),
+                    style: const TextStyle(
+                        fontFamily: 'Inter', fontSize: 18, color: Colors.grey)),
               ],
             ),
           );
@@ -217,10 +223,16 @@ class _BoardingPassCard extends StatelessWidget {
             depTime = (tripData['departureTime'] as Timestamp).toDate();
           }
 
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final cardColor = Theme.of(context).cardColor;
+          final textColor = Theme.of(context).textTheme.bodyLarge?.color;
+          final subTextColor =
+              Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+
           return Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -248,17 +260,19 @@ class _BoardingPassCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(statusStr,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     color: statusColor)),
                           ),
                           Text(
                               "Ref: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
+                                  fontFamily: 'Inter',
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade400)),
+                                  color: subTextColor)),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -269,27 +283,35 @@ class _BoardingPassCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("FROM",
-                                  style: GoogleFonts.inter(
-                                      fontSize: 10, color: Colors.grey)),
+                                  style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 10,
+                                      color: subTextColor)),
                               const SizedBox(height: 4),
                               Text(fromCity,
-                                  style: GoogleFonts.outfit(
+                                  style: TextStyle(
+                                      fontFamily: 'Outfit',
                                       fontSize: 20,
-                                      fontWeight: FontWeight.bold)),
+                                      fontWeight: FontWeight.bold,
+                                      color: textColor)),
                             ],
                           ),
-                          const Icon(Icons.arrow_forward, color: Colors.grey),
+                          Icon(Icons.arrow_forward, color: subTextColor),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text("TO",
-                                  style: GoogleFonts.inter(
-                                      fontSize: 10, color: Colors.grey)),
+                                  style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 10,
+                                      color: subTextColor)),
                               const SizedBox(height: 4),
                               Text(toCity,
-                                  style: GoogleFonts.outfit(
+                                  style: TextStyle(
+                                      fontFamily: 'Outfit',
                                       fontSize: 20,
-                                      fontWeight: FontWeight.bold)),
+                                      fontWeight: FontWeight.bold,
+                                      color: textColor)),
                             ],
                           ),
                         ],
@@ -297,13 +319,17 @@ class _BoardingPassCard extends StatelessWidget {
                       const SizedBox(height: 24),
                       Row(
                         children: [
-                          _infoBadge(Icons.calendar_today,
-                              DateFormat('MMM d, y').format(depTime)),
+                          _infoBadge(
+                              Icons.calendar_today,
+                              DateFormat('MMM d, y').format(depTime),
+                              subTextColor),
                           const SizedBox(width: 16),
-                          _infoBadge(Icons.chair, "$seatsCount Seats"),
+                          _infoBadge(
+                              Icons.chair, "$seatsCount Seats", subTextColor),
                           const Spacer(),
                           Text("LKR ${ticket.totalAmount.toStringAsFixed(0)}",
-                              style: GoogleFonts.outfit(
+                              style: const TextStyle(
+                                  fontFamily: 'Outfit',
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.primaryColor))
@@ -323,7 +349,9 @@ class _BoardingPassCard extends StatelessWidget {
                                 child: Container(
                                   color: index % 2 == 0
                                       ? Colors.transparent
-                                      : Colors.grey.shade200,
+                                      : (isDark
+                                          ? Colors.grey.shade800
+                                          : Colors.grey.shade200),
                                   height: 2,
                                 ),
                               )),
@@ -332,47 +360,89 @@ class _BoardingPassCard extends StatelessWidget {
                         left: -10,
                         top: -10,
                         child: CircleAvatar(
-                            radius: 10, backgroundColor: Colors.grey.shade50)),
+                            radius: 10,
+                            backgroundColor:
+                                Theme.of(context).scaffoldBackgroundColor)),
                     Positioned(
                         right: -10,
                         top: -10,
                         child: CircleAvatar(
-                            radius: 10, backgroundColor: Colors.grey.shade50)),
+                            radius: 10,
+                            backgroundColor:
+                                Theme.of(context).scaffoldBackgroundColor)),
                   ],
                 ),
 
-                // Bottom Action
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        try {
-                          // Reconstruct trip from ticket data for display
-                          final trip =
-                              Trip.fromMap(ticket.tripData, ticket.tripId);
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            try {
+                              final trip =
+                                  Trip.fromMap(ticket.tripData, ticket.tripId);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => TicketScreen(
+                                      ticketArg: ticket, tripArg: trip),
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text("Error opening ticket: $e")),
+                              );
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                  color: isDark
+                                      ? Colors.grey.shade700
+                                      : Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12))),
+                          child: Text("View Ticket",
+                              style: TextStyle(
+                                  fontFamily: 'Inter', color: textColor)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Book Again Logic
+                            final controller = Provider.of<TripController>(
+                                context,
+                                listen: false);
+                            controller.setFromCity(
+                                ticket.tripData['fromCity'] ?? 'Colombo');
+                            controller.setToCity(
+                                ticket.tripData['toCity'] ?? 'Kandy');
+                            controller.setDepartureDate(DateTime.now());
+                            controller.searchTrips(context);
 
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => TicketScreen(
-                                  ticketArg: ticket, tripArg: trip),
-                            ),
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Error opening ticket: $e")),
-                          );
-                        }
-                      },
-                      style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.grey.shade300),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                      child: Text("View Ticket Details",
-                          style: GoogleFonts.inter(color: Colors.black87)),
-                    ),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const BusListScreen()),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12))),
+                          child: const Text("Book Again",
+                              style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                        ),
+                      ),
+                    ],
                   ),
                 )
               ],
@@ -381,14 +451,14 @@ class _BoardingPassCard extends StatelessWidget {
         });
   }
 
-  Widget _infoBadge(IconData icon, String text) {
+  Widget _infoBadge(IconData icon, String text, Color color) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey),
+        Icon(icon, size: 16, color: color),
         const SizedBox(width: 6),
         Text(text,
-            style: GoogleFonts.inter(
-                fontWeight: FontWeight.w500, color: Colors.grey.shade700))
+            style: TextStyle(
+                fontFamily: 'Inter', fontWeight: FontWeight.w500, color: color))
       ],
     );
   }

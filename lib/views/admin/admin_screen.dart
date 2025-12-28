@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_constants.dart';
@@ -281,7 +281,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                       isEditing
                                           ? "Edit Route"
                                           : "Add New Route",
-                                      style: GoogleFonts.outfit(
+                                      style: const TextStyle(fontFamily: 'Outfit', 
                                           fontSize: 24,
                                           fontWeight: FontWeight.bold),
                                     ),
@@ -428,8 +428,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text("Schedule Type:",
-                                            style: GoogleFonts.inter(
+                                        const Text("Schedule Type:",
+                                            style: TextStyle(fontFamily: 'Inter', 
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 14)),
                                         const SizedBox(width: 16),
@@ -464,8 +464,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                 const SizedBox(height: 16),
 
                                 if (_isRecurring) ...[
-                                  Text("Operating Days (Weekly)",
-                                      style: GoogleFonts.inter(
+                                  const Text("Operating Days (Weekly)",
+                                      style: TextStyle(fontFamily: 'Inter', 
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14)),
                                   const SizedBox(height: 8),
@@ -496,8 +496,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                     }).toList(),
                                   ),
                                 ] else ...[
-                                  Text("Trip Date",
-                                      style: GoogleFonts.inter(
+                                  const Text("Trip Date",
+                                      style: TextStyle(fontFamily: 'Inter', 
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14)),
                                   const SizedBox(height: 8),
@@ -532,7 +532,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                 ? "Select Date"
                                                 : DateFormat('EEE, MMM d, yyyy')
                                                     .format(_tripDate!),
-                                            style: GoogleFonts.inter(
+                                            style: TextStyle(fontFamily: 'Inter', 
                                                 fontSize: 16,
                                                 color: _tripDate == null
                                                     ? Colors.grey
@@ -599,7 +599,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                         isEditing
                                             ? "SAVE CHANGES"
                                             : "ADD ROUTE",
-                                        style: GoogleFonts.outfit(
+                                        style: const TextStyle(fontFamily: 'Outfit', 
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16)),
                                   ),
@@ -629,7 +629,7 @@ class _AdminScreenState extends State<AdminScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: GoogleFonts.outfit(
+              style: const TextStyle(fontFamily: 'Outfit', 
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.darkText)),
@@ -775,8 +775,8 @@ class _AdminScreenState extends State<AdminScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Seat Layout (Manage Availability)",
-                style: GoogleFonts.outfit(
+            const Text("Seat Layout (Manage Availability)",
+                style: TextStyle(fontFamily: 'Outfit', 
                     fontSize: 18, fontWeight: FontWeight.bold)),
             // Legend
             Row(
@@ -863,7 +863,7 @@ class _AdminScreenState extends State<AdminScreen> {
           ),
         ),
         const SizedBox(width: 6),
-        Text(label, style: GoogleFonts.inter(fontSize: 12)),
+        Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 12)),
       ],
     );
   }
@@ -921,7 +921,7 @@ class _AdminScreenState extends State<AdminScreen> {
         child: Center(
           child: Text(
             "$seatNum",
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontWeight: FontWeight.bold,
               color: textColor,
               fontSize: 12,

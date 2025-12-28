@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
@@ -208,9 +208,9 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
               tooltip: "Back to Dashboard",
             ),
             const SizedBox(width: 8),
-            Text(
+            const Text(
               "User Management",
-              style: GoogleFonts.outfit(
+              style: TextStyle(fontFamily: 'Outfit', 
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.darkText,
@@ -223,7 +223,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
           padding: const EdgeInsets.only(left: 48.0),
           child: Text(
             "Manage roles and permissions for all users",
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               color: Colors.grey.shade500,
               fontSize: 16,
             ),
@@ -440,15 +440,15 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                         color: Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Row(
+                      child: const Row(
                         children: [
-                          const Icon(Icons.info_outline,
+                          Icon(Icons.info_outline,
                               color: Colors.blue, size: 20),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Expanded(
                               child: Text(
                                   "Creates a NEW login in Firebase Auth + Database Profile.",
-                                  style: GoogleFonts.inter(fontSize: 12))),
+                                  style: TextStyle(fontFamily: 'Inter', fontSize: 12))),
                         ],
                       ),
                     ),
@@ -585,7 +585,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
             ),
             const SizedBox(width: 12),
             Text(label,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   color: isSelected ? Colors.black : Colors.grey.shade700,
                 )),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart'; // For Redirect
 
@@ -117,8 +117,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       appBar: isDesktop
           ? null
           : AppBar(
-              title: Text("Secure Checkout",
-                  style: GoogleFonts.outfit(
+              title: const Text("Secure Checkout",
+                  style: TextStyle(fontFamily: 'Outfit', 
                       fontWeight: FontWeight.bold, color: Colors.black)),
               centerTitle: true,
               backgroundColor: Colors.white,
@@ -148,8 +148,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         child: Column(
                           children: [
                             if (isDesktop) ...[
-                              Text("Secure Checkout",
-                                  style: GoogleFonts.outfit(
+                              const Text("Secure Checkout",
+                                  style: TextStyle(fontFamily: 'Outfit', 
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black87)),
@@ -216,8 +216,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
             children: [
               Container(width: 4, height: 24, color: AppTheme.primaryColor),
               const SizedBox(width: 12),
-              Text("Order Summary",
-                  style: GoogleFonts.outfit(
+              const Text("Order Summary",
+                  style: TextStyle(fontFamily: 'Outfit', 
                       fontSize: 22, fontWeight: FontWeight.bold)),
             ],
           ),
@@ -229,7 +229,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           const Divider(height: 32),
           if (isBulk) ...[
             Text("Multi-Day Booking (${controller.bulkDates.length} Days)",
-                style: GoogleFonts.inter(
+                style: const TextStyle(fontFamily: 'Inter', 
                     fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
             const SizedBox(height: 8),
             // Show simplified range or list
@@ -257,11 +257,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Total Amount",
-                    style: GoogleFonts.inter(
+                const Text("Total Amount",
+                    style: TextStyle(fontFamily: 'Inter', 
                         fontWeight: FontWeight.bold, fontSize: 16)),
                 Text("LKR ${totalAmount.toStringAsFixed(0)}",
-                    style: GoogleFonts.outfit(
+                    style: const TextStyle(fontFamily: 'Outfit', 
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryColor)),
@@ -279,9 +279,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.inter(color: Colors.grey.shade500)),
+          Text(label, style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade500)),
           Text(value,
-              style: GoogleFonts.inter(
+              style: const TextStyle(fontFamily: 'Inter', 
                   fontWeight: FontWeight.w600, color: Colors.black87)),
         ],
       ),
@@ -292,13 +292,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Finalize Payment",
+        const Text("Finalize Payment",
             style:
-                GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold)),
+                TextStyle(fontFamily: 'Outfit', fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         Text(
           "You will be redirected to the secure Stripe Checkout page to complete your payment.",
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: 'Inter', 
               fontSize: 14, color: Colors.grey.shade600, height: 1.5),
         ),
         const SizedBox(height: 32),
@@ -319,13 +319,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     height: 24,
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2))
-                : Row(
+                : const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.lock, size: 18, color: Colors.white),
-                      const SizedBox(width: 10),
+                      Icon(Icons.lock, size: 18, color: Colors.white),
+                      SizedBox(width: 10),
                       Text("Proceed to Checkout",
-                          style: GoogleFonts.outfit(
+                          style: TextStyle(fontFamily: 'Outfit', 
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                               color: Colors.white)),
@@ -340,7 +340,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           child: TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text("Back",
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     color: Colors.grey.shade700)),
@@ -361,7 +361,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             Icon(Icons.lock, size: 14, color: Colors.green.shade600),
             const SizedBox(width: 8),
             Text("SSL Encrypted Transaction",
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 12,
                     color: Colors.green.shade700,
                     fontWeight: FontWeight.w600)),
@@ -390,6 +390,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
             borderRadius: BorderRadius.circular(4)),
         child: Text(text,
             style:
-                GoogleFonts.inter(fontSize: 10, color: Colors.grey.shade500)));
+                TextStyle(fontFamily: 'Inter', fontSize: 10, color: Colors.grey.shade500)));
   }
 }

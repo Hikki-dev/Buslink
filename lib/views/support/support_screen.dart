@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../utils/app_theme.dart';
 import '../layout/desktop_navbar.dart';
@@ -22,15 +22,15 @@ class _SupportScreenState extends State<SupportScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Oop!",
-            style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-        content: Text(message, style: GoogleFonts.inter()),
+        title: const Text("Oop!",
+            style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
+        content: Text(message, style: const TextStyle(fontFamily: 'Inter', )),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text("Okay",
-                style: GoogleFonts.outfit(
+            child: const Text("Okay",
+                style: TextStyle(fontFamily: 'Outfit', 
                     fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
           )
         ],
@@ -75,10 +75,10 @@ class _SupportScreenState extends State<SupportScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-        content: Text(
+        content: const Text(
           "Message Sent Successfully! We'll allow you to track it soon.",
           textAlign: TextAlign.center,
-          style: GoogleFonts.inter(),
+          style: TextStyle(fontFamily: 'Inter', ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
@@ -91,8 +91,8 @@ class _SupportScreenState extends State<SupportScreen> {
               _subjectController.clear();
               _messageController.clear();
             },
-            child: Text("Great",
-                style: GoogleFonts.outfit(
+            child: const Text("Great",
+                style: TextStyle(fontFamily: 'Outfit', 
                     fontWeight: FontWeight.bold, color: Colors.green)),
           )
         ],
@@ -130,8 +130,8 @@ class _SupportScreenState extends State<SupportScreen> {
             ],
 
             const SizedBox(height: 32),
-            Text("Emergency Hotlines",
-                style: GoogleFonts.outfit(
+            const Text("Emergency Hotlines",
+                style: TextStyle(fontFamily: 'Outfit', 
                     fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Wrap(
@@ -157,8 +157,8 @@ class _SupportScreenState extends State<SupportScreen> {
               ],
             ),
             const SizedBox(height: 32),
-            Text("Contact Us Directly",
-                style: GoogleFonts.outfit(
+            const Text("Contact Us Directly",
+                style: TextStyle(fontFamily: 'Outfit', 
                     fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Wrap(
@@ -219,8 +219,8 @@ class _SupportScreenState extends State<SupportScreen> {
           return Scaffold(
             backgroundColor: Colors.grey.shade50,
             appBar: AppBar(
-              title: Text("Help & Support",
-                  style: GoogleFonts.outfit(
+              title: const Text("Help & Support",
+                  style: TextStyle(fontFamily: 'Outfit', 
                       color: Colors.black, fontWeight: FontWeight.bold)),
               backgroundColor: Colors.white,
               centerTitle: true,
@@ -241,9 +241,9 @@ class _SupportScreenState extends State<SupportScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Frequently Asked Questions",
+        const Text("Frequently Asked Questions",
             style:
-                GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold)),
+                TextStyle(fontFamily: 'Outfit', fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         _buildFAQItem(context, "How do I cancel a ticket?",
             "You can cancel your ticket from the 'My Trips' section up to 24 hours before departure."),
@@ -259,9 +259,9 @@ class _SupportScreenState extends State<SupportScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Send us a message",
+        const Text("Send us a message",
             style:
-                GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold)),
+                TextStyle(fontFamily: 'Outfit', fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(24),
@@ -298,8 +298,8 @@ class _SupportScreenState extends State<SupportScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     elevation: 0),
-                child: Text("SEND MESSAGE",
-                    style: GoogleFonts.outfit(
+                child: const Text("SEND MESSAGE",
+                    style: TextStyle(fontFamily: 'Outfit', 
                         fontWeight: FontWeight.bold, color: Colors.white)),
               )
             ],
@@ -319,7 +319,7 @@ class _SupportScreenState extends State<SupportScreen> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.inter(color: Colors.grey.shade400),
+        hintStyle: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade400),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey.shade200)),
@@ -351,13 +351,13 @@ class _SupportScreenState extends State<SupportScreen> {
           const Icon(Icons.headset_mic_rounded, size: 48, color: Colors.white),
           const SizedBox(height: 16),
           Text("How can we help you?",
-              style: GoogleFonts.outfit(
+              style: TextStyle(fontFamily: 'Outfit', 
                   fontSize: isDesktop ? 32 : 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white)),
           const SizedBox(height: 8),
           Text("Our team is available 24/7 to assist you.",
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                   fontSize: isDesktop ? 16 : 14,
                   color: Colors.white.withValues(alpha: 0.9))),
         ],
@@ -378,12 +378,12 @@ class _SupportScreenState extends State<SupportScreen> {
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           title: Text(question,
               style:
-                  GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15)),
+                  const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 15)),
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Text(answer,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                       color: Colors.grey.shade600, height: 1.5)),
             )
           ],
@@ -412,9 +412,9 @@ class _SupportScreenState extends State<SupportScreen> {
             child: Icon(icon, color: AppTheme.primaryColor),
           ),
           title: Text(title,
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+              style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600)),
           subtitle: Text(subtitle,
-              style: GoogleFonts.inter(color: Colors.grey.shade500)),
+              style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade500)),
           trailing:
               const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
           onTap: onTap,

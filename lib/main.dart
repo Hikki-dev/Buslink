@@ -2,14 +2,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'dart:html'
+    as html; // ignore: avoid_web_libraries_in_flutter, deprecated_member_use
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+
 import 'controllers/trip_controller.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
+import 'utils/notification_service.dart';
 import 'utils/app_theme.dart';
 import 'views/admin/admin_dashboard.dart';
 import 'views/auth/login_screen.dart';
@@ -17,51 +21,159 @@ import 'views/conductor/conductor_dashboard.dart';
 import 'views/home/home_screen.dart';
 import 'views/booking/payment_success_screen.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  runApp(const AppBootstrapper());
+}
 
-  try {
-    await dotenv.load(fileName: ".env");
-  } catch (e) {
-    debugPrint("Warning: Failed to load .env file: $e");
+class AppBootstrapper extends StatefulWidget {
+  const AppBootstrapper({super.key});
+
+  @override
+  State<AppBootstrapper> createState() => _AppBootstrapperState();
+}
+
+class _AppBootstrapperState extends State<AppBootstrapper> {
+  bool _isInitialized = false;
+  String _statusText = "Booting..."; // Debug status
+  AuthService? _authService;
+
+  @override
+  void initState() {
+    super.initState();
+    _initialize();
   }
 
-  // Initialize Stripe
-  // You must set your publishable key in your .env file
-  // STRIPE_PUBLISHABLE_KEY=pk_test_...
-  final stripeKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
-  if (stripeKey != null) {
+  Future<void> _initialize() async {
+    // Safety timeout to ensure app ALWAYS loads eventually
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted && !_isInitialized) {
+        debugPrint("Force-loading app due to initialization timeout");
+        setState(() {
+          _isInitialized = true;
+          _statusText = "Timeout - Forcing Load...";
+        });
+      }
+    });
+
     try {
-      stripe.Stripe.publishableKey = stripeKey;
-      await stripe.Stripe.instance.applySettings();
+      // 1. Load Env
+      try {
+        setState(() => _statusText = "Loading Environment...");
+        await dotenv.load(fileName: ".env");
+        debugPrint("Env loaded");
+      } catch (e) {
+        debugPrint("Warning: Failed to load .env file: $e");
+      }
+
+      // 2. Firebase
+      try {
+        setState(() => _statusText = "Connecting to Firebase...");
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+        debugPrint("Firebase initialized");
+        // Initialize Auth Service early so it's ready if timeout triggers
+        _authService = AuthService();
+      } catch (e) {
+        debugPrint("Critical: Firebase initialization failed: $e");
+      }
+
+      // 3. Status Check & Notifications
+      setState(() => _statusText = "Initializing Services...");
+
+      try {
+        await NotificationService.initialize();
+        debugPrint("Notifications initialized");
+      } catch (e) {
+        debugPrint("Notification init failed: $e");
+      }
+
+      final stripeKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
+      if (stripeKey != null) {
+        try {
+          stripe.Stripe.publishableKey = stripeKey;
+          await stripe.Stripe.instance.applySettings().timeout(
+            const Duration(seconds: 2),
+            onTimeout: () {
+              debugPrint("Stripe init timed out - skipping");
+            },
+          );
+          debugPrint("Stripe initialized");
+        } catch (e) {
+          debugPrint("Warning: Failed to initialize Stripe: $e");
+        }
+      }
+
+      // 4. Auth (Actions that require async setup, service already instanced)
+      setState(() => _statusText = "Initializing Auth...");
+      try {
+        if (_authService != null) {
+          await _authService!
+              .initializeGoogleSignIn()
+              .timeout(const Duration(seconds: 3), onTimeout: () {
+            debugPrint("Google Sign-In init timed out - skipping");
+          });
+          debugPrint("Google Sign-In initialized");
+        }
+      } catch (e) {
+        debugPrint("Warning: Google Sign-In init failed: $e");
+      }
     } catch (e) {
-      debugPrint("Warning: Failed to initialize Stripe: $e");
+      debugPrint("Unexpected initialization error: $e");
+    } finally {
+      if (mounted && !_isInitialized) {
+        setState(() {
+          _isInitialized = true;
+        });
+        // Note: HTML spinner removal is now handled by web/index.html or flutter_bootstrap.js
+        // FORCE REMOVE HTML SPINNER (Restored to fix stuck spinner)
+        try {
+          final loader = html.document.getElementById('loading-indicator');
+          if (loader != null) {
+            loader.remove();
+            debugPrint("Deleted HTML Spinner via Dart");
+          }
+        } catch (e) {
+          debugPrint("Failed to remove HTML spinner: $e");
+        }
+      }
     }
-  } else {
-    debugPrint("STRIPE_PUBLISHABLE_KEY not found in .env");
   }
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    debugPrint("Critical: Firebase initialization failed: $e");
-    // We continue, but app might be broken.
-  }
+  @override
+  Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.directions_bus,
+                    size: 80, color: AppTheme.primaryColor),
+                const SizedBox(height: 24),
+                const CircularProgressIndicator(
+                    color: AppTheme.primaryColor, strokeWidth: 6),
+                const SizedBox(height: 16),
+                Text(_statusText,
+                    style: const TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold)), // Status Text
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
-  // Initialize Google Sign-In
-  final authService = AuthService();
-  try {
-    await authService.initializeGoogleSignIn();
-  } catch (e) {
-    debugPrint("Warning: Google Sign-In init failed: $e");
-  }
-
-  runApp(
-    MultiProvider(
+    return MultiProvider(
       providers: [
-        Provider<AuthService>(create: (_) => authService),
+        Provider<AuthService>(create: (_) => _authService!),
         Provider<FirestoreService>(create: (_) => FirestoreService()),
         StreamProvider<User?>(
           create: (context) => context.read<AuthService>().user,
@@ -83,7 +195,6 @@ void main() async {
             },
             debugShowCheckedModeBanner: false,
             onGenerateRoute: (settings) {
-              // Handle deep links or manual URL typing if needed
               if (settings.name?.startsWith('/payment_success') ?? false) {
                 return MaterialPageRoute(
                     settings: settings,
@@ -94,8 +205,8 @@ void main() async {
           );
         },
       ),
-    ),
-  );
+    );
+  }
 }
 
 // AuthWrapper (MODIFIED)
@@ -114,9 +225,41 @@ class AuthWrapper extends StatelessWidget {
 }
 
 // NEW WIDGET: RoleDispatcher
-class RoleDispatcher extends StatelessWidget {
+class RoleDispatcher extends StatefulWidget {
   final User user;
   const RoleDispatcher({super.key, required this.user});
+
+  @override
+  State<RoleDispatcher> createState() => _RoleDispatcherState();
+}
+
+class _RoleDispatcherState extends State<RoleDispatcher> {
+  late Future<DocumentSnapshot> _userFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _userFuture = _fetchUserData();
+  }
+
+  Future<DocumentSnapshot> _fetchUserData() {
+    final firestoreService =
+        Provider.of<FirestoreService>(context, listen: false);
+    return firestoreService.getUserData(widget.user.uid).timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        throw "Firestore Timeout";
+      },
+    );
+  }
+
+  @override
+  void didUpdateWidget(RoleDispatcher oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.user.uid != widget.user.uid) {
+      _userFuture = _fetchUserData();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -124,59 +267,64 @@ class RoleDispatcher extends StatelessWidget {
         Provider.of<FirestoreService>(context, listen: false);
 
     return FutureBuilder<DocumentSnapshot>(
-      future: firestoreService.getUserData(user.uid),
+      future: _userFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text("Loading Profile...",
+                      style: TextStyle(color: Colors.grey))
+                ],
+              ),
+            ),
           );
         }
         if (snapshot.hasError) {
           debugPrint("!!! FIRESTORE ERROR: ${snapshot.error}");
-          return const Scaffold(
-              body: Center(child: Text("Database Error. Check Console.")));
+          // Fallback to Home if Firestore fails (Offline mode potentially)
+          return const HomeScreen();
         }
         if (!snapshot.hasData || !snapshot.data!.exists) {
           debugPrint(
-              "!!! USER DOCUMENT MISSING (UID: ${user.uid}) - Attempting Self-Healing");
+              "!!! USER DOCUMENT MISSING (UID: ${widget.user.uid}) - Attempting Self-Healing");
 
           // --- SELF-HEALING: Create the missing doc ---
           final role =
-              (user.email == 'admin@buslink.com') ? 'admin' : 'customer';
+              (widget.user.email == 'admin@buslink.com') ? 'admin' : 'customer';
           firestoreService.createUserProfile({
-            'uid': user.uid,
-            'email': user.email,
-            'displayName':
-                user.displayName ?? user.email?.split('@')[0] ?? 'User',
+            'uid': widget.user.uid,
+            'email': widget.user.email,
+            'displayName': widget.user.displayName ??
+                widget.user.email?.split('@')[0] ??
+                'User',
             'role': role,
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-          // Show a temporary loading or fallback while it creates
           return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
+              body: Center(child: Text("Creating Profile...")));
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>?;
 
         // Force Admin Role if it's the master email but has wrong role
-        if (user.email == 'admin@buslink.com' && data?['role'] != 'admin') {
-          debugPrint("!!! FORCING ADMIN ROLE FOR MASTER EMAIL !!!");
-          firestoreService.updateUserRole(user.uid, 'admin');
+        if (widget.user.email == 'admin@buslink.com' &&
+            data?['role'] != 'admin') {
+          firestoreService.updateUserRole(widget.user.uid, 'admin');
           return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
+              body: Center(child: Text("Updating Admin Access...")));
         }
 
         if (data == null) {
-          debugPrint(
-              "User detected (UID: ${user.uid}) but NO DATA in Firestore 'users' collection.");
           return const HomeScreen();
         }
 
         final String role = (data['role'] ?? 'customer').toString().trim();
-        debugPrint("User: ${user.email} (UID: ${user.uid})");
-        debugPrint("Firestore Data: $data");
-        debugPrint("Determined Role: $role");
 
         switch (role) {
           case 'admin':

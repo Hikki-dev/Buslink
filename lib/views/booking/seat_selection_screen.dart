@@ -4,7 +4,7 @@ import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_theme.dart';
 import 'payment_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
 import '../../services/auth_service.dart';
@@ -36,8 +36,8 @@ class SeatSelectionScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: showAppBar
           ? AppBar(
-              title: Text("Select Seats",
-                  style: GoogleFonts.outfit(
+              title: const Text("Select Seats",
+                  style: TextStyle(fontFamily: 'Outfit', 
                       fontWeight: FontWeight.bold, color: Colors.black)),
               centerTitle: true,
               backgroundColor: Colors.white,
@@ -248,20 +248,20 @@ class SeatSelectionScreen extends StatelessWidget {
                                   children: [
                                     Text(
                                         "${selectedSeats.length} Seats Selected",
-                                        style: GoogleFonts.inter(
+                                        style: TextStyle(fontFamily: 'Inter', 
                                             color: Colors.grey.shade600,
                                             fontSize: 13,
                                             fontWeight: FontWeight.w500)),
                                     const SizedBox(height: 4),
                                     Text(
                                         "LKR ${(trip.price * selectedSeats.length).toStringAsFixed(0)}",
-                                        style: GoogleFonts.outfit(
+                                        style: const TextStyle(fontFamily: 'Outfit', 
                                             fontSize: 28,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.black)),
                                     Text(selectedSeats.join(", "),
                                         overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.outfit(
+                                        style: const TextStyle(fontFamily: 'Outfit', 
                                             color: AppTheme.primaryColor))
                                   ],
                                 ),
@@ -294,7 +294,7 @@ class SeatSelectionScreen extends StatelessWidget {
                                     isConductorMode
                                         ? "Issue Ticket (Cash)"
                                         : "Proceed to Pay",
-                                    style: GoogleFonts.outfit(
+                                    style: const TextStyle(fontFamily: 'Outfit', 
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
                                         color: Colors.white)),
@@ -336,10 +336,10 @@ class SeatSelectionScreen extends StatelessWidget {
           ),
         Text(trip.operatorName,
             style:
-                GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
+                const TextStyle(fontFamily: 'Outfit', fontSize: 24, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Text("${trip.fromCity} ➔ ${trip.toCity}",
-            style: GoogleFonts.inter(color: Colors.grey, fontSize: 16)),
+            style: const TextStyle(fontFamily: 'Inter', color: Colors.grey, fontSize: 16)),
       ],
     );
   }
@@ -372,7 +372,7 @@ class SeatSelectionScreen extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Text(label,
-            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500))
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w500))
       ],
     );
   }
@@ -395,14 +395,14 @@ class SeatSelectionScreen extends StatelessWidget {
     showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-              title: Text("Issue Cash Ticket",
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+              title: const Text("Issue Cash Ticket",
+                  style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Review Booking:",
-                      style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                  const Text("Review Booking:",
+                      style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text("Seats: ${controller.selectedSeats.join(', ')}"),
                   Text("Total Amount: LKR ${total.toStringAsFixed(0)}",

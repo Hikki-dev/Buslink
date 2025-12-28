@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,9 +20,9 @@ class ProfileScreen extends StatelessWidget {
     final user = Provider.of<User?>(context);
 
     if (user == null) {
-      return Center(
+      return const Center(
           child: Text("Please log in",
-              style: GoogleFonts.inter(color: Colors.grey)));
+              style: TextStyle(fontFamily: 'Inter', color: Colors.grey)));
     }
 
     return FutureBuilder<DocumentSnapshot>(
@@ -75,7 +75,7 @@ class ProfileScreen extends StatelessWidget {
                               backgroundColor:
                                   AppTheme.primaryColor.withValues(alpha: 0.1),
                               child: Text(initial,
-                                  style: GoogleFonts.outfit(
+                                  style: const TextStyle(fontFamily: 'Outfit', 
                                       fontSize: 48,
                                       fontWeight: FontWeight.bold,
                                       color: AppTheme.primaryColor)),
@@ -93,7 +93,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 24),
                         Text(name,
-                            style: GoogleFonts.outfit(
+                            style: const TextStyle(fontFamily: 'Outfit', 
                                 fontSize: 26, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 4),
                         Container(
@@ -104,7 +104,7 @@ class ProfileScreen extends StatelessWidget {
                                   AppTheme.primaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8)),
                           child: Text(role,
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(fontFamily: 'Inter', 
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.primaryColor,
@@ -131,8 +131,8 @@ class ProfileScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         SwitchListTile(
-                          title: Text("Dark Mode",
-                              style: GoogleFonts.inter(
+                          title: const Text("Dark Mode",
+                              style: TextStyle(fontFamily: 'Inter', 
                                   fontWeight: FontWeight.w600)),
                           secondary: Container(
                               padding: const EdgeInsets.all(8),
@@ -157,8 +157,8 @@ class ProfileScreen extends StatelessWidget {
                                   shape: BoxShape.circle),
                               child: const Icon(Icons.notifications_outlined,
                                   color: Colors.blue)),
-                          title: Text("Notifications",
-                              style: GoogleFonts.inter(
+                          title: const Text("Notifications",
+                              style: TextStyle(fontFamily: 'Inter', 
                                   fontWeight: FontWeight.w600)),
                           trailing: Switch(
                               value: true,
@@ -188,8 +188,8 @@ class ProfileScreen extends StatelessWidget {
                                   shape: BoxShape.circle),
                               child: const Icon(Icons.support_agent,
                                   color: Colors.orange)),
-                          title: Text("Help & Support",
-                              style: GoogleFonts.inter(
+                          title: const Text("Help & Support",
+                              style: TextStyle(fontFamily: 'Inter', 
                                   fontWeight: FontWeight.w600)),
                           trailing: const Icon(Icons.chevron_right,
                               size: 18, color: Colors.grey),
@@ -207,8 +207,8 @@ class ProfileScreen extends StatelessWidget {
                                   shape: BoxShape.circle),
                               child:
                                   const Icon(Icons.logout, color: Colors.red)),
-                          title: Text("Log Out",
-                              style: GoogleFonts.inter(
+                          title: const Text("Log Out",
+                              style: TextStyle(fontFamily: 'Inter', 
                                   fontWeight: FontWeight.w600,
                                   color: Colors.red)),
                           onTap: () => authService.signOut(),
@@ -219,7 +219,7 @@ class ProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 40),
                   Text("Version 1.0.0",
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                           color: Colors.grey.shade400, fontSize: 12))
                 ],
               ),
@@ -243,13 +243,13 @@ class ProfileScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 10,
                         color: Colors.grey.shade500,
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
                 Text(value,
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(fontFamily: 'Inter', 
                         fontWeight: FontWeight.w500, fontSize: 15)),
               ],
             ),

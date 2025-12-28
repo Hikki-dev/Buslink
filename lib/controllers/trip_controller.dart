@@ -63,6 +63,11 @@ class TripController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setDepartureDate(DateTime date) {
+    travelDate = date;
+    notifyListeners();
+  }
+
   Future<void> searchTrips(BuildContext context) async {
     if (fromCity == null ||
         toCity == null ||
@@ -528,13 +533,15 @@ class TripController extends ChangeNotifier {
   }
 
   Stream<List<Map<String, dynamic>>> getUserFavorites(String userId) {
-    return _service.getUserFavorites(userId);
+    return _service.getUserFavoriteRoutes(userId);
   }
 
   // Route Favorites
   Future<void> toggleRouteFavorite(
-      String userId, String fromCity, String toCity) async {
-    await _service.toggleRouteFavorite(userId, fromCity, toCity);
+      String userId, String fromCity, String toCity,
+      {String? operatorName, double? price}) async {
+    await _service.toggleRouteFavorite(userId, fromCity, toCity,
+        operatorName: operatorName, price: price);
     notifyListeners();
   }
 
@@ -643,16 +650,19 @@ class TripController extends ChangeNotifier {
   }
 
   void setFromCity(String? city) {
+    if (fromCity == city) return;
     fromCity = city;
     notifyListeners();
   }
 
   void setToCity(String? city) {
+    if (toCity == city) return;
     toCity = city;
     notifyListeners();
   }
 
   void setDate(DateTime? date) {
+    if (travelDate == date) return;
     travelDate = date;
     notifyListeners();
   }

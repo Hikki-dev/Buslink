@@ -194,12 +194,23 @@ class FirestoreService {
   final String favoritesCollection = 'favorites';
 
   Future<void> removeFavorite(String userId, String tripId) async {
-    await _db
+    // Try both collections to ensure cleanup
+    final docRefLegacy = _db
         .collection(userCollection)
         .doc(userId)
         .collection(favoritesCollection)
-        .doc(tripId)
-        .delete();
+        .doc(tripId);
+
+    final docRefRoutes = _db
+        .collection(userCollection)
+        .doc(userId)
+        .collection('favorite_routes')
+        .doc(tripId);
+
+    await Future.wait([
+      docRefLegacy.delete(),
+      docRefRoutes.delete(),
+    ]);
   }
 
   Future<void> toggleFavorite(String userId, Trip trip) async {
@@ -225,7 +236,8 @@ class FirestoreService {
   }
 
   Future<void> toggleRouteFavorite(
-      String userId, String fromCity, String toCity) async {
+      String userId, String fromCity, String toCity,
+      {String? operatorName, double? price}) async {
     try {
       final safeFrom = fromCity.replaceAll('/', '-');
       final safeTo = toCity.replaceAll('/', '-');
@@ -244,6 +256,8 @@ class FirestoreService {
         await docRef.set({
           'fromCity': fromCity,
           'toCity': toCity,
+          'operatorName': operatorName ?? '',
+          'price': price,
           'addedAt': FieldValue.serverTimestamp(),
         });
       }

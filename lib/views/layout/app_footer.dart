@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import '../../utils/app_theme.dart';
 
 class AppFooter extends StatelessWidget {
@@ -65,12 +65,12 @@ class AppFooter extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("© 2024 BusLink. All rights reserved.",
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                           color: Colors.grey.shade500, fontSize: 14)),
                   Row(
                     children: [
                       Text("Made with ❤️ in Sri Lanka",
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                               color: Colors.grey.shade500, fontSize: 14)),
                     ],
                   )
@@ -87,12 +87,12 @@ class AppFooter extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.directions_bus, color: Colors.white, size: 30),
-            const SizedBox(width: 8),
+            Icon(Icons.directions_bus, color: Colors.white, size: 30),
+            SizedBox(width: 8),
             Text("BusLink",
-                style: GoogleFonts.outfit(
+                style: TextStyle(fontFamily: 'Outfit', 
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.white)),
@@ -101,7 +101,7 @@ class AppFooter extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           "Sri Lanka's #1 Bus Booking Platform.\nTravel with comfort and style.",
-          style: GoogleFonts.inter(color: Colors.grey.shade400, height: 1.6),
+          style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade400, height: 1.6),
         ),
         const SizedBox(height: 24),
         Row(
@@ -120,7 +120,7 @@ class AppFooter extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title,
-            style: GoogleFonts.outfit(
+            style: const TextStyle(fontFamily: 'Outfit', 
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white)),
@@ -134,8 +134,8 @@ class AppFooter extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Contact",
-            style: GoogleFonts.outfit(
+        const Text("Contact",
+            style: TextStyle(fontFamily: 'Outfit', 
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white)),
@@ -161,7 +161,7 @@ class AppFooter extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(text,
-          style: GoogleFonts.inter(color: Colors.grey.shade400, fontSize: 14)),
+          style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade400, fontSize: 14)),
     );
   }
 
@@ -175,7 +175,7 @@ class AppFooter extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(text,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                     color: Colors.grey.shade400, fontSize: 14, height: 1.2),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis),

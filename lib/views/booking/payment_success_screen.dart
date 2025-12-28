@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:pdf/pdf.dart';
@@ -248,7 +248,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     const CircularProgressIndicator(color: Colors.black),
                     const SizedBox(height: 24),
                     Text(_message,
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(fontFamily: 'Inter', 
                             fontSize: 16, color: Colors.grey)),
                   ] else if (_isSuccess && _verifiedTickets.isNotEmpty) ...[
                     // --- SUCCESS VIEW ---
@@ -262,17 +262,17 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                           color: Colors.green, size: 40),
                     ),
                     const SizedBox(height: 20),
-                    Text(
+                    const Text(
                       "Booking Confirmed!",
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(fontFamily: 'Outfit', 
                           fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
-                    Text(
+                    const Text(
                       "HERE IS YOUR BOOKING QR\nSHOW THIS TO CONDUCTOR",
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(fontFamily: 'Outfit', 
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                           color: Colors.black,
@@ -298,8 +298,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                                   builder: (_) => const HomeScreen()),
                               (route) => false);
                         },
-                        child: Text("Back to Home",
-                            style: GoogleFonts.outfit(
+                        child: const Text("Back to Home",
+                            style: TextStyle(fontFamily: 'Outfit', 
                                 color: Colors.black87,
                                 fontWeight: FontWeight.bold)),
                       ),
@@ -316,17 +316,17 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                           color: Colors.red, size: 40),
                     ),
                     const SizedBox(height: 20),
-                    Text(
+                    const Text(
                       "Verification Failed",
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(fontFamily: 'Outfit', 
                           fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       _message,
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(color: Colors.grey.shade600),
+                      style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 32),
                     SizedBox(
@@ -346,8 +346,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text("Go Home",
-                            style: GoogleFonts.outfit(
+                        child: const Text("Go Home",
+                            style: TextStyle(fontFamily: 'Outfit', 
                                 color: Colors.black87,
                                 fontWeight: FontWeight.bold)),
                       ),
@@ -379,10 +379,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         child: Column(
           children: [
             Text(dateStr,
-                style: GoogleFonts.outfit(
+                style: const TextStyle(fontFamily: 'Outfit', 
                     fontWeight: FontWeight.bold, fontSize: 16)),
             Text("${tData['fromCity']} ➔ ${tData['toCity']}",
-                style: GoogleFonts.inter(fontSize: 14, color: Colors.grey)),
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: Colors.grey)),
             const SizedBox(height: 12),
             QrImageView(
               data: ticket.ticketId,
@@ -391,7 +391,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
             ),
             const SizedBox(height: 8),
             Text("Ticket ID: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
-                style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,

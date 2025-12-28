@@ -23,7 +23,97 @@
     <link rel="manifest" href="manifest.json" />
   </head>
   <body>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+    <!-- Initial Loading Spinner -->
+    <div
+      id="loading-indicator"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      "
+    >
+      <style>
+        @media (prefers-color-scheme: dark) {
+          #loading-indicator {
+            background-color: #121212 !important;
+            color: white !important;
+          }
+        }
+      </style>
+      <style>
+        .spinner {
+          width: 50px;
+          height: 50px;
+          border: 5px solid #f3f3f3;
+          border-top: 5px solid #ba181b; /* Brand Red */
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+      </style>
+      <div class="spinner"></div>
+      <div
+        id="debug-log"
+        style="
+          position: absolute;
+          bottom: 20px;
+          color: black;
+          font-family: monospace;
+          font-weight: bold;
+        "
+      >
+        Waiting for Flutter...
+      </div>
+    </div>
+
+    <!-- Error Catcher -->
+    <script>
+      window.onerror = function (message, source, lineno, colno, error) {
+        var log = document.getElementById("debug-log");
+        log.style.color = "red";
+        log.innerHTML =
+          "CRITICAL ERROR:<br>" + message + "<br>" + source + ":" + lineno;
+      };
+
+      console.log("Index.html loaded");
+      document.getElementById("debug-log").innerText =
+        "Loading Flutter Engine...";
+
+      window.addEventListener("load", function (ev) {
+        console.log("Window Loaded");
+        document.getElementById("debug-log").innerText += " | Window Loaded";
+
+        // Failsafe: Remove spinner after 8 seconds if app doesn't load
+        setTimeout(function () {
+          var loader = document.getElementById("loading-indicator");
+          if (loader) {
+            console.warn("Force removing spinner via Failsafe");
+            // loader.style.display = 'none'; // Optional: just hide or remove
+            // We keep it just in case, or maybe update text?
+            // But user hates stuck spinner.
+            // Let's assume Dart takes over, but if not:
+            document.getElementById("debug-log").innerText +=
+              " | Timeout (Check Console)";
+            document.getElementById("debug-log").style.color = "orange";
+          }
+        }, 10000);
+      });
+    </script>
+
     <script src="https://js.stripe.com/v3/"></script>
     <script src="flutter_bootstrap.js" async></script>
   </body>

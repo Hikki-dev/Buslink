@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
@@ -73,8 +73,8 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: Text("Add New Route",
-            style: GoogleFonts.outfit(
+        title: const Text("Add New Route",
+            style: TextStyle(fontFamily: 'Outfit', 
                 color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -104,8 +104,8 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Route Details",
-                            style: GoogleFonts.outfit(
+                        const Text("Route Details",
+                            style: TextStyle(fontFamily: 'Outfit', 
                                 fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 24),
                         _buildCityAutocomplete("Origin", _originController),
@@ -146,8 +146,8 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
                               borderRadius: BorderRadius.circular(12))),
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : Text("SAVE ROUTE",
-                              style: GoogleFonts.outfit(
+                          : const Text("SAVE ROUTE",
+                              style: TextStyle(fontFamily: 'Outfit', 
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),

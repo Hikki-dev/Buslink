@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
@@ -44,17 +44,17 @@ class ConductorNavBar extends StatelessWidget {
                       color: Colors.white, size: 24),
                 ),
                 const SizedBox(width: 12),
-                Column(
+                const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text("BusLink",
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(fontFamily: 'Outfit', 
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87)),
                     Text("CONDUCTOR",
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.primaryColor,
@@ -89,7 +89,7 @@ class ConductorNavBar extends StatelessWidget {
                 Text(
                     authService.currentUser!.displayName?.split(' ').first ??
                         'Conductor',
-                    style: GoogleFonts.outfit(
+                    style: const TextStyle(fontFamily: 'Outfit', 
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Colors.black87)),
@@ -117,7 +117,7 @@ class ConductorNavBar extends StatelessWidget {
               },
               icon: Icon(Icons.logout, size: 16, color: Colors.grey.shade600),
               label: Text("Logout",
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey.shade700)),
@@ -158,7 +158,7 @@ class ConductorNavBar extends StatelessWidget {
                       isActive ? AppTheme.primaryColor : Colors.grey.shade600),
               const SizedBox(width: 8),
               Text(label,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                       fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                       color: isActive
                           ? AppTheme.primaryColor

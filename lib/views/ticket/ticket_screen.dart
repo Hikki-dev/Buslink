@@ -5,7 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
@@ -40,12 +40,13 @@ class _TicketScreenState extends State<TicketScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
+          icon:
+              Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -53,8 +54,10 @@ class _TicketScreenState extends State<TicketScreen> {
           ),
         ),
         title: Text("Course", // "Course" or "Trip"
-            style: GoogleFonts.outfit(
-                color: Colors.black, fontWeight: FontWeight.bold)),
+            style: TextStyle(
+                fontFamily: 'Outfit',
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
           // --- FAVORITE HEART ---
@@ -67,7 +70,9 @@ class _TicketScreenState extends State<TicketScreen> {
                 return IconButton(
                   icon: Icon(
                     isFav ? Icons.favorite : Icons.favorite_border,
-                    color: isFav ? Colors.red : Colors.black,
+                    color: isFav
+                        ? Colors.red
+                        : Theme.of(context).colorScheme.onSurface,
                   ),
                   onPressed: () async {
                     await controller.toggleRouteFavorite(
@@ -80,13 +85,15 @@ class _TicketScreenState extends State<TicketScreen> {
 
           // --- FEEDBACK ---
           IconButton(
-            icon: const Icon(Icons.chat_bubble_outline, color: Colors.black),
+            icon: Icon(Icons.chat_bubble_outline,
+                color: Theme.of(context).colorScheme.onSurface),
             onPressed: () => _showFeedbackDialog(context),
             tooltip: "Give Feedback",
           ),
 
           IconButton(
-            icon: const Icon(Icons.download_rounded, color: Colors.black),
+            icon: Icon(Icons.download_rounded,
+                color: Theme.of(context).colorScheme.onSurface),
             onPressed: () => _downloadPdf(context, trip, ticket),
             tooltip: "Download PDF",
           )
@@ -99,7 +106,8 @@ class _TicketScreenState extends State<TicketScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text("E-TICKET",
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                      fontFamily: 'Outfit',
                       letterSpacing: 2,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey.shade400)),
@@ -140,7 +148,7 @@ class _TicketScreenState extends State<TicketScreen> {
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 400),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -162,8 +170,9 @@ class _TicketScreenState extends State<TicketScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Boarding Pass",
-                    style: GoogleFonts.outfit(
+                const Text("Boarding Pass",
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 18)),
@@ -173,8 +182,9 @@ class _TicketScreenState extends State<TicketScreen> {
                   decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4)),
-                  child: Text("CONFIRMED",
-                      style: GoogleFonts.inter(
+                  child: const Text("CONFIRMED",
+                      style: TextStyle(
+                          fontFamily: 'Inter',
                           color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.bold)),
@@ -194,12 +204,16 @@ class _TicketScreenState extends State<TicketScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("FROM",
-                            style: GoogleFonts.inter(
-                                fontSize: 10, color: Colors.grey)),
+                        const Text("FROM",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 10,
+                                color: Colors.grey)),
                         Text(trip.fromCity,
-                            style: GoogleFonts.outfit(
-                                fontSize: 24, fontWeight: FontWeight.bold)),
+                            style: const TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold)),
                       ],
                     ),
                     Icon(Icons.directions_bus,
@@ -207,12 +221,16 @@ class _TicketScreenState extends State<TicketScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text("TO",
-                            style: GoogleFonts.inter(
-                                fontSize: 10, color: Colors.grey)),
+                        const Text("TO",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 10,
+                                color: Colors.grey)),
                         Text(trip.toCity,
-                            style: GoogleFonts.outfit(
-                                fontSize: 24, fontWeight: FontWeight.bold)),
+                            style: const TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold)),
                       ],
                     )
                   ],
@@ -252,13 +270,17 @@ class _TicketScreenState extends State<TicketScreen> {
                 ),
                 const SizedBox(height: 16),
                 SelectableText("ID: ${ticket.ticketId}",
-                    style: GoogleFonts.inter(
-                        letterSpacing: 1, fontSize: 10, color: Colors.grey)),
+                    style: const TextStyle(
+                        fontFamily: 'Inter',
+                        letterSpacing: 1,
+                        fontSize: 10,
+                        color: Colors.grey)),
                 const SizedBox(height: 32),
-                Text(
+                const Text(
                   "HERE IS YOUR BOOKING QR\nSHOW THIS TO CONDUCTOR",
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                       color: Colors.black,
@@ -272,22 +294,28 @@ class _TicketScreenState extends State<TicketScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Passenger",
-                            style: GoogleFonts.inter(
-                                fontSize: 10, color: Colors.grey)),
+                        const Text("Passenger",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 10,
+                                color: Colors.grey)),
                         Text(ticket.passengerName,
-                            style:
-                                GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                            style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w600)),
                       ],
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text("Total Price",
-                            style: GoogleFonts.inter(
-                                fontSize: 10, color: Colors.grey)),
+                        const Text("Total Price",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 10,
+                                color: Colors.grey)),
                         Text("LKR ${ticket.totalAmount.toStringAsFixed(0)}",
-                            style: GoogleFonts.outfit(
+                            style: TextStyle(
+                                fontFamily: 'Outfit',
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
                                 color: AppTheme.primaryColor
@@ -333,11 +361,15 @@ class _TicketScreenState extends State<TicketScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label.toUpperCase(),
-            style: GoogleFonts.inter(
-                fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold)),
+            style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 9,
+                color: Colors.grey,
+                fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text(val,
-            style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14))
+            style: const TextStyle(
+                fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 14))
       ],
     );
   }
@@ -455,12 +487,14 @@ class __FeedbackDialogState extends State<_FeedbackDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Give Feedback",
-                  style: GoogleFonts.outfit(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text("Give Feedback",
+                  style: TextStyle(
+                      fontFamily: 'Outfit',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
-              Text("Rate your experience",
-                  style: GoogleFonts.inter(color: Colors.grey)),
+              const Text("Rate your experience",
+                  style: TextStyle(fontFamily: 'Inter', color: Colors.grey)),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -476,8 +510,8 @@ class __FeedbackDialogState extends State<_FeedbackDialog> {
                 }),
               ),
               const SizedBox(height: 16),
-              Text("Tell us more (Max 200 chars)",
-                  style: GoogleFonts.inter(color: Colors.grey)),
+              const Text("Tell us more (Max 200 chars)",
+                  style: TextStyle(fontFamily: 'Inter', color: Colors.grey)),
               const SizedBox(height: 8),
               TextField(
                 controller: _commentController,

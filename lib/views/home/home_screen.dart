@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 
 import '../../controllers/trip_controller.dart';
 import '../../services/auth_service.dart';
@@ -266,7 +266,8 @@ class _HeroSection extends StatelessWidget {
                       height: 20), // Top spacing for navbar overlap if any
                   Text(greeting,
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                          fontFamily: 'Outfit',
                           fontSize: isDesktop ? 56 : 32,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
@@ -276,7 +277,8 @@ class _HeroSection extends StatelessWidget {
                   Text(
                       "Book your bus tickets instantly with BusLink. Reliable, fast, and secure.",
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                          fontFamily: 'Inter',
                           fontSize: isDesktop ? 18 : 16,
                           color: Colors.white.withValues(alpha: 0.9))),
                   SizedBox(height: isDesktop ? 48 : 32),
@@ -336,7 +338,8 @@ class _CurrentTripStatusCard extends StatelessWidget {
                     size: 48, color: Colors.grey.shade300),
                 const SizedBox(height: 16),
                 Text("No active trips right now",
-                    style: GoogleFonts.inter(color: Colors.grey.shade500)),
+                    style: TextStyle(
+                        fontFamily: 'Inter', color: Colors.grey.shade500)),
               ],
             ),
           );
@@ -379,8 +382,10 @@ class _CurrentTripStatusCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(opName,
-                              style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.bold, fontSize: 18)),
+                              style: const TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18)),
                           Text("Bus No: ${tripData['busNumber'] ?? 'N/A'}",
                               style: TextStyle(
                                   fontSize: 12, color: Colors.grey.shade500)),
@@ -414,8 +419,10 @@ class _CurrentTripStatusCard extends StatelessWidget {
                                   letterSpacing: 1)),
                           const SizedBox(height: 4),
                           Text(fromCity,
-                              style: GoogleFonts.outfit(
-                                  fontSize: 20, fontWeight: FontWeight.bold)),
+                              style: const TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold)),
                         ],
                       ),
                       Icon(Icons.arrow_right_alt,
@@ -430,8 +437,10 @@ class _CurrentTripStatusCard extends StatelessWidget {
                                   letterSpacing: 1)),
                           const SizedBox(height: 4),
                           Text(toCity,
-                              style: GoogleFonts.outfit(
-                                  fontSize: 20, fontWeight: FontWeight.bold)),
+                              style: const TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ],
@@ -447,7 +456,8 @@ class _CurrentTripStatusCard extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 10, color: Colors.grey.shade400)),
                           Text(seats,
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(
+                                  fontFamily: 'Inter',
                                   fontWeight: FontWeight.w600)),
                         ],
                       ),
@@ -458,7 +468,8 @@ class _CurrentTripStatusCard extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 10, color: Colors.grey.shade400)),
                           Text("LKR ${price.toStringAsFixed(0)}",
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(
+                                  fontFamily: 'Inter',
                                   fontWeight: FontWeight.w600,
                                   color: AppTheme.primaryColor)),
                         ],
@@ -509,7 +520,8 @@ class _CurrentTripStatusCard extends StatelessWidget {
                 color: isActive ? Colors.green : Colors.grey.shade400),
             const SizedBox(height: 6),
             Text(label,
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                    fontFamily: 'Inter',
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: isActive ? Colors.green.shade700 : Colors.grey)),
@@ -612,9 +624,13 @@ class _SearchCardState extends State<_SearchCard>
       _toController.text = controller.toCity!;
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final borderColor = Theme.of(context).dividerColor;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -633,15 +649,15 @@ class _SearchCardState extends State<_SearchCard>
             // Tabs
             Container(
               decoration: BoxDecoration(
-                  border:
-                      Border(bottom: BorderSide(color: Colors.grey.shade100))),
+                  border: Border(bottom: BorderSide(color: borderColor))),
               child: TabBar(
                   controller: _tabController,
                   labelColor: AppTheme.primaryColor,
                   unselectedLabelColor: Colors.grey,
                   indicatorColor: AppTheme.primaryColor,
                   indicatorSize: TabBarIndicatorSize.label,
-                  labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                  labelStyle: const TextStyle(
+                      fontFamily: 'Outfit', fontWeight: FontWeight.bold),
                   tabs: const [
                     Tab(text: "One Way"),
                     Tab(text: "Round Trip"),
@@ -651,7 +667,8 @@ class _SearchCardState extends State<_SearchCard>
             // Bulk Booking Toggle
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              color: Colors.red.shade50,
+              color:
+                  AppTheme.primaryColor.withValues(alpha: isDark ? 0.1 : 0.05),
               child: Row(
                 children: [
                   Checkbox(
@@ -673,9 +690,9 @@ class _SearchCardState extends State<_SearchCard>
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: cardColor,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade300)),
+                          border: Border.all(color: borderColor)),
                       child: Row(
                         children: [
                           Icon(Icons.event_seat,
@@ -684,10 +701,16 @@ class _SearchCardState extends State<_SearchCard>
                           DropdownButton<int>(
                             value: controller.seatsPerTrip,
                             underline: Container(),
+                            dropdownColor: cardColor,
                             icon:
                                 const Icon(Icons.keyboard_arrow_down, size: 16),
-                            style: GoogleFonts.inter(
-                                fontSize: 14, color: Colors.black),
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 14,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color),
                             items: [1, 2, 3, 4, 5, 10]
                                 .map((e) => DropdownMenuItem(
                                       value: e,
@@ -716,7 +739,7 @@ class _SearchCardState extends State<_SearchCard>
                         Expanded(
                             child: _buildLocationInput(
                                 context,
-                                "Where you are now",
+                                "Origin",
                                 _fromController,
                                 cities,
                                 (v) => controller.setFromCity(v),
@@ -730,7 +753,7 @@ class _SearchCardState extends State<_SearchCard>
                         Expanded(
                             child: _buildLocationInput(
                                 context,
-                                "Where you will be going",
+                                "Destination",
                                 _toController,
                                 cities,
                                 (v) => controller.setToCity(v),
@@ -744,7 +767,7 @@ class _SearchCardState extends State<_SearchCard>
                   else ...[
                     _buildLocationInput(
                         context,
-                        "Where you are now",
+                        "Origin",
                         _fromController,
                         cities,
                         (v) => controller.setFromCity(v),
@@ -756,7 +779,7 @@ class _SearchCardState extends State<_SearchCard>
                     const SizedBox(height: 16),
                     _buildLocationInput(
                         context,
-                        "Where you will be going",
+                        "Destination",
                         _toController,
                         cities,
                         (v) => controller.setToCity(v),
@@ -785,10 +808,15 @@ class _SearchCardState extends State<_SearchCard>
       List<String> options,
       Function(String) onSelected,
       IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inputFillColor =
+        Theme.of(context).inputDecorationTheme.fillColor ?? Colors.grey.shade50;
+    final borderColor = Theme.of(context).dividerColor;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /* Text(label.toUpperCase(), style: GoogleFonts.inter(
+        /* Text(label.toUpperCase(), style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade500, letterSpacing: 1)),
         const SizedBox(height: 10), */
         // Removed label to match "Where you are now" placeholder style more closely or keep it clean
@@ -797,9 +825,12 @@ class _SearchCardState extends State<_SearchCard>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: inputFillColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200)),
+              border: Border.all(
+                  color: isDark
+                      ? borderColor.withValues(alpha: 0.2)
+                      : Colors.grey.shade200)),
           child: Row(
             children: [
               Icon(icon, size: 20, color: AppTheme.primaryColor),
@@ -832,9 +863,17 @@ class _SearchCardState extends State<_SearchCard>
                     return TextField(
                       controller: fieldTextEditingController,
                       focusNode: fieldFocusNode,
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context)
+                              .dividerColor
+                              .withValues(alpha: 0.2)),
                       decoration: InputDecoration(
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: false, // Transparent, use Container bg
                         hintText: hint,
                         hintStyle: TextStyle(
                             color: Colors.grey.shade400,
@@ -842,7 +881,16 @@ class _SearchCardState extends State<_SearchCard>
                       ),
                       onChanged: (val) {
                         // Also update parent controller if user types manually
-                        onSelected(val);
+                        // But finding cities might depend on selection
+                        // For simply setting city text:
+                        if (hint.contains("now")) {
+                          Provider.of<TripController>(context, listen: false)
+                              .setFromCity(val);
+                        }
+                        if (hint.contains("going")) {
+                          Provider.of<TripController>(context, listen: false)
+                              .setToCity(val);
+                        }
                       },
                     );
                   },
@@ -873,7 +921,8 @@ class _SearchCardState extends State<_SearchCard>
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Text(option,
-                                      style: GoogleFonts.inter(
+                                      style: const TextStyle(
+                                          fontFamily: 'Inter',
                                           fontWeight: FontWeight.w500)),
                                 ),
                               );
@@ -893,19 +942,27 @@ class _SearchCardState extends State<_SearchCard>
   }
 
   Widget _buildDateField(BuildContext context, TripController controller) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inputFillColor =
+        Theme.of(context).inputDecorationTheme.fillColor ?? Colors.grey.shade50;
+    final borderColor = Theme.of(context).dividerColor;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /* Text("DEPARTURE DATE", style: GoogleFonts.inter(...) ), const SizedBox(height: 10), */
+        /* Text("DEPARTURE DATE", style: TextStyle(fontFamily: 'Inter', ...) ), const SizedBox(height: 10), */
         InkWell(
           onTap: () => _selectDate(context, controller),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: inputFillColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200)),
+                border: Border.all(
+                    color: isDark
+                        ? borderColor.withValues(alpha: 0.2)
+                        : Colors.grey.shade200)),
             child: Row(
               children: [
                 const Icon(Icons.calendar_today,
@@ -920,12 +977,13 @@ class _SearchCardState extends State<_SearchCard>
                           ? DateFormat('EEE, d MMM yyyy')
                               .format(controller.travelDate!)
                           : "Select Date"),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w600,
                       color: (controller.isBulkBooking
                               ? controller.bulkDates.isNotEmpty
                               : controller.travelDate != null)
-                          ? Colors.black
+                          ? Theme.of(context).textTheme.bodyLarge?.color
                           : Colors.grey.shade400),
                 ),
               ],
@@ -937,8 +995,8 @@ class _SearchCardState extends State<_SearchCard>
   }
 
   Widget _buildSearchButton(BuildContext context, TripController controller) {
-    return ElevatedButton(
-      onPressed: () {
+    return GestureDetector(
+      onTap: () {
         if (controller.fromCity == null ||
             controller.toCity == null ||
             (!controller.isBulkBooking && controller.travelDate == null) ||
@@ -951,18 +1009,34 @@ class _SearchCardState extends State<_SearchCard>
         Navigator.push(
             context, MaterialPageRoute(builder: (_) => const BusListScreen()));
       },
-      style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primaryColor,
-          elevation: 0,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 22)),
-      child: Text("SEARCH BUSES",
-          style: GoogleFonts.outfit(
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          // Width handled by parent
+          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 22),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            ],
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            "SEARCH BUSES",
+            style: TextStyle(
+              fontFamily: 'Outfit',
+              color: Colors.white,
               fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-              fontSize: 14,
-              color: Colors.white)),
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1193,7 +1267,8 @@ class _DestinationCardState extends State<_DestinationCard> {
             children: [
               Text(
                 widget.name,
-                style: GoogleFonts.outfit(
+                style: const TextStyle(
+                  fontFamily: 'Outfit',
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 24,
@@ -1205,7 +1280,8 @@ class _DestinationCardState extends State<_DestinationCard> {
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
                     widget.description,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: 'Inter',
                       color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 14,
                       height: 1.4,
@@ -1262,10 +1338,13 @@ class _SectionHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title,
-            style:
-                GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold)),
+            style: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 28,
+                fontWeight: FontWeight.bold)),
         Text(subtitle,
-            style: GoogleFonts.inter(fontSize: 16, color: Colors.grey)),
+            style: const TextStyle(
+                fontFamily: 'Inter', fontSize: 16, color: Colors.grey)),
         Container(
             width: 50,
             height: 4,

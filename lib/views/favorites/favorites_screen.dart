@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../utils/app_theme.dart';
 import '../../controllers/trip_controller.dart';
 import '../../services/auth_service.dart';
+import '../results/bus_list_screen.dart';
 
 class FavoritesScreen extends StatelessWidget {
   final bool showBackButton;
@@ -19,20 +20,24 @@ class FavoritesScreen extends StatelessWidget {
     final isDesktop = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      // Use theme background
       appBar: AppBar(
         title: Text("My Favourites",
-            style: GoogleFonts.outfit(
-                color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+            style: TextStyle(
+                fontFamily: 'Outfit',
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
-        leading: showBackButton ? const BackButton(color: Colors.black) : null,
+        // Remove manual background color to use theme
       ),
       body: user == null
           ? Center(
               child: Text("Please log in to view favorites",
-                  style: GoogleFonts.inter(fontSize: 16, color: Colors.grey)),
+                  style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      color: Theme.of(context).colorScheme.onSurface)),
             )
           : StreamBuilder<List<Map<String, dynamic>>>(
               stream: controller.getUserFavorites(user.uid),
@@ -50,8 +55,11 @@ class FavoritesScreen extends StatelessWidget {
                             size: 64, color: Colors.grey.shade300),
                         const SizedBox(height: 16),
                         Text("No favourites yet",
-                            style: GoogleFonts.inter(
-                                fontSize: 18, color: Colors.grey)),
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 18,
+                                color:
+                                    Theme.of(context).colorScheme.onSurface)),
                       ],
                     ),
                   );
@@ -90,15 +98,15 @@ class FavoritesScreen extends StatelessWidget {
                         // 1. Pre-fill Search
                         controller.setFromCity(fav['fromCity']);
                         controller.setToCity(fav['toCity']);
+                        controller.setDepartureDate(DateTime.now());
 
                         // 2. Navigate
-                        if (onBookNow != null) {
-                          onBookNow!();
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                              content: Text(
-                                  "Search criteria updated. Go to Home to search.")));
-                        }
+                        controller.searchTrips(context); // Trigger search
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const BusListScreen()),
+                        );
                       },
                     );
                   },
@@ -128,17 +136,23 @@ class _FavoriteItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF161A1D) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.white.withValues(alpha: 0.9),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.grey.shade200,
             blurRadius: 15,
             offset: const Offset(0, 5),
           )
         ],
+        border: isDark ? Border.all(color: Colors.grey.shade800) : null,
       ),
       child: Stack(
         children: [
@@ -155,31 +169,39 @@ class _FavoriteItemCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("FROM",
-                              style: GoogleFonts.inter(
+                          const Text("FROM",
+                              style: TextStyle(
+                                  fontFamily: 'Inter',
                                   fontSize: 10,
                                   color: Colors.grey,
                                   fontWeight: FontWeight.bold)),
                           Text(from,
-                              style: GoogleFonts.outfit(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                              style: TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onSurface)),
                         ],
                       ),
                     ),
                     Icon(Icons.arrow_forward_rounded,
-                        color: Colors.grey.shade300),
+                        color: Colors.grey.shade500),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text("TO",
-                              style: GoogleFonts.inter(
+                          const Text("TO",
+                              style: TextStyle(
+                                  fontFamily: 'Inter',
                                   fontSize: 10,
                                   color: Colors.grey,
                                   fontWeight: FontWeight.bold)),
                           Text(to,
-                              style: GoogleFonts.outfit(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                              style: TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onSurface)),
                         ],
                       ),
                     ),
@@ -194,16 +216,20 @@ class _FavoriteItemCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(operator,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
+                                fontFamily: 'Inter',
                                 fontWeight: FontWeight.w600,
-                                color: Colors.black87)),
-                        Text("Standard Bus",
-                            style: GoogleFonts.inter(
-                                fontSize: 11, color: Colors.grey)),
+                                color: theme.colorScheme.onSurface)),
+                        const Text("Standard Bus",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 11,
+                                color: Colors.grey)),
                       ],
                     ),
                     Text(price,
-                        style: GoogleFonts.outfit(
+                        style: const TextStyle(
+                            fontFamily: 'Outfit',
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             color: AppTheme.primaryColor))
@@ -221,9 +247,11 @@ class _FavoriteItemCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         elevation: 0),
-                    child: Text("BOOK NOW",
-                        style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.bold, color: Colors.white)),
+                    child: const Text("BOOK AGAIN",
+                        style: TextStyle(
+                            fontFamily: 'Outfit',
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white)),
                   ),
                 )
               ],
@@ -237,7 +265,7 @@ class _FavoriteItemCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: Colors.red.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.favorite, color: Colors.red, size: 18),

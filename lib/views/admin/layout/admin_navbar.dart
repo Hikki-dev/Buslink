@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_theme.dart';
@@ -51,15 +51,18 @@ class AdminNavBar extends StatelessWidget {
                       color: AppTheme.primaryColor),
                 ),
                 const SizedBox(width: 12),
-                Column(
+                const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("BusLink",
-                        style: GoogleFonts.outfit(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
                     Text("ADMIN CONSOLE",
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
+                            fontFamily: 'Inter',
                             fontSize: 10,
                             color: Colors.grey,
                             letterSpacing: 1)),
@@ -154,22 +157,27 @@ class AdminNavBar extends StatelessWidget {
             const SizedBox(width: 24),
 
           // User Profile / Logout
-          PopupMenuButton(
+          PopupMenuButton<String>(
             child: const CircleAvatar(
               backgroundColor: AppTheme.primaryColor,
               child: Icon(Icons.person, color: Colors.white),
             ),
+            onSelected: (value) {
+              if (value == 'logout') {
+                authService.signOut();
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil('/', (route) => false);
+              }
+            },
             itemBuilder: (context) => [
               const PopupMenuItem(enabled: false, child: Text("Admin User")),
-              PopupMenuItem(
-                child: const Row(children: [
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(children: [
                   Icon(Icons.logout, size: 16),
                   SizedBox(width: 8),
                   Text("Logout")
                 ]),
-                onTap: () {
-                  authService.signOut();
-                },
               ),
             ],
           )

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -241,12 +241,12 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Welcome back, $conductorName!",
-                                style: GoogleFonts.outfit(
+                                style: TextStyle(fontFamily: 'Outfit', 
                                     fontSize: isDesktop ? 32 : 24,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black87)),
                             Text("Here is your schedule for $_formattedDate.",
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: 'Inter', 
                                     color: Colors.grey.shade600, fontSize: 16)),
                           ],
                         ),
@@ -285,8 +285,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Find Your Trip",
-                        style: GoogleFonts.outfit(
+                    const Text("Find Your Trip",
+                        style: TextStyle(fontFamily: 'Outfit', 
                             fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 20),
                     Container(
@@ -369,13 +369,13 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   size: 64, color: AppTheme.primaryColor),
             ),
             const SizedBox(height: 24),
-            Text("Scan Passenger Ticket",
-                style: GoogleFonts.outfit(
+            const Text("Scan Passenger Ticket",
+                style: TextStyle(fontFamily: 'Outfit', 
                     fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text("Point camera at QR code or enter Ticket ID manually",
+            const Text("Point camera at QR code or enter Ticket ID manually",
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(color: Colors.grey)),
+                style: TextStyle(fontFamily: 'Inter', color: Colors.grey)),
             const SizedBox(height: 32),
 
             // Manual Entry Field
@@ -480,8 +480,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                         color: Colors.green, size: 48),
                   ),
                   const SizedBox(height: 16),
-                  Text("Valid Ticket",
-                      style: GoogleFonts.outfit(
+                  const Text("Valid Ticket",
+                      style: TextStyle(fontFamily: 'Outfit', 
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.green)),
@@ -545,8 +545,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.inter(color: Colors.grey.shade600)),
-          Text(value, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+          Text(label, style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade600)),
+          Text(value, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -562,8 +562,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Weekly Reports",
-                  style: GoogleFonts.outfit(
+              const Text("Weekly Reports",
+                  style: TextStyle(fontFamily: 'Outfit', 
                       fontSize: 32, fontWeight: FontWeight.bold)),
               const SizedBox(height: 32),
               Container(
@@ -605,8 +605,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       children: [
         Text(value,
             style:
-                GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
-        Text(label, style: GoogleFonts.inter(color: Colors.grey)),
+                const TextStyle(fontFamily: 'Outfit', fontSize: 24, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(fontFamily: 'Inter', color: Colors.grey)),
       ],
     );
   }
@@ -632,17 +632,17 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               radius: 50,
               backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
               child: Text(name[0],
-                  style: GoogleFonts.outfit(
+                  style: const TextStyle(fontFamily: 'Outfit', 
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryColor)),
             ),
             const SizedBox(height: 24),
             Text(name,
-                style: GoogleFonts.outfit(
+                style: const TextStyle(fontFamily: 'Outfit', 
                     fontSize: 24, fontWeight: FontWeight.bold)),
-            Text("Senior Conductor",
-                style: GoogleFonts.inter(color: Colors.grey)),
+            const Text("Senior Conductor",
+                style: TextStyle(fontFamily: 'Inter', color: Colors.grey)),
             const SizedBox(height: 32),
             const Divider(),
             ListTile(
@@ -673,7 +673,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label.toUpperCase(),
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: Colors.grey.shade500,
@@ -693,7 +693,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey.shade200)),
               hintText: "Enter City",
-              hintStyle: GoogleFonts.inter(color: Colors.grey.shade400)),
+              hintStyle: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade400)),
         )
       ],
     );
@@ -704,7 +704,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("DATE",
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: Colors.grey.shade500,
@@ -725,7 +725,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 const Icon(Icons.calendar_today, color: AppTheme.primaryColor),
                 const SizedBox(width: 12),
                 Text(DateFormat('EEE, d MMM').format(_selectedDate),
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                    style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600)),
                 const SizedBox(width: 12),
                 const Icon(Icons.arrow_drop_down, color: Colors.grey)
               ],
@@ -760,15 +760,15 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                     size: 48, color: Colors.grey.shade400),
               ),
               const SizedBox(height: 24),
-              Text("No trips found for today.",
-                  style: GoogleFonts.outfit(
+              const Text("No trips found for today.",
+                  style: TextStyle(fontFamily: 'Outfit', 
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87)),
               const SizedBox(height: 8),
               Text("Try changing your search location or check back later.",
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(color: Colors.grey.shade500)),
+                  style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade500)),
               const SizedBox(height: 24),
               OutlinedButton(
                 onPressed: () => _loadTripsForDate(_selectedDate),
@@ -789,7 +789,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text("Scheduled Trips (${_filteredTrips.length})",
-                  style: GoogleFonts.outfit(
+                  style: const TextStyle(fontFamily: 'Outfit', 
                       fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               ListView.separated(
@@ -885,7 +885,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       children: [
         Text("$start - $end",
             style:
-                GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 20)),
+                const TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold, fontSize: 20)),
       ],
     );
   }
@@ -895,7 +895,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("${trip.fromCity} ➔ ${trip.toCity}",
-            style: GoogleFonts.inter(
+            style: const TextStyle(fontFamily: 'Inter', 
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
                 fontSize: 16)),
@@ -903,7 +903,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
         Text(
             "Bus: ${trip.busNumber} • T${trip.id.substring(0, 4).toUpperCase()}",
             style:
-                GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade500)),
+                TextStyle(fontFamily: 'Inter', fontSize: 12, color: Colors.grey.shade500)),
       ],
     );
   }
@@ -950,8 +950,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   borderRadius: BorderRadius.circular(8)),
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
-          child: Text("Update",
-              style: GoogleFonts.inter(
+          child: const Text("Update",
+              style: TextStyle(fontFamily: 'Inter', 
                   fontWeight: FontWeight.w600, color: Colors.white)),
         ),
       ],
@@ -985,13 +985,13 @@ class _StatCard extends StatelessWidget {
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 12),
           Text(value,
-              style: GoogleFonts.outfit(
+              style: const TextStyle(fontFamily: 'Outfit', 
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87)),
           Text(label,
               style:
-                  GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade700)),
+                  TextStyle(fontFamily: 'Inter', fontSize: 12, color: Colors.grey.shade700)),
         ],
       ),
     );

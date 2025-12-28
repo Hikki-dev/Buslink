@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class PaymentService {
+  static final http.Client _client = http.Client();
+
   // 1. Create Payment Intent (Direct via Stripe API)
   Future<String> createPaymentIntent(String amount, String currency) async {
     try {
@@ -21,7 +23,7 @@ class PaymentService {
       final double amountVal = double.parse(amount);
       final int amountCents = (amountVal * 100).toInt();
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('https://api.stripe.com/v1/payment_intents'),
         headers: {
           'Authorization': 'Bearer $stripeSecretKey',
@@ -156,7 +158,7 @@ class PaymentService {
 
       debugPrint("Creating Checkout Session... Success: $successUrl");
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('https://api.stripe.com/v1/checkout/sessions'),
         headers: {
           'Authorization': 'Bearer $stripeSecretKey',

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_constants.dart';
@@ -55,17 +55,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       constraints: const BoxConstraints(maxWidth: 1000),
                       child: Row(
                         children: [
-                          Column(
+                          const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("Route Management",
-                                  style: GoogleFonts.outfit(
+                                  style: TextStyle(fontFamily: 'Outfit', 
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
                                       color: AppTheme.darkText)),
                               Text(
                                   "Manage bus schedules, fares, and availability.",
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: 'Inter', 
                                       color: Colors.grey, fontSize: 16)),
                             ],
                           ),
@@ -130,8 +130,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   Icon(Icons.search_off,
                                       size: 64, color: Colors.grey.shade300),
                                   const SizedBox(height: 16),
-                                  Text("No routes found matching your criteria",
-                                      style: GoogleFonts.inter(
+                                  const Text("No routes found matching your criteria",
+                                      style: TextStyle(fontFamily: 'Inter', 
                                           fontSize: 16, color: Colors.grey)),
                                 ],
                               ),
@@ -175,7 +175,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        textStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -192,7 +192,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         backgroundColor: Colors.black87,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        textStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -219,8 +219,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("FIND ROUTES",
-                  style: GoogleFonts.inter(
+              const Text("FIND ROUTES",
+                  style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey,
@@ -310,7 +310,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               controller.travelDate != null
                   ? DateFormat('yyyy-MM-dd').format(controller.travelDate!)
                   : "Select Date",
-              style: GoogleFonts.inter(color: Colors.black87),
+              style: const TextStyle(fontFamily: 'Inter', color: Colors.black87),
             )
           ],
         ),
@@ -454,7 +454,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   children: [
                     Text(
                       "${trip.fromCity} ➝ ${trip.toCity}",
-                      style: GoogleFonts.outfit(
+                      style: const TextStyle(fontFamily: 'Outfit', 
                           fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                   ],
@@ -462,12 +462,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 const SizedBox(height: 8),
                 Text(
                   "Departs: ${DateFormat('HH:mm').format(trip.departureTime)} • Arrives: ${DateFormat('HH:mm').format(trip.arrivalTime)}",
-                  style: GoogleFonts.inter(color: Colors.grey.shade600),
+                  style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade600),
                 ),
                 if (trip.via.isNotEmpty)
                   Text(
                     "Via: ${trip.via}",
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                         color: Colors.grey.shade500, fontSize: 12),
                   ),
               ],
