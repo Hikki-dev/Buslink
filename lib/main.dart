@@ -96,7 +96,10 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
         debugPrint("Notification init failed: $e");
       }
 
-      final stripeKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
+      String? stripeKey;
+      if (dotenv.isInitialized) {
+        stripeKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
+      }
       if (stripeKey != null) {
         try {
           stripe.Stripe.publishableKey = stripeKey;
@@ -126,8 +129,9 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
       } catch (e) {
         debugPrint("Warning: Google Sign-In init failed: $e");
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint("Unexpected initialization error: $e");
+      debugPrintStack(stackTrace: stackTrace);
     } finally {
       if (mounted && !_isInitialized) {
         setState(() {
