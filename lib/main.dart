@@ -14,6 +14,8 @@ import 'controllers/trip_controller.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'utils/notification_service.dart';
+import 'utils/language_provider.dart';
+import 'utils/translations.dart';
 import 'utils/app_theme.dart';
 import 'views/admin/admin_dashboard.dart';
 import 'views/auth/login_screen.dart';
@@ -35,7 +37,7 @@ class AppBootstrapper extends StatefulWidget {
 
 class _AppBootstrapperState extends State<AppBootstrapper> {
   bool _isInitialized = false;
-  String _statusText = "Booting..."; // Debug status
+  String _statusKey = "booting"; // Debug status
   AuthService? _authService;
 
   @override
@@ -51,7 +53,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
         debugPrint("Force-loading app due to initialization timeout");
         setState(() {
           _isInitialized = true;
-          _statusText = "Timeout - Forcing Load...";
+          _statusKey = "timeout_load";
         });
       }
     });
@@ -59,7 +61,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
     try {
       // 1. Load Env
       try {
-        setState(() => _statusText = "Loading Environment...");
+        setState(() => _statusKey = "loading_env");
         await dotenv.load(fileName: ".env");
         debugPrint("Env loaded");
       } catch (e) {
@@ -68,7 +70,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
 
       // 2. Firebase
       try {
-        setState(() => _statusText = "Connecting to Firebase...");
+        setState(() => _statusKey = "connecting_firebase");
         await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform,
         );
@@ -80,10 +82,15 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
       }
 
       // 3. Status Check & Notifications
-      setState(() => _statusText = "Initializing Services...");
+      setState(() => _statusKey = "init_services");
 
       try {
-        await NotificationService.initialize();
+        await NotificationService.initialize().timeout(
+          const Duration(seconds: 3),
+          onTimeout: () {
+            debugPrint("NotificationService init timed out - skipping");
+          },
+        );
         debugPrint("Notifications initialized");
       } catch (e) {
         debugPrint("Notification init failed: $e");
@@ -106,7 +113,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
       }
 
       // 4. Auth (Actions that require async setup, service already instanced)
-      setState(() => _statusText = "Initializing Auth...");
+      setState(() => _statusKey = "init_auth");
       try {
         if (_authService != null) {
           await _authService!
@@ -162,10 +169,12 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
                 const CircularProgressIndicator(
                     color: AppTheme.primaryColor, strokeWidth: 6),
                 const SizedBox(height: 16),
-                Text(_statusText,
+                Text(
+                    Translations.translate(_statusKey,
+                        html.window.navigator.language.split('-')[0]),
                     style: const TextStyle(
                         color: AppTheme.primaryColor,
-                        fontSize: 20,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold)), // Status Text
               ],
             ),
@@ -184,6 +193,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
         ),
         ChangeNotifierProvider(create: (_) => TripController()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
       child: Consumer<ThemeController>(
         builder: (context, themeController, child) {
@@ -273,15 +283,19 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
       future: _userFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
+          return Scaffold(
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text("Loading Profile...",
-                      style: TextStyle(color: Colors.grey))
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                      Translations.translate(
+                          'loading_profile',
+                          Provider.of<LanguageProvider>(context)
+                              .currentLanguage),
+                      style: const TextStyle(color: Colors.grey, fontSize: 18))
                 ],
               ),
             ),

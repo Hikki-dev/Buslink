@@ -101,6 +101,40 @@ class AuthService {
     }
   }
 
+  Future<UserCredential?> signInWithApple(BuildContext context) async {
+    debugPrint("--- Apple Sign-In Started ---");
+    try {
+      final appleProvider = OAuthProvider("apple.com");
+      appleProvider.addScope('email');
+      appleProvider.addScope('name');
+
+      debugPrint("Triggering signInWithPopup...");
+      final userCredential = await _auth.signInWithPopup(appleProvider);
+      debugPrint("Popup success: ${userCredential.user?.uid}");
+
+      final user = userCredential.user;
+
+      if (user != null) {
+        await _ensureUserDocument(user);
+      }
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      debugPrint("Firebase Auth Error (Apple): ${e.code} - ${e.message}");
+      if (!context.mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Apple sign in failed: ${e.message}")),
+      );
+      return null;
+    } catch (e) {
+      debugPrint("General Error (Apple): $e");
+      if (!context.mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Unexpected error: $e")),
+      );
+      return null;
+    }
+  }
+
   Future<UserCredential?> signUpWithEmail(
       BuildContext context, String email, String password) async {
     try {

@@ -34,6 +34,7 @@ dependencies:
   latlong2: ^0.9.1
   firebase_messaging: ^16.1.0
   google_fonts: ^6.1.0
+  shared_preferences: ^2.5.4
 
 dev_dependencies:
   flutter_test:
@@ -54,3 +55,12 @@ flutter:
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Variable.ttf
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/Noto_Sans/NotoSans-VariableFont_wdth,wght.ttf
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat/Montserrat-VariableFont_wght.ttf
+    - family: Cormorant
+      fonts:
+        - asset: assets/fonts/Cormorant_Garamond/CormorantGaramond-VariableFont_wght.ttf

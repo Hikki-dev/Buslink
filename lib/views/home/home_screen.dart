@@ -1,18 +1,15 @@
 // lib/views/home/home_screen.dart
+import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-// import 'package:google_fonts/google_fonts.dart';
-
 import '../../controllers/trip_controller.dart';
-import '../../services/auth_service.dart';
-import '../results/bus_list_screen.dart';
 import '../../utils/app_theme.dart';
-import '../booking/my_trips_screen.dart';
-import '../favorites/favorites_screen.dart';
+import '../../utils/language_provider.dart';
+import '../results/bus_list_screen.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
-import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isAdminView;
@@ -23,1116 +20,638 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  final TextEditingController _originController = TextEditingController();
+  final TextEditingController _destinationController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
+  final ScrollController _scrollController = ScrollController();
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  void _searchBuses() {
+    if (_originController.text.isEmpty || _destinationController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter origin and destination')),
+      );
+      return;
+    }
+
+    final tripController = Provider.of<TripController>(context, listen: false);
+    tripController.setFromCity(_originController.text);
+    tripController.setToCity(_destinationController.text);
+    tripController.setDate(_selectedDate);
+
+    // Trigger the actual Firestore search
+    tripController.searchTrips(context);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const BusListScreen(),
+      ),
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // 1. Define screens for navigation
-    final List<Widget> pages = [
-      _HomeContent(isAdminView: widget.isAdminView),
-      const MyTripsScreen(showBackButton: false),
-      FavoritesScreen(showBackButton: false, onBookNow: () => _onItemTapped(0)),
-      const ProfileScreen(),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth > 1000;
-
-        return Scaffold(
-          key: const ValueKey("home_scaffold"),
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          // Mobile Bottom Nav
-          bottomNavigationBar: isDesktop
-              ? null
-              : Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: NavigationBar(
-                    selectedIndex: _selectedIndex,
-                    onDestinationSelected: _onItemTapped,
-                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    elevation: 0,
-                    indicatorColor:
-                        AppTheme.primaryColor.withValues(alpha: 0.1),
-                    destinations: const [
-                      NavigationDestination(
-                          icon: Icon(Icons.home_outlined),
-                          selectedIcon: Icon(Icons.home_rounded),
-                          label: 'Home'),
-                      NavigationDestination(
-                          icon: Icon(Icons.directions_bus_outlined),
-                          selectedIcon: Icon(Icons.directions_bus_filled),
-                          label: 'Trips'),
-                      NavigationDestination(
-                          icon: Icon(Icons.favorite_border),
-                          selectedIcon: Icon(Icons.favorite),
-                          label: 'Favs'),
-                      NavigationDestination(
-                          icon: Icon(Icons.person_outline),
-                          selectedIcon: Icon(Icons.person),
-                          label: 'Profile'),
-                    ],
-                  ),
-                ),
-          body: isDesktop
-              ? Column(
-                  children: [
-                    if (widget.isAdminView)
-                      Container(
-                        width: double.infinity,
-                        color: Colors.amber,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text("Welcome Admin - Preview Mode",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black)),
-                            const SizedBox(width: 16),
-                            InkWell(
-                              onTap: () => Navigator.pop(context),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12)),
-                                child: const Text("EXIT",
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold)),
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    DesktopNavBar(
-                      selectedIndex: _selectedIndex,
-                      onTap: _onItemTapped,
-                    ),
-                    Expanded(
-                      child: IndexedStack(
-                        index: _selectedIndex,
-                        children: pages,
-                      ),
-                    ),
-                  ],
-                )
-              : SafeArea(
-                  top: false,
-                  child: IndexedStack(
-                    index: _selectedIndex,
-                    children: pages,
-                  ),
-                ),
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppTheme.primaryColor,
+              primary: AppTheme.primaryColor,
+            ),
+          ),
+          child: child!,
         );
       },
     );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
   }
-}
-
-// --- Component: Home Content ---
-class _HomeContent extends StatelessWidget {
-  final bool isAdminView;
-  const _HomeContent({this.isAdminView = false});
 
   @override
   Widget build(BuildContext context) {
-    final bool isDesktop = MediaQuery.of(context).size.width > 800;
+    final bool isDesktop = MediaQuery.of(context).size.width > 900;
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Column(
         children: [
-          // Banner for Mobile
-          if (isAdminView && !isDesktop)
+          if (widget.isAdminView)
             Container(
               width: double.infinity,
               color: Colors.amber,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: const Text("Welcome Admin - Preview Mode",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black)),
-            ),
-
-          _HeroSection(isDesktop: isDesktop),
-          Center(
-              child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1200),
-            child: Padding(
-              padding: EdgeInsets.all(isDesktop ? 32 : 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const _SectionHeader(
-                      title: "Your Favourites",
-                      subtitle: "Quick access to your regular routes"),
-                  const SizedBox(height: 20),
-                  _FavoritesList(isDesktop: isDesktop),
-                  const SizedBox(height: 60),
-                  const _SectionHeader(
-                      title: "Upcoming Trip", subtitle: "Don't miss your bus!"),
-                  const SizedBox(height: 20),
-// --- REVISED: Search Card with Autocomplete ---
-                  const _CurrentTripStatusCard(),
-
-                  const SizedBox(height: 60),
-                  const _SectionHeader(
-                      title: "Popular Destinations",
-                      subtitle: "Explore the most travelled cities"),
-                  const SizedBox(height: 24),
-                  _PopularDestinationsGrid(isDesktop: isDesktop),
-                  const SizedBox(height: 60),
-                  if (isDesktop) ...[
-                    const _FeaturesSection(),
-                    const SizedBox(height: 60),
-                  ]
+                  const Text("Welcome Admin - Preview Mode",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.black)),
+                  const SizedBox(width: 16),
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12)),
+                      child: const Text("EXIT",
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  )
                 ],
               ),
             ),
-          )),
-          if (isDesktop) const AppFooter(),
-          if (!isDesktop) const SizedBox(height: 40),
+          Expanded(
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                if (isDesktop)
+                  const SliverToBoxAdapter(
+                      child: DesktopNavBar(selectedIndex: 0)),
+                SliverToBoxAdapter(
+                  child: _HeroSection(
+                    isDesktop: isDesktop,
+                    originController: _originController,
+                    destinationController: _destinationController,
+                    selectedDate: _selectedDate,
+                    onDateTap: () => _selectDate(context),
+                    onSearchTap: _searchBuses,
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(vertical: 60),
+                  sliver: SliverToBoxAdapter(
+                    child: _FeaturesSection(isDesktop: isDesktop),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: _PopularDestinationsGrid(isDesktop: isDesktop),
+                ),
+                const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+                if (isDesktop) const SliverToBoxAdapter(child: AppFooter()),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-// --- Hero Section ---
-class _HeroSection extends StatelessWidget {
+class _HeroSection extends StatefulWidget {
   final bool isDesktop;
-  const _HeroSection({required this.isDesktop});
+  final TextEditingController originController;
+  final TextEditingController destinationController;
+  final DateTime selectedDate;
+  final VoidCallback onDateTap;
+  final VoidCallback onSearchTap;
+
+  const _HeroSection({
+    required this.isDesktop,
+    required this.originController,
+    required this.destinationController,
+    required this.selectedDate,
+    required this.onDateTap,
+    required this.onSearchTap,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    final user = Provider.of<AuthService>(context).currentUser;
-    final String greeting = user != null
-        ? "Hi ${user.displayName?.split(' ').first ?? user.email?.split('@').first ?? 'Traveler'}"
-        : "Travel with Comfort & Style";
-
-    return Container(
-      width: double.infinity,
-      constraints: BoxConstraints(
-        minHeight: isDesktop ? 600 : 500,
-      ),
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: NetworkImage(
-              "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80"),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.red.shade900.withValues(alpha: 0.3),
-              Colors.red.shade900.withValues(alpha: 0.8),
-            ],
-          ),
-        ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                  horizontal: isDesktop ? 24 : 16,
-                  vertical: isDesktop ? 48 : 24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(
-                      height: 20), // Top spacing for navbar overlap if any
-                  Text(greeting,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontFamily: 'Outfit',
-                          fontSize: isDesktop ? 56 : 32,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          height: 1.1)),
-                  /* const SizedBox(height: 16), is handled by the next lines usually */
-                  const SizedBox(height: 16),
-                  Text(
-                      "Book your bus tickets instantly with BusLink. Reliable, fast, and secure.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: isDesktop ? 18 : 16,
-                          color: Colors.white.withValues(alpha: 0.9))),
-                  SizedBox(height: isDesktop ? 48 : 32),
-                  const _SearchCard(),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  State<_HeroSection> createState() => _HeroSectionState();
 }
 
-// --- NEW: Current Trip Dashboard Card ---
-class _CurrentTripStatusCard extends StatelessWidget {
-  const _CurrentTripStatusCard();
+class _HeroSectionState extends State<_HeroSection> {
+  int _currentImageIndex = 0;
+  Timer? _timer;
 
-  @override
-  Widget build(BuildContext context) {
-    final authSubject = Provider.of<AuthService>(context);
-    final controller = Provider.of<TripController>(context);
-    final user = authSubject.currentUser;
-
-    if (user == null) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: const Center(child: Text("Sign in to see your active trip")),
-      );
-    }
-
-    return StreamBuilder<dynamic>(
-      // Using dynamic to avoid circular dep check issues, practically Ticket
-      stream: controller.getCurrentActiveTicket(user.uid),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: LinearProgressIndicator());
-        }
-
-        if (!snapshot.hasData || snapshot.data == null) {
-          return Container(
-            padding: const EdgeInsets.all(32),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              children: [
-                Icon(Icons.directions_bus_outlined,
-                    size: 48, color: Colors.grey.shade300),
-                const SizedBox(height: 16),
-                Text("No active trips right now",
-                    style: TextStyle(
-                        fontFamily: 'Inter', color: Colors.grey.shade500)),
-              ],
-            ),
-          );
-        }
-
-        final ticket = snapshot.data!; // This is a Ticket model
-        final tripData = ticket.tripData;
-
-        // Extract Data
-        final fromCity = tripData['fromCity'] ?? "Unknown";
-        final toCity = tripData['toCity'] ?? "Unknown";
-        final opName = tripData['operatorName'] ?? "Bus Operator";
-        final price = ticket.totalAmount;
-        final seats = ticket.seatNumbers.join(", ");
-        final status = tripData['status'] ?? 'scheduled';
-
-        return Column(
-          children: [
-            // 1. Connection Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10))
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(opName,
-                              style: const TextStyle(
-                                  fontFamily: 'Outfit',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18)),
-                          Text("Bus No: ${tripData['busNumber'] ?? 'N/A'}",
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade500)),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20)),
-                        child: const Text("Active",
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.bold)),
-                      )
-                    ],
-                  ),
-                  const Divider(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("ORIGIN",
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey.shade400,
-                                  letterSpacing: 1)),
-                          const SizedBox(height: 4),
-                          Text(fromCity,
-                              style: const TextStyle(
-                                  fontFamily: 'Outfit',
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      Icon(Icons.arrow_right_alt,
-                          size: 30, color: Colors.grey.shade300),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text("DESTINATION",
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey.shade400,
-                                  letterSpacing: 1)),
-                          const SizedBox(height: 4),
-                          Text(toCity,
-                              style: const TextStyle(
-                                  fontFamily: 'Outfit',
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("SEATS",
-                              style: TextStyle(
-                                  fontSize: 10, color: Colors.grey.shade400)),
-                          Text(seats,
-                              style: const TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text("PRICE PAID",
-                              style: TextStyle(
-                                  fontSize: 10, color: Colors.grey.shade400)),
-                          Text("LKR ${price.toStringAsFixed(0)}",
-                              style: const TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primaryColor)),
-                        ],
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // 2. Status Indicators
-            Row(
-              children: [
-                _statusIndicator(
-                    "Departed",
-                    status == "departed" ||
-                        status == "onWay" ||
-                        status == "arrived"),
-                const SizedBox(width: 8),
-                _statusIndicator(
-                    "On Way",
-                    status == "onWay" ||
-                        status == "arrived"), // Simplified logic
-                const SizedBox(width: 8),
-                _statusIndicator("Arrived", status == "arrived"),
-              ],
-            )
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _statusIndicator(String label, bool isActive) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isActive ? Colors.green.shade50 : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: isActive ? Colors.green.shade200 : Colors.grey.shade200),
-        ),
-        child: Column(
-          children: [
-            Icon(Icons.circle,
-                size: 10,
-                color: isActive ? Colors.green : Colors.grey.shade400),
-            const SizedBox(height: 6),
-            Text(label,
-                style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isActive ? Colors.green.shade700 : Colors.grey)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// --- Search Card with Tabs ---
-class _SearchCard extends StatefulWidget {
-  const _SearchCard();
-
-  @override
-  State<_SearchCard> createState() => _SearchCardState();
-}
-
-class _SearchCardState extends State<_SearchCard>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final TextEditingController _fromController = TextEditingController();
-  final TextEditingController _toController = TextEditingController();
-
-  // Demo Data (Same as existing logic)
-  final List<String> cities = [
-    "Colombo",
-    "Kandy",
-    "Galle",
-    "Jaffna",
-    "Matara",
-    "Ella",
-    "Trincomalee",
-    "Anuradhapura"
+  final List<Map<String, String>> _heroData = [
+    {
+      "image":
+          "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80",
+      "subtitle":
+          "Book your bus tickets instantly with BusLink. Reliable, fast, and secure."
+    },
+    {
+      "image":
+          "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&q=80",
+      "subtitle":
+          "Discover the most beautiful routes across the island in comfort."
+    },
+    {
+      "image":
+          "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&q=80",
+      "subtitle": "Seamless payments and real-time tracking for your journey."
+    },
+    {
+      "image":
+          "https://images.unsplash.com/photo-1557223562-6c77ef16210f?auto=format&fit=crop&q=80",
+      "subtitle": "Experience premium travel with our top-rated bus operators."
+    },
   ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _currentImageIndex = Random().nextInt(_heroData.length);
+    _startTimer();
   }
 
-  void _selectDate(BuildContext context, TripController controller) async {
-    if (controller.isBulkBooking) {
-      final DateTimeRange? picked = await showDateRangePicker(
-        context: context,
-        firstDate: DateTime.now(),
-        lastDate: DateTime.now().add(const Duration(days: 90)),
-        builder: (context, child) {
-          return Theme(
-            data: ThemeData.light().copyWith(
-              colorScheme:
-                  ColorScheme.fromSeed(seedColor: AppTheme.primaryColor),
-            ),
-            child: child!,
-          );
-        },
-      );
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
-      if (picked != null) {
-        // Generate list of dates
-        List<DateTime> dates = [];
-        for (int i = 0; i <= picked.end.difference(picked.start).inDays; i++) {
-          dates.add(picked.start.add(Duration(days: i)));
-        }
-        controller.setBulkDates(dates);
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentImageIndex = (_currentImageIndex + 1) % _heroData.length;
+        });
       }
-    } else {
-      final DateTime? picked = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime.now(),
-          lastDate: DateTime.now().add(const Duration(days: 90)),
-          builder: (context, child) {
-            return Theme(
-              data: ThemeData.light().copyWith(
-                colorScheme:
-                    ColorScheme.fromSeed(seedColor: AppTheme.primaryColor),
-              ),
-              child: child!,
-            );
-          });
-      if (picked != null) {
-        controller.setDate(picked);
-      }
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Provider.of<TripController>(context);
-    final isDesktop = MediaQuery.of(context).size.width > 800;
-
-    // Pre-fill controllers if data exists in controller
-    if (controller.fromCity != null &&
-        _fromController.text != controller.fromCity) {
-      _fromController.text = controller.fromCity!;
-    }
-    if (controller.toCity != null && _toController.text != controller.toCity) {
-      _toController.text = controller.toCity!;
-    }
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = Theme.of(context).cardColor;
-    final borderColor = Theme.of(context).dividerColor;
+    final lp = Provider.of<LanguageProvider>(context);
 
     return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 40,
-              offset: const Offset(0, 20))
-        ],
-      ),
-      child: Material(
-        type: MaterialType.transparency,
-        borderRadius: BorderRadius.circular(24),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Tabs
-            Container(
-              decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: borderColor))),
-              child: TabBar(
-                  controller: _tabController,
-                  labelColor: AppTheme.primaryColor,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: AppTheme.primaryColor,
-                  indicatorSize: TabBarIndicatorSize.label,
-                  labelStyle: const TextStyle(
-                      fontFamily: 'Outfit', fontWeight: FontWeight.bold),
-                  tabs: const [
-                    Tab(text: "One Way"),
-                    Tab(text: "Round Trip"),
-                  ]),
-            ),
-
-            // Bulk Booking Toggle
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              color:
-                  AppTheme.primaryColor.withValues(alpha: isDark ? 0.1 : 0.05),
-              child: Row(
-                children: [
-                  Checkbox(
-                    value: controller.isBulkBooking,
-                    activeColor: AppTheme.primaryColor,
-                    onChanged: (val) => controller.setBulkMode(val ?? false),
+      height: widget.isDesktop ? 600 : 500,
+      width: double.infinity,
+      child: Stack(
+        children: [
+          // Background Image with AnimatedSwitcher
+          Positioned.fill(
+            child: AnimatedSwitcher(
+              duration: const Duration(seconds: 2),
+              child: Container(
+                key: ValueKey(_heroData[_currentImageIndex]["image"]),
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: NetworkImage(
+                        _heroData[_currentImageIndex]["image"] ?? ""),
+                    fit: BoxFit.cover,
                   ),
-                  const Text("Bulk / Multi-day Booking",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 8),
-                  Tooltip(
-                    message: "Book the same bus for multiple days in one go.",
-                    child: Icon(Icons.info_outline,
-                        size: 16, color: Colors.grey.shade600),
-                  ),
-                  if (controller.isBulkBooking) ...[
-                    const Spacer(),
-                    // Seats Selector
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: borderColor)),
-                      child: Row(
-                        children: [
-                          Icon(Icons.event_seat,
-                              size: 16, color: Colors.grey.shade600),
-                          const SizedBox(width: 8),
-                          DropdownButton<int>(
-                            value: controller.seatsPerTrip,
-                            underline: Container(),
-                            dropdownColor: cardColor,
-                            icon:
-                                const Icon(Icons.keyboard_arrow_down, size: 16),
-                            style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 14,
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge
-                                    ?.color),
-                            items: [1, 2, 3, 4, 5, 10]
-                                .map((e) => DropdownMenuItem(
-                                      value: e,
-                                      child: Text("$e Seats"),
-                                    ))
-                                .toList(),
-                            onChanged: (v) =>
-                                controller.setSeatsPerTrip(v ?? 1),
-                          ),
-                        ],
-                      ),
-                    )
-                  ]
-                ],
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.all(isDesktop ? 32 : 20),
-              child: Column(
-                children: [
-                  if (isDesktop)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                            child: _buildLocationInput(
-                                context,
-                                "Origin",
-                                _fromController,
-                                cities,
-                                (v) => controller.setFromCity(v),
-                                Icons.my_location)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          child: Icon(Icons.arrow_forward,
-                              color: Colors.grey.shade300),
-                        ),
-                        Expanded(
-                            child: _buildLocationInput(
-                                context,
-                                "Destination",
-                                _toController,
-                                cities,
-                                (v) => controller.setToCity(v),
-                                Icons.location_on)),
-                        const SizedBox(width: 24),
-                        Expanded(child: _buildDateField(context, controller)),
-                        const SizedBox(width: 24),
-                        _buildSearchButton(context, controller),
-                      ],
-                    )
-                  else ...[
-                    _buildLocationInput(
-                        context,
-                        "Origin",
-                        _fromController,
-                        cities,
-                        (v) => controller.setFromCity(v),
-                        Icons.my_location),
-                    const SizedBox(height: 16),
-                    Center(
-                        child:
-                            Icon(Icons.swap_vert, color: Colors.grey.shade300)),
-                    const SizedBox(height: 16),
-                    _buildLocationInput(
-                        context,
-                        "Destination",
-                        _toController,
-                        cities,
-                        (v) => controller.setToCity(v),
-                        Icons.location_on),
-                    const SizedBox(height: 24),
-                    _buildDateField(context, controller),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: _buildSearchButton(context, controller)),
-                  ]
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLocationInput(
-      BuildContext context,
-      String hint,
-      TextEditingController textController,
-      List<String> options,
-      Function(String) onSelected,
-      IconData icon) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final inputFillColor =
-        Theme.of(context).inputDecorationTheme.fillColor ?? Colors.grey.shade50;
-    final borderColor = Theme.of(context).dividerColor;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        /* Text(label.toUpperCase(), style: TextStyle(fontFamily: 'Inter', 
-                fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade500, letterSpacing: 1)),
-        const SizedBox(height: 10), */
-        // Removed label to match "Where you are now" placeholder style more closely or keep it clean
-        // The user request said: Input 1 placeholder: "Where you are now", no dropdown.
-
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          decoration: BoxDecoration(
-              color: inputFillColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: isDark
-                      ? borderColor.withValues(alpha: 0.2)
-                      : Colors.grey.shade200)),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: AppTheme.primaryColor),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Autocomplete<String>(
-                  optionsBuilder: (TextEditingValue textEditingValue) {
-                    if (textEditingValue.text == '') {
-                      return const Iterable<String>.empty();
-                    }
-                    return options.where((String option) {
-                      return option
-                          .toLowerCase()
-                          .contains(textEditingValue.text.toLowerCase());
-                    });
-                  },
-                  onSelected: onSelected,
-                  fieldViewBuilder: (BuildContext context,
-                      TextEditingController fieldTextEditingController,
-                      FocusNode fieldFocusNode,
-                      VoidCallback onFieldSubmitted) {
-                    // Sync internal controller if needed, but Autocomplete manages its own unless passed
-                    // We need to keep our state controller in sync.
-                    if (textController.text !=
-                            fieldTextEditingController.text &&
-                        fieldTextEditingController.text.isNotEmpty) {
-                      // Logic to prevent loops, simplified here
-                    }
-
-                    return TextField(
-                      controller: fieldTextEditingController,
-                      focusNode: fieldFocusNode,
-                      style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context)
-                              .dividerColor
-                              .withValues(alpha: 0.2)),
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        filled: false, // Transparent, use Container bg
-                        hintText: hint,
-                        hintStyle: TextStyle(
-                            color: Colors.grey.shade400,
-                            fontWeight: FontWeight.normal),
-                      ),
-                      onChanged: (val) {
-                        // Also update parent controller if user types manually
-                        // But finding cities might depend on selection
-                        // For simply setting city text:
-                        if (hint.contains("now")) {
-                          Provider.of<TripController>(context, listen: false)
-                              .setFromCity(val);
-                        }
-                        if (hint.contains("going")) {
-                          Provider.of<TripController>(context, listen: false)
-                              .setToCity(val);
-                        }
-                      },
-                    );
-                  },
-                  optionsViewBuilder: (BuildContext context,
-                      AutocompleteOnSelected<String> onSelected,
-                      Iterable<String> options) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 4.0,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          width: 300, // Or dynamic
-                          constraints: const BoxConstraints(maxHeight: 200),
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12)),
-                          child: ListView.builder(
-                            padding: EdgeInsets.zero,
-                            shrinkWrap: true,
-                            itemCount: options.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              final String option = options.elementAt(index);
-                              return InkWell(
-                                onTap: () {
-                                  onSelected(option);
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Text(option,
-                                      style: const TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w500)),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    );
-                  },
                 ),
               ),
-            ],
+            ),
           ),
-        )
-      ],
+          // Gradient Overlay
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.4),
+                    Colors.black.withOpacity(0.7),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Content
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      lp.translate('find_bus'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: widget.isDesktop ? 64 : 42,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Animated Subtitle Text
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 500),
+                      child: Text(
+                        _heroData[_currentImageIndex]["subtitle"] ?? "",
+                        key:
+                            ValueKey(_heroData[_currentImageIndex]["subtitle"]),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: widget.isDesktop ? 18 : 16,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+                    // Search Bar
+                    _buildSearchCard(context, lp),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildDateField(BuildContext context, TripController controller) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final inputFillColor =
-        Theme.of(context).inputDecorationTheme.fillColor ?? Colors.grey.shade50;
-    final borderColor = Theme.of(context).dividerColor;
+  Widget _buildSearchCard(BuildContext context, LanguageProvider lp) {
+    if (widget.isDesktop) {
+      return Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 30,
+              offset: const Offset(0, 15),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildSearchInput(
+                controller: widget.originController,
+                icon: Icons.location_on_outlined,
+                label: 'From',
+                hint: 'Enter origin',
+              ),
+            ),
+            Container(height: 40, width: 1, color: Colors.grey.shade200),
+            Expanded(
+              child: _buildSearchInput(
+                controller: widget.destinationController,
+                icon: Icons.navigation_outlined,
+                label: 'To',
+                hint: 'Enter destination',
+              ),
+            ),
+            Container(height: 40, width: 1, color: Colors.grey.shade200),
+            Expanded(
+              child: InkWell(
+                onTap: widget.onDateTap,
+                child: _buildSearchDisplay(
+                  icon: Icons.calendar_today_outlined,
+                  label: 'Date',
+                  value: DateFormat('EEE, d MMM').format(widget.selectedDate),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 64,
+              width: 150,
+              child: ElevatedButton(
+                onPressed: widget.onSearchTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'Search',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Mobile Search Card
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            _buildSearchInput(
+              controller: widget.originController,
+              icon: Icons.location_on_outlined,
+              label: 'From',
+              hint: 'Enter origin',
+            ),
+            const Divider(height: 32),
+            _buildSearchInput(
+              controller: widget.destinationController,
+              icon: Icons.navigation_outlined,
+              label: 'To',
+              hint: 'Enter destination',
+            ),
+            const Divider(height: 32),
+            InkWell(
+              onTap: widget.onDateTap,
+              child: _buildSearchDisplay(
+                icon: Icons.calendar_today_outlined,
+                label: 'Date',
+                value: DateFormat('EEE, d MMM').format(widget.selectedDate),
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: widget.onSearchTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text('Search Buses',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        /* Text("DEPARTURE DATE", style: TextStyle(fontFamily: 'Inter', ...) ), const SizedBox(height: 10), */
-        InkWell(
-          onTap: () => _selectDate(context, controller),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-                color: inputFillColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: isDark
-                        ? borderColor.withValues(alpha: 0.2)
-                        : Colors.grey.shade200)),
-            child: Row(
+  Widget _buildSearchInput({
+    required TextEditingController controller,
+    required IconData icon,
+    required String label,
+    required String hint,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.primaryColor, size: 24),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.calendar_today,
-                    size: 18, color: AppTheme.primaryColor),
-                const SizedBox(width: 12),
                 Text(
-                  controller.isBulkBooking
-                      ? (controller.bulkDates.isNotEmpty
-                          ? "${DateFormat('MMM d').format(controller.bulkDates.first)} - ${DateFormat('MMM d').format(controller.bulkDates.last)}"
-                          : "Select Date Range")
-                      : (controller.travelDate != null
-                          ? DateFormat('EEE, d MMM yyyy')
-                              .format(controller.travelDate!)
-                          : "Select Date"),
+                  label,
                   style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w600,
-                      color: (controller.isBulkBooking
-                              ? controller.bulkDates.isNotEmpty
-                              : controller.travelDate != null)
-                          ? Theme.of(context).textTheme.bodyLarge?.color
-                          : Colors.grey.shade400),
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextField(
+                  controller: controller,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: TextStyle(color: Colors.grey.shade400),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                  ),
                 ),
               ],
             ),
           ),
-        )
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildSearchButton(BuildContext context, TripController controller) {
-    return GestureDetector(
-      onTap: () {
-        if (controller.fromCity == null ||
-            controller.toCity == null ||
-            (!controller.isBulkBooking && controller.travelDate == null) ||
-            (controller.isBulkBooking && controller.bulkDates.isEmpty)) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Please fill all fields")));
-          return;
-        }
-        controller.searchTrips(context);
-        Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const BusListScreen()));
-      },
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          // Width handled by parent
-          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 22),
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
+  Widget _buildSearchDisplay({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.primaryColor, size: 24),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
-          alignment: Alignment.center,
-          child: const Text(
-            "SEARCH BUSES",
-            style: TextStyle(
-              fontFamily: 'Outfit',
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeaturesSection extends StatelessWidget {
+  final bool isDesktop;
+  const _FeaturesSection({required this.isDesktop});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (isDesktop) {
+                return Row(
+                  children: [
+                    _FeatureItem(
+                      icon: Icons.bolt,
+                      title: 'Fast Booking',
+                      description:
+                          'Book your seats in less than 60 seconds with our streamlined flow.',
+                    ),
+                    _FeatureItem(
+                      icon: Icons.shield_outlined,
+                      title: 'Secure Payments',
+                      description:
+                          'Your transactions are protected with industry-standard encryption.',
+                    ),
+                    _FeatureItem(
+                      icon: Icons.location_on_outlined,
+                      title: 'Live Tracking',
+                      description:
+                          'Track your bus in real-time and never miss your ride again.',
+                    ),
+                    _FeatureItem(
+                      icon: Icons.support_agent,
+                      title: '24/7 Support',
+                      description:
+                          'Our dedicated team is always here to help with your journey.',
+                    ),
+                  ],
+                );
+              } else {
+                return Column(
+                  children: [
+                    _FeatureItem(
+                      icon: Icons.bolt,
+                      title: 'Fast Booking',
+                      description: 'Book your seats in less than 60 seconds.',
+                    ),
+                    const SizedBox(height: 32),
+                    _FeatureItem(
+                      icon: Icons.shield_outlined,
+                      title: 'Secure Payments',
+                      description:
+                          'Protected with industry-standard encryption.',
+                    ),
+                    const SizedBox(height: 32),
+                    _FeatureItem(
+                      icon: Icons.location_on_outlined,
+                      title: 'Live Tracking',
+                      description: 'Track your bus in real-time on our map.',
+                    ),
+                  ],
+                );
+              }
+            },
           ),
         ),
       ),
     );
   }
 }
-// --- Features & Favorites reused but minimized here for brevity or import ---
-// I'll inline the list widgets for simplicity as I rewrote them before,
-// but ensure they use Theme.of(context) dynamically for Dark Mode.
 
-class _FavoritesList extends StatelessWidget {
-  final bool isDesktop;
-  const _FavoritesList({required this.isDesktop});
+class _FeatureItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+
+  const _FeatureItem({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final controller = Provider.of<TripController>(context, listen: false);
-    final user = authService.currentUser;
-
-    if (user == null) {
-      return SizedBox(
-        height: 100,
-        child: Center(
-          child: Text(
-            "Log in to view favorites",
-            style: TextStyle(color: Colors.grey.shade500),
-          ),
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 140,
-      child: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: controller.getUserFavorites(user.uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Text(
-                "No favorites added yet",
-                style: TextStyle(color: Colors.grey.shade500),
-              ),
-            );
-          }
-
-          final favorites = snapshot.data!;
-
-          return ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: favorites.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 16),
-            itemBuilder: (context, index) {
-              final fav = favorites[index];
-              return _favCard(
-                context,
-                fav['fromCity'] ?? 'Unknown',
-                fav['toCity'] ?? 'Unknown',
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _favCard(BuildContext context, String from, String to) {
-    return Container(
-      width: 250,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-                color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))
-          ]),
+    return Expanded(
+      flex: 1,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.favorite, color: AppTheme.primaryColor),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text("$from - $to",
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppTheme.primaryColor, size: 32),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: const TextStyle(
+              fontFamily: 'Outfit',
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
-          Text("Daily Service",
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: Colors.grey.shade600,
+                height: 1.5,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1145,153 +664,58 @@ class _PopularDestinationsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final destinations = [
-      {
-        "name": "Kandy",
-        "image": "https://loremflickr.com/640/480/kandy,temple",
-        "desc":
-            "The hill capital, home to the Temple of the Tooth and scenic lakes."
-      },
-      {
-        "name": "Galle",
-        "image": "https://loremflickr.com/640/480/galle,fort",
-        "desc":
-            "Historic fort city on the southwest coast with Dutch colonial architecture."
-      },
-      {
-        "name": "Ella",
-        "image": "https://loremflickr.com/640/480/ella,srilanka",
-        "desc":
-            "Mountain village famous for the Nine Arch Bridge and stunning hiking trails."
-      },
-      {
-        "name": "Jaffna",
-        "image": "https://loremflickr.com/640/480/jaffna,temple",
-        "desc":
-            "Cultural hub of the north, known for its vibrant Hindu temples and history."
-      },
-    ];
+    final lp = Provider.of<LanguageProvider>(context);
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          // Adjust aspect ratio for card content
-          crossAxisCount: isDesktop
-              ? 4
-              : 1, // Single column on mobile for better visibility
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: isDesktop ? 0.8 : 1.5), // Wider cards on mobile
-      itemCount: destinations.length,
-      itemBuilder: (context, index) {
-        final dest = destinations[index];
-        return _DestinationCard(
-          name: dest['name']!,
-          imageUrl: dest['image']!,
-          description: dest['desc']!,
-        );
-      },
-    );
-  }
-}
-
-class _DestinationCard extends StatefulWidget {
-  final String name;
-  final String imageUrl;
-  final String description;
-
-  const _DestinationCard({
-    required this.name,
-    required this.imageUrl,
-    required this.description,
-  });
-
-  @override
-  State<_DestinationCard> createState() => _DestinationCardState();
-}
-
-class _DestinationCardState extends State<_DestinationCard> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          image: DecorationImage(
-            image: NetworkImage(widget.imageUrl),
-            fit: BoxFit.cover,
-            colorFilter: _isHovered
-                ? ColorFilter.mode(
-                    Colors.black.withValues(alpha: 0.6), BlendMode.darken)
-                : ColorFilter.mode(
-                    Colors.black.withValues(alpha: 0.3), BlendMode.darken),
-          ),
-          boxShadow: [
-            if (_isHovered)
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 15,
-                spreadRadius: 2,
-                offset: const Offset(0, 5),
-              )
-            else
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-          ],
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.transparent,
-                Colors.black.withValues(alpha: 0.8),
-              ],
-            ),
-          ),
-          padding: const EdgeInsets.all(20),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.name,
+                lp.translate('popular_destinations'),
                 style: const TextStyle(
                   fontFamily: 'Outfit',
-                  color: Colors.white,
+                  fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  fontSize: 24,
                 ),
               ),
-              AnimatedCrossFade(
-                firstChild: const SizedBox.shrink(),
-                secondChild: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    widget.description,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
+              const SizedBox(height: 32),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: isDesktop ? 4 : 2,
+                mainAxisSpacing: 24,
+                crossAxisSpacing: 24,
+                childAspectRatio: 0.8,
+                children: const [
+                  _DestinationCard(
+                    city: 'Colombo',
+                    imageUrl:
+                        'https://images.unsplash.com/photo-1588598116712-2902f78c1e66?auto=format&fit=crop&q=80',
+                    busCount: 120,
                   ),
-                ),
-                crossFadeState: _isHovered
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
-                duration: const Duration(milliseconds: 200),
+                  _DestinationCard(
+                    city: 'Kandy',
+                    imageUrl:
+                        'https://images.unsplash.com/photo-1625413390089-631d5bc0fca6?auto=format&fit=crop&q=80',
+                    busCount: 85,
+                  ),
+                  _DestinationCard(
+                    city: 'Galle',
+                    imageUrl:
+                        'https://images.unsplash.com/photo-1616422791483-34e837943c5b?auto=format&fit=crop&q=80',
+                    busCount: 64,
+                  ),
+                  _DestinationCard(
+                    city: 'Ella',
+                    imageUrl:
+                        'https://images.unsplash.com/photo-1586713756850-8483cfd3e86c?auto=format&fit=crop&q=80',
+                    busCount: 42,
+                  ),
+                ],
               ),
             ],
           ),
@@ -1301,56 +725,64 @@ class _DestinationCardState extends State<_DestinationCard> {
   }
 }
 
-class _FeaturesSection extends StatelessWidget {
-  const _FeaturesSection();
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Column(children: [
-          Icon(Icons.security, size: 40),
-          SizedBox(height: 10),
-          Text("Secure")
-        ]),
-        Column(children: [
-          Icon(Icons.timer, size: 40),
-          SizedBox(height: 10),
-          Text("Fast")
-        ]),
-        Column(children: [
-          Icon(Icons.headset_mic, size: 40),
-          SizedBox(height: 10),
-          Text("Support")
-        ]),
-      ],
-    );
-  }
-}
+class _DestinationCard extends StatelessWidget {
+  final String city;
+  final String imageUrl;
+  final int busCount;
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  const _SectionHeader({required this.title, required this.subtitle});
+  const _DestinationCard({
+    required this.city,
+    required this.imageUrl,
+    required this.busCount,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title,
-            style: const TextStyle(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        image: DecorationImage(
+          image: NetworkImage(imageUrl),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black.withOpacity(0.8),
+            ],
+          ),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              city,
+              style: const TextStyle(
                 fontFamily: 'Outfit',
-                fontSize: 28,
-                fontWeight: FontWeight.bold)),
-        Text(subtitle,
-            style: const TextStyle(
-                fontFamily: 'Inter', fontSize: 16, color: Colors.grey)),
-        Container(
-            width: 50,
-            height: 4,
-            color: AppTheme.primaryColor,
-            margin: const EdgeInsets.only(top: 8)),
-      ],
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            Text(
+              '$busCount Buses Daily',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

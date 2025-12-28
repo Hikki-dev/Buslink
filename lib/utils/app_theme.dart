@@ -1,6 +1,5 @@
 // lib/utils/app_theme.dart
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 // This class will manage and notify the app of theme changes
 class ThemeController extends ChangeNotifier {
@@ -29,7 +28,7 @@ class AppTheme {
     primaryColor: primaryColor,
     scaffoldBackgroundColor: Colors.white,
     fontFamily: 'Outfit',
-    fontFamilyFallback: ['Inter', GoogleFonts.notoSans().fontFamily!],
+    fontFamilyFallback: ['Montserrat', 'Inter', 'NotoSans', 'sans-serif'],
     useMaterial3: true,
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
@@ -54,37 +53,37 @@ class AppTheme {
     ),
     textTheme: const TextTheme(
       headlineLarge: TextStyle(
-        fontFamily: 'Outfit',
-        fontSize: 48,
+        fontFamily: 'Cormorant',
+        fontSize: 52,
         fontWeight: FontWeight.w800,
         color: Colors.black,
         height: 1.1,
       ),
       headlineSmall: TextStyle(
         fontFamily: 'Outfit',
-        fontSize: 32,
+        fontSize: 36,
         fontWeight: FontWeight.bold,
         color: Colors.black,
       ),
       titleLarge: TextStyle(
         fontFamily: 'Outfit',
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: FontWeight.bold,
         color: Colors.black,
       ),
       bodyLarge: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 16,
+          fontFamily: 'Montserrat',
+          fontSize: 18,
           color: Colors.black,
           fontWeight: FontWeight.bold),
       bodyMedium: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 14,
+          fontFamily: 'Montserrat',
+          fontSize: 16,
           color: Colors.black,
           fontWeight: FontWeight.bold),
       labelLarge: TextStyle(
         fontFamily: 'Inter',
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: FontWeight.bold,
         color: Colors.white, // For Elevated Buttons
       ),
@@ -156,54 +155,63 @@ class AppTheme {
 
   static final ThemeData darkTheme = ThemeData(
     primaryColor: primaryColor,
-    scaffoldBackgroundColor: Colors.black, // Pure Black
+    scaffoldBackgroundColor: const Color(0xFF0A0B10), // Deep Premium Navy Black
     fontFamily: 'Outfit',
-    fontFamilyFallback: ['Inter', GoogleFonts.notoSans().fontFamily!],
+    fontFamilyFallback: ['Montserrat', 'Inter', 'NotoSans', 'sans-serif'],
     useMaterial3: true,
     brightness: Brightness.dark,
     appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.black,
+      backgroundColor: Color(0xFF0A0A0B),
       elevation: 0,
     ),
     colorScheme: ColorScheme.fromSeed(
       seedColor: primaryColor,
       brightness: Brightness.dark,
-      surface: const Color(0xFF161A1D),
+      surface: const Color(0xFF161821), // Lighter Navy Surface
       onSurface: Colors.white,
       primary: primaryColor,
     ),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      color: const Color(0xFF161821),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+    ),
     textTheme: const TextTheme(
       headlineLarge: TextStyle(
-        fontFamily: 'Outfit',
-        fontSize: 48,
+        fontFamily: 'Cormorant',
+        fontSize: 52,
         fontWeight: FontWeight.bold,
         color: Colors.white,
       ),
       headlineSmall: TextStyle(
         fontFamily: 'Outfit',
-        fontSize: 32,
+        fontSize: 36,
         fontWeight: FontWeight.bold,
         color: Colors.white,
       ),
       titleLarge: TextStyle(
         fontFamily: 'Outfit',
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: FontWeight.bold,
         color: Colors.white,
       ),
       bodyLarge: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 16,
+          fontFamily: 'Montserrat',
+          fontSize: 18,
           color: Colors.white,
           fontWeight: FontWeight.bold),
       bodyMedium: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 14,
+          fontFamily: 'Montserrat',
+          fontSize: 16,
           color: Colors.white, // High Contrast White
           fontWeight: FontWeight.bold),
       labelLarge: TextStyle(
         fontFamily: 'Inter',
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: FontWeight.bold,
         color: Colors.white,
       ),
@@ -248,15 +256,6 @@ class AppTheme {
         borderRadius: BorderRadius.circular(8.0),
         borderSide: const BorderSide(color: primaryColor, width: 2),
       ),
-    ),
-    cardTheme: CardThemeData(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade800),
-      ),
-      color: const Color(0xFF161A1D),
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
     ),
   );
 }
