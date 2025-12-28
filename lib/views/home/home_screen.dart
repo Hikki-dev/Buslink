@@ -375,24 +375,24 @@ class _HeroSectionState extends State<_HeroSection> {
   final List<Map<String, String>> _heroData = [
     {
       "image":
-          "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80",
+          "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1280",
       "subtitle":
           "Book your bus tickets instantly with BusLink. Reliable, fast, and secure."
     },
     {
       "image":
-          "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&q=80",
+          "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&q=80&w=1280",
       "subtitle":
           "Discover the most beautiful routes across the island in comfort."
     },
     {
       "image":
-          "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&q=80",
+          "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&q=80&w=1280",
       "subtitle": "Seamless payments and real-time tracking for your journey."
     },
     {
       "image":
-          "https://images.unsplash.com/photo-1557223562-6c77ef16210f?auto=format&fit=crop&q=80",
+          "https://images.unsplash.com/photo-1557223562-6c77ef16210f?auto=format&fit=crop&q=80&w=1280",
       "subtitle": "Experience premium travel with our top-rated bus operators."
     },
   ];
@@ -402,6 +402,14 @@ class _HeroSectionState extends State<_HeroSection> {
     super.initState();
     _currentImageIndex = Random().nextInt(_heroData.length);
     _startTimer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    for (var data in _heroData) {
+      precacheImage(NetworkImage(data['image']!), context);
+    }
   }
 
   @override
