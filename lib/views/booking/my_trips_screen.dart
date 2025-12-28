@@ -10,6 +10,7 @@ import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
 import '../ticket/ticket_screen.dart';
 import '../results/bus_list_screen.dart';
+import '../layout/desktop_navbar.dart';
 
 class MyTripsScreen extends StatelessWidget {
   final bool showBackButton;
@@ -20,47 +21,57 @@ class MyTripsScreen extends StatelessWidget {
     final user = Provider.of<User?>(context);
     final controller = Provider.of<TripController>(context);
 
+    final bool isDesktop = MediaQuery.of(context).size.width > 900;
+
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        backgroundColor: Colors.grey.shade50,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading:
-              showBackButton ? const BackButton(color: Colors.black) : null,
-          title: const Text("My Trips",
-              style: TextStyle(
-                  fontFamily: 'Outfit',
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold)),
-          centerTitle: true,
-          bottom: const TabBar(
-            labelColor: AppTheme.primaryColor,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: AppTheme.primaryColor,
-            labelStyle:
-                TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold),
-            tabs: [
-              Tab(text: "UPCOMING"),
-              Tab(text: "HISTORY"),
-            ],
-          ),
-        ),
-        body: user == null
-            ? _buildLoginPrompt()
-            : TabBarView(
-                children: [
-                  _TripsList(
-                      controller: controller,
-                      userId: user.uid,
-                      isHistory: false),
-                  _TripsList(
-                      controller: controller,
-                      userId: user.uid,
-                      isHistory: true),
-                ],
+      child: Column(
+        children: [
+          if (isDesktop) const DesktopNavBar(selectedIndex: 1),
+          Expanded(
+            child: Scaffold(
+              backgroundColor: Colors.grey.shade50,
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                elevation: 0,
+                leading: showBackButton && !isDesktop
+                    ? const BackButton(color: Colors.black)
+                    : null,
+                title: const Text("My Trips",
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold)),
+                centerTitle: true,
+                bottom: const TabBar(
+                  labelColor: AppTheme.primaryColor,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: AppTheme.primaryColor,
+                  labelStyle: TextStyle(
+                      fontFamily: 'Outfit', fontWeight: FontWeight.bold),
+                  tabs: [
+                    Tab(text: "UPCOMING"),
+                    Tab(text: "HISTORY"),
+                  ],
+                ),
               ),
+              body: user == null
+                  ? _buildLoginPrompt()
+                  : TabBarView(
+                      children: [
+                        _TripsList(
+                            controller: controller,
+                            userId: user.uid,
+                            isHistory: false),
+                        _TripsList(
+                            controller: controller,
+                            userId: user.uid,
+                            isHistory: true),
+                      ],
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }

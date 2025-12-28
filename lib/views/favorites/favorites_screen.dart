@@ -5,6 +5,7 @@ import '../../utils/app_theme.dart';
 import '../../controllers/trip_controller.dart';
 import '../../services/auth_service.dart';
 import '../results/bus_list_screen.dart';
+import '../layout/desktop_navbar.dart';
 
 class FavoritesScreen extends StatelessWidget {
   final bool showBackButton;
@@ -19,100 +20,109 @@ class FavoritesScreen extends StatelessWidget {
     final user = authService.currentUser;
     final isDesktop = MediaQuery.of(context).size.width > 800;
 
-    return Scaffold(
-      // Use theme background
-      appBar: AppBar(
-        title: Text("My Favourites",
-            style: TextStyle(
-                fontFamily: 'Outfit',
-                color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        elevation: 0,
-        // Remove manual background color to use theme
-      ),
-      body: user == null
-          ? Center(
-              child: Text("Please log in to view favorites",
+    return Column(
+      children: [
+        if (isDesktop) const DesktopNavBar(selectedIndex: 2),
+        Expanded(
+          child: Scaffold(
+            // Use theme background
+            appBar: AppBar(
+              title: Text("My Favourites",
                   style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.onSurface)),
-            )
-          : StreamBuilder<List<Map<String, dynamic>>>(
-              stream: controller.getUserFavorites(user.uid),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.favorite_border,
-                            size: 64, color: Colors.grey.shade300),
-                        const SizedBox(height: 16),
-                        Text("No favourites yet",
-                            style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 18,
-                                color:
-                                    Theme.of(context).colorScheme.onSurface)),
-                      ],
-                    ),
-                  );
-                }
-
-                final favorites = snapshot.data!;
-
-                return GridView.builder(
-                  padding: const EdgeInsets.all(24),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: isDesktop ? 3 : 1,
-                    mainAxisSpacing: 20,
-                    crossAxisSpacing: 20,
-                    childAspectRatio: isDesktop ? 1.5 : 1.8,
-                  ),
-                  itemCount: favorites.length,
-                  itemBuilder: (context, index) {
-                    final fav = favorites[index];
-                    return _FavoriteItemCard(
-                      from: fav['fromCity'] ?? 'Unknown',
-                      to: fav['toCity'] ?? 'Unknown',
-                      operator: fav['operatorName'] ?? 'Unknown',
-                      price: fav['price'] != null
-                          ? "LKR ${fav['price']}"
-                          : "Price Varies",
-                      onRemove: () async {
-                        await controller.removeFavorite(user.uid, fav['id']);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text("Removed from favourites")),
-                          );
-                        }
-                      },
-                      onBook: () {
-                        // 1. Pre-fill Search
-                        controller.setFromCity(fav['fromCity']);
-                        controller.setToCity(fav['toCity']);
-                        controller.setDepartureDate(DateTime.now());
-
-                        // 2. Navigate
-                        controller.searchTrips(context); // Trigger search
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const BusListScreen()),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
+                      fontFamily: 'Outfit',
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.bold)),
+              centerTitle: true,
+              elevation: 0,
+              // Remove manual background color to use theme
             ),
+            body: user == null
+                ? Center(
+                    child: Text("Please log in to view favorites",
+                        style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            color: Theme.of(context).colorScheme.onSurface)),
+                  )
+                : StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: controller.getUserFavorites(user.uid),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.favorite_border,
+                                  size: 64, color: Colors.grey.shade300),
+                              const SizedBox(height: 16),
+                              Text("No favourites yet",
+                                  style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 18,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface)),
+                            ],
+                          ),
+                        );
+                      }
+
+                      final favorites = snapshot.data!;
+
+                      return GridView.builder(
+                        padding: const EdgeInsets.all(24),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: isDesktop ? 3 : 1,
+                          mainAxisSpacing: 20,
+                          crossAxisSpacing: 20,
+                          childAspectRatio: isDesktop ? 1.5 : 1.8,
+                        ),
+                        itemCount: favorites.length,
+                        itemBuilder: (context, index) {
+                          final fav = favorites[index];
+                          return _FavoriteItemCard(
+                            from: fav['fromCity'] ?? 'Unknown',
+                            to: fav['toCity'] ?? 'Unknown',
+                            operator: fav['operatorName'] ?? 'Unknown',
+                            price: fav['price'] != null
+                                ? "LKR ${fav['price']}"
+                                : "Price Varies",
+                            onRemove: () async {
+                              await controller.removeFavorite(
+                                  user.uid, fav['id']);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text("Removed from favourites")),
+                                );
+                              }
+                            },
+                            onBook: () {
+                              // 1. Pre-fill Search
+                              controller.setFromCity(fav['fromCity']);
+                              controller.setToCity(fav['toCity']);
+                              controller.setDepartureDate(DateTime.now());
+
+                              // 2. Navigate
+                              controller.searchTrips(context); // Trigger search
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const BusListScreen()),
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -24,6 +24,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _destinationController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   final ScrollController _scrollController = ScrollController();
+  bool _isRoundTrip = false;
+  bool _isBulkBooking = false;
 
   void _searchBuses() {
     if (_originController.text.isEmpty || _destinationController.text.isEmpty) {
@@ -126,6 +128,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     selectedDate: _selectedDate,
                     onDateTap: () => _selectDate(context),
                     onSearchTap: _searchBuses,
+                    isRoundTrip: _isRoundTrip,
+                    isBulkBooking: _isBulkBooking,
+                    onRoundTripChanged: (val) =>
+                        setState(() => _isRoundTrip = val),
+                    onBulkBookingChanged: (val) =>
+                        setState(() => _isBulkBooking = val),
                   ),
                 ),
                 SliverPadding(
@@ -155,6 +163,10 @@ class _HeroSection extends StatefulWidget {
   final DateTime selectedDate;
   final VoidCallback onDateTap;
   final VoidCallback onSearchTap;
+  final bool isRoundTrip;
+  final bool isBulkBooking;
+  final ValueChanged<bool> onRoundTripChanged;
+  final ValueChanged<bool> onBulkBookingChanged;
 
   const _HeroSection({
     required this.isDesktop,
@@ -163,6 +175,10 @@ class _HeroSection extends StatefulWidget {
     required this.selectedDate,
     required this.onDateTap,
     required this.onSearchTap,
+    required this.isRoundTrip,
+    required this.isBulkBooking,
+    required this.onRoundTripChanged,
+    required this.onBulkBookingChanged,
   });
 
   @override
@@ -312,9 +328,30 @@ class _HeroSectionState extends State<_HeroSection> {
 
   Widget _buildSearchCard(BuildContext context, LanguageProvider lp) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Widget buildTabButton(String text, bool isActive, VoidCallback onTap) {
+      return InkWell(
+        onTap: onTap,
+        child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(
+                border: Border(
+                    bottom: BorderSide(
+                        color: isActive
+                            ? AppTheme.primaryColor
+                            : Colors.transparent,
+                        width: 2))),
+            child: Text(text,
+                style: TextStyle(
+                    color:
+                        isActive ? AppTheme.primaryColor : Colors.grey.shade600,
+                    fontWeight: FontWeight.bold))),
+      );
+    }
+
     if (widget.isDesktop) {
       return Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF161821) : Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -326,60 +363,100 @@ class _HeroSectionState extends State<_HeroSection> {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           children: [
-            Expanded(
-              child: _buildSearchInput(
-                controller: widget.originController,
-                icon: Icons.location_on_outlined,
-                label: 'From',
-                hint: 'Enter origin',
-              ),
-            ),
-            Container(
-                height: 40,
-                width: 1,
-                color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
-            Expanded(
-              child: _buildSearchInput(
-                controller: widget.destinationController,
-                icon: Icons.navigation_outlined,
-                label: 'To',
-                hint: 'Enter destination',
-              ),
-            ),
-            Container(
-                height: 40,
-                width: 1,
-                color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
-            Expanded(
-              child: InkWell(
-                onTap: widget.onDateTap,
-                child: _buildSearchDisplay(
-                  icon: Icons.calendar_today_outlined,
-                  label: 'Date',
-                  value: DateFormat('EEE, d MMM').format(widget.selectedDate),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              height: 64,
-              width: 150,
-              child: ElevatedButton(
-                onPressed: widget.onSearchTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Row(
+                children: [
+                  buildTabButton("One Way", !widget.isRoundTrip,
+                      () => widget.onRoundTripChanged(false)),
+                  const SizedBox(width: 16),
+                  buildTabButton("Round Trip", widget.isRoundTrip,
+                      () => widget.onRoundTripChanged(true)),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: widget.isBulkBooking,
+                        activeColor: AppTheme.primaryColor,
+                        onChanged: (v) => widget.onBulkBookingChanged(v!),
+                      ),
+                      Text("Bulk / Multi-day Booking",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87)),
+                    ],
                   ),
-                ),
-                child: const Text(
-                  'Search',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                ],
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildSearchInput(
+                      controller: widget.originController,
+                      icon: Icons.location_on_outlined,
+                      label: 'From',
+                      hint: 'Enter origin',
+                    ),
+                  ),
+                  Container(
+                      height: 40,
+                      width: 1,
+                      color:
+                          isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                  Expanded(
+                    child: _buildSearchInput(
+                      controller: widget.destinationController,
+                      icon: Icons.navigation_outlined,
+                      label: 'To',
+                      hint: 'Enter destination',
+                    ),
+                  ),
+                  Container(
+                      height: 40,
+                      width: 1,
+                      color:
+                          isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                  Expanded(
+                    child: InkWell(
+                      onTap: widget.onDateTap,
+                      child: _buildSearchDisplay(
+                        icon: Icons.calendar_today_outlined,
+                        label: 'Date',
+                        value: DateFormat('EEE, d MMM')
+                            .format(widget.selectedDate),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    height: 64,
+                    width: 150,
+                    child: ElevatedButton(
+                      onPressed: widget.onSearchTap,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'Search',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -402,6 +479,49 @@ class _HeroSectionState extends State<_HeroSection> {
         ),
         child: Column(
           children: [
+            Row(
+              children: [
+                Expanded(
+                  child: buildTabButton("One Way", !widget.isRoundTrip,
+                      () => widget.onRoundTripChanged(false)),
+                ),
+                Expanded(
+                  child: buildTabButton("Round Trip", widget.isRoundTrip,
+                      () => widget.onRoundTripChanged(true)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: Checkbox(
+                      value: widget.isBulkBooking,
+                      activeColor: AppTheme.primaryColor,
+                      onChanged: (v) => widget.onBulkBookingChanged(v!),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text("Bulk / Multi-day Booking",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: isDark ? Colors.white : Colors.black87)),
+                  ),
+                  const Icon(Icons.info_outline, size: 16, color: Colors.grey)
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
             _buildSearchInput(
               controller: widget.originController,
               icon: Icons.location_on_outlined,
@@ -701,25 +821,25 @@ class _PopularDestinationsGrid extends StatelessWidget {
                   _DestinationCard(
                     city: 'Colombo',
                     imageUrl:
-                        'https://images.unsplash.com/photo-1588598116712-2902f78c1e66?auto=format&fit=crop&q=80',
+                        'https://images.unsplash.com/photo-1578508479831-7e5088235288?auto=format&fit=crop&q=80',
                     busCount: 120,
                   ),
                   _DestinationCard(
                     city: 'Kandy',
                     imageUrl:
-                        'https://images.unsplash.com/photo-1625413390089-631d5bc0fca6?auto=format&fit=crop&q=80',
+                        'https://images.unsplash.com/photo-1596700773663-8328de8d3381?auto=format&fit=crop&q=80',
                     busCount: 85,
                   ),
                   _DestinationCard(
                     city: 'Galle',
                     imageUrl:
-                        'https://images.unsplash.com/photo-1616422791483-34e837943c5b?auto=format&fit=crop&q=80',
+                        'https://images.unsplash.com/photo-1550955217-08709d7cf744?auto=format&fit=crop&q=80',
                     busCount: 64,
                   ),
                   _DestinationCard(
                     city: 'Ella',
                     imageUrl:
-                        'https://images.unsplash.com/photo-1586713756850-8483cfd3e86c?auto=format&fit=crop&q=80',
+                        'https://images.unsplash.com/photo-1566838029562-b13c77d54406?auto=format&fit=crop&q=80',
                     busCount: 42,
                   ),
                 ],
