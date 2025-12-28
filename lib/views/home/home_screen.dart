@@ -311,15 +311,16 @@ class _HeroSectionState extends State<_HeroSection> {
   }
 
   Widget _buildSearchCard(BuildContext context, LanguageProvider lp) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (widget.isDesktop) {
       return Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF161821) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.2),
               blurRadius: 30,
               offset: const Offset(0, 15),
             ),
@@ -335,7 +336,10 @@ class _HeroSectionState extends State<_HeroSection> {
                 hint: 'Enter origin',
               ),
             ),
-            Container(height: 40, width: 1, color: Colors.grey.shade200),
+            Container(
+                height: 40,
+                width: 1,
+                color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
             Expanded(
               child: _buildSearchInput(
                 controller: widget.destinationController,
@@ -344,7 +348,10 @@ class _HeroSectionState extends State<_HeroSection> {
                 hint: 'Enter destination',
               ),
             ),
-            Container(height: 40, width: 1, color: Colors.grey.shade200),
+            Container(
+                height: 40,
+                width: 1,
+                color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
             Expanded(
               child: InkWell(
                 onTap: widget.onDateTap,
@@ -383,11 +390,11 @@ class _HeroSectionState extends State<_HeroSection> {
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF161821) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
