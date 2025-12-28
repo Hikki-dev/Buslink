@@ -113,7 +113,7 @@ class DesktopNavBar extends StatelessWidget {
                     // Header
                     PopupMenuItem(
                       enabled: false,
-                      child: Text("Signed in as\\n${user.email ?? name}",
+                      child: Text("Signed in as ${user.email ?? name}",
                           style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
