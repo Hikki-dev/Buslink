@@ -126,23 +126,26 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
         setState(() {
           _isInitialized = true;
         });
-        // Note: HTML spinner removal is now handled by web/index.html or flutter_bootstrap.js
-        // FORCE REMOVE HTML SPINNER (Restored to fix stuck spinner)
-        try {
-          final loader = html.document.getElementById('loading-indicator');
-          if (loader != null) {
-            loader.remove();
-            debugPrint("Deleted HTML Spinner via Dart");
-          }
-        } catch (e) {
-          debugPrint("Failed to remove HTML spinner: $e");
-        }
+        _removeHtmlSpinner();
       }
     }
   }
 
+  void _removeHtmlSpinner() {
+    try {
+      final loader = html.document.getElementById('loading-indicator');
+      if (loader != null) {
+        loader.remove();
+        debugPrint("Deleted HTML Spinner via Dart");
+      }
+    } catch (e) {}
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Aggressive removal on build
+    _removeHtmlSpinner();
+
     if (!_isInitialized) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -325,6 +328,18 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
         }
 
         final String role = (data['role'] ?? 'customer').toString().trim();
+        debugPrint("User: ${widget.user.email} (UID: ${widget.user.uid})");
+        debugPrint("Firestore Data: $data");
+        debugPrint("Determined Role: $role");
+
+        // Last chance to remove spinner
+        try {
+          final loader = html.document.getElementById('loading-indicator');
+          if (loader != null) {
+            loader.remove();
+            debugPrint("Deleted HTML Spinner via RoleDispatcher");
+          }
+        } catch (e) {}
 
         switch (role) {
           case 'admin':

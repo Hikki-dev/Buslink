@@ -247,13 +247,13 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           if (MediaQuery.of(context).size.width > 900) ...[
             // Desktop Header inside form
-            const Text(
+            Text(
               'Hello Again! 👋',
               style: TextStyle(
                 fontFamily: 'Outfit',
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.darkText,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -268,11 +268,11 @@ class _LoginScreenState extends State<LoginScreen> {
             // Mobile Title
             Text(
               _isLogin ? 'Welcome Back' : 'Create Account',
-              style: const TextStyle(
+              style: TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.darkText),
+                  color: Theme.of(context).colorScheme.onSurface),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 40),
@@ -387,11 +387,20 @@ class _LoginScreenState extends State<LoginScreen> {
               child: OutlinedButton(
                 onPressed: _googleSignIn,
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.grey.shade200, width: 2),
+                  backgroundColor: theme.brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.transparent,
+                  side: BorderSide(
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.grey.shade200,
+                      width: 2),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  foregroundColor: AppTheme.darkText,
+                  foregroundColor: theme.brightness == Brightness.dark
+                      ? Colors.black
+                      : theme.colorScheme.onSurface,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,

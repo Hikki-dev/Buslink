@@ -1,6 +1,6 @@
 // lib/utils/app_theme.dart
 import 'package:flutter/material.dart';
-// // import 'package:google_fonts/google_fonts.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // This class will manage and notify the app of theme changes
 class ThemeController extends ChangeNotifier {
@@ -29,6 +29,7 @@ class AppTheme {
     primaryColor: primaryColor,
     scaffoldBackgroundColor: Colors.white,
     fontFamily: 'Outfit',
+    fontFamilyFallback: ['Inter', GoogleFonts.notoSans().fontFamily!],
     useMaterial3: true,
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
@@ -157,6 +158,7 @@ class AppTheme {
     primaryColor: primaryColor,
     scaffoldBackgroundColor: Colors.black, // Pure Black
     fontFamily: 'Outfit',
+    fontFamilyFallback: ['Inter', GoogleFonts.notoSans().fontFamily!],
     useMaterial3: true,
     brightness: Brightness.dark,
     appBarTheme: const AppBarTheme(

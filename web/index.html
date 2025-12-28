@@ -97,20 +97,17 @@
         console.log("Window Loaded");
         document.getElementById("debug-log").innerText += " | Window Loaded";
 
-        // Failsafe: Remove spinner after 8 seconds if app doesn't load
+        // Failsafe: Remove spinner after 6 seconds if app doesn't load
         setTimeout(function () {
           var loader = document.getElementById("loading-indicator");
           if (loader) {
             console.warn("Force removing spinner via Failsafe");
-            // loader.style.display = 'none'; // Optional: just hide or remove
-            // We keep it just in case, or maybe update text?
-            // But user hates stuck spinner.
-            // Let's assume Dart takes over, but if not:
+            loader.remove();
             document.getElementById("debug-log").innerText +=
-              " | Timeout (Check Console)";
+              " | Timeout (Auto-Removed)";
             document.getElementById("debug-log").style.color = "orange";
           }
-        }, 10000);
+        }, 6000);
       });
     </script>
 
