@@ -33,6 +33,7 @@ class Trip {
   final List<int> operatingDays;
   final bool isGenerated;
   final String? routeId;
+  final String? conductorId; // Added for Conductor Phase 2
   final List<int> blockedSeats;
 
   Trip({
@@ -55,6 +56,7 @@ class Trip {
     this.operatingDays = const [],
     this.isGenerated = false,
     this.routeId,
+    this.conductorId,
     this.blockedSeats = const [],
   });
 
@@ -81,6 +83,7 @@ class Trip {
       'operatingDays': operatingDays,
       'isGenerated': isGenerated,
       'routeId': routeId,
+      'conductorId': conductorId,
       'blockedSeats': blockedSeats,
     };
   }
@@ -116,6 +119,7 @@ class Trip {
           : [],
       isGenerated: data['isGenerated'] ?? false,
       routeId: data['routeId'],
+      conductorId: data['conductorId'],
       blockedSeats: List<int>.from(data['blockedSeats'] ?? []),
     );
   }
@@ -167,6 +171,7 @@ class Trip {
             : [],
         isGenerated: data['isGenerated'] ?? false,
         routeId: data['routeId'],
+        conductorId: data['conductorId'],
         blockedSeats: (data['blockedSeats'] is List)
             ? List<int>.from(data['blockedSeats']
                 .map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0))

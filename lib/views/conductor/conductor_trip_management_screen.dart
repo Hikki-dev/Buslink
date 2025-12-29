@@ -20,16 +20,20 @@ class ConductorTripManagementScreen extends StatelessWidget {
         ? (controller.conductorSelectedTrip ?? trip)
         : trip;
 
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Update Status",
-            style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: Text("Update Status",
+            style: TextStyle(
+                fontFamily: 'Outfit',
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black)),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ??
+            Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        leading: const BackButton(color: Colors.black),
-        titleTextStyle: const TextStyle(
-            color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
+        leading: BackButton(color: isDark ? Colors.white : Colors.black),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -40,38 +44,51 @@ class ConductorTripManagementScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.shade200)),
+                  border: Border.all(
+                      color: isDark ? Colors.white10 : Colors.grey.shade200)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Trip T${currentTrip.id.substring(0, 4).toUpperCase()}",
-                      style: TextStyle(fontFamily: 'Inter', 
-                          color: Colors.grey.shade500,
+                      style: TextStyle(
+                          fontFamily: 'Inter',
+                          color: isDark ? Colors.white70 : Colors.grey.shade500,
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text("${currentTrip.fromCity} ➔ ${currentTrip.toCity}",
-                      style: const TextStyle(fontFamily: 'Outfit', 
-                          fontSize: 24, fontWeight: FontWeight.bold)),
+                      style: TextStyle(
+                          fontFamily: 'Outfit',
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black)),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(Icons.access_time,
-                          size: 20, color: Colors.black54),
+                      Icon(Icons.access_time,
+                          size: 20,
+                          color: isDark ? Colors.white70 : Colors.black54),
                       const SizedBox(width: 8),
                       Text(
                           DateFormat('hh:mm a')
                               .format(currentTrip.departureTime),
-                          style: const TextStyle(fontFamily: 'Inter', 
-                              fontSize: 16, fontWeight: FontWeight.w600)),
+                          style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : Colors.black87)),
                       const SizedBox(width: 24),
-                      const Icon(Icons.directions_bus,
-                          size: 20, color: Colors.black54),
+                      Icon(Icons.directions_bus,
+                          size: 20,
+                          color: isDark ? Colors.white70 : Colors.black54),
                       const SizedBox(width: 8),
                       Text(currentTrip.busNumber,
-                          style: const TextStyle(fontFamily: 'Inter', 
-                              fontSize: 16, fontWeight: FontWeight.w600)),
+                          style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : Colors.black87)),
                     ],
                   )
                 ],
@@ -79,9 +96,12 @@ class ConductorTripManagementScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            const Text("Update Trip Status",
-                style: TextStyle(fontFamily: 'Outfit', 
-                    fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("Update Trip Status",
+                style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black)),
             const SizedBox(height: 16),
 
             // STATUS BUTTONS
@@ -120,7 +140,8 @@ class ConductorTripManagementScreen extends StatelessWidget {
             Center(
               child: Text(
                 "Current Status: ${currentTrip.status.name.toUpperCase()}",
-                style: TextStyle(fontFamily: 'Inter', 
+                style: TextStyle(
+                    fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: _getStatusColor(currentTrip.status)),
@@ -204,7 +225,8 @@ class ConductorTripManagementScreen extends StatelessWidget {
         },
         icon: Icon(icon, color: Colors.white),
         label: Text(label,
-            style: const TextStyle(fontFamily: 'Inter', 
+            style: const TextStyle(
+                fontFamily: 'Inter',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white)),

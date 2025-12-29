@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_theme.dart';
+import '../../services/firestore_service.dart'; // Import Service
 import 'payment_screen.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import '../layout/desktop_navbar.dart';
@@ -27,24 +28,28 @@ class SeatSelectionScreen extends StatelessWidget {
     final isDesktop = MediaQuery.of(context).size.width > 900;
     List<int> selectedSeats = controller.selectedSeats;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     // Determine if we need an AppBar
     // - On Mobile: Yes (unless specific case?)
     // - On Desktop: Only if showBackButton is true
     final bool showAppBar = !isDesktop || showBackButton;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: showAppBar
           ? AppBar(
-              title: const Text("Select Seats",
+              title: Text("Select Seats",
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       fontWeight: FontWeight.bold,
-                      color: Colors.black)),
+                      color: isDark ? Colors.white : Colors.black)),
               centerTitle: true,
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).appBarTheme.backgroundColor ??
+                  Theme.of(context).scaffoldBackgroundColor,
               elevation: 0,
-              iconTheme: const IconThemeData(color: Colors.black),
+              iconTheme:
+                  IconThemeData(color: isDark ? Colors.white : Colors.black),
               leading: showBackButton
                   ? const BackButton()
                   : null, // Default auto-leading is usually fine
@@ -67,9 +72,9 @@ class SeatSelectionScreen extends StatelessWidget {
                           constraints: const BoxConstraints(maxWidth: 1200),
                           child: Column(
                             children: [
-                              _buildHeader(context, trip),
+                              _buildHeader(context, trip, isDark),
                               const SizedBox(height: 40),
-                              _buildLegend(),
+                              _buildLegend(isDark),
                               const SizedBox(height: 40),
 
                               // The Bus Visual
@@ -78,12 +83,17 @@ class SeatSelectionScreen extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 24, vertical: 40),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: isDark
+                                      ? const Color(0xFF2D3142)
+                                      : Colors.white, // Bus Interior Color
                                   borderRadius: const BorderRadius.vertical(
                                       top: Radius.circular(60),
                                       bottom: Radius.circular(30)),
                                   border: Border.all(
-                                      color: Colors.grey.shade200, width: 2),
+                                      color: isDark
+                                          ? Colors.white10
+                                          : Colors.grey.shade200,
+                                      width: 2),
                                   boxShadow: [
                                     BoxShadow(
                                         color: Colors.black
@@ -98,25 +108,35 @@ class SeatSelectionScreen extends StatelessWidget {
                                     Container(
                                       padding:
                                           const EdgeInsets.only(bottom: 20),
-                                      decoration: const BoxDecoration(
+                                      decoration: BoxDecoration(
                                           border: Border(
                                               bottom: BorderSide(
-                                                  color: Colors.black12))),
+                                                  color: isDark
+                                                      ? Colors.white10
+                                                      : Colors.black12))),
                                       child: Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Icon(Icons.exit_to_app,
-                                              color: Colors.grey),
+                                          Icon(Icons.exit_to_app,
+                                              color: isDark
+                                                  ? Colors.white54
+                                                  : Colors.grey),
                                           Column(
                                             children: [
-                                              const Icon(Icons.print,
-                                                  size: 20, color: Colors.grey),
+                                              Icon(Icons.print,
+                                                  size: 20,
+                                                  color: isDark
+                                                      ? Colors.white54
+                                                      : Colors.grey),
                                               const SizedBox(height: 8),
                                               Image.asset(
                                                   "assets/steering_wheel.png",
                                                   width: 34,
                                                   height: 34,
+                                                  color: isDark
+                                                      ? Colors.white54
+                                                      : null, // Tint icon in dark mode?
                                                   errorBuilder: (_, __, ___) =>
                                                       Icon(Icons.settings,
                                                           size: 34,
@@ -129,71 +149,98 @@ class SeatSelectionScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 24),
 
-                                    // Seat Grid
-                                    ListView.builder(
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      shrinkWrap: true,
-                                      itemCount: (trip.totalSeats / 4).ceil(),
-                                      itemBuilder: (context, index) {
-                                        int rowStart = index * 4;
-                                        return Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 16),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              // Left
-                                              Row(
-                                                children: [
-                                                  _SeatItem(
-                                                      seatNum: rowStart + 1,
-                                                      trip: trip,
-                                                      isSelected: selectedSeats
-                                                          .contains(
-                                                              rowStart + 1)),
-                                                  const SizedBox(width: 14),
-                                                  _SeatItem(
-                                                      seatNum: rowStart + 2,
-                                                      trip: trip,
-                                                      isSelected: selectedSeats
-                                                          .contains(
-                                                              rowStart + 2)),
-                                                ],
-                                              ),
-                                              // Aisle text periodically?
-                                              if (index == 4)
-                                                const Text("EXIT",
-                                                    style: TextStyle(
-                                                        fontSize: 10,
-                                                        color: Colors.red,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
+                                    // REAL-TIME SEAT GRID
+                                    StreamBuilder<Trip>(
+                                        stream: FirestoreService()
+                                            .getTripStream(trip.id),
+                                        builder: (context, snapshot) {
+                                          // Use the latest trip data if available, else fallback to initial 'trip'
+                                          final currentTrip =
+                                              snapshot.data ?? trip;
 
-                                              // Right
-                                              Row(
-                                                children: [
-                                                  _SeatItem(
-                                                      seatNum: rowStart + 3,
-                                                      trip: trip,
-                                                      isSelected: selectedSeats
-                                                          .contains(
-                                                              rowStart + 3)),
-                                                  const SizedBox(width: 14),
-                                                  _SeatItem(
-                                                      seatNum: rowStart + 4,
-                                                      trip: trip,
-                                                      isSelected: selectedSeats
-                                                          .contains(
-                                                              rowStart + 4)),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                          return ListView.builder(
+                                            physics:
+                                                const NeverScrollableScrollPhysics(),
+                                            shrinkWrap: true,
+                                            itemCount:
+                                                (currentTrip.totalSeats / 4)
+                                                    .ceil(),
+                                            itemBuilder: (context, index) {
+                                              int rowStart = index * 4;
+                                              return Padding(
+                                                padding: const EdgeInsets.only(
+                                                    bottom: 16),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    // Left
+                                                    Row(
+                                                      children: [
+                                                        _SeatItem(
+                                                            seatNum:
+                                                                rowStart + 1,
+                                                            trip: currentTrip,
+                                                            isSelected:
+                                                                selectedSeats
+                                                                    .contains(
+                                                                        rowStart +
+                                                                            1)),
+                                                        const SizedBox(
+                                                            width: 14),
+                                                        _SeatItem(
+                                                            seatNum:
+                                                                rowStart + 2,
+                                                            trip: currentTrip,
+                                                            isSelected:
+                                                                selectedSeats
+                                                                    .contains(
+                                                                        rowStart +
+                                                                            2)),
+                                                      ],
+                                                    ),
+                                                    // Aisle text
+                                                    if (index == 4)
+                                                      const Text("EXIT",
+                                                          style: TextStyle(
+                                                              fontSize: 10,
+                                                              color: Colors.red,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+
+                                                    // Right
+                                                    Row(
+                                                      children: [
+                                                        _SeatItem(
+                                                            seatNum:
+                                                                rowStart + 3,
+                                                            trip: currentTrip,
+                                                            isSelected:
+                                                                selectedSeats
+                                                                    .contains(
+                                                                        rowStart +
+                                                                            3)),
+                                                        const SizedBox(
+                                                            width: 14),
+                                                        _SeatItem(
+                                                            seatNum:
+                                                                rowStart + 4,
+                                                            trip: currentTrip,
+                                                            isSelected:
+                                                                selectedSeats
+                                                                    .contains(
+                                                                        rowStart +
+                                                                            4)),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        }),
 
                                     const SizedBox(height: 20),
                                     // Back of bus
@@ -201,7 +248,9 @@ class SeatSelectionScreen extends StatelessWidget {
                                       height: 10,
                                       width: double.infinity,
                                       decoration: BoxDecoration(
-                                          color: Colors.grey.shade100,
+                                          color: isDark
+                                              ? Colors.white10
+                                              : Colors.grey.shade100,
                                           borderRadius:
                                               BorderRadius.circular(10)),
                                     )
@@ -227,10 +276,10 @@ class SeatSelectionScreen extends StatelessWidget {
                     right: 0,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor, // Adaptive
                         boxShadow: [
                           BoxShadow(
-                              color: Colors.white.withValues(alpha: 0.08),
+                              color: Colors.black.withValues(alpha: 0.08),
                               blurRadius: 30,
                               offset: const Offset(0, -5))
                         ],
@@ -258,11 +307,13 @@ class SeatSelectionScreen extends StatelessWidget {
                                     const SizedBox(height: 4),
                                     Text(
                                         "LKR ${(trip.price * selectedSeats.length).toStringAsFixed(0)}",
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontFamily: 'Outfit',
                                             fontSize: 28,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.black)),
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black)),
                                     Text(selectedSeats.join(", "),
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
@@ -319,7 +370,7 @@ class SeatSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, Trip trip) {
+  Widget _buildHeader(BuildContext context, Trip trip, bool isDark) {
     final controller = Provider.of<TripController>(context);
     final isBulk = controller.isBulkBooking && controller.bulkDates.length > 1;
 
@@ -341,52 +392,92 @@ class SeatSelectionScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold)),
           ),
         Text(trip.operatorName,
-            style: const TextStyle(
+            style: TextStyle(
                 fontFamily: 'Outfit',
                 fontSize: 24,
-                fontWeight: FontWeight.bold)),
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black)),
         const SizedBox(height: 8),
         Text("${trip.fromCity} ➔ ${trip.toCity}",
-            style: const TextStyle(
-                fontFamily: 'Inter', color: Colors.grey, fontSize: 16)),
+            style: TextStyle(
+                fontFamily: 'Inter',
+                color: isDark ? Colors.white70 : Colors.grey,
+                fontSize: 16)),
       ],
     );
   }
 
-  Widget _buildLegend() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _legendItem(Colors.white, Colors.grey.shade300, "Available"),
-        const SizedBox(width: 30),
-        _legendItem(AppTheme.primaryColor, AppTheme.primaryColor, "Selected"),
-        const SizedBox(width: 30),
-        _legendItem(Colors.red.shade300, Colors.transparent, "Booked",
-            icon: Icons.close),
-        const SizedBox(width: 30),
-        _legendItem(Colors.amber, Colors.transparent, "Blocked",
-            icon: Icons.block),
-      ],
-    );
-  }
-
-  Widget _legendItem(Color bg, Color border, String label, {IconData? icon}) {
+  // Helper for legend items
+  Widget _buildLegendItem(
+      Color color, Color borderColor, String label, bool isDark,
+      {IconData? icon}) {
     return Row(
       children: [
         Container(
-          width: 24,
-          height: 24,
+          width: 32, // Bigger Box
+          height: 32, // Bigger Box
           decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: border)),
-          child: icon != null ? Icon(icon, size: 16, color: Colors.grey) : null,
+            color: color,
+            border: Border.all(color: borderColor, width: 2), // thicker border
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: icon != null
+              ? Icon(icon, size: 20, color: Colors.white.withValues(alpha: 0.9))
+              : null,
         ),
-        const SizedBox(width: 10),
-        Text(label,
-            style: const TextStyle(
-                fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w500))
+        const SizedBox(width: 12),
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Outfit', // Better font
+            fontSize: 16, // Bigger Text
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.grey.shade800,
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildLegend(bool isDark) {
+    return Center(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildLegendItem(
+              isDark ? Colors.transparent : Colors.white,
+              isDark ? Colors.white54 : Colors.grey.shade300,
+              "Available",
+              isDark,
+            ),
+            const SizedBox(width: 24),
+            _buildLegendItem(
+              AppTheme.primaryColor,
+              AppTheme.primaryColor,
+              "Selected",
+              isDark,
+            ),
+            const SizedBox(width: 24),
+            _buildLegendItem(
+              Colors.red.shade300,
+              Colors.red.shade300,
+              "Booked",
+              isDark,
+              icon: Icons.close,
+            ),
+            const SizedBox(width: 24),
+            _buildLegendItem(
+              Colors.amber,
+              Colors.amber,
+              "Blocked",
+              isDark,
+              icon: Icons.block,
+            ),
+          ],
+        ),
+      ),
     );
   }
 

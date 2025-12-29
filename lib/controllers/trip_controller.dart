@@ -207,6 +207,27 @@ class TripController extends ChangeNotifier {
     }
   }
 
+  // --- ADDED: Load Conductor's Assigned Trips ---
+  Future<List<Trip>> loadConductorTrips(String conductorId) async {
+    try {
+      return await _service.getTripsByConductor(conductorId);
+    } catch (e) {
+      debugPrint("Error loading conductor trips: $e");
+      return [];
+    }
+  }
+
+  // --- ADDED: Update Trip Status (Arrived, Departed, etc) ---
+  Future<void> updateTripStatus(String tripId, TripStatus status) async {
+    try {
+      await _service.updateStatus(tripId, status, 0); // Delay 0 for now
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error updating trip status: $e");
+      rethrow;
+    }
+  }
+
   // --- ADDED: Add Trip ---
   Future<void> addTrip(BuildContext context, Map<String, dynamic> data) async {
     _setLoading(true);
@@ -333,6 +354,7 @@ class TripController extends ChangeNotifier {
             'operatingDays': recurrenceDays,
             'isGenerated': true,
             'routeId': routeRef.id,
+            'blockedSeats': routeData['blockedSeats'] ?? [],
           };
 
           batch.set(newTripRef, tripMap);
@@ -453,14 +475,27 @@ class TripController extends ChangeNotifier {
     }
   }
 
+  // --- Booking Confirmation ---
   Future<bool> confirmBooking(String bookingId) async {
     _setLoading(true);
     try {
-      currentTicket = await _service.confirmBooking(bookingId);
+      // NOW calls the Transactional confirm method in Service
+      final ticket = await _service.confirmBooking(bookingId);
+
+      currentTicket = ticket;
+      // Refresh Trip Data to reflect new booked seats immediately
+      final trip = await _service.getTrip(ticket.tripId);
+      if (trip != null) {
+        selectedTrip = trip;
+        notifyListeners();
+        _setLoading(false);
+        return true;
+      }
+
       _setLoading(false);
-      return true;
+      return false;
     } catch (e) {
-      debugPrint("Error confirming booking: $e");
+      debugPrint('Error confirming booking: $e');
       _setLoading(false);
       return false;
     }

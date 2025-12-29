@@ -244,7 +244,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             MaterialPageRoute(builder: (_) => const AdminScreen(trip: null)));
       },
       icon: const Icon(Icons.add),
-      label: const Text("Add Trip / Route"),
+      label: const Text("Add New Trip"),
       style: ElevatedButton.styleFrom(
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
@@ -262,7 +262,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             MaterialPageRoute(builder: (_) => const AdminRouteScreen()));
       },
       icon: const Icon(Icons.alt_route),
-      label: const Text("New Route"),
+      label: const Text("Add Route"),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.black87,
         foregroundColor: Colors.white,

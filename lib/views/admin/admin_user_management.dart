@@ -29,11 +29,12 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context, listen: false);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return LayoutBuilder(builder: (context, constraints) {
       final isDesktop = constraints.maxWidth > 800;
       return Scaffold(
-        backgroundColor: Colors.grey.shade50,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         bottomNavigationBar: isDesktop
             ? null
             : const AdminBottomNav(selectedIndex: 1), // Index 1 for Roles
@@ -53,7 +54,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                       constraints: const BoxConstraints(maxWidth: 1000),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
@@ -74,7 +75,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _buildHeaderTitle(),
+                                  _buildHeaderTitle(isDark),
                                   Row(
                                     children: [
                                       ElevatedButton.icon(
@@ -90,7 +91,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                                                 horizontal: 20, vertical: 16)),
                                       ),
                                       const SizedBox(width: 16),
-                                      _buildSearchBar(),
+                                      _buildSearchBar(isDark),
                                     ],
                                   ),
                                 ],
@@ -99,13 +100,13 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  _buildHeaderTitle(),
+                                  _buildHeaderTitle(isDark),
                                   const SizedBox(height: 16),
                                   Row(
                                     children: [
                                       Expanded(
-                                          child:
-                                              _buildSearchBar(fullWidth: true)),
+                                          child: _buildSearchBar(isDark,
+                                              fullWidth: true)),
                                       const SizedBox(width: 8),
                                       ElevatedButton(
                                         onPressed: () =>
@@ -131,8 +132,11 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {
-                                  return const Center(
-                                      child: CircularProgressIndicator());
+                                  return Center(
+                                      child: CircularProgressIndicator(
+                                          color: isDark
+                                              ? Colors.white
+                                              : AppTheme.primaryColor));
                                 }
                                 if (snapshot.hasError) {
                                   return Center(
@@ -147,10 +151,14 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                                 }
                                 if (!snapshot.hasData ||
                                     snapshot.data!.isEmpty) {
-                                  return const Center(
+                                  return Center(
                                       child: Padding(
-                                    padding: EdgeInsets.all(40.0),
-                                    child: Text("No users found"),
+                                    padding: const EdgeInsets.all(40.0),
+                                    child: Text("No users found",
+                                        style: TextStyle(
+                                            color: isDark
+                                                ? Colors.white70
+                                                : Colors.grey)),
                                   ));
                                 }
 
@@ -170,11 +178,13 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
                                   itemCount: users.length,
-                                  separatorBuilder: (context, index) =>
-                                      Divider(color: Colors.grey.shade100),
+                                  separatorBuilder: (context, index) => Divider(
+                                      color: isDark
+                                          ? Colors.white10
+                                          : Colors.grey.shade100),
                                   itemBuilder: (context, index) {
                                     final user = users[index];
-                                    return _buildUserRow(context, user);
+                                    return _buildUserRow(context, user, isDark);
                                   },
                                 );
                               },
@@ -195,7 +205,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     });
   }
 
-  Widget _buildHeaderTitle() {
+  Widget _buildHeaderTitle(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -203,17 +213,19 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.arrow_back),
+              icon: Icon(Icons.arrow_back,
+                  color: isDark ? Colors.white : Colors.black),
               onPressed: () => Navigator.of(context).pop(),
               tooltip: "Back to Dashboard",
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               "User Management",
-              style: TextStyle(fontFamily: 'Outfit', 
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.darkText,
+                color: isDark ? Colors.white : AppTheme.darkText,
               ),
             ),
           ],
@@ -223,8 +235,9 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
           padding: const EdgeInsets.only(left: 48.0),
           child: Text(
             "Manage roles and permissions for all users",
-            style: TextStyle(fontFamily: 'Inter', 
-              color: Colors.grey.shade500,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              color: isDark ? Colors.white70 : Colors.grey.shade500,
               fontSize: 16,
             ),
           ),
@@ -233,7 +246,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     );
   }
 
-  Widget _buildSearchBar({bool fullWidth = false}) {
+  Widget _buildSearchBar(bool isDark, {bool fullWidth = false}) {
     return SizedBox(
       width: fullWidth ? double.infinity : 300,
       child: TextField(
@@ -241,12 +254,26 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         onChanged: (val) {
           setState(() => _searchQuery = val);
         },
+        style: TextStyle(color: isDark ? Colors.white : Colors.black),
         decoration: InputDecoration(
           hintText: "Search by email or name...",
-          prefixIcon: const Icon(Icons.search),
+          hintStyle:
+              TextStyle(color: isDark ? Colors.white54 : Colors.grey.shade400),
+          prefixIcon:
+              Icon(Icons.search, color: isDark ? Colors.white70 : Colors.grey),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade200),
+            borderSide: BorderSide(
+                color: isDark ? Colors.white24 : Colors.grey.shade200),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+                color: isDark ? Colors.white24 : Colors.grey.shade200),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppTheme.primaryColor),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
         ),
@@ -254,7 +281,8 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     );
   }
 
-  Widget _buildUserRow(BuildContext context, Map<String, dynamic> user) {
+  Widget _buildUserRow(
+      BuildContext context, Map<String, dynamic> user, bool isDark) {
     final String role = user['role'] ?? 'customer';
     final String email = user['email'] ?? 'No Email';
     final String name = user['displayName'] ?? 'Unknown User';
@@ -279,11 +307,14 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDark ? Colors.white : Colors.black87)),
                 Text(email,
-                    style:
-                        TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+                    style: TextStyle(
+                        color: isDark ? Colors.white54 : Colors.grey.shade500,
+                        fontSize: 14)),
               ],
             ),
           ),
@@ -292,7 +323,8 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
             child: _buildRoleBadge(role),
           ),
           IconButton(
-            icon: Icon(Icons.edit_outlined, color: Colors.grey.shade600),
+            icon: Icon(Icons.edit_outlined,
+                color: isDark ? Colors.white70 : Colors.grey.shade600),
             tooltip: "Edit User",
             onPressed: () => _showEditUserDialog(context, uid, name, role),
           ),
@@ -448,7 +480,8 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                           Expanded(
                               child: Text(
                                   "Creates a NEW login in Firebase Auth + Database Profile.",
-                                  style: TextStyle(fontFamily: 'Inter', fontSize: 12))),
+                                  style: TextStyle(
+                                      fontFamily: 'Inter', fontSize: 12))),
                         ],
                       ),
                     ),
@@ -585,7 +618,8 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
             ),
             const SizedBox(width: 12),
             Text(label,
-                style: TextStyle(fontFamily: 'Inter', 
+                style: TextStyle(
+                  fontFamily: 'Inter',
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   color: isSelected ? Colors.black : Colors.grey.shade700,
                 )),

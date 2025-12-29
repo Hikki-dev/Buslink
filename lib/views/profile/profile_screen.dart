@@ -7,7 +7,8 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/language_provider.dart';
-import '../support/support_screen.dart';
+import 'support_screen.dart';
+import 'feedback_dialog.dart';
 import '../layout/desktop_navbar.dart';
 import '../favorites/favorites_screen.dart';
 
@@ -372,7 +373,35 @@ class ProfileScreen extends StatelessWidget {
                                     onTap: () => Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (_) => SupportScreen())),
+                                            builder: (_) =>
+                                                const SupportScreen())),
+                                  ),
+                                  const Divider(height: 1),
+                                  ListTile(
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Colors.blue.withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.rate_review,
+                                          color: Colors.blue),
+                                    ),
+                                    title: const Text(
+                                      "Send Feedback",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                    trailing: const Icon(Icons.chevron_right,
+                                        size: 18, color: Colors.grey),
+                                    onTap: () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (_) =>
+                                              const FeedbackDialog());
+                                    },
                                   ),
                                   const Divider(height: 1),
                                   ListTile(

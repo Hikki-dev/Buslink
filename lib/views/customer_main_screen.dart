@@ -59,6 +59,54 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
       body: Material(
         color: Theme.of(context).scaffoldBackgroundColor,
         child: Column(children: [
+          // --- Persistent Admin Preview Banner ---
+          if (widget.isAdminView)
+            Container(
+              width: double.infinity,
+              color: Colors.amber,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: SafeArea(
+                bottom: false,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.info_outline,
+                        color: Colors.black, size: 16),
+                    const SizedBox(width: 8),
+                    const Text(
+                      "Welcome Admin - Preview Mode",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12),
+                    ),
+                    const Spacer(),
+                    Container(
+                      height: 28,
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black),
+                          borderRadius: BorderRadius.circular(100)),
+                      child: TextButton(
+                        onPressed: () {
+                          // Exit preview -> Go back to Admin Dashboard
+                          // Since we pushed/replaced, we might need to route explicitly
+                          Navigator.pushNamedAndRemoveUntil(
+                              context, '/admin', (route) => false);
+                        },
+                        style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            foregroundColor: Colors.black),
+                        child: const Text("EXIT",
+                            style: TextStyle(
+                                fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
           Expanded(
             child: IndexedStack(
               index: _selectedIndex,

@@ -17,6 +17,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../layout/app_footer.dart';
 import '../../services/auth_service.dart';
+import '../../services/firestore_service.dart';
 
 part 'parts/clock_widget.dart';
 
@@ -160,7 +161,7 @@ class _BusListScreenState extends State<BusListScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: isDesktop
           ? _buildDesktopLayout(context, isDesktop, trips, controller)
           : _buildMobileLayout(context, trips, controller),
@@ -583,9 +584,12 @@ class _BusListScreenState extends State<BusListScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white12
+                : Colors.grey.shade200),
       ),
       child: Row(
         children: [
@@ -596,7 +600,7 @@ class _BusListScreenState extends State<BusListScreen> {
                   style: TextStyle(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700)),
+                      color: Theme.of(context).colorScheme.onSurface)),
               if (Provider.of<TripController>(context).isBulkBooking)
                 Text(
                   "Showing valid options for ${Provider.of<TripController>(context).bulkDates.length} Consecutive Days",
@@ -634,9 +638,12 @@ class _BusListScreenState extends State<BusListScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200)),
+          border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white12
+                  : Colors.grey.shade200)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -671,28 +678,31 @@ class _BusListScreenState extends State<BusListScreen> {
                   SizedBox(
                     width: 20,
                     height: 20,
-                    child: Checkbox(
-                      value: _selectedFilters.contains(opt),
-                      onChanged: (val) {
-                        setState(() {
-                          if (val!) {
-                            _selectedFilters.add(opt);
-                          } else {
-                            _selectedFilters.remove(opt);
-                          }
-                        });
-                      },
-                      activeColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4)),
+                    child: Transform.scale(
+                      scale: 1.3,
+                      child: Checkbox(
+                        value: _selectedFilters.contains(opt),
+                        onChanged: (val) {
+                          setState(() {
+                            if (val!) {
+                              _selectedFilters.add(opt);
+                            } else {
+                              _selectedFilters.remove(opt);
+                            }
+                          });
+                        },
+                        activeColor: AppTheme.primaryColor,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4)),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(opt,
                       style: TextStyle(
                           fontFamily: 'Inter',
-                          color: Colors.grey.shade700,
-                          fontSize: 13))
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 15)) // Increased font size
                 ],
               ),
             ))
@@ -785,63 +795,73 @@ class _BusTicketCardState extends State<_BusTicketCard> {
 
   @override
   Widget build(BuildContext context) {
-    final controller =
-        Provider.of<TripController>(context); // Listen to changes esp bulk
-    final trip = widget.trip;
-    final duration = trip.arrivalTime.difference(trip.departureTime);
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    final controller = Provider.of<TripController>(context);
 
-    // Bulk Logic
-    final totalPrice = controller.isBulkBooking
-        ? trip.price * controller.bulkDates.length
-        : trip.price;
+    // Use StreamBuilder to ensure real-time updates for seat availability
+    return StreamBuilder<Trip>(
+        stream: Provider.of<FirestoreService>(context, listen: false)
+            .getTripStream(widget.trip.id),
+        initialData: widget.trip,
+        builder: (context, snapshot) {
+          final trip = snapshot.data ?? widget.trip;
+          final duration = trip.arrivalTime.difference(trip.departureTime);
+          final isMobile = MediaQuery.of(context).size.width < 700;
 
-    final priceLabel = controller.isBulkBooking
-        ? "LKR ${totalPrice.toStringAsFixed(0)} (x${controller.bulkDates.length} Days)"
-        : "LKR ${trip.price.toStringAsFixed(0)}";
+          // Bulk Logic
+          final totalPrice = controller.isBulkBooking
+              ? trip.price * controller.bulkDates.length
+              : trip.price;
 
-    return RepaintBoundary(
-      child: MouseRegion(
-        onEnter: (_) => setState(() => isHovered = true),
-        onExit: (_) => setState(() => isHovered = false),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-                color: isHovered
-                    ? AppTheme.primaryColor.withValues(alpha: 0.5)
-                    : Colors.grey.shade200),
-            boxShadow: [
-              BoxShadow(
-                  color:
-                      Colors.black.withValues(alpha: isHovered ? 0.08 : 0.02),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5))
-            ],
-          ),
-          child: isMobile
-              ? Column(
-                  children: [
-                    _buildMobileContent(trip, duration),
-                    _buildBookButton(
-                        trip, context, controller, isMobile, priceLabel),
+          final priceLabel = controller.isBulkBooking
+              ? "LKR ${totalPrice.toStringAsFixed(0)} (x${controller.bulkDates.length} Days)"
+              : "LKR ${trip.price.toStringAsFixed(0)}";
+
+          return RepaintBoundary(
+            child: MouseRegion(
+              onEnter: (_) => setState(() => isHovered = true),
+              onExit: (_) => setState(() => isHovered = false),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: isHovered
+                          ? AppTheme.primaryColor.withValues(alpha: 0.5)
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white12
+                              : Colors.grey.shade200)),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black
+                            .withValues(alpha: isHovered ? 0.08 : 0.02),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5))
                   ],
-                )
-              : IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(child: _buildDesktopContent(trip, duration)),
-                      _buildBookButton(
-                          trip, context, controller, isMobile, priceLabel),
-                    ],
-                  ),
                 ),
-        ),
-      ),
-    );
+                child: isMobile
+                    ? Column(
+                        children: [
+                          _buildMobileContent(trip, duration),
+                          _buildBookButton(
+                              trip, context, controller, isMobile, priceLabel),
+                        ],
+                      )
+                    : IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                                child: _buildDesktopContent(trip, duration)),
+                            _buildBookButton(trip, context, controller,
+                                isMobile, priceLabel),
+                          ],
+                        ),
+                      ),
+              ),
+            ),
+          );
+        });
   }
 
   Widget _buildDesktopContent(Trip trip, Duration duration) {
@@ -906,11 +926,11 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                 trip.operatorName.isEmpty
                     ? "BusLink Operator"
                     : trip.operatorName,
-                style: const TextStyle(
+                style: TextStyle(
                     fontFamily: 'Outfit',
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87)),
+                    color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 4),
             Row(
               children: [
@@ -923,29 +943,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
           ],
         ),
         // Amenities (Hardcoded for Demo feel as user requested "rich aesthetics")
-        Row(
-          children: [
-            _amenityIcon(Icons.wifi, "WiFi"),
-            const SizedBox(width: 8),
-            _amenityIcon(Icons.ac_unit, "A/C"),
-            const SizedBox(width: 8),
-            _amenityIcon(Icons.power, "Charging"),
-          ],
-        )
       ],
-    );
-  }
-
-  Widget _amenityIcon(IconData icon, String tooltip) {
-    return Tooltip(
-      message: tooltip,
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(50)),
-        child: Icon(icon, size: 16, color: Colors.grey.shade600),
-      ),
     );
   }
 
@@ -970,7 +968,10 @@ class _BusTicketCardState extends State<_BusTicketCard> {
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white12
+                : Colors.grey.shade300),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1040,12 +1041,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
   }
 
   Widget _buildAmenities(Trip trip) {
-    return Row(
-      children: [
-        _amenityIcon(Icons.wifi, "Wifi"),
-        _amenityIcon(Icons.power, "Outlet"),
-      ],
-    );
+    return const SizedBox.shrink(); // Amenities hidden as per request
   }
 
   Widget _buildBookButton(Trip trip, BuildContext context,
@@ -1053,13 +1049,21 @@ class _BusTicketCardState extends State<_BusTicketCard> {
     return Container(
       width: isMobile ? double.infinity : 180,
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Theme.of(context).cardColor,
         borderRadius: isMobile
             ? const BorderRadius.vertical(bottom: Radius.circular(12))
             : const BorderRadius.horizontal(right: Radius.circular(12)),
         border: isMobile
-            ? Border(top: BorderSide(color: Colors.grey.shade100))
-            : Border(left: BorderSide(color: Colors.grey.shade100)),
+            ? Border(
+                top: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.withValues(alpha: 0.2)
+                        : Colors.grey.shade100))
+            : Border(
+                left: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.withValues(alpha: 0.2)
+                        : Colors.grey.shade100)),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -1067,8 +1071,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         crossAxisAlignment:
             isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.end,
         children: [
-          Text("Standard",
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+          // Text("Standard", style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
           Text(priceLabel,
               style: const TextStyle(
                   fontFamily: 'Outfit',

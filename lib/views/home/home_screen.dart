@@ -268,7 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             return StreamBuilder<List<Map<String, dynamic>>>(
               stream: Provider.of<FirestoreService>(context, listen: false)
-                  .getUserFavorites(user.uid),
+                  .getUserFavoriteRoutes(user.uid),
               builder: (context, favSnap) {
                 final favorites = favSnap.data ?? [];
 
@@ -1207,7 +1207,7 @@ class _HeroSectionState extends State<_HeroSection> {
                             color: isDark ? Colors.white38 : Colors.black38),
                         border: InputBorder.none,
                         isDense: true,
-                        contentPadding: EdgeInsets.zero,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
                       ),
                       onSubmitted: (String value) {
                         onFieldSubmitted();

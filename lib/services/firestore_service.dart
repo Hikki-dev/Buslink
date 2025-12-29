@@ -56,6 +56,23 @@ class FirestoreService {
     return snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
   }
 
+  // --- NEW: Get Trips by Conductor ---
+  Future<List<Trip>> getTripsByConductor(String conductorId) async {
+    final now = DateTime.now();
+    // Show trips from today onwards (or maybe slightly in the past to show active ones)
+    final start = DateTime(now.year, now.month, now.day);
+
+    final snapshot = await _db
+        .collection(tripCollection)
+        .where('conductorId', isEqualTo: conductorId)
+        .where('departureTime', isGreaterThanOrEqualTo: start)
+        .orderBy('departureTime')
+        .get();
+
+    if (snapshot.docs.isEmpty) return [];
+    return snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
+  }
+
   // --- NEW: Method to find a trip by its bus number ---
   Future<Trip?> getTripByBusNumber(String busNumber) async {
     final now = DateTime.now();
@@ -434,40 +451,78 @@ class FirestoreService {
     return bookingIds;
   }
 
-  Future<Ticket?> confirmBooking(String bookingId) async {
-    final bookingRef = _db.collection('tickets').doc(bookingId);
-    final snapshot = await bookingRef.get();
+  // --- 9. Confirm Persistent Booking (Called after Succesful Payment) ---
+  Future<Ticket> confirmBooking(String bookingId) async {
+    final ticketRef = _db.collection('tickets').doc(bookingId);
 
-    if (!snapshot.exists) {
-      throw Exception("Booking not found");
-    }
+    return await _db.runTransaction((transaction) async {
+      final ticketSnap = await transaction.get(ticketRef);
+      if (!ticketSnap.exists) {
+        throw Exception("Booking not found!");
+      }
 
-    final data = snapshot.data();
-    if (data == null) throw Exception("Booking data empty");
+      final ticketData = ticketSnap.data() as Map<String, dynamic>;
+      // If already confirmed, return it
+      if (ticketData['status'] == 'confirmed') {
+        return Ticket.fromFirestore(ticketSnap);
+      }
 
-    // Check if already confirmed to avoid double-processing
-    if (data['status'] == 'confirmed') {
-      return Ticket.fromMap(data, bookingId);
-    }
+      final String tripId = ticketData['tripId'];
+      // Explicitly cast to List<int> to ensure arrayUnion works
+      final List<dynamic> rawSeats = ticketData['seatNumbers'] ?? [];
+      final List<int> seats = rawSeats.map((e) => e as int).toList();
 
-    // 1. Update Booking Status
-    await bookingRef.update({'status': 'confirmed'});
+      debugPrint(
+          "Confirming Booking: $bookingId for Trip: $tripId Seats: $seats");
 
-    // 2. Update Trip Seats (Reserve them permanently)
-    final tripId = data['tripId'];
-    final List<dynamic> seats = data['seatNumbers'];
+      final tripRef = _db.collection('trips').doc(tripId);
+      final tripSnap = await transaction.get(tripRef);
 
-    final tripRef = _db.collection('trips').doc(tripId);
-    await tripRef.update({
-      'bookedSeats': FieldValue.arrayUnion(seats),
+      if (!tripSnap.exists) {
+        throw Exception("Trip not found!");
+      }
+
+      final trip = Trip.fromFirestore(tripSnap);
+
+      // Verify availability again
+      for (int seat in seats) {
+        if (trip.bookedSeats.contains(seat)) {
+          throw Exception(
+              "Seats $seat are no longer available. Please contact support.");
+        }
+      }
+
+      // Lock seats
+      transaction.update(tripRef, {
+        'bookedSeats': FieldValue.arrayUnion(seats),
+      });
+
+      debugPrint("Trip $tripId updated with booked seats: $seats");
+
+      // Confirm ticket
+      transaction.update(ticketRef, {
+        'status': 'confirmed',
+        'confirmedAt': FieldValue.serverTimestamp(),
+      });
+
+      return Ticket.fromMap({
+        ...ticketData,
+        'status': 'confirmed',
+        'id': bookingId,
+      }, bookingId);
     });
-
-    // Return the updated ticket
-    final updatedSnapshot = await bookingRef.get();
-    return Ticket.fromMap(updatedSnapshot.data()!, bookingId);
   }
 
-  // --- ADDED: Offline (Cash) Booking for Conductors ---
+  // --- ADDED: Get Trip by ID ---
+  Future<Trip?> getTrip(String tripId) async {
+    final doc = await _db.collection(tripCollection).doc(tripId).get();
+    if (doc.exists) {
+      return Trip.fromFirestore(doc);
+    }
+    return null;
+  }
+
+  // --- ADDED: Offline (Cash) Booking ---
   Future<Ticket> createOfflineBooking(
       Trip trip, List<int> seats, String passengerName, User? conductor) async {
     final ticketRef = _db.collection(ticketCollection).doc();
@@ -475,31 +530,26 @@ class FirestoreService {
 
     return _db.runTransaction((transaction) async {
       final freshTripSnap = await transaction.get(tripRef);
-      if (!freshTripSnap.exists) {
-        throw Exception("Trip does not exist!");
-      }
+      if (!freshTripSnap.exists) throw Exception("Trip missing");
 
       final freshTrip = Trip.fromFirestore(freshTripSnap);
 
-      // 1. Check Availability
       for (int seat in seats) {
         if (freshTrip.bookedSeats.contains(seat)) {
           throw Exception('Seat $seat is already booked.');
         }
       }
 
-      // 2. Reserve Seats
       transaction.update(tripRef, {
         'bookedSeats': FieldValue.arrayUnion(seats),
       });
 
-      // 3. Create Ticket
       final ticketData = {
         'ticketId': ticketRef.id,
         'tripId': trip.id,
-        'userId': conductor?.uid ?? 'offline_admin', // Log who sold it
+        'userId': conductor?.uid ?? 'offline_admin',
         'passengerName': passengerName,
-        'passengerPhone': 'N/A', // Could add field for manual entry later
+        'passengerPhone': 'N/A',
         'userEmail': 'offline@buslink.com',
         'seatNumbers': seats,
         'totalAmount': trip.price * seats.length,
@@ -511,8 +561,6 @@ class FirestoreService {
       };
 
       transaction.set(ticketRef, ticketData);
-
-      // Return the created ticket object (approximated timestamps)
       return Ticket.fromMap(ticketData, ticketRef.id);
     });
   }

@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-// import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../utils/app_theme.dart'; // Added Import
+import '../../controllers/trip_controller.dart';
+import '../../models/trip_model.dart'; // Corrected import for Ticket
+import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:flutter/rendering.dart'; // For capturing widget?
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart'; // kIsWeb
 
-import '../../controllers/trip_controller.dart';
-import '../../views/home/home_screen.dart';
-import '../../models/trip_model.dart';
+// import '../../views/home/home_screen.dart'; // Unused
+import '../customer_main_screen.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
   const PaymentSuccessScreen({super.key});
@@ -222,14 +224,25 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
       body: Center(
         child: Container(
           padding: const EdgeInsets.all(32),
           constraints: const BoxConstraints(maxWidth: 600), // Slightly wider
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
+            border: isDark
+                ? Border.all(color: Colors.white.withValues(alpha: 0.1))
+                : null,
             boxShadow: [
               BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
@@ -248,62 +261,107 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     const CircularProgressIndicator(color: Colors.black),
                     const SizedBox(height: 24),
                     Text(_message,
-                        style: const TextStyle(fontFamily: 'Inter', 
-                            fontSize: 16, color: Colors.grey)),
+                        style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            color: Colors.grey)),
                   ] else if (_isSuccess && _verifiedTickets.isNotEmpty) ...[
                     // --- SUCCESS VIEW ---
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.green.shade50,
+                        color: Colors.green.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.check_rounded,
                           color: Colors.green, size: 40),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
-                      "Booking Confirmed!",
+                    Text(
+                      "Thank You for booking with BusLink,\n${_verifiedTickets.first.passengerName.split(' ')[0]}!",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontFamily: 'Outfit', 
-                          fontSize: 24, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontFamily: 'Outfit',
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      "HERE IS YOUR BOOKING QR\nSHOW THIS TO CONDUCTOR",
+                    Text(
+                      "Here is your booking confirmation.\nYou can also view this in 'My Trips'.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontFamily: 'Outfit', 
+                      style: TextStyle(
+                          fontFamily: 'Outfit',
                           fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white70 : Colors.black87,
                           height: 1.2),
                     ),
                     const SizedBox(height: 24),
 
                     // List of Tickets
                     ..._verifiedTickets
-                        .map((ticket) => _buildTicketCard(ticket)),
+                        .map((ticket) => _buildTicketCard(ticket, isDark)),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 40),
 
-                    // Home Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const HomeScreen()),
-                              (route) => false);
-                        },
-                        child: const Text("Back to Home",
-                            style: TextStyle(fontFamily: 'Outfit', 
-                                color: Colors.black87,
-                                fontWeight: FontWeight.bold)),
-                      ),
-                    )
+                    // Buttons Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 56,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                // Navigate to My Trips
+                                Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const CustomerMainScreen(
+                                                initialIndex: 1)),
+                                    (route) => false);
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                    color: isDark
+                                        ? Colors.white24
+                                        : Colors.grey.shade300),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: Text("View My Trips",
+                                  style: TextStyle(
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: SizedBox(
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const CustomerMainScreen(
+                                                initialIndex: 0)),
+                                    (route) => false);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryColor,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12))),
+                              child: const Text("Back to Home"),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ] else ...[
                     // --- FAILURE VIEW ---
                     Container(
@@ -319,14 +377,17 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     const Text(
                       "Verification Failed",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontFamily: 'Outfit', 
-                          fontSize: 24, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontFamily: 'Outfit',
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       _message,
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade600),
+                      style: TextStyle(
+                          fontFamily: 'Inter', color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 32),
                     SizedBox(
@@ -334,10 +395,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pushAndRemoveUntil(
-                              context,
+                          Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
-                                  builder: (_) => const HomeScreen()),
+                                  builder: (_) => const CustomerMainScreen(
+                                      initialIndex: 0)),
                               (route) => false);
                         },
                         style: ElevatedButton.styleFrom(
@@ -347,7 +408,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                               borderRadius: BorderRadius.circular(12)),
                         ),
                         child: const Text("Go Home",
-                            style: TextStyle(fontFamily: 'Outfit', 
+                            style: TextStyle(
+                                fontFamily: 'Outfit',
                                 color: Colors.black87,
                                 fontWeight: FontWeight.bold)),
                       ),
@@ -362,7 +424,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     );
   }
 
-  Widget _buildTicketCard(Ticket ticket) {
+  Widget _buildTicketCard(Ticket ticket, bool isDark) {
     // Extract date for display
     final tData = ticket.tripData;
     final dateStr = tData['departureTime'] is Timestamp
@@ -379,10 +441,13 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         child: Column(
           children: [
             Text(dateStr,
-                style: const TextStyle(fontFamily: 'Outfit', 
-                    fontWeight: FontWeight.bold, fontSize: 16)),
+                style: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16)),
             Text("${tData['fromCity']} ➔ ${tData['toCity']}",
-                style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: Colors.grey)),
+                style: const TextStyle(
+                    fontFamily: 'Inter', fontSize: 14, color: Colors.grey)),
             const SizedBox(height: 12),
             QrImageView(
               data: ticket.ticketId,
@@ -391,7 +456,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
             ),
             const SizedBox(height: 8),
             Text("Ticket ID: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
-                style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: Colors.grey)),
+                style: const TextStyle(
+                    fontFamily: 'Inter', fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,

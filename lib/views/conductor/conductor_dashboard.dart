@@ -33,12 +33,33 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
   List<Trip> _filteredTrips = [];
   bool _loading = true;
 
+  // --- NEW: My Trips State ---
+  List<Trip> _myTrips = [];
+  bool _loadingMyTrips = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadTripsForDate(_selectedDate);
+      _loadMyTrips();
     });
+  }
+
+  // --- NEW: Load My Trips ---
+  Future<void> _loadMyTrips() async {
+    final user = Provider.of<AuthService>(context, listen: false).currentUser;
+    if (user == null) return;
+
+    setState(() => _loadingMyTrips = true);
+    final controller = Provider.of<TripController>(context, listen: false);
+    final trips = await controller.loadConductorTrips(user.uid);
+    if (mounted) {
+      setState(() {
+        _myTrips = trips;
+        _loadingMyTrips = false;
+      });
+    }
   }
 
   Future<void> _loadTripsForDate(DateTime date) async {
@@ -253,68 +274,33 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             ),
           ),
 
-          // 2. Search & Filter Section
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1000),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("Find Your Trip",
-                        style: TextStyle(
-                            fontFamily: 'Outfit',
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 10)
-                          ]),
-                      child: isDesktop
-                          ? Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Expanded(
-                                    child: _buildInput("Current Location",
-                                        _fromController, Icons.my_location)),
-                                const SizedBox(width: 24),
-                                Expanded(
-                                    child: _buildInput("Destination",
-                                        _toController, Icons.location_on)),
-                                const SizedBox(width: 24),
-                                _buildDateSelector(),
-                              ],
-                            )
-                          : Column(
-                              children: [
-                                _buildInput("Current Location", _fromController,
-                                    Icons.my_location),
-                                const SizedBox(height: 16),
-                                _buildInput("Destination", _toController,
-                                    Icons.location_on),
-                                const SizedBox(height: 16),
-                                SizedBox(
-                                    width: double.infinity,
-                                    child: _buildDateSelector()),
-                              ],
-                            ),
-                    ),
+          // 2. Tabs for "My Trips" vs "Search"
+          DefaultTabController(
+            length: 2,
+            child: Column(
+              children: [
+                TabBar(
+                  labelColor: AppTheme.primaryColor,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: AppTheme.primaryColor,
+                  tabs: const [
+                    Tab(text: "My Assigned Trips"),
+                    Tab(text: "Search All Trips"),
                   ],
                 ),
-              ),
+                SizedBox(
+                  height:
+                      800, // Fixed height for now, or use Expanded if parent allows
+                  child: TabBarView(
+                    children: [
+                      _buildMyTripsTab(isDesktop),
+                      _buildSearchTripsTab(isDesktop),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-
-          // 3. Trips List
-          _buildTripsListSection(isDesktop),
 
           if (isDesktop) const AppFooter(),
         ],
@@ -582,7 +568,9 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                     Container(
                       height: 200,
                       alignment: Alignment.center,
-                      color: Colors.grey.shade50,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.grey.shade50,
                       child: Text("Performance Chart Placeholder",
                           style: TextStyle(color: Colors.grey.shade400)),
                     )
@@ -747,6 +735,120 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
     );
   }
 
+  // --- TAB 1: My Trips ---
+  Widget _buildMyTripsTab(bool isDesktop) {
+    if (_loadingMyTrips) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_myTrips.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment_ind, size: 64, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            const Text("No trips assigned to you yet.",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text("Check back later or search for trips."),
+            const SizedBox(height: 24),
+            OutlinedButton(
+                onPressed: _loadMyTrips, child: const Text("Refresh"))
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _myTrips.length,
+            separatorBuilder: (ctx, i) => const SizedBox(height: 16),
+            itemBuilder: (ctx, i) {
+              return _buildTripCard(_myTrips[i], isDesktop, isMyTrip: true);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- TAB 2: Search Trips ---
+  Widget _buildSearchTripsTab(bool isDesktop) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Search Inputs
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Find Your Trip",
+                        style: TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10)
+                          ]),
+                      child: isDesktop
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                    child: _buildInput("Current Location",
+                                        _fromController, Icons.my_location)),
+                                const SizedBox(width: 24),
+                                Expanded(
+                                    child: _buildInput("Destination",
+                                        _toController, Icons.location_on)),
+                                const SizedBox(width: 24),
+                                _buildDateSelector(),
+                              ],
+                            )
+                          : Column(
+                              children: [
+                                _buildInput("Current Location", _fromController,
+                                    Icons.my_location),
+                                const SizedBox(height: 16),
+                                _buildInput("Destination", _toController,
+                                    Icons.location_on),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                    width: double.infinity,
+                                    child: _buildDateSelector()),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Trips List
+          _buildTripsListSection(isDesktop),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTripsListSection(bool isDesktop) {
     if (_loading) {
       return Container(
@@ -825,7 +927,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
     );
   }
 
-  Widget _buildTripCard(Trip trip, bool isDesktop) {
+  Widget _buildTripCard(Trip trip, bool isDesktop, {bool isMyTrip = false}) {
     final startTime = DateFormat('h.mm a').format(trip.departureTime);
     final endTime = DateFormat('h.mm a').format(trip.arrivalTime);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -874,7 +976,10 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                                   : Colors.green)),
                     ),
                     const SizedBox(height: 8),
-                    _updateButton(trip),
+                    if (isMyTrip)
+                      _buildStatusActions(trip)
+                    else
+                      _updateButton(trip),
                   ],
                 )
               ],
@@ -885,7 +990,10 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _tripInfo(startTime, endTime),
-                    _updateButton(trip),
+                    if (isMyTrip)
+                      _buildStatusActions(trip)
+                    else
+                      _updateButton(trip),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -932,8 +1040,10 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
   }
 
   Widget _updateButton(Trip trip) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.start,
       children: [
         ElevatedButton.icon(
           onPressed: () {
@@ -957,7 +1067,6 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
         ),
-        const SizedBox(width: 8),
         ElevatedButton(
           onPressed: () {
             Navigator.push(
@@ -980,6 +1089,50 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   color: Colors.white)),
         ),
       ],
+    );
+  }
+
+  Widget _buildStatusActions(Trip trip) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _miniStatusButton(
+            trip, TripStatus.departed, Icons.departure_board, Colors.green),
+        const SizedBox(width: 8),
+        _miniStatusButton(
+            trip, TripStatus.onWay, Icons.directions_bus_filled, Colors.blue),
+        const SizedBox(width: 8),
+        _miniStatusButton(
+            trip, TripStatus.arrived, Icons.check_circle, Colors.purple),
+        const SizedBox(width: 8),
+        _miniStatusButton(trip, TripStatus.delayed, Icons.warning, Colors.red,
+            isDelay: true),
+      ],
+    );
+  }
+
+  Widget _miniStatusButton(
+      Trip trip, TripStatus status, IconData icon, Color color,
+      {bool isDelay = false}) {
+    return IconButton(
+      onPressed: () async {
+        final controller = Provider.of<TripController>(context, listen: false);
+        if (isDelay) {
+          await controller.updateTripStatus(trip.id, status);
+        } else {
+          await controller.updateTripStatus(trip.id, status);
+        }
+        // Refresh
+        _loadTripsForDate(_selectedDate);
+        _loadMyTrips();
+      },
+      icon: Icon(icon),
+      color: color,
+      tooltip: status.name.toUpperCase(),
+      style: IconButton.styleFrom(
+        backgroundColor: color.withValues(alpha: 0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
     );
   }
 }

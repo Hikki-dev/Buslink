@@ -4,6 +4,7 @@ import '../../home/home_screen.dart';
 import '../../conductor/conductor_dashboard.dart';
 import '../admin_dashboard.dart';
 import '../admin_user_management.dart';
+import '../../customer_main_screen.dart' as customer_main_screen;
 
 class AdminBottomNav extends StatelessWidget {
   final int selectedIndex;
@@ -25,7 +26,8 @@ class AdminBottomNav extends StatelessWidget {
         page = const ConductorDashboard(isAdminView: true);
         break;
       case 3:
-        page = const HomeScreen(isAdminView: true);
+        // Use CustomerMainScreen wrapper so we get the Scaffold + Exit Banner
+        page = const customer_main_screen.CustomerMainScreen(isAdminView: true);
         break;
       default:
         return;
@@ -40,7 +42,7 @@ class AdminBottomNav extends StatelessWidget {
     return NavigationBar(
       selectedIndex: selectedIndex,
       onDestinationSelected: (index) => _onItemTapped(context, index),
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       indicatorColor: AppTheme.primaryColor.withValues(alpha: 0.1),
       elevation: 3,
       destinations: const [

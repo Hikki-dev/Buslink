@@ -144,39 +144,8 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
 
   @override
   Widget build(BuildContext context) {
-    // Aggressive removal on build
+    // Aggressive removal on build for web spinner
     removeWebSpinner();
-
-    if (!_isInitialized) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: Scaffold(
-          backgroundColor: Colors.white,
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.directions_bus,
-                    size: 80, color: AppTheme.primaryColor),
-                const SizedBox(height: 24),
-                const CircularProgressIndicator(
-                    color: AppTheme.primaryColor, strokeWidth: 6),
-                const SizedBox(height: 16),
-                Text(Translations.translate(_statusKey, getPlatformLanguage()),
-                    style: const TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold)), // Status Text
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-    // ...
-    // Inside RoleDispatcher build method (lines 353-360 in original) needs update too.
-    // Since this tool chunk ends here, I will make another call for RoleDispatcher.
 
     return MultiProvider(
       providers: [
@@ -197,30 +166,61 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeController.themeMode,
-            home: const AuthWrapper(),
+            // initialRoute: '/', // REMOVED: Let Flutter Web handle URL from browser
             routes: {
-              '/payment_success': (context) => PaymentSuccessScreen(),
+              '/': (context) => const AuthWrapper(),
             },
-            debugShowCheckedModeBanner: false,
             onGenerateRoute: (settings) {
+              // Handle deep link for success page
               if (settings.name?.startsWith('/payment_success') ?? false) {
                 return MaterialPageRoute(
-                    settings: settings, builder: (_) => PaymentSuccessScreen());
+                    settings: settings,
+                    builder: (_) => const PaymentSuccessScreen());
               }
               return null;
             },
+            debugShowCheckedModeBanner: false,
             builder: (context, child) {
-              // GLOBAL ADMIN BANNER OVERLAY
-              // This ensures the banner persists over ALL screens, including those pushed via Navigator.
+              // 1. LOADING SCREEN OVERLAY
+              if (!_isInitialized) {
+                return Scaffold(
+                  backgroundColor: Colors.white,
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.directions_bus,
+                            size: 80, color: AppTheme.primaryColor),
+                        const SizedBox(height: 24),
+                        const CircularProgressIndicator(
+                            color: AppTheme.primaryColor, strokeWidth: 6),
+                        const SizedBox(height: 16),
+                        Text(
+                            Translations.translate(
+                                _statusKey, getPlatformLanguage()),
+                            style: const TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              // 2. CHILD (NAVIGATOR)
+              if (child == null) return const SizedBox();
+
+              // 3. GLOBAL ADMIN BANNER OVERLAY
               final tripController = Provider.of<TripController>(context);
 
               if (!tripController.isPreviewMode) {
-                return child!;
+                return child;
               }
 
               return Stack(
                 children: [
-                  child!,
+                  child,
                   Positioned(
                     top: 0,
                     left: 0,
@@ -248,9 +248,6 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
                               InkWell(
                                 onTap: () {
                                   tripController.setPreviewMode(false);
-                                  // No Navigator.pop needed here as state change triggers rebuild
-                                  // But if inside a deep navigation stack, user might want to go home?
-                                  // For now, just exiting the mode is enough.
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(

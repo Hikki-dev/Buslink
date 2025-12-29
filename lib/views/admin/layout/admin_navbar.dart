@@ -52,7 +52,7 @@ class AdminNavBar extends StatelessWidget {
                       color: AppTheme.primaryColor),
                 ),
                 const SizedBox(width: 12),
-                const Column(
+                Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -60,12 +60,16 @@ class AdminNavBar extends StatelessWidget {
                         style: TextStyle(
                             fontFamily: 'Outfit',
                             fontSize: 18,
-                            fontWeight: FontWeight.bold)),
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface)),
                     Text("ADMIN CONSOLE",
                         style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 10,
-                            color: Colors.grey,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white70
+                                    : Colors.grey,
                             letterSpacing: 1)),
                   ],
                 ),
@@ -204,7 +208,11 @@ class AdminNavBar extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: isActive ? AppTheme.primaryColor : Colors.grey[700],
+            color: isActive
+                ? AppTheme.primaryColor
+                : (Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.grey[700]),
             fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
           ),
         ),

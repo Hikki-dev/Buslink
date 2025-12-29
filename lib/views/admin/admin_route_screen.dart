@@ -161,7 +161,7 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Standard Price",
+                                    Text("Price",
                                         style: TextStyle(
                                             fontFamily: 'Inter',
                                             fontSize: 12,

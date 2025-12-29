@@ -11,7 +11,7 @@ import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
-import '../home/home_screen.dart';
+// import '../home/home_screen.dart'; // Unused
 
 class TicketScreen extends StatefulWidget {
   final Trip? tripArg;
@@ -47,11 +47,7 @@ class _TicketScreenState extends State<TicketScreen> {
         leading: IconButton(
           icon:
               Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
-            (r) => false,
-          ),
+          onPressed: () => Navigator.pop(context),
         ),
         title: Text("Course", // "Course" or "Trip"
             style: TextStyle(
