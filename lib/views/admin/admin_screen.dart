@@ -186,7 +186,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
         List<int> recurrenceDays =
             _operatingDays.map((d) => _daysOfWeek.indexOf(d) + 1).toList();
-        await controller.addRoute(context, tripData, recurrenceDays);
+        await controller.createRecurringRoute(
+            context, tripData, recurrenceDays);
       } else {
         // SINGLE TRIP (ONE-TIME)
         final d = _tripDate!;
@@ -215,8 +216,13 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       final isDesktop = constraints.maxWidth > 800;
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final scaffoldColor = Theme.of(context).scaffoldBackgroundColor;
+      final cardColor = Theme.of(context).cardColor;
+      final textColor = Theme.of(context).colorScheme.onSurface;
+
       return Scaffold(
-        backgroundColor: Colors.grey.shade50,
+        backgroundColor: scaffoldColor,
         body: Column(
           children: [
             // Nav
@@ -236,7 +242,7 @@ class _AdminScreenState extends State<AdminScreen> {
                         child: Container(
                           padding: EdgeInsets.all(isDesktop ? 32 : 16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: cardColor,
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
@@ -259,7 +265,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                         padding:
                                             const EdgeInsets.only(right: 16),
                                         child: IconButton(
-                                            icon: const Icon(Icons.arrow_back),
+                                            icon: Icon(Icons.arrow_back,
+                                                color: textColor),
                                             onPressed: () =>
                                                 Navigator.pop(context)),
                                       ),
@@ -281,9 +288,11 @@ class _AdminScreenState extends State<AdminScreen> {
                                       isEditing
                                           ? "Edit Route"
                                           : "Add New Route",
-                                      style: const TextStyle(fontFamily: 'Outfit', 
+                                      style: TextStyle(
+                                          fontFamily: 'Outfit',
                                           fontSize: 24,
-                                          fontWeight: FontWeight.bold),
+                                          fontWeight: FontWeight.bold,
+                                          color: textColor),
                                     ),
                                   ],
                                 ),
@@ -320,74 +329,107 @@ class _AdminScreenState extends State<AdminScreen> {
                                             (v) => _viaRoute = v)),
                                     const SizedBox(width: 16),
                                     Expanded(
-                                      child: TextFormField(
-                                        controller: _durationController,
-                                        readOnly: true,
-                                        onTap: () async {
-                                          TimeOfDay initial = const TimeOfDay(
-                                              hour: 3, minute: 30);
-                                          if (_durationController.text
-                                              .contains(':')) {
-                                            final parts = _durationController
-                                                .text
-                                                .split(':');
-                                            if (parts.length == 2) {
-                                              initial = TimeOfDay(
-                                                  hour:
-                                                      int.tryParse(parts[0]) ??
-                                                          3,
-                                                  minute:
-                                                      int.tryParse(parts[1]) ??
-                                                          30);
+                                      child: Builder(builder: (context) {
+                                        final isDark =
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark;
+                                        final textColor = Theme.of(context)
+                                            .colorScheme
+                                            .onSurface;
+                                        final inputFillColor = isDark
+                                            ? Colors.grey.withValues(alpha: 0.1)
+                                            : Colors.grey.shade50;
+                                        final borderColor = isDark
+                                            ? Colors.grey.withValues(alpha: 0.2)
+                                            : Colors.grey.shade300;
+
+                                        return TextFormField(
+                                          controller: _durationController,
+                                          readOnly: true,
+                                          style: TextStyle(color: textColor),
+                                          onTap: () async {
+                                            TimeOfDay initial = const TimeOfDay(
+                                                hour: 3, minute: 30);
+                                            if (_durationController.text
+                                                .contains(':')) {
+                                              final parts = _durationController
+                                                  .text
+                                                  .split(':');
+                                              if (parts.length == 2) {
+                                                initial = TimeOfDay(
+                                                    hour: int.tryParse(
+                                                            parts[0]) ??
+                                                        3,
+                                                    minute: int.tryParse(
+                                                            parts[1]) ??
+                                                        30);
+                                              }
                                             }
-                                          }
 
-                                          final TimeOfDay? picked =
-                                              await showTimePicker(
-                                            context: context,
-                                            initialTime: initial,
-                                            helpText: "SELECT TRAVEL DURATION",
-                                            initialEntryMode:
-                                                TimePickerEntryMode.input,
-                                            builder: (context, child) {
-                                              return MediaQuery(
-                                                data: MediaQuery.of(context)
-                                                    .copyWith(
-                                                        alwaysUse24HourFormat:
-                                                            true),
-                                                child: child!,
-                                              );
-                                            },
-                                          );
+                                            final TimeOfDay? picked =
+                                                await showTimePicker(
+                                              context: context,
+                                              initialTime: initial,
+                                              helpText:
+                                                  "SELECT TRAVEL DURATION",
+                                              initialEntryMode:
+                                                  TimePickerEntryMode.input,
+                                              builder: (context, child) {
+                                                return MediaQuery(
+                                                  data: MediaQuery.of(context)
+                                                      .copyWith(
+                                                          alwaysUse24HourFormat:
+                                                              true),
+                                                  child: child!,
+                                                );
+                                              },
+                                            );
 
-                                          if (picked != null) {
-                                            final h = picked.hour
-                                                .toString()
-                                                .padLeft(2, '0');
-                                            final m = picked.minute
-                                                .toString()
-                                                .padLeft(2, '0');
-                                            setState(() {
-                                              _durationController.text =
-                                                  "$h:$m";
-                                              _calculateArrival();
-                                            });
-                                          }
-                                        },
-                                        decoration: const InputDecoration(
-                                          labelText: "Duration (HH:MM)",
-                                          border: OutlineInputBorder(),
-                                          hintText: "Tap to select",
-                                          suffixIcon:
-                                              Icon(Icons.timer_outlined),
-                                        ),
-                                        validator: (v) {
-                                          if (v == null || v.isEmpty) {
-                                            return "Required";
-                                          }
-                                          return null;
-                                        },
-                                      ),
+                                            if (picked != null) {
+                                              final h = picked.hour
+                                                  .toString()
+                                                  .padLeft(2, '0');
+                                              final m = picked.minute
+                                                  .toString()
+                                                  .padLeft(2, '0');
+                                              setState(() {
+                                                _durationController.text =
+                                                    "$h:$m";
+                                                _calculateArrival();
+                                              });
+                                            }
+                                          },
+                                          decoration: InputDecoration(
+                                            labelText: "Duration (HH:MM)",
+                                            labelStyle: TextStyle(
+                                                color: Colors.grey.shade500),
+                                            enabledBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                    color: borderColor)),
+                                            focusedBorder:
+                                                const OutlineInputBorder(
+                                                    borderSide: BorderSide(
+                                                        color: AppTheme
+                                                            .primaryColor,
+                                                        width: 2)),
+                                            border: const OutlineInputBorder(),
+                                            hintText: "Tap to select",
+                                            hintStyle: TextStyle(
+                                                color: Colors.grey.shade500),
+                                            suffixIcon: const Icon(
+                                                Icons.timer_outlined,
+                                                color: Colors.grey),
+                                            filled: true,
+                                            fillColor: inputFillColor,
+                                          ),
+                                          validator: (v) {
+                                            if (v == null || v.isEmpty) {
+                                              return "Required";
+                                            }
+                                            return null;
+                                          },
+                                        );
+                                      }),
                                     ),
                                   ],
                                 ),
@@ -423,15 +465,19 @@ class _AdminScreenState extends State<AdminScreen> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 12, vertical: 8),
                                     decoration: BoxDecoration(
-                                        color: Colors.grey.shade100,
+                                        color: isDark
+                                            ? Colors.grey.withValues(alpha: 0.1)
+                                            : Colors.grey.shade100,
                                         borderRadius: BorderRadius.circular(8)),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Text("Schedule Type:",
-                                            style: TextStyle(fontFamily: 'Inter', 
+                                        Text("Schedule Type:",
+                                            style: TextStyle(
+                                                fontFamily: 'Inter',
                                                 fontWeight: FontWeight.bold,
-                                                fontSize: 14)),
+                                                fontSize: 14,
+                                                color: textColor)),
                                         const SizedBox(width: 16),
                                         ToggleButtons(
                                           isSelected: [
@@ -447,6 +493,9 @@ class _AdminScreenState extends State<AdminScreen> {
                                               BorderRadius.circular(8),
                                           selectedColor: Colors.white,
                                           fillColor: AppTheme.primaryColor,
+                                          // Text color for unselected items needs to be visible
+                                          color:
+                                              textColor.withValues(alpha: 0.7),
                                           children: const [
                                             Padding(
                                                 padding: EdgeInsets.symmetric(
@@ -464,10 +513,12 @@ class _AdminScreenState extends State<AdminScreen> {
                                 const SizedBox(height: 16),
 
                                 if (_isRecurring) ...[
-                                  const Text("Operating Days (Weekly)",
-                                      style: TextStyle(fontFamily: 'Inter', 
+                                  Text("Operating Days (Weekly)",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 14)),
+                                          fontSize: 14,
+                                          color: textColor)),
                                   const SizedBox(height: 8),
                                   Wrap(
                                     spacing: 10,
@@ -488,18 +539,23 @@ class _AdminScreenState extends State<AdminScreen> {
                                         },
                                         checkmarkColor: Colors.white,
                                         selectedColor: AppTheme.primaryColor,
+                                        backgroundColor: isDark
+                                            ? Colors.grey.withValues(alpha: 0.2)
+                                            : null,
                                         labelStyle: TextStyle(
                                             color: isSelected
                                                 ? Colors.white
-                                                : Colors.black87),
+                                                : textColor),
                                       );
                                     }).toList(),
                                   ),
                                 ] else ...[
-                                  const Text("Trip Date",
-                                      style: TextStyle(fontFamily: 'Inter', 
+                                  Text("Trip Date",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 14)),
+                                          fontSize: 14,
+                                          color: textColor)),
                                   const SizedBox(height: 8),
                                   InkWell(
                                     onTap: () async {
@@ -532,11 +588,12 @@ class _AdminScreenState extends State<AdminScreen> {
                                                 ? "Select Date"
                                                 : DateFormat('EEE, MMM d, yyyy')
                                                     .format(_tripDate!),
-                                            style: TextStyle(fontFamily: 'Inter', 
+                                            style: TextStyle(
+                                                fontFamily: 'Inter',
                                                 fontSize: 16,
                                                 color: _tripDate == null
                                                     ? Colors.grey
-                                                    : Colors.black87),
+                                                    : textColor),
                                           ),
                                         ],
                                       ),
@@ -599,7 +656,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                         isEditing
                                             ? "SAVE CHANGES"
                                             : "ADD ROUTE",
-                                        style: const TextStyle(fontFamily: 'Outfit', 
+                                        style: const TextStyle(
+                                            fontFamily: 'Outfit',
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16)),
                                   ),
@@ -623,16 +681,18 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: const TextStyle(fontFamily: 'Outfit', 
+              style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.darkText)),
+                  color: textColor)),
           const Divider(),
         ],
       ),
@@ -641,6 +701,14 @@ class _AdminScreenState extends State<AdminScreen> {
 
   Widget _buildCityAutocomplete(
       String label, String? initialValue, Function(String) onSelected) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final inputFillColor =
+        isDark ? Colors.grey.withValues(alpha: 0.1) : Colors.grey.shade50;
+    final borderColor =
+        isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade300;
+
     return LayoutBuilder(builder: (context, constraints) {
       return Autocomplete<String>(
         initialValue: TextEditingValue(text: initialValue ?? ''),
@@ -660,6 +728,7 @@ class _AdminScreenState extends State<AdminScreen> {
           return TextFormField(
             controller: textEditingController,
             focusNode: focusNode,
+            style: TextStyle(color: textColor),
             onFieldSubmitted: (String value) {
               onFieldSubmitted();
             },
@@ -669,8 +738,17 @@ class _AdminScreenState extends State<AdminScreen> {
             },
             decoration: InputDecoration(
               labelText: label,
-              border: const OutlineInputBorder(),
-              suffixIcon: const Icon(Icons.search),
+              labelStyle: TextStyle(color: Colors.grey.shade500),
+              enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: borderColor)),
+              focusedBorder: const OutlineInputBorder(
+                  borderSide:
+                      BorderSide(color: AppTheme.primaryColor, width: 2)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              filled: true,
+              fillColor: inputFillColor,
+              suffixIcon: const Icon(Icons.search, color: Colors.grey),
             ),
             validator: (v) => v == null || v.isEmpty ? "Required" : null,
           );
@@ -680,6 +758,7 @@ class _AdminScreenState extends State<AdminScreen> {
             alignment: Alignment.topLeft,
             child: Material(
               elevation: 4.0,
+              color: cardColor,
               child: SizedBox(
                 width: constraints.maxWidth,
                 child: ListView.builder(
@@ -694,7 +773,7 @@ class _AdminScreenState extends State<AdminScreen> {
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
-                        child: Text(option),
+                        child: Text(option, style: TextStyle(color: textColor)),
                       ),
                     );
                   },
@@ -709,23 +788,105 @@ class _AdminScreenState extends State<AdminScreen> {
 
   Widget _buildDropdown(String label, String? value, List<String> items,
       Function(String?) onChanged) {
-    return DropdownButtonFormField<String>(
-      initialValue: items.contains(value) ? value : null,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-      ),
-      items:
-          items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-      onChanged: onChanged,
-      validator: (v) => v == null ? "Required" : null,
-    );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final inputFillColor =
+        isDark ? Colors.grey.withValues(alpha: 0.1) : Colors.grey.shade50;
+    final borderColor =
+        isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade300;
+
+    return LayoutBuilder(builder: (context, constraints) {
+      return Autocomplete<String>(
+        initialValue: TextEditingValue(text: value ?? ''),
+        optionsBuilder: (TextEditingValue textEditingValue) {
+          if (textEditingValue.text == '') {
+            return const Iterable<String>.empty();
+          }
+          return items.where((String option) {
+            return option
+                .toLowerCase()
+                .contains(textEditingValue.text.toLowerCase());
+          });
+        },
+        onSelected: onChanged,
+        fieldViewBuilder:
+            (context, textEditingController, focusNode, onFieldSubmitted) {
+          if (value != null &&
+              textEditingController.text.isEmpty &&
+              value != textEditingController.text) {
+            textEditingController.text = value;
+          }
+          return TextFormField(
+            controller: textEditingController,
+            focusNode: focusNode,
+            style: TextStyle(color: textColor),
+            onFieldSubmitted: (String val) {
+              onFieldSubmitted();
+              onChanged(val);
+            },
+            onChanged: (val) {
+              onChanged(val);
+            },
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: TextStyle(color: Colors.grey.shade500),
+              enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: borderColor)),
+              focusedBorder: const OutlineInputBorder(
+                  borderSide:
+                      BorderSide(color: AppTheme.primaryColor, width: 2)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              filled: true,
+              fillColor: inputFillColor,
+              suffixIcon: const Icon(Icons.edit_road, color: Colors.grey),
+              hintText: "Select or Type New",
+              hintStyle: TextStyle(color: Colors.grey.shade500),
+            ),
+            validator: (v) => v == null || v.isEmpty ? "Required" : null,
+          );
+        },
+        optionsViewBuilder: (context, onSelected, options) {
+          return Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 4.0,
+              color: cardColor,
+              child: SizedBox(
+                width: constraints.maxWidth,
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final String option = options.elementAt(index);
+                    return InkWell(
+                      onTap: () {
+                        onSelected(option);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(option, style: TextStyle(color: textColor)),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    });
   }
 
   Widget _buildTimePicker(
       String label, DateTime time, Function(DateTime) onChanged) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final borderColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.grey.withValues(alpha: 0.2)
+        : Colors.grey.shade300;
+
     return InkWell(
       onTap: () async {
         final t = await showTimePicker(
@@ -739,23 +900,42 @@ class _AdminScreenState extends State<AdminScreen> {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(color: Colors.grey.shade500),
+          enabledBorder:
+              OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
           border: const OutlineInputBorder(),
-          suffixIcon: const Icon(Icons.access_time),
+          suffixIcon: const Icon(Icons.access_time, color: Colors.grey),
         ),
-        child: Text(DateFormat('hh:mm a').format(time)),
+        child: Text(DateFormat('hh:mm a').format(time),
+            style: TextStyle(color: textColor)),
       ),
     );
   }
 
   Widget _buildTextField(String label, TextEditingController controller,
       {bool isNumber = false, IconData? icon}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final inputFillColor =
+        isDark ? Colors.grey.withValues(alpha: 0.1) : Colors.grey.shade50;
+    final borderColor =
+        isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade300;
+
     return TextFormField(
       controller: controller,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly] : [],
+      style: TextStyle(color: textColor),
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
+        labelStyle: TextStyle(color: Colors.grey.shade500),
+        enabledBorder:
+            OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
+        focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: AppTheme.primaryColor, width: 2)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        filled: true,
+        fillColor: inputFillColor,
         suffixIcon:
             icon != null ? Icon(icon, size: 20, color: Colors.grey) : null,
       ),
@@ -776,8 +956,10 @@ class _AdminScreenState extends State<AdminScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text("Seat Layout (Manage Availability)",
-                style: TextStyle(fontFamily: 'Outfit', 
-                    fontSize: 18, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
             // Legend
             Row(
               children: [
@@ -791,59 +973,110 @@ class _AdminScreenState extends State<AdminScreen> {
           ],
         ),
         const SizedBox(height: 24),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: Column(
-            children: [
-              // Driver
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                        color: Colors.black87,
-                        borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(
-                        Icons
-                            .directions_bus, // steering_wheel not available in default set
-                        color: Colors.white,
-                        size: 20),
+        const SizedBox(height: 24),
+
+        // CENTERED COMPACT BUS LAYOUT
+        Center(
+          child: Container(
+            width: 340, // Fixed width to match real bus feel
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(60), bottom: Radius.circular(30)),
+              border: Border.all(color: Colors.grey.shade300, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                // Driver / Front Area
+                Container(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  decoration: const BoxDecoration(
+                      border:
+                          Border(bottom: BorderSide(color: Colors.black12))),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Icon(Icons.exit_to_app, color: Colors.grey),
+                      Column(
+                        children: [
+                          const Icon(Icons.print, size: 20, color: Colors.grey),
+                          const SizedBox(height: 8),
+                          // Simple Steering Wheel Icon replacement
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.grey)),
+                            child: const Icon(Icons.directions_car,
+                                size: 20, color: Colors.grey),
+                          )
+                        ],
+                      )
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Grid
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 10, // 10 Rows
-                itemBuilder: (context, rowIndex) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Left Side (2 Seats)
-                        _seatItem(rowIndex * 4 + 1),
-                        _seatItem(rowIndex * 4 + 2),
-                        // Aisle
-                        const SizedBox(width: 24),
-                        // Right Side (2 Seats)
-                        _seatItem(rowIndex * 4 + 3),
-                        _seatItem(rowIndex * 4 + 4),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
+                ),
+                const SizedBox(height: 24),
+
+                // Seat Grid
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 10, // 10 Rows
+                  itemBuilder: (context, rowIndex) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Left Side (2 Seats)
+                          Row(
+                            children: [
+                              _seatItem(rowIndex * 4 + 1),
+                              const SizedBox(width: 14), // Gap between seats
+                              _seatItem(rowIndex * 4 + 2),
+                            ],
+                          ),
+                          // Aisle Text (Middle)
+                          if (rowIndex == 4)
+                            const Text("EXIT",
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold)),
+
+                          // Right Side (2 Seats)
+                          Row(
+                            children: [
+                              _seatItem(rowIndex * 4 + 3),
+                              const SizedBox(width: 14), // Gap between seats
+                              _seatItem(rowIndex * 4 + 4),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 20),
+                // Back of bus line
+                Container(
+                  height: 8,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(4)),
+                )
+              ],
+            ),
           ),
         ),
       ],
@@ -888,9 +1121,10 @@ class _AdminScreenState extends State<AdminScreen> {
       borderColor = Colors.red.shade200;
       textColor = Colors.red.shade700;
     } else if (isBlocked) {
-      bgColor = Colors.orange;
-      borderColor = Colors.orange.shade700;
-      textColor = Colors.white;
+      // AMBER / YELLOW for Blocked
+      bgColor = Colors.amber;
+      borderColor = Colors.amber.shade700;
+      textColor = Colors.black; // High contrast on Yellow
     }
 
     return InkWell(
@@ -921,7 +1155,8 @@ class _AdminScreenState extends State<AdminScreen> {
         child: Center(
           child: Text(
             "$seatNum",
-            style: TextStyle(fontFamily: 'Inter', 
+            style: TextStyle(
+              fontFamily: 'Inter',
               fontWeight: FontWeight.bold,
               color: textColor,
               fontSize: 12,

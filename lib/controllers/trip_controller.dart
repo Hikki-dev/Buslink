@@ -225,22 +225,48 @@ class TripController extends ChangeNotifier {
     _setLoading(false);
   }
 
-  // --- ADDED: Add Route (Recurring) ---
-  Future<void> addRoute(
+  // --- ADDED: Create Recurring Route & Generate Trips ---
+  Future<void> createRecurringRoute(
     BuildContext context,
     Map<String, dynamic> routeData,
-    List<int> recurrenceDays, // [1, 2, ... 7]
+    List<int> recurrenceDays, // [1, 2, ... 7] where 1 = Monday
   ) async {
     _setLoading(true);
     try {
       // 1. Save Route Definition
-      // We extract time of day components for storage
-      final DateTime dep = routeData['departureTime'];
-      final DateTime arr = routeData['arrivalTime'];
+      // We assume departureTime/arrivalTime in routeData are NOT set (null),
+      // or at least irrelevant. We rely on time components if passed, or we parse them?
+      // Actually, AdminRouteScreen currently sends 'duration' (HH:MM) and 'departureTime' (null).
+      // We need 'departureHour'/'departureMinute' which usually come from the TimePicker,
+      // BUT AdminRouteScreen doesn't send those explicitly in the map anymore?
+      // Wait, AdminRouteScreen sends:
+      // duration: "HH:MM"
+      // via, price, etc.
+      // It DOES NOT send departureTime anymore.
+
+      // We need to know specific Departure Time for the schedule.
+      // AdminRouteScreen likely sends 'departureTime' as a DateTime object from the TimePicker
+      // even if it removed the *field* from the map construction in _submit?
+      // Let's check _submit in AdminRouteScreen later.
+      // Assuming routeData['departureTime'] IS a DateTime representing the time of day.
+
+      final DateTime dep =
+          routeData['departureTime']; // This holds the TiimeOfDay date
+
+      // Parse Duration String "HH:MM"
+      final durationStr = routeData['duration'] as String;
+      final durationParts = durationStr.split(':');
+      final int durH = int.parse(durationParts[0]);
+      final int durM = int.parse(durationParts[1]);
+      final duration = Duration(hours: durH, minutes: durM);
+
+      // Determine Arrival Time relative to Departure
+      // Just for route definition metadata
+      final DateTime arr = dep.add(duration);
 
       final Map<String, dynamic> routeStorageData = {
         ...routeData,
-        'departureTime': null, // Clear specific dates
+        'departureTime': null,
         'arrivalTime': null,
         'departureHour': dep.hour,
         'departureMinute': dep.minute,
@@ -249,25 +275,20 @@ class TripController extends ChangeNotifier {
         'recurrenceDays': recurrenceDays,
         'createdAt': FieldValue.serverTimestamp(),
       };
+
       final DocumentReference routeRef =
           await _service.addRoute(routeStorageData);
       debugPrint("Route created with ID: ${routeRef.id}");
 
-      // 2. Generate Trips for next 90 days
-      const int daysToGenerate = 90;
+      // 2. Generate Trips for next 60 days (2 Months)
+      const int daysToGenerate = 60;
       final DateTime now = DateTime.now();
-
-      // Calculate duration to maintain arrival time relative to departure
-      final Duration tripDuration = arr.difference(dep);
 
       final WriteBatch batch = FirebaseFirestore.instance.batch();
       int tripCount = 0;
 
       for (int i = 0; i < daysToGenerate; i++) {
         final DateTime targetDate = now.add(Duration(days: i));
-
-        // Debug: check logic
-        // debugPrint("Checking date: ${targetDate.toString()} Weekday: ${targetDate.weekday} vs Recurrence: $recurrenceDays");
 
         if (recurrenceDays.contains(targetDate.weekday)) {
           // Construct specific Departure Time
@@ -279,7 +300,7 @@ class TripController extends ChangeNotifier {
             dep.minute,
           );
 
-          final DateTime tripArrival = tripDeparture.add(tripDuration);
+          final DateTime tripArrival = tripDeparture.add(duration);
 
           final DocumentReference newTripRef =
               FirebaseFirestore.instance.collection('trips').doc();
@@ -294,15 +315,15 @@ class TripController extends ChangeNotifier {
             'price': routeData['price'],
             'totalSeats': routeData['totalSeats'],
             'platformNumber': routeData['platformNumber'],
-            'status': 'onTime', // Default
+            'status': 'onTime',
             'delayMinutes': 0,
             'bookedSeats': [],
-            'stops': routeData['stops'],
+            'stops': routeData['stops'] ?? [],
             'via': routeData['via'] ?? '',
             'duration': routeData['duration'] ?? '',
-            'operatingDays': routeData['operatingDays'] ?? [],
+            'operatingDays': recurrenceDays,
             'isGenerated': true,
-            'routeId': routeRef.id, // Linked to the parent route
+            'routeId': routeRef.id,
           };
 
           batch.set(newTripRef, tripMap);
@@ -316,11 +337,11 @@ class TripController extends ChangeNotifier {
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Route & $tripCount trips created!")),
+        SnackBar(content: Text("Route & $tripCount trips created (60 Days)!")),
       );
       Navigator.pop(context);
     } catch (e) {
-      debugPrint("ERROR in addRoute: $e");
+      debugPrint("ERROR in createRecurringRoute: $e");
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error adding route: $e")),

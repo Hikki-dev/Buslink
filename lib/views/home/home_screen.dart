@@ -239,77 +239,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       final user = snapshot.data;
                       if (user == null) return const SliverToBoxAdapter();
 
-                      return SliverList(
-                        delegate: SliverChildListDelegate([
-                          // 1. Ongoing/Upcoming Trip
-                          StreamBuilder<List<Ticket>>(
-                            stream: Provider.of<FirestoreService>(context,
-                                    listen: false)
-                                .getUserTickets(user.uid),
-                            builder: (context, ticketSnap) {
-                              if (!ticketSnap.hasData ||
-                                  ticketSnap.data!.isEmpty) {
-                                return const SizedBox.shrink();
-                              }
-
-                              // Filter logic: Find active or future trips
-                              // For simplicity, take the last booked item that isn't 'cancelled'
-                              // A better logic would be: Sort by time, pick nearest future or currently active
-                              final tickets = ticketSnap.data!
-                                  .where((t) => t.status != 'cancelled')
-                                  .toList();
-
-                              if (tickets.isEmpty) {
-                                return const SizedBox.shrink();
-                              }
-
-                              // Sort by booking time (desc) or trip time?
-                              // Let's grab the most relevant one.
-                              final activeTicket = tickets.last;
-                              // In real app: Compare activeTicket.tripData['departureTime'] with now
-
-                              return StreamBuilder<Trip>(
-                                stream: Provider.of<FirestoreService>(context,
-                                        listen: false)
-                                    .getTripStream(activeTicket.tripId),
-                                builder: (context, tripSnap) {
-                                  if (!tripSnap.hasData) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  return OngoingTripCard(
-                                    trip: tripSnap.data!,
-                                    seatCount: activeTicket.seatNumbers.length,
-                                    paidAmount: activeTicket.totalAmount,
-                                  );
-                                },
-                              );
-                            },
-                          ),
-
-                          // 2. Favorites
-                          StreamBuilder<List<Map<String, dynamic>>>(
-                            stream: Provider.of<FirestoreService>(context,
-                                    listen: false)
-                                .getUserFavorites(user.uid),
-                            builder: (context, favSnap) {
-                              if (!favSnap.hasData || favSnap.data!.isEmpty) {
-                                return const SizedBox.shrink();
-                              }
-                              return FavoritesSection(
-                                favorites: favSnap.data!,
-                                onTap: (fav) {
-                                  // Quick search or navigation logic
-                                  setState(() {
-                                    _originController.text = fav['fromCity'];
-                                    _destinationController.text = fav['toCity'];
-                                    _searchBuses();
-                                  });
-                                },
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 24),
-                        ]),
+                      return SliverToBoxAdapter(
+                        child: _buildDashboardSection(context, user, isDesktop),
                       );
                     }),
                 SliverPadding(
@@ -331,6 +262,107 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDashboardSection(
+      BuildContext context, User user, bool isDesktop) {
+    return Column(
+      children: [
+        StreamBuilder<List<Ticket>>(
+          stream: Provider.of<FirestoreService>(context, listen: false)
+              .getUserTickets(user.uid),
+          builder: (context, ticketSnap) {
+            // Logic to find active ticket
+            Ticket? activeTicket;
+            if (ticketSnap.hasData && ticketSnap.data!.isNotEmpty) {
+              final tickets = ticketSnap.data!
+                  .where((t) => t.status != 'cancelled')
+                  .toList();
+              if (tickets.isNotEmpty) {
+                activeTicket = tickets.last;
+              }
+            }
+
+            return StreamBuilder<List<Map<String, dynamic>>>(
+              stream: Provider.of<FirestoreService>(context, listen: false)
+                  .getUserFavorites(user.uid),
+              builder: (context, favSnap) {
+                final favorites = favSnap.data ?? [];
+
+                if (activeTicket == null && favorites.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                // Widget for Favorites
+                final favoritesWidget = favorites.isEmpty
+                    ? const SizedBox.shrink()
+                    : FavoritesSection(
+                        favorites: favorites,
+                        onTap: (fav) {
+                          setState(() {
+                            _originController.text = fav['fromCity'];
+                            _destinationController.text = fav['toCity'];
+                            _searchBuses();
+                          });
+                        },
+                      );
+
+                // If no active ticket, just show favorites (which might be empty -> shrink)
+                if (activeTicket == null) {
+                  return favoritesWidget;
+                }
+
+                // If active ticket, fetch Trip details
+                return StreamBuilder<Trip>(
+                  stream: Provider.of<FirestoreService>(context, listen: false)
+                      .getTripStream(activeTicket.tripId),
+                  builder: (context, tripSnap) {
+                    if (!tripSnap.hasData) {
+                      // Trip data loading or failed -> Show favorites at least
+                      return favoritesWidget;
+                    }
+
+                    final tripWidget = OngoingTripCard(
+                      trip: tripSnap.data!,
+                      seatCount: activeTicket!.seatNumbers.length,
+                      paidAmount: activeTicket.totalAmount,
+                    );
+
+                    // --- LAYOUT LOGIC ---
+                    if (isDesktop && favorites.isNotEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 20),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: tripWidget),
+                            const SizedBox(width: 24),
+                            Expanded(child: favoritesWidget),
+                          ],
+                        ),
+                      );
+                    } else {
+                      // Mobile or no favorites -> Stack
+                      return Column(
+                        children: [
+                          Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 24 : 0),
+                              child: tripWidget),
+                          const SizedBox(height: 24),
+                          favoritesWidget,
+                        ],
+                      );
+                    }
+                  },
+                );
+              },
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -571,9 +603,7 @@ class _HeroSectionState extends State<_HeroSection> {
             ),
           ),
           Container(
-              height: 40,
-              width: 1,
-              color: isDark ? Colors.white12 : Colors.black12),
+              height: 40, width: 1, color: Theme.of(context).dividerColor),
           Expanded(
             flex: 1,
             child: InkWell(
@@ -618,7 +648,7 @@ class _HeroSectionState extends State<_HeroSection> {
     return Container(
       padding: const EdgeInsets.all(12), // REDUCED PADDING
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161821) : Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -697,8 +727,7 @@ class _HeroSectionState extends State<_HeroSection> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                border:
-                    Border.all(color: isDark ? Colors.white24 : Colors.black12),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Row(
                 children: [

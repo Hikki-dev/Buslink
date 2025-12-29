@@ -27,7 +27,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final isDesktop = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       bottomNavigationBar:
           isDesktop ? null : const AdminBottomNav(selectedIndex: 0),
       body: Column(
@@ -55,7 +55,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       constraints: const BoxConstraints(maxWidth: 1000),
                       child: Row(
                         children: [
-                          const Column(
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("Route Management",
@@ -63,7 +63,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       fontFamily: 'Outfit',
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
-                                      color: AppTheme.darkText)),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface)),
                               Text(
                                   "Manage bus schedules, fares, and availability.",
                                   style: TextStyle(
@@ -147,20 +149,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             return Container(
                               padding: const EdgeInsets.all(40),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: Theme.of(context).cardColor,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.grey.shade200),
+                                border: Border.all(
+                                    color: Colors.grey.withValues(alpha: 0.2)),
                               ),
                               child: Column(
                                 children: [
                                   Icon(Icons.search_off,
                                       size: 64, color: Colors.grey.shade300),
                                   const SizedBox(height: 16),
-                                  const Text(
-                                      "No routes found matching your criteria",
+                                  Text("No routes found",
                                       style: TextStyle(
                                           fontFamily: 'Inter',
                                           fontSize: 16,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.6))),
+                                  const SizedBox(height: 8),
+                                  Text("Try adjusting your filters.",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 14,
                                           color: Colors.grey)),
                                 ],
                               ),
@@ -237,7 +248,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           margin: const EdgeInsets.symmetric(horizontal: 24),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -342,8 +353,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
               controller.travelDate != null
                   ? DateFormat('yyyy-MM-dd').format(controller.travelDate!)
                   : "Select Date",
-              style:
-                  const TextStyle(fontFamily: 'Inter', color: Colors.black87),
+              style: TextStyle(
+                  fontFamily: 'Inter',
+                  color: Theme.of(context).colorScheme.onSurface),
             )
           ],
         ),
@@ -459,9 +471,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -487,10 +499,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   children: [
                     Text(
                       "${trip.fromCity} ➝ ${trip.toCity}",
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontFamily: 'Outfit',
                           fontWeight: FontWeight.bold,
-                          fontSize: 18),
+                          fontSize: 18,
+                          color: Theme.of(context).colorScheme.onSurface),
                     ),
                   ],
                 ),

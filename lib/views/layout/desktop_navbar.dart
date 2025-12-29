@@ -24,9 +24,11 @@ class DesktopNavBar extends StatelessWidget {
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 40),
-      decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, boxShadow: [
+        BoxShadow(
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
+            blurRadius: 4)
+      ]),
       child: Row(
         children: [
           // Logo Area
@@ -89,8 +91,7 @@ class DesktopNavBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(30),
-                      border:
-                          Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -108,7 +109,7 @@ class DesktopNavBar extends StatelessWidget {
                                     Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(width: 4),
                         Icon(Icons.keyboard_arrow_down,
-                            size: 16, color: Colors.grey.shade500),
+                            size: 16, color: Theme.of(context).hintColor),
                       ],
                     ),
                   ),
@@ -136,12 +137,16 @@ class DesktopNavBar extends StatelessWidget {
                           children: [
                             Icon(Icons.person,
                                 size: 20,
-                                color: isDark ? Colors.white : Colors.black54),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.7)),
                             const SizedBox(width: 12),
                             Text("Profile",
                                 style: TextStyle(
                                   fontFamily: 'Inter',
-                                  color: isDark ? Colors.white : Colors.black87,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 )),
                           ],
                         ),
@@ -154,12 +159,16 @@ class DesktopNavBar extends StatelessWidget {
                           children: [
                             Icon(Icons.favorite,
                                 size: 20,
-                                color: isDark ? Colors.white : Colors.black54),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.7)),
                             const SizedBox(width: 12),
                             Text("Favourites",
                                 style: TextStyle(
                                   fontFamily: 'Inter',
-                                  color: isDark ? Colors.white : Colors.black87,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 )),
                           ],
                         ),
@@ -172,12 +181,16 @@ class DesktopNavBar extends StatelessWidget {
                           children: [
                             Icon(Icons.settings,
                                 size: 20,
-                                color: isDark ? Colors.white : Colors.black54),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.7)),
                             const SizedBox(width: 12),
                             Text("Settings",
                                 style: TextStyle(
                                   fontFamily: 'Inter',
-                                  color: isDark ? Colors.white : Colors.black87,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 )),
                           ],
                         ),
@@ -189,28 +202,20 @@ class DesktopNavBar extends StatelessWidget {
                       PopupMenuItem(
                         value: 'theme',
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                    isDark ? Icons.light_mode : Icons.dark_mode,
-                                    size: 20,
-                                    color:
-                                        isDark ? Colors.white : Colors.black54),
-                                const SizedBox(width: 12),
-                                Text(
-                                    isDark
-                                        ? "Switch to Light Mode"
-                                        : "Switch to Dark Mode",
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.black87,
-                                    )),
-                              ],
-                            ),
+                            Icon(isDark ? Icons.light_mode : Icons.dark_mode,
+                                size: 20,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.7)),
+                            const SizedBox(width: 12),
+                            Text(isDark ? "Light Mode" : "Dark Mode",
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                )),
                           ],
                         ),
                       ),
@@ -258,9 +263,7 @@ class DesktopNavBar extends StatelessWidget {
                         }
                         break;
                       case 'settings':
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text("Settings coming soon")));
+                        // Settings logic
                         break;
                       case 'theme':
                         themeController.setTheme(
@@ -345,12 +348,10 @@ class DesktopNavBar extends StatelessWidget {
 
   Widget _navItem(BuildContext context, String label, int index) {
     final bool isActive = selectedIndex == index;
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
     // Explicit high contrast colors to avoid interpolation crashes
     final Color textColor = isActive
         ? AppTheme.primaryColor
-        : (isDark ? Colors.white : Colors.black);
+        : Theme.of(context).colorScheme.onSurface;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),

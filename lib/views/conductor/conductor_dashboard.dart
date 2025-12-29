@@ -104,13 +104,13 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
         final isDesktop = constraints.maxWidth > 900;
 
         return Scaffold(
-          backgroundColor: Colors.grey.shade50,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           bottomNavigationBar: !isDesktop
               ? widget.isAdminView
                   ? const AdminBottomNav(selectedIndex: 2)
                   : Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.05),
@@ -120,7 +120,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                         ],
                       ),
                       child: NavigationBar(
-                        backgroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).cardColor,
                         elevation: 0,
                         selectedIndex: _selectedIndex,
                         onDestinationSelected: (idx) =>
@@ -218,8 +218,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             width: double.infinity,
             padding: EdgeInsets.symmetric(
                 vertical: isDesktop ? 48 : 32, horizontal: isDesktop ? 40 : 24),
-            decoration: const BoxDecoration(
-                color: Colors.white,
+            decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
                 border: Border(bottom: BorderSide(color: Colors.black12))),
             child: Center(
               child: ConstrainedBox(
@@ -245,7 +245,9 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                                     fontFamily: 'Outfit',
                                     fontSize: isDesktop ? 32 : 24,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black87)),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface)),
                             Text("Here is your schedule for $_formattedDate.",
                                 style: TextStyle(
                                     fontFamily: 'Inter',
@@ -363,7 +365,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -591,7 +593,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(16)),
                 child: Column(
                   children: [
@@ -644,7 +646,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
         margin: const EdgeInsets.all(24),
         constraints: const BoxConstraints(maxWidth: 500),
         decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
@@ -665,10 +667,11 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             ),
             const SizedBox(height: 24),
             Text(name,
-                style: const TextStyle(
+                style: TextStyle(
                     fontFamily: 'Outfit',
                     fontSize: 24,
-                    fontWeight: FontWeight.bold)),
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface)),
             const Text("Senior Conductor",
                 style: TextStyle(fontFamily: 'Inter', color: Colors.grey)),
             const SizedBox(height: 32),
@@ -714,13 +717,15 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
           decoration: InputDecoration(
               prefixIcon: Icon(icon, color: AppTheme.primaryColor),
               filled: true,
-              fillColor: Colors.grey.shade50,
+              fillColor: Theme.of(context).cardColor,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade200)),
+                  borderSide:
+                      BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade200)),
+                  borderSide:
+                      BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
               hintText: "Enter City",
               hintStyle:
                   TextStyle(fontFamily: 'Inter', color: Colors.grey.shade400)),
@@ -747,17 +752,19 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             height: 56,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200)),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.calendar_today, color: AppTheme.primaryColor),
                 const SizedBox(width: 12),
                 Text(DateFormat('EEE, d MMM').format(_selectedDate),
-                    style: const TextStyle(
-                        fontFamily: 'Inter', fontWeight: FontWeight.w600)),
+                    style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(width: 12),
                 const Icon(Icons.arrow_drop_down, color: Colors.grey)
               ],
@@ -787,17 +794,18 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                    color: Colors.grey.shade100, shape: BoxShape.circle),
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    shape: BoxShape.circle),
                 child: Icon(Icons.event_busy,
                     size: 48, color: Colors.grey.shade400),
               ),
               const SizedBox(height: 24),
-              const Text("No trips found for today.",
+              Text("No trips found for today.",
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87)),
+                      color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 8),
               Text("Try changing your search location or check back later.",
                   textAlign: TextAlign.center,
