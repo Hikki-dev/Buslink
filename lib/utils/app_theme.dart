@@ -28,17 +28,17 @@ class AppTheme {
     primaryColor: primaryColor,
     scaffoldBackgroundColor: Colors.white,
     fontFamily: 'Outfit',
-    fontFamilyFallback: ['Montserrat', 'Inter', 'NotoSans', 'sans-serif'],
+    fontFamilyFallback: const ['Montserrat', 'Inter', 'NotoSans', 'sans-serif'],
     useMaterial3: true,
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
       elevation: 0,
-      iconTheme: IconThemeData(color: Colors.black),
+      iconTheme: IconThemeData(color: Colors.black, size: 28), // Bolder Icons
       titleTextStyle: TextStyle(
         fontFamily: 'Outfit',
         color: Colors.black,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
+        fontSize: 22, // Larger
+        fontWeight: FontWeight.w800, // Extra Bold
       ),
       surfaceTintColor: Colors.transparent,
     ),
@@ -49,43 +49,43 @@ class AppTheme {
       surface: Colors.white,
       onPrimary: Colors.white,
       onSurface: Colors.black,
-      outline: Colors.grey.shade200,
+      outline: Colors.black12, // Darker outline
     ),
     textTheme: const TextTheme(
       headlineLarge: TextStyle(
         fontFamily: 'Cormorant',
-        fontSize: 52,
-        fontWeight: FontWeight.w800,
+        fontSize: 56, // Larger
+        fontWeight: FontWeight.w900, // Black
         color: Colors.black,
         height: 1.1,
       ),
       headlineSmall: TextStyle(
         fontFamily: 'Outfit',
-        fontSize: 36,
-        fontWeight: FontWeight.bold,
-        color: Colors.black,
+        fontSize: 40, // Larger
+        fontWeight: FontWeight.w800, // Extra Bold
+        color: Colors.black, // Pure Black
       ),
       titleLarge: TextStyle(
         fontFamily: 'Outfit',
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
+        fontSize: 30, // Larger
+        fontWeight: FontWeight.w800, // Extra Bold
         color: Colors.black,
       ),
       bodyLarge: TextStyle(
           fontFamily: 'Montserrat',
-          fontSize: 18,
+          fontSize: 20, // Larger base size for elderly
           color: Colors.black,
-          fontWeight: FontWeight.bold),
+          fontWeight: FontWeight.w700), // Bold
       bodyMedium: TextStyle(
           fontFamily: 'Montserrat',
-          fontSize: 16,
+          fontSize: 18, // Larger
           color: Colors.black,
-          fontWeight: FontWeight.bold),
+          fontWeight: FontWeight.w600), // Semi-Bold
       labelLarge: TextStyle(
         fontFamily: 'Inter',
         fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: Colors.white, // For Elevated Buttons
+        fontWeight: FontWeight.w800, // Extra Bold
+        color: Colors.white,
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -93,126 +93,137 @@ class AppTheme {
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
+          borderRadius: BorderRadius.circular(12.0),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+        elevation: 2,
         textStyle: const TextStyle(
-            fontFamily: 'Outfit', fontSize: 16, fontWeight: FontWeight.bold),
+            fontFamily: 'Outfit', fontSize: 18, fontWeight: FontWeight.w800),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: primaryColor,
-        side: const BorderSide(color: primaryColor, width: 1.5),
+        side:
+            const BorderSide(color: primaryColor, width: 2.5), // Thicker border
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
+          borderRadius: BorderRadius.circular(12.0),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
         textStyle: const TextStyle(
-            fontFamily: 'Outfit', fontSize: 14, fontWeight: FontWeight.bold),
+            fontFamily: 'Outfit', fontSize: 16, fontWeight: FontWeight.w800),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: surfaceColor,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.0),
-        borderSide: const BorderSide(color: primaryColor, width: 2),
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: const BorderSide(color: primaryColor, width: 2.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.0),
-        borderSide: const BorderSide(color: Colors.redAccent),
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
       ),
-      hintStyle: TextStyle(
+      hintStyle: const TextStyle(
           fontFamily: 'Inter',
-          color: Colors.grey.shade500,
-          fontWeight: FontWeight.bold),
+          fontSize: 16,
+          color: Colors.black54, // Darker hint
+          fontWeight: FontWeight.w600),
       labelStyle: const TextStyle(
           fontFamily: 'Inter',
+          fontSize: 16,
           color: Colors.black,
-          fontWeight: FontWeight.bold),
+          fontWeight: FontWeight.w800),
     ),
     cardTheme: CardThemeData(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(20), // Rounder cards
+        side: BorderSide(
+            color: Colors.grey.shade300, width: 1.5), // Visible border
       ),
       color: Colors.white,
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
     ),
   );
 
   static final ThemeData darkTheme = ThemeData(
     primaryColor: primaryColor,
-    scaffoldBackgroundColor: const Color(0xFF0A0B10), // Deep Premium Navy Black
+    scaffoldBackgroundColor: const Color(0xFF0D0D0D), // Almost Black
     fontFamily: 'Outfit',
-    fontFamilyFallback: ['Montserrat', 'Inter', 'NotoSans', 'sans-serif'],
+    fontFamilyFallback: const ['Montserrat', 'Inter', 'NotoSans', 'sans-serif'],
     useMaterial3: true,
     brightness: Brightness.dark,
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF0A0A0B),
+      backgroundColor: Color(0xFF0D0D0D),
       elevation: 0,
+      iconTheme: IconThemeData(color: Colors.white, size: 28),
+      titleTextStyle: TextStyle(
+        fontFamily: 'Outfit',
+        color: Colors.white,
+        fontSize: 22,
+        fontWeight: FontWeight.w800,
+      ),
     ),
     colorScheme: ColorScheme.fromSeed(
       seedColor: primaryColor,
       brightness: Brightness.dark,
-      surface: const Color(0xFF161821), // Lighter Navy Surface
+      surface: const Color(0xFF1A1A1A), // Dark Grey Surface
       onSurface: Colors.white,
       primary: primaryColor,
     ),
     cardTheme: CardThemeData(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1),
       ),
-      color: const Color(0xFF161821),
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      color: const Color(0xFF1A1A1A),
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
     ),
     textTheme: const TextTheme(
       headlineLarge: TextStyle(
         fontFamily: 'Cormorant',
-        fontSize: 52,
-        fontWeight: FontWeight.bold,
+        fontSize: 56,
+        fontWeight: FontWeight.w900,
         color: Colors.white,
       ),
       headlineSmall: TextStyle(
         fontFamily: 'Outfit',
-        fontSize: 36,
-        fontWeight: FontWeight.bold,
+        fontSize: 40,
+        fontWeight: FontWeight.w800,
         color: Colors.white,
       ),
       titleLarge: TextStyle(
         fontFamily: 'Outfit',
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
+        fontSize: 30,
+        fontWeight: FontWeight.w800,
         color: Colors.white,
       ),
       bodyLarge: TextStyle(
           fontFamily: 'Montserrat',
-          fontSize: 18,
+          fontSize: 20,
           color: Colors.white,
-          fontWeight: FontWeight.bold),
+          fontWeight: FontWeight.w700),
       bodyMedium: TextStyle(
           fontFamily: 'Montserrat',
-          fontSize: 16,
-          color: Colors.white, // High Contrast White
-          fontWeight: FontWeight.bold),
+          fontSize: 18,
+          color: Colors.white,
+          fontWeight: FontWeight.w600),
       labelLarge: TextStyle(
         fontFamily: 'Inter',
         fontSize: 18,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w800,
         color: Colors.white,
       ),
     ),
@@ -221,41 +232,51 @@ class AppTheme {
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
+          borderRadius: BorderRadius.circular(12.0),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
         textStyle: const TextStyle(
-            fontFamily: 'Outfit', fontSize: 16, fontWeight: FontWeight.bold),
+            fontFamily: 'Outfit', fontSize: 18, fontWeight: FontWeight.w800),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.white,
-        side: const BorderSide(color: Colors.white, width: 1.5),
+        side: const BorderSide(color: Colors.white, width: 2),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
+          borderRadius: BorderRadius.circular(12.0),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
         textStyle: const TextStyle(
-            fontFamily: 'Outfit', fontSize: 14, fontWeight: FontWeight.w600),
+            fontFamily: 'Outfit', fontSize: 16, fontWeight: FontWeight.w700),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: const Color(0xFF161A1D),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      fillColor: const Color(0xFF262626), // Lighter than background
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.0),
-        borderSide: const BorderSide(color: primaryColor, width: 2),
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: const BorderSide(color: primaryColor, width: 2.5),
       ),
+      hintStyle: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 16,
+          color: Colors.white60, // Clearer hint
+          fontWeight: FontWeight.w600),
+      labelStyle: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 16,
+          color: Colors.white,
+          fontWeight: FontWeight.w800),
     ),
   );
 }

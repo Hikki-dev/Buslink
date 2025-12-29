@@ -18,7 +18,7 @@ class SeatSelectionScreen extends StatelessWidget {
   const SeatSelectionScreen(
       {super.key,
       required this.trip,
-      this.showBackButton = false,
+      this.showBackButton = true,
       this.isConductorMode = false});
 
   @override
@@ -37,8 +37,10 @@ class SeatSelectionScreen extends StatelessWidget {
       appBar: showAppBar
           ? AppBar(
               title: const Text("Select Seats",
-                  style: TextStyle(fontFamily: 'Outfit', 
-                      fontWeight: FontWeight.bold, color: Colors.black)),
+                  style: TextStyle(
+                      fontFamily: 'Outfit',
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black)),
               centerTitle: true,
               backgroundColor: Colors.white,
               elevation: 0,
@@ -248,20 +250,23 @@ class SeatSelectionScreen extends StatelessWidget {
                                   children: [
                                     Text(
                                         "${selectedSeats.length} Seats Selected",
-                                        style: TextStyle(fontFamily: 'Inter', 
+                                        style: TextStyle(
+                                            fontFamily: 'Inter',
                                             color: Colors.grey.shade600,
                                             fontSize: 13,
                                             fontWeight: FontWeight.w500)),
                                     const SizedBox(height: 4),
                                     Text(
                                         "LKR ${(trip.price * selectedSeats.length).toStringAsFixed(0)}",
-                                        style: const TextStyle(fontFamily: 'Outfit', 
+                                        style: const TextStyle(
+                                            fontFamily: 'Outfit',
                                             fontSize: 28,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.black)),
                                     Text(selectedSeats.join(", "),
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontFamily: 'Outfit', 
+                                        style: const TextStyle(
+                                            fontFamily: 'Outfit',
                                             color: AppTheme.primaryColor))
                                   ],
                                 ),
@@ -294,7 +299,8 @@ class SeatSelectionScreen extends StatelessWidget {
                                     isConductorMode
                                         ? "Issue Ticket (Cash)"
                                         : "Proceed to Pay",
-                                    style: const TextStyle(fontFamily: 'Outfit', 
+                                    style: const TextStyle(
+                                        fontFamily: 'Outfit',
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
                                         color: Colors.white)),
@@ -335,11 +341,14 @@ class SeatSelectionScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold)),
           ),
         Text(trip.operatorName,
-            style:
-                const TextStyle(fontFamily: 'Outfit', fontSize: 24, fontWeight: FontWeight.bold)),
+            style: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 24,
+                fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Text("${trip.fromCity} ➔ ${trip.toCity}",
-            style: const TextStyle(fontFamily: 'Inter', color: Colors.grey, fontSize: 16)),
+            style: const TextStyle(
+                fontFamily: 'Inter', color: Colors.grey, fontSize: 16)),
       ],
     );
   }
@@ -354,6 +363,9 @@ class SeatSelectionScreen extends StatelessWidget {
         const SizedBox(width: 30),
         _legendItem(Colors.red.shade300, Colors.transparent, "Booked",
             icon: Icons.close),
+        const SizedBox(width: 30),
+        _legendItem(Colors.amber, Colors.transparent, "Blocked",
+            icon: Icons.block),
       ],
     );
   }
@@ -372,7 +384,8 @@ class SeatSelectionScreen extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Text(label,
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w500))
+            style: const TextStyle(
+                fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w500))
       ],
     );
   }
@@ -396,13 +409,15 @@ class SeatSelectionScreen extends StatelessWidget {
         context: context,
         builder: (ctx) => AlertDialog(
               title: const Text("Issue Cash Ticket",
-                  style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text("Review Booking:",
-                      style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold)),
+                      style: TextStyle(
+                          fontFamily: 'Inter', fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text("Seats: ${controller.selectedSeats.join(', ')}"),
                   Text("Total Amount: LKR ${total.toStringAsFixed(0)}",

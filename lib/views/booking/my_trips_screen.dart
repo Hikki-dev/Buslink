@@ -11,7 +11,7 @@ import '../../utils/app_theme.dart';
 import '../ticket/ticket_screen.dart';
 import '../results/bus_list_screen.dart';
 import '../layout/desktop_navbar.dart';
-import '../layout/mobile_navbar.dart';
+// import '../layout/mobile_navbar.dart';
 import '../layout/custom_app_bar.dart';
 
 class MyTripsScreen extends StatelessWidget {
@@ -34,11 +34,17 @@ class MyTripsScreen extends StatelessWidget {
               elevation: 4,
               child: const DesktopNavBar(selectedIndex: 1),
             ),
+          // App Bar Logic: currently MyTripsScreen has a CustomAppBar.
+          // We need to keep the AppBar logic but remove the BottomNav.
+          // If we remove Scaffold, we can't use 'appBar' property easily unless we wrap in Scaffold but WITHOUT BottomNav.
+          // Actually, CustomerMainScreen has a BODY that is IndexedStack -> MyTripsScreen.
+          // If MyTripsScreen returns a Scaffold, it's fine as long as it doesn't have a BottomNavigationBar.
+          // So we just REMOVE bottomNavigationBar.
+
           Expanded(
             child: Scaffold(
-              // REMOVED hardcoded grey.shade50
-              bottomNavigationBar:
-                  isDesktop ? null : const MobileBottomNav(selectedIndex: 1),
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              // Removed BottomNavigationBar
               appBar: CustomAppBar(
                 hideActions: isDesktop,
                 leading: showBackButton && !isDesktop

@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_theme.dart';
-import '../../home/home_screen.dart';
+
 import '../../conductor/conductor_dashboard.dart';
 import '../admin_dashboard.dart';
 import '../admin_user_management.dart';
+import '../../customer_main_screen.dart';
 
 class AdminNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -89,7 +90,8 @@ class AdminNavBar extends StatelessWidget {
                 () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => const HomeScreen(isAdminView: true)))),
+                        builder: (_) => const CustomerMainScreen(
+                            isAdminView: true, initialIndex: 0)))),
             _navLink(
                 context,
                 "Conductor View",
@@ -123,8 +125,8 @@ class AdminNavBar extends StatelessWidget {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) =>
-                                const HomeScreen(isAdminView: true)));
+                            builder: (_) => const CustomerMainScreen(
+                                isAdminView: true, initialIndex: 0)));
                     break;
                   case 'Conductor View':
                     Navigator.push(

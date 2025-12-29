@@ -47,7 +47,7 @@ class OngoingTripCard extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800, // Extra Bold
                       color: isDark ? Colors.white : const Color(0xFF2D3142),
                     ),
                   ),

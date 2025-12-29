@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 import '../../data/cities.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:buslink/services/firestore_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/trip_model.dart';
-import '../../services/firestore_service.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/language_provider.dart';
@@ -17,9 +18,6 @@ import 'widgets/ongoing_trip_card.dart';
 import 'widgets/favorites_section.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
-import '../layout/mobile_navbar.dart';
-
-import '../layout/custom_app_bar.dart';
 
 // Mock Data for Popular Destinatinos
 final List<Map<String, dynamic>> _allDestinations = [
@@ -90,6 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isRoundTrip = false;
   bool _isBulkBooking = false;
+  DateTime? _selectedReturnDate; // NEW: Return Date State
 
   List<Map<String, dynamic>> _currentDestinations = [];
 
@@ -116,6 +115,16 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_originController.text.isEmpty || _destinationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter origin and destination')),
+      );
+      return;
+    }
+
+    // NEW: Round Trip Validation
+    if (_isRoundTrip && _selectedReturnDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'Please select a Return Date for Round Trip booking.')), // Professional Error
       );
       return;
     }
@@ -150,6 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
             colorScheme: ColorScheme.fromSeed(
               seedColor: AppTheme.primaryColor,
               primary: AppTheme.primaryColor,
+              brightness: Theme.of(context).brightness,
             ),
           ),
           child: child!,
@@ -167,101 +177,74 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final bool isDesktop = MediaQuery.of(context).size.width > 900;
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: isDesktop
-          ? null
-          : CustomAppBar(isAdminView: widget.isAdminView), // Use CustomAppBar
-      // Actions moved to CustomAppBar
-      bottomNavigationBar:
-          isDesktop ? null : const MobileBottomNav(selectedIndex: 0),
-      body: Column(
-        children: [
-          if (widget.isAdminView)
-            Container(
-              width: double.infinity,
-              color: Colors.amber,
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Welcome Admin - Preview Mode",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.black)),
-                  const SizedBox(width: 16),
-                  InkWell(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12)),
-                      child: const Text("EXIT",
-                          style: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          Expanded(
-            child: CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                if (isDesktop)
-                  const SliverToBoxAdapter(
-                      child: DesktopNavBar(selectedIndex: 0)),
-                SliverToBoxAdapter(
-                  child: _HeroSection(
-                    isDesktop: isDesktop,
-                    originController: _originController,
-                    destinationController: _destinationController,
-                    originFocusNode: _originFocusNode,
-                    destinationFocusNode: _destinationFocusNode,
-                    selectedDate: _selectedDate,
-                    onDateTap: () => _selectDate(context),
-                    onSearchTap: _searchBuses,
-                    isRoundTrip: _isRoundTrip,
-                    isBulkBooking: _isBulkBooking,
-                    onRoundTripChanged: (val) =>
-                        setState(() => _isRoundTrip = val),
-                    onBulkBookingChanged: (val) =>
-                        setState(() => _isBulkBooking = val),
-                  ),
-                ),
-                // --- ONGOING TRIPS & FAVORITES SECTION ---
-                StreamBuilder<User?>(
-                    stream: FirebaseAuth.instance.authStateChanges(),
-                    builder: (context, snapshot) {
-                      final user = snapshot.data;
-                      if (user == null) return const SliverToBoxAdapter();
+    // For Desktop, we still might want the scaffold if it's running standalone?
+    // But now proper entry is CustomerMainScreen.
+    // If isDesktop is true, we might want to return just the content.
+    // The previous Scaffold had 'extendBodyBehindAppBar: true'.
 
-                      return SliverToBoxAdapter(
-                        child: _buildDashboardSection(context, user, isDesktop),
-                      );
-                    }),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  sliver: SliverToBoxAdapter(
-                    child: _FeaturesSection(isDesktop: isDesktop),
-                  ),
+    // If we just return the CustomScrollView, it needs a Material/Scaffold ancestor for some widgets?
+    // CustomerMainScreen provides Scaffold.
+
+    return Column(
+      children: [
+        Expanded(
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              if (isDesktop)
+                const SliverToBoxAdapter(
+                    child: DesktopNavBar(selectedIndex: 0)),
+              SliverToBoxAdapter(
+                child: _HeroSection(
+                  isDesktop: isDesktop,
+                  originController: _originController,
+                  destinationController: _destinationController,
+                  originFocusNode: _originFocusNode,
+                  destinationFocusNode: _destinationFocusNode,
+                  selectedDate: _selectedDate,
+                  onDateTap: () => _selectDate(context),
+                  onSearchTap: _searchBuses,
+                  isRoundTrip: _isRoundTrip,
+                  isBulkBooking: _isBulkBooking,
+                  // NEW: Pass Return Date Logic
+                  selectedReturnDate: _selectedReturnDate,
+                  onReturnDateChanged: (val) =>
+                      setState(() => _selectedReturnDate = val),
+                  onRoundTripChanged: (val) =>
+                      setState(() => _isRoundTrip = val),
+                  onBulkBookingChanged: (val) =>
+                      setState(() => _isBulkBooking = val),
                 ),
-                SliverToBoxAdapter(
-                  child: _PopularDestinationsGrid(
-                    isDesktop: isDesktop,
-                    destinations: _currentDestinations,
-                  ),
+              ),
+              // --- ONGOING TRIPS & FAVORITES SECTION ---
+              StreamBuilder<User?>(
+                  stream: FirebaseAuth.instance.authStateChanges(),
+                  builder: (context, snapshot) {
+                    final user = snapshot.data;
+                    if (user == null) return const SliverToBoxAdapter();
+
+                    return SliverToBoxAdapter(
+                      child: _buildDashboardSection(context, user, isDesktop),
+                    );
+                  }),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                sliver: SliverToBoxAdapter(
+                  child: _FeaturesSection(isDesktop: isDesktop),
                 ),
-                const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
-                if (isDesktop) const SliverToBoxAdapter(child: AppFooter()),
-              ],
-            ),
+              ),
+              SliverToBoxAdapter(
+                child: _PopularDestinationsGrid(
+                  isDesktop: isDesktop,
+                  destinations: _currentDestinations,
+                ),
+              ),
+              const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+              if (isDesktop) const SliverToBoxAdapter(child: AppFooter()),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -273,7 +256,6 @@ class _HomeScreenState extends State<HomeScreen> {
           stream: Provider.of<FirestoreService>(context, listen: false)
               .getUserTickets(user.uid),
           builder: (context, ticketSnap) {
-            // Logic to find active ticket
             Ticket? activeTicket;
             if (ticketSnap.hasData && ticketSnap.data!.isNotEmpty) {
               final tickets = ticketSnap.data!
@@ -290,36 +272,26 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context, favSnap) {
                 final favorites = favSnap.data ?? [];
 
-                if (activeTicket == null && favorites.isEmpty) {
-                  return const SizedBox.shrink();
-                }
+                final favoritesWidget = FavoritesSection(
+                  favorites: favorites, // Pass list (empty or not)
+                  onTap: (fav) {
+                    setState(() {
+                      _originController.text = fav['fromCity'];
+                      _destinationController.text = fav['toCity'];
+                      _searchBuses();
+                    });
+                  },
+                );
 
-                // Widget for Favorites
-                final favoritesWidget = favorites.isEmpty
-                    ? const SizedBox.shrink()
-                    : FavoritesSection(
-                        favorites: favorites,
-                        onTap: (fav) {
-                          setState(() {
-                            _originController.text = fav['fromCity'];
-                            _destinationController.text = fav['toCity'];
-                            _searchBuses();
-                          });
-                        },
-                      );
-
-                // If no active ticket, just show favorites (which might be empty -> shrink)
                 if (activeTicket == null) {
                   return favoritesWidget;
                 }
 
-                // If active ticket, fetch Trip details
                 return StreamBuilder<Trip>(
                   stream: Provider.of<FirestoreService>(context, listen: false)
                       .getTripStream(activeTicket.tripId),
                   builder: (context, tripSnap) {
                     if (!tripSnap.hasData) {
-                      // Trip data loading or failed -> Show favorites at least
                       return favoritesWidget;
                     }
 
@@ -329,31 +301,43 @@ class _HomeScreenState extends State<HomeScreen> {
                       paidAmount: activeTicket.totalAmount,
                     );
 
-                    // --- LAYOUT LOGIC ---
-                    if (isDesktop && favorites.isNotEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 20),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(child: tripWidget),
-                            const SizedBox(width: 24),
-                            Expanded(child: favoritesWidget),
-                          ],
+                    // Wrap contents
+                    // Note: ActiveTicketCard & FavoritesSection might already have containers.
+                    // If they do, we shouldn't double wrap.
+                    // Checking code: ActiveTicketCard usually has its own style.
+                    // User said "properly put like why is it stretched... make it somewhat similar to the search bar".
+                    // The screenshots show they are full width black blocks.
+                    // I will wrap them in a constrained box to avoid "stretch" on desktop, but fill on mobile.
+
+                    // Since TripWidget and FavoritesWidget are instances of `ActiveTicketCard` and `FavoritesSection`
+                    // I'll wrap them here.
+
+                    if (isDesktop) {
+                      return Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 900),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            child: Column(
+                              children: [
+                                favoritesWidget,
+                                const SizedBox(height: 24),
+                                tripWidget,
+                              ],
+                            ),
+                          ),
                         ),
                       );
                     } else {
-                      // Mobile or no favorites -> Stack
-                      return Column(
-                        children: [
-                          Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: isDesktop ? 24 : 0),
-                              child: tripWidget),
-                          const SizedBox(height: 24),
-                          favoritesWidget,
-                        ],
+                      return Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            favoritesWidget,
+                            const SizedBox(height: 16),
+                            tripWidget,
+                          ],
+                        ),
                       );
                     }
                   },
@@ -378,6 +362,9 @@ class _HeroSection extends StatefulWidget {
   final VoidCallback onSearchTap;
   final bool isRoundTrip;
   final bool isBulkBooking;
+  // NEW: Return Date Fields
+  final DateTime? selectedReturnDate;
+  final ValueChanged<DateTime> onReturnDateChanged;
   final ValueChanged<bool> onRoundTripChanged;
   final ValueChanged<bool> onBulkBookingChanged;
 
@@ -392,6 +379,8 @@ class _HeroSection extends StatefulWidget {
     required this.onSearchTap,
     required this.isRoundTrip,
     required this.isBulkBooking,
+    required this.selectedReturnDate,
+    required this.onReturnDateChanged,
     required this.onRoundTripChanged,
     required this.onBulkBookingChanged,
   });
@@ -463,6 +452,7 @@ class _HeroSectionState extends State<_HeroSection> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final user = FirebaseAuth.instance.currentUser;
 
     return SizedBox(
       child: Stack(
@@ -483,7 +473,7 @@ class _HeroSectionState extends State<_HeroSection> {
               ),
             ),
           ),
-          // Gradient Overlay
+          // Heavy Red Gradient Overlay
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -491,8 +481,9 @@ class _HeroSectionState extends State<_HeroSection> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.3),
-                    Colors.black.withValues(alpha: 0.7),
+                    AppTheme.primaryColor.withValues(alpha: 0.3),
+                    AppTheme.primaryColor.withValues(alpha: 0.6),
+                    Colors.black.withValues(alpha: 0.9),
                   ],
                 ),
               ),
@@ -506,7 +497,7 @@ class _HeroSectionState extends State<_HeroSection> {
                 minHeight: widget.isDesktop ? 600 : 550,
               ),
               padding: EdgeInsets.only(
-                  top: widget.isDesktop ? 100 : 140, // INCREASED TOP PADDING
+                  top: widget.isDesktop ? 100 : 120,
                   bottom: 40,
                   left: 20,
                   right: 20),
@@ -514,40 +505,94 @@ class _HeroSectionState extends State<_HeroSection> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    "Find Your Bus Ticket",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'AudioWide',
-                      fontSize:
-                          widget.isDesktop ? 48 : 32, // Responsive Font Size
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          offset: const Offset(2, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
+                  // DB-Driven Greeting
+                  if (user != null)
+                    FutureBuilder<DocumentSnapshot>(
+                      future: FirestoreService().getUserData(user.uid),
+                      builder: (context, snapshot) {
+                        String name = "";
+
+                        // 1. Try Display Name
+                        if (user.displayName != null &&
+                            user.displayName!.isNotEmpty) {
+                          name = user.displayName!.split(' ').first;
+                        }
+
+                        // 2. Try Firestore Data (Best Source)
+                        if (snapshot.hasData && snapshot.data!.exists) {
+                          final data =
+                              snapshot.data!.data() as Map<String, dynamic>;
+                          if (data.containsKey('name') &&
+                              data['name'].toString().isNotEmpty) {
+                            name = data['name'].toString().split(' ').first;
+                          }
+                        }
+
+                        // 3. Last Resort: Extract from Email (e.g. admin@buslink -> Admin)
+                        if (name.isEmpty && user.email != null) {
+                          final emailName = user.email!.split('@').first;
+                          // Capitalize first letter
+                          name = emailName[0].toUpperCase() +
+                              emailName.substring(1);
+                        }
+
+                        // 4. Fallback if somehow still empty (Should catch all)
+                        if (name.isEmpty) name = "Friend";
+
+                        return Text(
+                          "Hi, $name",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 56,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1.0,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                offset: const Offset(2, 4),
+                                blurRadius: 12,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    )
+                  else
+                    // Fallback if NOT logged in (User requested no "Traveler")
+                    Text(
+                      "Welcome",
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 56,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1.0,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            offset: const Offset(2, 4),
+                            blurRadius: 12,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Text(
-                    _heroData[_currentImageIndex]["subtitle"]!,
+                    "Book your bus tickets instantly with BusLink. Reliable, fast, and secure.",
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontFamily: 'Inter',
+                      fontFamily:
+                          'Outfit', // Changed to Outfit for cleaner look
                       fontSize: 18,
-                      color: Colors.white,
-                      height: 1.5,
-                      fontWeight: FontWeight.w500,
+                      color: Colors.white, // Slightly transparent
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 40),
                   widget.isDesktop
-                      ? _buildDesktopSearch(isDark)
+                      ? _buildDesktopSearchCard(isDark)
                       : _buildMobileSearch(isDark),
                 ],
               ),
@@ -558,89 +603,384 @@ class _HeroSectionState extends State<_HeroSection> {
     );
   }
 
-  Widget _buildDesktopSearch(bool isDark) {
+  // New "Card Style" Desktop Search
+  Widget _buildDesktopSearchCard(bool isDark) {
     return Container(
+      width: 900, // Constrain width for the "Card" look
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161821) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).cardColor, // Adaptive Color
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
           )
         ],
-        border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            flex: 2,
-            child: _buildSearchInput(
-              controller: widget.originController,
-              focusNode: widget.originFocusNode,
-              icon: Icons.location_on,
-              label: 'From',
-              hint: 'Enter origin',
-              isLast: false,
-              isDark: isDark,
-            ),
-          ),
-          Container(
-              height: 40,
-              width: 1,
-              color: isDark ? Colors.white12 : Colors.black12),
-          Expanded(
-            flex: 2,
-            child: _buildSearchInput(
-              controller: widget.destinationController,
-              focusNode: widget.destinationFocusNode,
-              icon: Icons.navigation,
-              label: 'To',
-              hint: 'Enter destination',
-              isLast: false,
-              isDark: isDark,
-            ),
-          ),
-          Container(
-              height: 40, width: 1, color: Theme.of(context).dividerColor),
-          Expanded(
-            flex: 1,
-            child: InkWell(
-              onTap: widget.onDateTap,
-              child: _buildSearchDisplay(
-                icon: Icons.calendar_today,
-                label: 'Date',
-                value: DateFormat('EEE, d MMM').format(widget.selectedDate),
-                isDark: isDark,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
+          // 1. Tabs View
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SizedBox(
-              height: 50,
-              width: 150,
-              child: ElevatedButton(
-                onPressed: widget.onSearchTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start, // Left aligned tabs
+              children: [
+                _buildTabItem("One Way", !widget.isRoundTrip,
+                    () => widget.onRoundTripChanged(false)),
+                const SizedBox(width: 32),
+                _buildTabItem("Round Trip", widget.isRoundTrip,
+                    () => widget.onRoundTripChanged(true)),
+              ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
+
+          // 2. Bulk Booking Strip
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+            color: AppTheme.primaryColor
+                .withValues(alpha: 0.08), // Light Red Strip
+            child: Row(
+              children: [
+                SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: Checkbox(
+                    value: widget.isBulkBooking,
+                    activeColor: AppTheme.primaryColor,
+                    onChanged: (v) => widget.onBulkBookingChanged(v!),
                   ),
                 ),
-                child: const Text(
-                  'Search',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                const SizedBox(width: 12),
+                Text(
+                  "Bulk / Multi-day Booking",
+                  style: TextStyle(
+                    color: isDark
+                        ? Colors.white
+                        : Colors.black.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
+              ],
+            ),
+          ),
+
+          // 3. Inputs Row
+          Padding(
+            padding:
+                const EdgeInsets.only(left: 40, right: 20, top: 24, bottom: 24),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: _buildInputNoBorder(
+                    controller: widget.originController,
+                    focusNode: widget.originFocusNode,
+                    icon: Icons.my_location, // Target Icon
+                    hint: 'Where from?',
+                    isDark: isDark,
+                  ),
+                ),
+                Container(
+                  height: 30,
+                  width: 1,
+                  color: Colors.grey.shade300,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: _buildInputNoBorder(
+                    controller: widget.destinationController,
+                    focusNode: widget.destinationFocusNode,
+                    icon: Icons.location_on, // Pin Icon
+                    hint: 'Where to?',
+                    isDark: isDark,
+                  ),
+                ),
+                Container(
+                  height: 30,
+                  width: 1,
+                  color: Colors.grey.shade300,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                // DEPARTURE DATE
+                Expanded(
+                  flex: 2,
+                  child: InkWell(
+                    onTap: widget.onDateTap,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_month,
+                            color: AppTheme.primaryColor, size: 22),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Departure",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark
+                                    ? Colors.white70
+                                    : Colors.grey.shade600,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              DateFormat('EEE, d MMM')
+                                  .format(widget.selectedDate),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isDark ? Colors.white : Colors.black87,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // RETURN DATE (Only if Round Trip)
+                if (widget.isRoundTrip) ...[
+                  Container(
+                    height: 30,
+                    width: 1,
+                    color: Colors.grey.shade300,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: InkWell(
+                      onTap: () async {
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: widget.selectedReturnDate ??
+                              widget.selectedDate.add(const Duration(days: 1)),
+                          firstDate: widget.selectedDate,
+                          lastDate: DateTime(2026),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: ColorScheme.fromSeed(
+                                  seedColor: AppTheme.primaryColor,
+                                  primary: AppTheme.primaryColor,
+                                  brightness: Theme.of(context).brightness,
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+                        if (picked != null) {
+                          widget.onReturnDateChanged(picked);
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          const Icon(Icons.event_repeat,
+                              color: AppTheme.primaryColor, size: 22),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Return",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.grey.shade600,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                widget.selectedReturnDate != null
+                                    ? DateFormat('EEE, d MMM')
+                                        .format(widget.selectedReturnDate!)
+                                    : "Select Date",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: widget.selectedReturnDate != null
+                                      ? Colors.black87
+                                      : Colors.grey.shade400,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 22),
+                SizedBox(
+                  height: 54, // Slightly taller
+                  width: 180, // Wider to prevent wrapping
+                  child: ElevatedButton(
+                    onPressed: widget.onSearchTap,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 8, // More pop
+                      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12), // More rounded
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.search, size: 20),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'SEARCH', // concise
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTabItem(String label, bool isActive, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isActive ? AppTheme.primaryColor : Colors.transparent,
+              width: 3,
+            ),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? AppTheme.primaryColor : Colors.grey.shade500,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputNoBorder({
+    required TextEditingController controller,
+    required IconData icon,
+    required String hint,
+    required FocusNode focusNode,
+    required bool isDark,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: AppTheme.primaryColor, size: 22),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // No label, just hint as placeholder if empty
+              RawAutocomplete<String>(
+                textEditingController: controller,
+                focusNode: focusNode,
+                optionsBuilder: (TextEditingValue textEditingValue) {
+                  if (textEditingValue.text.isEmpty) {
+                    return const Iterable<String>.empty();
+                  }
+                  return kSriLankanCities.where((String option) {
+                    return option
+                        .toLowerCase()
+                        .contains(textEditingValue.text.toLowerCase());
+                  });
+                },
+                optionsViewBuilder: (context, onSelected, options) {
+                  return Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      elevation: 4.0,
+                      color: isDark ? const Color(0xFF1E2129) : Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 300,
+                        constraints: const BoxConstraints(maxHeight: 200),
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: options.length,
+                          itemBuilder: (context, index) {
+                            final String option = options.elementAt(index);
+                            return ListTile(
+                              title: Text(option,
+                                  style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87)),
+                              onTap: () => onSelected(option),
+                              hoverColor: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.grey.shade100,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                fieldViewBuilder: (context, fieldController, fieldFocusNode,
+                    onFieldSubmitted) {
+                  return TextField(
+                    controller: fieldController,
+                    focusNode: fieldFocusNode,
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : Colors.black87),
+                    decoration: InputDecoration(
+                      hintText: hint,
+                      hintStyle: TextStyle(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.5)
+                              : Colors.grey.shade400,
+                          fontWeight: FontWeight.w600),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none, // Totally clean
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                      filled: false,
+                    ),
+                    onSubmitted: (val) => onFieldSubmitted(),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -916,43 +1256,6 @@ class _HeroSectionState extends State<_HeroSection> {
                     );
                   },
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchDisplay({
-    required IconData icon,
-    required String label,
-    required String value,
-    required bool isDark,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: isDark ? Colors.white70 : Colors.black87, size: 20),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(label,
-                    style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        color: isDark ? Colors.white70 : Colors.black54,
-                        fontWeight: FontWeight.w600)),
-                Text(value,
-                    style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: isDark ? Colors.white : Colors.black)),
               ],
             ),
           ),

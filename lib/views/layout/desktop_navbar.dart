@@ -4,11 +4,9 @@ import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
 import '../support/support_screen.dart';
-import '../home/home_screen.dart';
+
 import '../auth/login_screen.dart';
-import '../booking/my_trips_screen.dart';
-import '../favorites/favorites_screen.dart';
-import '../profile/profile_screen.dart';
+import '../customer_main_screen.dart';
 
 class DesktopNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -37,7 +35,9 @@ class DesktopNavBar extends StatelessWidget {
               // Always go to Home if logo clicked
               Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  MaterialPageRoute(
+                      builder: (_) =>
+                          const CustomerMainScreen(initialIndex: 0)),
                   (route) => false);
             },
             child: const Row(
@@ -246,20 +246,24 @@ class DesktopNavBar extends StatelessWidget {
                         if (onTap != null) {
                           onTap!(3);
                         } else {
-                          Navigator.push(
+                          Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) => const ProfileScreen()));
+                                  builder: (_) => const CustomerMainScreen(
+                                      initialIndex: 3)),
+                              (route) => false);
                         }
                         break;
                       case 'favorites':
                         if (onTap != null) {
                           onTap!(2);
                         } else {
-                          Navigator.push(
+                          Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) => const FavoritesScreen()));
+                                  builder: (_) => const CustomerMainScreen(
+                                      initialIndex: 2)),
+                              (route) => false);
                         }
                         break;
                       case 'settings':
@@ -362,31 +366,12 @@ class DesktopNavBar extends StatelessWidget {
           } else {
             // Direct Navigation
             Widget page;
-            switch (index) {
-              case 0:
-                page = const HomeScreen();
-                break;
-              case 1:
-                page = const MyTripsScreen();
-                break;
-              case 2:
-                // Check if Favorites exists, else placeholder or import
-                // Assuming it's imported above
-                page = const FavoritesScreen();
-                break;
-              case 3:
-                page = const ProfileScreen();
-                break;
-              default:
-                page = const HomeScreen();
-            }
 
-            if (index == 0) {
-              Navigator.pushAndRemoveUntil(context,
-                  MaterialPageRoute(builder: (_) => page), (route) => false);
-            } else {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-            }
+            // Route everything through CustomerMainScreen to ensure Scaffold/Material exists
+            page = CustomerMainScreen(initialIndex: index);
+
+            Navigator.pushAndRemoveUntil(context,
+                MaterialPageRoute(builder: (_) => page), (route) => false);
           }
         },
         child: MouseRegion(

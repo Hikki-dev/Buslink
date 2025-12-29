@@ -7,7 +7,7 @@ import '../../services/auth_service.dart';
 import '../results/bus_list_screen.dart';
 import '../layout/desktop_navbar.dart';
 
-import '../layout/mobile_navbar.dart';
+// import '../layout/mobile_navbar.dart';
 import '../layout/custom_app_bar.dart';
 
 class FavoritesScreen extends StatelessWidget {
@@ -32,8 +32,8 @@ class FavoritesScreen extends StatelessWidget {
           ),
         Expanded(
           child: Scaffold(
-            bottomNavigationBar:
-                isDesktop ? null : const MobileBottomNav(selectedIndex: 2),
+            // bottomNavigationBar:
+            //    isDesktop ? null : const MobileBottomNav(selectedIndex: 2),
             // Use theme background
             appBar: CustomAppBar(
               hideActions: isDesktop,

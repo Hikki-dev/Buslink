@@ -11,7 +11,7 @@ import '../support/support_screen.dart';
 import '../layout/desktop_navbar.dart';
 import '../favorites/favorites_screen.dart';
 
-import '../layout/mobile_navbar.dart';
+// import '../layout/mobile_navbar.dart';
 import '../layout/custom_app_bar.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -58,8 +58,8 @@ class ProfileScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: isDesktop ? null : const CustomAppBar(),
-          bottomNavigationBar:
-              isDesktop ? null : const MobileBottomNav(selectedIndex: 3),
+          // bottomNavigationBar:
+          //    isDesktop ? null : const MobileBottomNav(selectedIndex: 3),
           body: Column(
             children: [
               if (isDesktop)

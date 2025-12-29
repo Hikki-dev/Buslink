@@ -314,13 +314,14 @@ class _TicketScreenState extends State<TicketScreen> {
                                 fontFamily: 'Inter',
                                 fontSize: 10,
                                 color: Colors.grey)),
-                        Text("LKR ${ticket.totalAmount.toStringAsFixed(0)}",
-                            style: TextStyle(
-                                fontFamily: 'Outfit',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: AppTheme.primaryColor
-                                    .withValues(alpha: 0.1))),
+                        Text(
+                          "LKR ${ticket.totalAmount.toStringAsFixed(0)}",
+                          style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: AppTheme.primaryColor),
+                        ),
                       ],
                     )
                   ],

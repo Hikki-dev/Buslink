@@ -15,7 +15,55 @@ class FavoritesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    if (favorites.isEmpty) return const SizedBox.shrink();
+    if (favorites.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Your Favorites",
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : const Color(0xFF2D3142),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(24),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E2129) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? Colors.white10 : Colors.grey.shade200,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.favorite_border,
+                      size: 40, color: Colors.grey.shade400),
+                  const SizedBox(height: 12),
+                  Text("No favorites yet",
+                      style: TextStyle(
+                          fontFamily: 'Inter',
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.bold)),
+                  Text("Mark routes as favorites for quick access",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          color: Colors.grey.shade400)),
+                ],
+              ),
+            )
+          ],
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,8 +78,10 @@ class FavoritesSection extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF2D3142),
+                  fontWeight: FontWeight.w800, // Extra Bold
+                  color: isDark
+                      ? Colors.white
+                      : const Color(0xFF2D3142), // Pure White
                 ),
               ),
               const SizedBox(height: 4),

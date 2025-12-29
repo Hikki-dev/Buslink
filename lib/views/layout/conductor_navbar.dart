@@ -19,7 +19,7 @@ class ConductorNavBar extends StatelessWidget {
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 40),
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           border:
               Border(bottom: BorderSide(color: Colors.red.shade100, width: 2)),
           boxShadow: [
@@ -44,17 +44,19 @@ class ConductorNavBar extends StatelessWidget {
                       color: Colors.white, size: 24),
                 ),
                 const SizedBox(width: 12),
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text("BusLink",
-                        style: TextStyle(fontFamily: 'Outfit', 
+                        style: TextStyle(
+                            fontFamily: 'Outfit',
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87)),
+                            color: Theme.of(context).colorScheme.onSurface)),
                     Text("CONDUCTOR",
-                        style: TextStyle(fontFamily: 'Inter', 
+                        style: TextStyle(
+                            fontFamily: 'Inter',
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.primaryColor,
@@ -76,55 +78,90 @@ class ConductorNavBar extends StatelessWidget {
 
           const Spacer(),
 
-          // User Greeting
-          if (authService.currentUser != null) ...[
-            Row(
+          // Profile Dropdown
+          PopupMenuButton<String>(
+            offset: const Offset(0, 50),
+            child: Row(
               children: [
                 CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.grey.shade100,
-                  child: const Icon(Icons.person, size: 18, color: Colors.grey),
+                  radius: 18,
+                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  child: const Icon(Icons.person,
+                      size: 20, color: AppTheme.primaryColor),
                 ),
                 const SizedBox(width: 12),
                 Text(
                     authService.currentUser!.displayName?.split(' ').first ??
                         'Conductor',
-                    style: const TextStyle(fontFamily: 'Outfit', 
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: Colors.black87)),
+                        color: Theme.of(context).colorScheme.onSurface)),
+                const SizedBox(width: 8),
+                const Icon(Icons.keyboard_arrow_down,
+                    size: 16, color: Colors.grey),
               ],
             ),
-            const SizedBox(width: 24),
-          ],
-
-          // Logout Action
-          Container(
-            height: 40,
-            decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(30)),
-            child: TextButton.icon(
-              onPressed: () async {
-                await authService.signOut();
-                // Redirect to Login
-                if (context.mounted) {
-                  Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      (r) => false);
-                }
-              },
-              icon: Icon(Icons.logout, size: 16, color: Colors.grey.shade600),
-              label: Text("Logout",
-                  style: TextStyle(fontFamily: 'Inter', 
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700)),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemBuilder: (context) => [
+              // Theme Toggle
+              PopupMenuItem(
+                enabled: false,
+                child: StatefulBuilder(
+                  builder: (context, setState) {
+                    final isDark =
+                        Theme.of(context).brightness == Brightness.dark;
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Dark Mode",
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        Switch(
+                          value: isDark,
+                          activeTrackColor: AppTheme.primaryColor,
+                          activeThumbColor: Colors
+                              .white, // Switch thumb color works differently now, usually track color defines it.
+                          // Or use standard Material 3 Switch logic
+                          // activeColor actually controls the THUMB color when ON.
+                          // activeTrackColor controls TRACK when ON.
+                          // Let's just stick to default or simple overrides.
+                          onChanged: (val) {
+                            final themeController =
+                                Provider.of<ThemeController>(context,
+                                    listen: false);
+                            themeController.setTheme(
+                                val ? ThemeMode.dark : ThemeMode.light);
+                            Navigator.pop(
+                                context); // Close menu to apply visual update
+                          },
+                        )
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
+              const PopupMenuDivider(),
+              // Logout
+              PopupMenuItem(
+                value: 'logout',
+                onTap: () async {
+                  await authService.signOut();
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (r) => false);
+                  }
+                },
+                child: const Row(
+                  children: [
+                    Icon(Icons.logout, size: 18, color: Colors.red),
+                    SizedBox(width: 12),
+                    Text("Logout", style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -158,7 +195,8 @@ class ConductorNavBar extends StatelessWidget {
                       isActive ? AppTheme.primaryColor : Colors.grey.shade600),
               const SizedBox(width: 8),
               Text(label,
-                  style: TextStyle(fontFamily: 'Inter', 
+                  style: TextStyle(
+                      fontFamily: 'Inter',
                       fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                       color: isActive
                           ? AppTheme.primaryColor

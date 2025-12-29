@@ -19,8 +19,9 @@ import 'utils/app_theme.dart';
 import 'views/admin/admin_dashboard.dart';
 import 'views/auth/login_screen.dart';
 import 'views/conductor/conductor_dashboard.dart';
-import 'views/home/home_screen.dart';
+
 import 'views/booking/payment_success_screen.dart';
+import 'views/customer_main_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -198,16 +199,81 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
             themeMode: themeController.themeMode,
             home: const AuthWrapper(),
             routes: {
-              '/payment_success': (context) => const PaymentSuccessScreen(),
+              '/payment_success': (context) => PaymentSuccessScreen(),
             },
             debugShowCheckedModeBanner: false,
             onGenerateRoute: (settings) {
               if (settings.name?.startsWith('/payment_success') ?? false) {
                 return MaterialPageRoute(
-                    settings: settings,
-                    builder: (_) => const PaymentSuccessScreen());
+                    settings: settings, builder: (_) => PaymentSuccessScreen());
               }
               return null;
+            },
+            builder: (context, child) {
+              // GLOBAL ADMIN BANNER OVERLAY
+              // This ensures the banner persists over ALL screens, including those pushed via Navigator.
+              final tripController = Provider.of<TripController>(context);
+
+              if (!tripController.isPreviewMode) {
+                return child!;
+              }
+
+              return Stack(
+                children: [
+                  child!,
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: Material(
+                      elevation: 4,
+                      child: Container(
+                        width: double.infinity,
+                        color: Colors.amber,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 16),
+                        child: SafeArea(
+                          bottom: false,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text("Welcome Admin - Preview Mode",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                      decoration: TextDecoration.none,
+                                      fontSize: 14)),
+                              const SizedBox(width: 16),
+                              InkWell(
+                                onTap: () {
+                                  tripController.setPreviewMode(false);
+                                  // No Navigator.pop needed here as state change triggers rebuild
+                                  // But if inside a deep navigation stack, user might want to go home?
+                                  // For now, just exiting the mode is enough.
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 4),
+                                  decoration: BoxDecoration(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12)),
+                                  child: const Text("EXIT",
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black)),
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
             },
           );
         },
@@ -298,7 +364,7 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
         if (snapshot.hasError) {
           debugPrint("!!! FIRESTORE ERROR: ${snapshot.error}");
           // Fallback to Home if Firestore fails (Offline mode potentially)
-          return const HomeScreen();
+          return const CustomerMainScreen();
         }
         if (!snapshot.hasData || !snapshot.data!.exists) {
           debugPrint(
@@ -332,7 +398,7 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
         }
 
         if (data == null) {
-          return const HomeScreen();
+          return const CustomerMainScreen();
         }
 
         final String role = (data['role'] ?? 'customer').toString().trim();
@@ -348,9 +414,10 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
             return const AdminDashboard();
           case 'conductor':
             return const ConductorDashboard();
+
           case 'customer':
           default:
-            return const HomeScreen();
+            return const CustomerMainScreen();
         }
       },
     );

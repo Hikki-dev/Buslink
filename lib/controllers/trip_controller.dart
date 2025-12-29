@@ -25,6 +25,12 @@ class TripController extends ChangeNotifier {
   Ticket? currentTicket;
 
   bool isAdminMode = false;
+  bool isPreviewMode = false; // For Admin "Preview App" banner persistence
+
+  void setPreviewMode(bool value) {
+    isPreviewMode = value;
+    notifyListeners();
+  }
 
   Trip? conductorSelectedTrip;
 
@@ -163,11 +169,14 @@ class TripController extends ChangeNotifier {
         // --- STANDARD SEARCH ---
         // Ensure travelDate is set if not bulk
         travelDate ??= DateTime.now();
+        debugPrint(
+            "TripController: Searching trips from $fromCity to $toCity on $travelDate");
         searchResults = await _service.searchTrips(
           fromCity!,
           toCity!,
           travelDate!,
         );
+        debugPrint("TripController: Found ${searchResults.length} trips.");
       }
     } catch (e) {
       if (!context.mounted) return;

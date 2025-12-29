@@ -18,6 +18,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../layout/app_footer.dart';
 import '../../services/auth_service.dart';
 
+part 'parts/clock_widget.dart';
+
 class BusListScreen extends StatefulWidget {
   const BusListScreen({super.key});
 
@@ -30,24 +32,13 @@ class _BusListScreenState extends State<BusListScreen> {
   final List<String> _selectedFilters = [];
 
   // Weather & Time State
-  late Timer _timer;
   final MapController _mapController = MapController();
-  DateTime _currentTime = DateTime.now();
   String _weatherCondition = "Sunny";
   int _temperature = 29;
 
   @override
   void initState() {
     super.initState();
-    // Update time every minute
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          _currentTime = DateTime.now();
-        });
-      }
-    });
-
     // Fetch real weather
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchWeather();
@@ -114,7 +105,6 @@ class _BusListScreenState extends State<BusListScreen> {
 
   @override
   void dispose() {
-    _timer.cancel();
     super.dispose();
   }
 
@@ -182,6 +172,18 @@ class _BusListScreenState extends State<BusListScreen> {
     return CustomScrollView(
       slivers: [
         const SliverToBoxAdapter(child: DesktopNavBar()),
+        if (controller.isPreviewMode)
+          SliverToBoxAdapter(
+            child: Container(
+              width: double.infinity,
+              color: Colors.amber,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: const Text("Welcome Admin - Preview Mode",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black)),
+            ),
+          ),
         // Replaced Date Bar with Weather/Map Header
         SliverToBoxAdapter(child: _buildInfoHeader(context, controller)),
         SliverToBoxAdapter(
@@ -260,6 +262,16 @@ class _BusListScreenState extends State<BusListScreen> {
         actions: const [RouteFavoriteButton()],
         // Using info header in mobile too, maybe simplified?
       ),
+      bottomSheet: controller.isPreviewMode
+          ? Container(
+              width: double.infinity,
+              color: Colors.amber,
+              padding: const EdgeInsets.all(8),
+              child: const Text("Admin Preview Mode",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            )
+          : null,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showMobileFilterModal(context),
         label: const Text("Filters"),
@@ -326,15 +338,10 @@ class _BusListScreenState extends State<BusListScreen> {
                     const SizedBox(height: 16),
                     Column(
                       children: [
-                        Text(DateFormat('hh:mm:ss a').format(_currentTime),
-                            style: const TextStyle(
-                                fontFamily: 'monospace',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 24,
-                                color: AppTheme.primaryColor)),
+                        const _ClockWidget(fontSize: 24),
                         Text(
-                            DateFormat('EEEE, d MMMM yyyy')
-                                .format(_currentTime),
+                            DateFormat('EEEE, d MMMM yyyy').format(DateTime
+                                .now()), // Date doesn't change every second, safe enough or can move inside
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 12,
@@ -361,7 +368,8 @@ class _BusListScreenState extends State<BusListScreen> {
                                 style: const TextStyle(
                                     fontFamily: 'Outfit',
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 18)),
+                                    fontSize: 18,
+                                    color: Colors.black)),
                             Text(weatherCity,
                                 style: TextStyle(
                                     fontFamily: 'Inter',
@@ -377,20 +385,16 @@ class _BusListScreenState extends State<BusListScreen> {
                       children: [
                         Row(
                           mainAxisSize: MainAxisSize.min,
+                          // Time
                           children: [
                             const RouteFavoriteButton(),
                             const SizedBox(width: 8),
-                            Text(DateFormat('hh:mm:ss a').format(_currentTime),
-                                style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 24,
-                                    color: AppTheme.primaryColor)),
+                            const _ClockWidget(fontSize: 24),
                           ],
                         ),
                         Text(
                             DateFormat('EEEE, d MMMM yyyy')
-                                .format(_currentTime),
+                                .format(DateTime.now()),
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 12,
@@ -411,93 +415,104 @@ class _BusListScreenState extends State<BusListScreen> {
                     border: Border.all(color: Colors.grey.shade300),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    children: [
-                      FlutterMap(
-                        mapController: _mapController,
-                        options: const MapOptions(
-                          initialCenter: latlng.LatLng(
-                              7.8731, 80.7718), // Sri Lanka Center
-                          initialZoom: 7,
-                          interactionOptions: InteractionOptions(
-                              flags: InteractiveFlag.all &
-                                  ~InteractiveFlag.rotate),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      children: [
+                        // Map Layer (Optimized with RepaintBoundary)
+                        RepaintBoundary(
+                          child: FlutterMap(
+                            mapController: _mapController,
+                            options: MapOptions(
+                              initialCenter: controller.fromCity != null &&
+                                      _cityCoordinates
+                                          .containsKey(controller.fromCity)
+                                  ? _cityCoordinates[controller.fromCity]!
+                                  : const latlng.LatLng(
+                                      7.8731, 80.7718), // Center of SL
+                              initialZoom: 7.5,
+                              interactionOptions: InteractionOptions(
+                                  flags: InteractiveFlag.all &
+                                      ~InteractiveFlag.rotate),
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate:
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName: 'com.example.buslink',
+                              ),
+                              PolylineLayer(
+                                polylines: _createPolylines(controller),
+                              ),
+                              MarkerLayer(
+                                markers: _createMarkers(controller),
+                              ),
+                            ],
+                          ),
                         ),
-                        children: [
-                          TileLayer(
-                            urlTemplate:
-                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.buslink.app',
+                        // Overlays
+                        Positioned(
+                            top: 16,
+                            left: 16,
+                            child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                          color: Colors.black12, blurRadius: 4)
+                                    ]),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.map,
+                                        size: 16, color: AppTheme.primaryColor),
+                                    SizedBox(width: 8),
+                                    Text("Live Route Preview",
+                                        style: TextStyle(
+                                            fontFamily: 'Outfit',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black87)),
+                                  ],
+                                ))),
+                        Positioned(
+                          bottom: 16,
+                          right: 16,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final query =
+                                  "${controller.fromCity} to ${controller.toCity}";
+                              final googleMapsUrl = Uri.parse(
+                                  "https://www.google.com/maps/search/?api=1&query=$query");
+                              if (await canLaunchUrl(googleMapsUrl)) {
+                                await launchUrl(googleMapsUrl);
+                              }
+                            },
+                            icon: const Icon(Icons.map, size: 16),
+                            label: const Text("Open Google Maps"),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black,
+                                elevation: 2),
                           ),
-                          PolylineLayer(
-                            polylines: _createPolylines(controller),
-                          ),
-                          MarkerLayer(
-                            markers: _createMarkers(controller),
-                          ),
-                        ],
-                      ),
-                      Positioned(
+                        ),
+                        Positioned(
                           top: 16,
-                          left: 16,
-                          child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                        color: Colors.black12, blurRadius: 4)
-                                  ]),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.map,
-                                      size: 16, color: AppTheme.primaryColor),
-                                  SizedBox(width: 8),
-                                  Text("Live Route Preview",
-                                      style: TextStyle(
-                                          fontFamily: 'Outfit',
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black87)),
-                                ],
-                              ))),
-                      Positioned(
-                        bottom: 16,
-                        right: 16,
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            final query =
-                                "${controller.fromCity} to ${controller.toCity}";
-                            final googleMapsUrl = Uri.parse(
-                                "https://www.google.com/maps/search/?api=1&query=$query");
-                            if (await canLaunchUrl(googleMapsUrl)) {
-                              await launchUrl(googleMapsUrl);
-                            }
-                          },
-                          icon: const Icon(Icons.map, size: 16),
-                          label: const Text("Open Google Maps"),
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
-                              elevation: 2),
+                          right: 16,
+                          child: FloatingActionButton.small(
+                            heroTag: "recenter_map_btn",
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            onPressed: _recenterMap,
+                            tooltip: "Recenter Map",
+                            child: const Icon(Icons.my_location),
+                          ),
                         ),
-                      ),
-                      Positioned(
-                        top: 16,
-                        right: 16,
-                        child: FloatingActionButton.small(
-                          heroTag: "recenter_map_btn",
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          onPressed: _recenterMap,
-                          tooltip: "Recenter Map",
-                          child: const Icon(Icons.my_location),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               )
@@ -785,43 +800,46 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         ? "LKR ${totalPrice.toStringAsFixed(0)} (x${controller.bulkDates.length} Days)"
         : "LKR ${trip.price.toStringAsFixed(0)}";
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: isHovered
-                  ? AppTheme.primaryColor.withValues(alpha: 0.5)
-                  : Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: isHovered ? 0.08 : 0.02),
-                blurRadius: 15,
-                offset: const Offset(0, 5))
-          ],
-        ),
-        child: isMobile
-            ? Column(
-                children: [
-                  _buildMobileContent(trip, duration),
-                  _buildBookButton(
-                      trip, context, controller, isMobile, priceLabel),
-                ],
-              )
-            : IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+    return RepaintBoundary(
+      child: MouseRegion(
+        onEnter: (_) => setState(() => isHovered = true),
+        onExit: (_) => setState(() => isHovered = false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: isHovered
+                    ? AppTheme.primaryColor.withValues(alpha: 0.5)
+                    : Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                  color:
+                      Colors.black.withValues(alpha: isHovered ? 0.08 : 0.02),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5))
+            ],
+          ),
+          child: isMobile
+              ? Column(
                   children: [
-                    Expanded(child: _buildDesktopContent(trip, duration)),
+                    _buildMobileContent(trip, duration),
                     _buildBookButton(
                         trip, context, controller, isMobile, priceLabel),
                   ],
+                )
+              : IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: _buildDesktopContent(trip, duration)),
+                      _buildBookButton(
+                          trip, context, controller, isMobile, priceLabel),
+                    ],
+                  ),
                 ),
-              ),
+        ),
       ),
     );
   }
@@ -833,7 +851,9 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildCardHeader(trip),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          _buildTripDetails(trip),
+          const SizedBox(height: 12),
           _buildTimeline(trip, duration),
           const SizedBox(height: 16),
           _buildAmenities(trip),
@@ -849,7 +869,9 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildCardHeader(trip),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          _buildTripDetails(trip),
+          const SizedBox(height: 12),
           _buildTimeline(trip, duration),
           const SizedBox(height: 16),
           _buildAmenities(trip),
@@ -860,39 +882,109 @@ class _BusTicketCardState extends State<_BusTicketCard> {
 
   Widget _buildCardHeader(Trip trip) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        if (trip.delayMinutes > 0) ...{
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(4)),
-            child: Text("+${trip.delayMinutes} min",
-                style: TextStyle(fontSize: 10, color: Colors.red.shade700)),
-          ),
-          const SizedBox(width: 8),
-        },
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(4)),
-          child: Text("High Rated",
-              style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.blue.shade800,
-                  fontWeight: FontWeight.bold)),
+        // Operator Info
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text("High Rated",
+                  style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue)),
+            ),
+            const SizedBox(height: 8),
+            Text(
+                trip.operatorName.isEmpty
+                    ? "BusLink Operator"
+                    : trip.operatorName,
+                style: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87)),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                _detailChip(Icons.directions_bus, trip.busNumber),
+                const SizedBox(width: 8),
+                if (trip.via.isNotEmpty)
+                  _detailChip(Icons.route, "Via ${trip.via}"),
+              ],
+            )
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(trip.operatorName,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  fontFamily: 'Outfit',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16)),
-        ),
+        // Amenities (Hardcoded for Demo feel as user requested "rich aesthetics")
+        Row(
+          children: [
+            _amenityIcon(Icons.wifi, "WiFi"),
+            const SizedBox(width: 8),
+            _amenityIcon(Icons.ac_unit, "A/C"),
+            const SizedBox(width: 8),
+            _amenityIcon(Icons.power, "Charging"),
+          ],
+        )
       ],
+    );
+  }
+
+  Widget _amenityIcon(IconData icon, String tooltip) {
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(50)),
+        child: Icon(icon, size: 16, color: Colors.grey.shade600),
+      ),
+    );
+  }
+
+  Widget _buildTripDetails(Trip trip) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        if (trip.via.isNotEmpty)
+          _detailChip(Icons.directions, "Via ${trip.via}"),
+        if (trip.busNumber.isNotEmpty)
+          _detailChip(Icons.directions_bus, trip.busNumber),
+        if (trip.platformNumber.isNotEmpty && trip.platformNumber != 'TBD')
+          _detailChip(Icons.signpost, "Platform ${trip.platformNumber}"),
+      ],
+    );
+  }
+
+  Widget _detailChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.grey.shade700),
+          const SizedBox(width: 4),
+          Text(label,
+              style: TextStyle(
+                  fontFamily: 'Inter',
+                  color: Colors.grey.shade700,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600)),
+        ],
+      ),
     );
   }
 
@@ -1029,16 +1121,6 @@ class _BusTicketCardState extends State<_BusTicketCard> {
       ),
     );
   }
-
-  Widget _amenityIcon(IconData icon, String tooltip) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 12),
-      child: Tooltip(
-        message: tooltip,
-        child: Icon(icon, size: 16, color: Colors.grey.shade400),
-      ),
-    );
-  }
 }
 
 class RouteFavoriteButton extends StatefulWidget {
@@ -1081,6 +1163,15 @@ class _RouteFavoriteButtonState extends State<RouteFavoriteButton> {
     }
 
     if (controller.fromCity == null || controller.toCity == null) return;
+
+    // VALIDATION: Cannot favorite if no trips exist
+    if (controller.searchResults.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Cannot add route to favorites: No valid trips found!"),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
 
     setState(() => _isLoading = true);
 

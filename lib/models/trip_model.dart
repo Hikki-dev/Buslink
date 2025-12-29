@@ -107,7 +107,13 @@ class Trip {
       stops: List<String>.from(data['stops'] ?? []),
       via: data['via'] ?? '',
       duration: data['duration'] ?? '',
-      operatingDays: List<int>.from(data['operatingDays'] ?? []),
+      operatingDays: (data['operatingDays'] is List)
+          ? List<int>.from(data['operatingDays'].map((e) {
+              if (e is int) return e;
+              if (e is String) return int.tryParse(e) ?? 0;
+              return 0;
+            }).where((e) => e != 0))
+          : [],
       isGenerated: data['isGenerated'] ?? false,
       routeId: data['routeId'],
       blockedSeats: List<int>.from(data['blockedSeats'] ?? []),

@@ -146,37 +146,6 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               : null,
           body: Column(
             children: [
-              if (widget.isAdminView)
-                Container(
-                  width: double.infinity,
-                  color: Colors.amber,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Welcome Admin - Preview Mode",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black)),
-                      const SizedBox(width: 16),
-                      InkWell(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12)),
-                          child: const Text("EXIT",
-                              style: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.bold)),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
               if (isDesktop)
                 ConductorNavBar(
                   selectedIndex: _selectedIndex,
@@ -220,7 +189,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 vertical: isDesktop ? 48 : 32, horizontal: isDesktop ? 40 : 24),
             decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
-                border: Border(bottom: BorderSide(color: Colors.black12))),
+                border: Border(
+                    bottom: BorderSide(color: Theme.of(context).dividerColor))),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1000),
@@ -251,7 +221,9 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                             Text("Here is your schedule for $_formattedDate.",
                                 style: TextStyle(
                                     fontFamily: 'Inter',
-                                    color: Colors.grey.shade600,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                     fontSize: 16)),
                           ],
                         ),
@@ -299,7 +271,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
@@ -856,13 +828,15 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
   Widget _buildTripCard(Trip trip, bool isDesktop) {
     final startTime = DateFormat('h.mm a').format(trip.departureTime);
     final endTime = DateFormat('h.mm a').format(trip.arrivalTime);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(
+              color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
@@ -876,7 +850,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 Container(
                     height: 40,
                     width: 1,
-                    color: Colors.grey.shade200,
+                    color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
                     margin: const EdgeInsets.symmetric(horizontal: 32)),
                 _busInfo(trip),
                 const Spacer(),
@@ -888,8 +862,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                           color: trip.status == TripStatus.delayed
-                              ? Colors.red.shade50
-                              : Colors.green.shade50,
+                              ? Colors.red.withValues(alpha: 0.2)
+                              : Colors.green.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8)),
                       child: Text(trip.status.name.toUpperCase(),
                           style: TextStyle(
@@ -941,10 +915,10 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("${trip.fromCity} ➔ ${trip.toCity}",
-            style: const TextStyle(
+            style: TextStyle(
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 16)),
         const SizedBox(height: 4),
         Text(
@@ -1036,16 +1010,24 @@ class _StatCard extends StatelessWidget {
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 12),
           Text(value,
-              style: const TextStyle(
+              style: TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87)),
+                  // Dark Mode: White & Bold | Light Mode: Black & Bold
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black87)),
           Text(label,
               style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
-                  color: Colors.grey.shade700)),
+                  fontWeight: FontWeight
+                      .bold, // Requested bold for dark, implied for consistency
+                  // Dark Mode: White | Light Mode: Grey/Black
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white70
+                      : Colors.grey.shade700)),
         ],
       ),
     );

@@ -7,6 +7,7 @@ import '../../models/trip_model.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/app_theme.dart';
 import '../booking/seat_selection_screen.dart';
+import '../customer_main_screen.dart';
 import 'admin_screen.dart';
 import 'layout/admin_bottom_nav.dart';
 import 'layout/admin_footer.dart';
@@ -35,167 +36,200 @@ class _AdminDashboardState extends State<AdminDashboard> {
           // Desktop Nav (Hidden on Mobile inside widget)
           if (isDesktop) const AdminNavBar(selectedIndex: 0),
 
-          // Mobile Header (If needed, or just use content)
-          // AdminNavBar handles both currently, but we want to strip the bottom nav items from it on mobile?
-          // The AdminNavBar currently has a popup menu for mobile.
-          // We should probably keep the top bar for Logo/Profile but REMOVE the navigation popup if we have bottom nav.
+          // Mobile Header
           if (!isDesktop) const AdminNavBar(selectedIndex: 0),
 
           Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 40),
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 40),
 
-                  // Title Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
-                      child: Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      // Title Section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1000),
+                          child: Row(
                             children: [
-                              Text("Route Management",
-                                  style: TextStyle(
-                                      fontFamily: 'Outfit',
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface)),
-                              Text(
-                                  "Manage bus schedules, fares, and availability.",
-                                  style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      color: Colors.grey,
-                                      fontSize: 16)),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Route Management",
+                                      style: TextStyle(
+                                          fontFamily: 'Outfit',
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface)),
+                                  Text(
+                                      "Manage bus schedules, fares, and availability.",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          color: Colors.grey,
+                                          fontSize: 16)),
+                                ],
+                              ),
+                              const Spacer(),
+                              if (isDesktop) ...[
+                                _buildAddRouteButton(context),
+                                const SizedBox(width: 16),
+                                _buildAddRouteSimpleButton(context),
+                                const SizedBox(width: 16),
+                                // Theme Toggle
+                                Consumer<ThemeController>(
+                                  builder: (context, themeController, _) {
+                                    final isDark =
+                                        Theme.of(context).brightness ==
+                                            Brightness.dark;
+                                    return IconButton(
+                                      onPressed: () {
+                                        themeController.setTheme(isDark
+                                            ? ThemeMode.light
+                                            : ThemeMode.dark);
+                                      },
+                                      icon: Icon(
+                                          isDark
+                                              ? Icons.light_mode // Sun in Dark
+                                              : Icons
+                                                  .dark_mode, // Moon in Light
+                                          color: isDark
+                                              ? Colors.white
+                                              : Colors.black87),
+                                      tooltip: "Toggle Theme",
+                                    );
+                                  },
+                                )
+                              ]
                             ],
                           ),
-                          const Spacer(),
-                          if (isDesktop) ...[
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Mobile Add Button
+                      if (!isDesktop) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
                             _buildAddRouteButton(context),
                             const SizedBox(width: 16),
                             _buildAddRouteSimpleButton(context),
-                            const SizedBox(width: 16),
-                            // Theme Toggle
-                            Consumer<ThemeController>(
-                              builder: (context, themeController, _) {
-                                final isDark =
-                                    themeController.themeMode == ThemeMode.dark;
-                                return IconButton(
-                                  onPressed: () {
-                                    themeController.setTheme(isDark
-                                        ? ThemeMode.light
-                                        : ThemeMode.dark);
-                                  },
-                                  icon: Icon(
-                                      isDark
-                                          ? Icons.dark_mode
-                                          : Icons.light_mode,
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.black87),
-                                  tooltip: "Toggle Theme",
-                                );
-                              },
-                            )
-                          ]
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Mobile Add Button
-                  if (!isDesktop) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildAddRouteButton(context),
-                        const SizedBox(width: 16),
-                        _buildAddRouteSimpleButton(context),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
                       ],
-                    ),
-                    const SizedBox(height: 24),
-                  ],
 
-                  // Search Section
-                  _buildSearchSection(context, controller, isDesktop),
+                      // Search Section
+                      _buildSearchSection(context, controller, isDesktop),
 
-                  const SizedBox(height: 32),
+                      const SizedBox(height: 32),
 
-                  // Results Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
-                      child: Consumer<TripController>(
-                        builder: (context, ctl, _) {
-                          if (ctl.isLoading) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          }
+                      // Results Section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1000),
+                          child: Consumer<TripController>(
+                            builder: (context, ctl, _) {
+                              if (ctl.isLoading) {
+                                return const Center(
+                                    child: CircularProgressIndicator());
+                              }
 
-                          // If search was performed and we have results
-                          // Note: ctl.searchResults might be empty initially or after search
-                          // We can check if filters are active or just show all/none.
-                          // Assuming search has been run or we show a default list.
+                              if (ctl.searchResults.isEmpty) {
+                                return Container(
+                                  padding: const EdgeInsets.all(40),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).cardColor,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                        color:
+                                            Colors.grey.withValues(alpha: 0.2)),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Icon(Icons.search_off,
+                                          size: 64,
+                                          color: Colors.grey.shade300),
+                                      const SizedBox(height: 16),
+                                      Text("No routes found",
+                                          style: TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontSize: 16,
+                                              color: Colors.grey
+                                                  .withValues(alpha: 0.2))),
+                                      const SizedBox(height: 8),
+                                      Text("Try adjusting your filters.",
+                                          style: TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontSize: 14,
+                                              color: Colors.grey)),
+                                      const SizedBox(height: 24),
+                                      // Preview Action
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const CustomerMainScreen(
+                                                      isAdminView: true),
+                                            ),
+                                          ).then((_) {
+                                            // Reset when coming back
+                                            if (context.mounted) {
+                                              Provider.of<TripController>(
+                                                      context,
+                                                      listen: false)
+                                                  .setPreviewMode(false);
+                                            }
+                                          });
+                                        },
+                                        icon: const Icon(Icons.preview),
+                                        label: const Text("Preview App"),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          foregroundColor: Colors.black,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
 
-                          if (ctl.searchResults.isEmpty) {
-                            return Container(
-                              padding: const EdgeInsets.all(40),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                    color: Colors.grey.withValues(alpha: 0.2)),
-                              ),
-                              child: Column(
-                                children: [
-                                  Icon(Icons.search_off,
-                                      size: 64, color: Colors.grey.shade300),
-                                  const SizedBox(height: 16),
-                                  Text("No routes found",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 16,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: 0.6))),
-                                  const SizedBox(height: 8),
-                                  Text("Try adjusting your filters.",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 14,
-                                          color: Colors.grey)),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: ctl.searchResults.length,
-                            itemBuilder: (context, index) {
-                              return _buildResultRow(
-                                  context, ctl.searchResults[index], ctl);
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: ctl.searchResults.length,
+                                itemBuilder: (context, index) {
+                                  return _buildResultRow(
+                                      context, ctl.searchResults[index], ctl);
+                                },
+                              );
                             },
-                          );
-                        },
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 60),
+                    ],
                   ),
-
-                  const SizedBox(height: 60),
-                  const AdminFooter(),
-                ],
-              ),
+                ),
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      AdminFooter(),
+                    ],
+                  ),
+                )
+              ],
             ),
           ),
         ],
@@ -210,7 +244,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             MaterialPageRoute(builder: (_) => const AdminScreen(trip: null)));
       },
       icon: const Icon(Icons.add),
-      label: const Text("Add New Trip"),
+      label: const Text("Add Trip / Route"),
       style: ElevatedButton.styleFrom(
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,

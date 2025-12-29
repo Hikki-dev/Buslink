@@ -128,6 +128,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // Fix: Prevent keyboard from squashing the background
+      resizeToAvoidBottomInset: false,
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 900) {
@@ -151,23 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                        Positioned(
-                          top: 40,
-                          right: 40,
-                          child: Material(
-                            color: Colors.transparent,
-                            elevation: 8,
-                            borderRadius: BorderRadius.circular(8),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _ThemeSwitcher(),
-                                const SizedBox(width: 12),
-                                _LanguageSwitcher(),
-                              ],
-                            ),
-                          ),
-                        ),
+                        // ...
                       ],
                     ),
                   ),
@@ -183,6 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // Mobile Layout
             return Stack(
               children: [
+                // Background stays static
                 Positioned.fill(
                   child: AnimatedSwitcher(
                     duration: const Duration(seconds: 2),
@@ -211,51 +198,63 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24.0),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      child: Container(
-                        padding: const EdgeInsets.all(32),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildHeaderLogo(context),
-                            const SizedBox(height: 32),
-                            _buildAnimatedForm(context),
-                          ],
+                // Scrollable Form Container that respects keyboard
+                Positioned.fill(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.only(
+                        left: 24,
+                        right: 24,
+                        top: 24,
+                        // Add padding for keyboard manually
+                        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 400),
+                        child: Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildHeaderLogo(context),
+                              const SizedBox(height: 32),
+                              _buildAnimatedForm(context),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                // Theme & Language Switchers - LAST = ON TOP
+                // Theme & Language Switchers
                 Positioned(
-                  top: 16,
+                  top:
+                      16, // Use Safe Area in logic if needed, but simple top padding works for now
                   right: 16,
-                  child: Material(
-                    color: Colors.transparent,
-                    elevation: 8,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _ThemeSwitcher(),
-                        const SizedBox(width: 12),
-                        _LanguageSwitcher(),
-                      ],
+                  child: SafeArea(
+                    child: Material(
+                      color: Colors.transparent,
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _ThemeSwitcher(),
+                          const SizedBox(width: 12),
+                          _LanguageSwitcher(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -379,6 +378,7 @@ class _LoginScreenState extends State<LoginScreen> {
             validator: (v) => v == null || v.length < 6
                 ? 'Password must be at least 6 characters'
                 : null,
+            onFieldSubmitted: _submitAuthForm, // Submit on Enter
           ),
           const SizedBox(height: 16),
           if (_isLogin)
@@ -459,6 +459,7 @@ class _LoginScreenState extends State<LoginScreen> {
     bool isPasswordVisible = false,
     VoidCallback? onVisibilityToggle,
     String? Function(String?)? validator,
+    VoidCallback? onFieldSubmitted, // NEW: Callback for Submit
   }) {
     final isDark = theme.brightness == Brightness.dark;
     return Column(
@@ -489,6 +490,10 @@ class _LoginScreenState extends State<LoginScreen> {
               color: isDark ? Colors.white : Colors.black,
             ),
             validator: validator,
+            textInputAction: isPassword
+                ? TextInputAction.done
+                : TextInputAction.next, // Keyboard Action
+            onFieldSubmitted: (_) => onFieldSubmitted?.call(), // Trigger Submit
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
