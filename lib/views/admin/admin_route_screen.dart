@@ -19,8 +19,21 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
   final TextEditingController _viaController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
+  TimeOfDay? _departureTime;
 
   bool _isLoading = false;
+
+  Future<void> _pickTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _departureTime ?? TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _departureTime = picked;
+      });
+    }
+  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -43,6 +56,9 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
       'via': _viaController.text,
       'price': double.tryParse(_priceController.text) ?? 0.0,
       'duration': _durationController.text,
+      'departureTime': _departureTime != null
+          ? "${_departureTime!.hour.toString().padLeft(2, '0')}:${_departureTime!.minute.toString().padLeft(2, '0')}"
+          : null,
       'operatorName': 'BusLink Official',
       'busNumber': 'TEMPLATE', // Indicates this is a route definition
       'isRouteDefinition': true, // Flag to distinguish
@@ -70,15 +86,18 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Add New Route",
-            style: TextStyle(fontFamily: 'Outfit', 
-                color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: Text("Add New Route",
+            style: TextStyle(
+                fontFamily: 'Outfit',
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold)),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
-        leading: const BackButton(color: Colors.black),
+        leading: BackButton(color: Theme.of(context).colorScheme.onSurface),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -94,7 +113,7 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
@@ -105,8 +124,10 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text("Route Details",
-                            style: TextStyle(fontFamily: 'Outfit', 
-                                fontSize: 20, fontWeight: FontWeight.bold)),
+                            style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold)),
                         const SizedBox(height: 24),
                         _buildCityAutocomplete("Origin", _originController),
                         const SizedBox(height: 16),
@@ -115,6 +136,43 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
                         const SizedBox(height: 16),
                         _buildTextField("Via (Route Variant)", _viaController,
                             icon: Icons.alt_route),
+                        const SizedBox(height: 16),
+                        // Time Picker
+                        InkWell(
+                          onTap: _pickTime,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 16),
+                            decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.grey.shade800
+                                    : Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: isDark
+                                        ? Colors.grey.shade700
+                                        : Colors.grey.shade300)),
+                            child: Row(
+                              children: [
+                                Icon(Icons.access_time,
+                                    color:
+                                        isDark ? Colors.white70 : Colors.grey),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _departureTime != null
+                                      ? _departureTime!.format(context)
+                                      : "Select Departure Time",
+                                  style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: 24),
                         const Divider(),
                         const SizedBox(height: 24),
@@ -147,7 +205,8 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
                           : const Text("SAVE ROUTE",
-                              style: TextStyle(fontFamily: 'Outfit', 
+                              style: TextStyle(
+                                  fontFamily: 'Outfit',
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),

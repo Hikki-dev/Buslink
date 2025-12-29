@@ -59,21 +59,47 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("Route Management",
-                                  style: TextStyle(fontFamily: 'Outfit', 
+                                  style: TextStyle(
+                                      fontFamily: 'Outfit',
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
                                       color: AppTheme.darkText)),
                               Text(
                                   "Manage bus schedules, fares, and availability.",
-                                  style: TextStyle(fontFamily: 'Inter', 
-                                      color: Colors.grey, fontSize: 16)),
+                                  style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      color: Colors.grey,
+                                      fontSize: 16)),
                             ],
                           ),
                           const Spacer(),
                           if (isDesktop) ...[
                             _buildAddRouteButton(context),
                             const SizedBox(width: 16),
-                            _buildAddRouteSimpleButton(context)
+                            _buildAddRouteSimpleButton(context),
+                            const SizedBox(width: 16),
+                            // Theme Toggle
+                            Consumer<ThemeController>(
+                              builder: (context, themeController, _) {
+                                final isDark =
+                                    themeController.themeMode == ThemeMode.dark;
+                                return IconButton(
+                                  onPressed: () {
+                                    themeController.setTheme(isDark
+                                        ? ThemeMode.light
+                                        : ThemeMode.dark);
+                                  },
+                                  icon: Icon(
+                                      isDark
+                                          ? Icons.dark_mode
+                                          : Icons.light_mode,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87),
+                                  tooltip: "Toggle Theme",
+                                );
+                              },
+                            )
                           ]
                         ],
                       ),
@@ -130,9 +156,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   Icon(Icons.search_off,
                                       size: 64, color: Colors.grey.shade300),
                                   const SizedBox(height: 16),
-                                  const Text("No routes found matching your criteria",
-                                      style: TextStyle(fontFamily: 'Inter', 
-                                          fontSize: 16, color: Colors.grey)),
+                                  const Text(
+                                      "No routes found matching your criteria",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 16,
+                                          color: Colors.grey)),
                                 ],
                               ),
                             );
@@ -175,7 +204,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
+        textStyle:
+            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -192,7 +222,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
         backgroundColor: Colors.black87,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
+        textStyle:
+            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -220,7 +251,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text("FIND ROUTES",
-                  style: TextStyle(fontFamily: 'Inter', 
+                  style: TextStyle(
+                      fontFamily: 'Inter',
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey,
@@ -310,7 +342,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
               controller.travelDate != null
                   ? DateFormat('yyyy-MM-dd').format(controller.travelDate!)
                   : "Select Date",
-              style: const TextStyle(fontFamily: 'Inter', color: Colors.black87),
+              style:
+                  const TextStyle(fontFamily: 'Inter', color: Colors.black87),
             )
           ],
         ),
@@ -454,21 +487,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   children: [
                     Text(
                       "${trip.fromCity} ➝ ${trip.toCity}",
-                      style: const TextStyle(fontFamily: 'Outfit', 
-                          fontWeight: FontWeight.bold, fontSize: 18),
+                      style: const TextStyle(
+                          fontFamily: 'Outfit',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   "Departs: ${DateFormat('HH:mm').format(trip.departureTime)} • Arrives: ${DateFormat('HH:mm').format(trip.arrivalTime)}",
-                  style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade600),
+                  style: TextStyle(
+                      fontFamily: 'Inter', color: Colors.grey.shade600),
                 ),
                 if (trip.via.isNotEmpty)
                   Text(
                     "Via: ${trip.via}",
-                    style: TextStyle(fontFamily: 'Inter', 
-                        color: Colors.grey.shade500, fontSize: 12),
+                    style: TextStyle(
+                        fontFamily: 'Inter',
+                        color: Colors.grey.shade500,
+                        fontSize: 12),
                   ),
               ],
             ),
