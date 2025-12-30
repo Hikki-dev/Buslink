@@ -142,7 +142,9 @@ class _TripsList extends StatelessWidget {
         var tickets = snapshot.data ?? [];
         final now = DateTime.now();
 
-        // Safe Filtering
+        // Safe Filtering with Buffer
+        final cutoff = now.subtract(const Duration(hours: 12));
+
         tickets = tickets.where((ticket) {
           DateTime? tripDate;
           if (ticket.tripData.containsKey('departureTime') &&
@@ -159,11 +161,33 @@ class _TripsList extends StatelessWidget {
           tripDate ??= ticket.bookingTime;
 
           if (isHistory) {
-            return tripDate.isBefore(now);
+            // History = Completed more than 12 hours ago
+            return tripDate.isBefore(cutoff);
           } else {
-            return tripDate.isAfter(now);
+            // Upcoming = Future OR departed within last 12 hours
+            return tripDate.isAfter(cutoff);
           }
         }).toList();
+
+        // Sorting
+        tickets.sort((a, b) {
+          DateTime dateA = a.bookingTime;
+          DateTime dateB = b.bookingTime;
+
+          // Try to get actual trip date
+          if (a.tripData['departureTime'] is Timestamp) {
+            dateA = (a.tripData['departureTime'] as Timestamp).toDate();
+          }
+          if (b.tripData['departureTime'] is Timestamp) {
+            dateB = (b.tripData['departureTime'] as Timestamp).toDate();
+          }
+
+          if (isHistory) {
+            return dateB.compareTo(dateA); // Newest first
+          } else {
+            return dateA.compareTo(dateB); // Soonest first
+          }
+        });
 
         if (tickets.isEmpty) {
           return Center(
@@ -421,69 +445,88 @@ class _BoardingPassCard extends StatelessWidget {
                   child: Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            try {
-                              final trip =
-                                  Trip.fromMap(ticket.tripData, ticket.tripId);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => TicketScreen(
-                                      ticketArg: ticket, tripArg: trip),
-                                ),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text("Error opening ticket: $e")),
-                              );
-                            }
-                          },
-                          style: OutlinedButton.styleFrom(
-                              side: BorderSide(
-                                  color: isDark
-                                      ? Colors.grey.shade700
-                                      : Colors.grey.shade300),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12))),
-                          child: Text("View Ticket",
-                              style: TextStyle(
-                                  fontFamily: 'Inter', color: textColor)),
+                        child: SizedBox(
+                          height: 48,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              try {
+                                final trip = Trip.fromMap(
+                                    ticket.tripData, ticket.tripId);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => TicketScreen(
+                                        ticketArg: ticket, tripArg: trip),
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content:
+                                          Text("Error opening ticket: $e")),
+                                );
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8), // Fix clipping
+                                side: BorderSide(
+                                    color: isDark
+                                        ? Colors.grey.shade700
+                                        : Colors.grey.shade300),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12))),
+                            child: Text("View Ticket",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: textColor)),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Book Again Logic
-                            final controller = Provider.of<TripController>(
-                                context,
-                                listen: false);
-                            controller.setFromCity(
-                                ticket.tripData['fromCity'] ?? 'Colombo');
-                            controller.setToCity(
-                                ticket.tripData['toCity'] ?? 'Kandy');
-                            controller.setDepartureDate(DateTime.now());
-                            controller.searchTrips(context);
+                        child: SizedBox(
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Book Again Logic
+                              final controller = Provider.of<TripController>(
+                                  context,
+                                  listen: false);
+                              controller.setFromCity(
+                                  ticket.tripData['fromCity'] ?? 'Colombo');
+                              controller.setToCity(
+                                  ticket.tripData['toCity'] ?? 'Kandy');
+                              controller.setDepartureDate(DateTime.now());
+                              controller.searchTrips(context);
 
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const BusListScreen()),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12))),
-                          child: const Text("Book Again",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const BusListScreen()),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8), // Fix clipping
+                                backgroundColor: AppTheme.primaryColor,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12))),
+                            child: const Text("Book Again",
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Colors.white)),
+                          ),
                         ),
                       ),
                     ],
