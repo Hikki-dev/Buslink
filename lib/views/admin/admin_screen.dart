@@ -489,8 +489,11 @@ class _AdminScreenState extends State<AdminScreen> {
                                                   : Colors.grey.shade100,
                                               borderRadius:
                                                   BorderRadius.circular(8)),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
+                                          child: Wrap(
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            spacing: 16,
+                                            runSpacing: 8,
                                             children: [
                                               Text("Schedule Type:",
                                                   style: TextStyle(
@@ -499,8 +502,12 @@ class _AdminScreenState extends State<AdminScreen> {
                                                           FontWeight.bold,
                                                       fontSize: 14,
                                                       color: textColor)),
-                                              const SizedBox(width: 16),
                                               ToggleButtons(
+                                                constraints:
+                                                    const BoxConstraints(
+                                                  minHeight: 36.0,
+                                                  minWidth: 80.0,
+                                                ),
                                                 isSelected: [
                                                   _isRecurring,
                                                   !_isRecurring
@@ -521,15 +528,19 @@ class _AdminScreenState extends State<AdminScreen> {
                                                   Padding(
                                                       padding:
                                                           EdgeInsets.symmetric(
-                                                              horizontal: 16),
+                                                              horizontal: 12),
                                                       child: Text(
-                                                          "Recurring Route")),
+                                                          "Recurring Route",
+                                                          style: TextStyle(
+                                                              fontSize: 13))),
                                                   Padding(
                                                       padding:
                                                           EdgeInsets.symmetric(
-                                                              horizontal: 16),
+                                                              horizontal: 12),
                                                       child: Text(
-                                                          "One-Time Trip")),
+                                                          "One-Time Trip",
+                                                          style: TextStyle(
+                                                              fontSize: 13))),
                                                 ],
                                               ),
                                             ],
@@ -1000,8 +1011,11 @@ class _AdminScreenState extends State<AdminScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 16,
+          runSpacing: 12,
           children: [
             const Text("Seat Layout (Manage Availability)",
                 style: TextStyle(
@@ -1009,12 +1023,12 @@ class _AdminScreenState extends State<AdminScreen> {
                     fontSize: 18,
                     fontWeight: FontWeight.bold)),
             // Legend
-            Row(
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
               children: [
                 _legendItem(Colors.white, "Available", Colors.grey),
-                const SizedBox(width: 12),
-                _legendItem(Colors.orange, "Blocked/Repair", null),
-                const SizedBox(width: 12),
+                _legendItem(Colors.orange, "Blocked", null), // Shortened text
                 _legendItem(Colors.red.shade100, "Booked", null),
               ],
             )

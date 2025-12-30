@@ -199,15 +199,16 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
 
   // --- VIEW 0: Dashboard (Existing) ---
   Widget _buildDashboardView(bool isDesktop, String conductorName) {
-    return SingleChildScrollView(
+    return DefaultTabController(
+      length: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Welcome Header (Always Visible)
+          // 1. Welcome Header (Static)
           Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(
-                vertical: isDesktop ? 48 : 32, horizontal: isDesktop ? 40 : 24),
+                vertical: isDesktop ? 48 : 24, horizontal: isDesktop ? 40 : 24),
             decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 border: Border(
@@ -228,45 +229,49 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                               size: 30, color: AppTheme.primaryColor),
                         ),
                         const SizedBox(width: 20),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Welcome back, $conductorName!",
-                                style: TextStyle(
-                                    fontFamily: 'Outfit',
-                                    fontSize: isDesktop ? 32 : 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface)),
-                            Text("Here is your schedule for $_formattedDate.",
-                                style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                    fontSize: 16)),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Welcome back, $conductorName!",
+                                  style: TextStyle(
+                                      fontFamily: 'Outfit',
+                                      fontSize: isDesktop ? 32 : 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface)),
+                              Text("Here is your schedule for $_formattedDate.",
+                                  style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                      fontSize: 14)),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 40),
-
+                    const SizedBox(height: 24),
                     // Quick Stats
-                    Row(
-                      children: [
-                        _StatCard(
-                            label: "Scheduled Trips",
-                            value: "${_todaysTrips.length}",
-                            icon: Icons.directions_bus,
-                            color: Colors.blue),
-                        const SizedBox(width: 20),
-                        const _StatCard(
-                            label: "Pending Issues",
-                            value: "0",
-                            icon: Icons.warning_amber,
-                            color: Colors.orange),
-                      ],
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _StatCard(
+                              label: "Scheduled Trips",
+                              value: "${_todaysTrips.length}",
+                              icon: Icons.directions_bus,
+                              color: Colors.blue),
+                          const SizedBox(width: 20),
+                          const _StatCard(
+                              label: "Pending Issues",
+                              value: "0",
+                              icon: Icons.warning_amber,
+                              color: Colors.orange),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -274,30 +279,26 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             ),
           ),
 
-          // 2. Tabs for "My Trips" vs "Search"
-          DefaultTabController(
-            length: 2,
-            child: Column(
+          // 2. Tabs
+          Container(
+            color: Theme.of(context).cardColor,
+            child: TabBar(
+              labelColor: AppTheme.primaryColor,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: AppTheme.primaryColor,
+              tabs: const [
+                Tab(text: "My Assigned Trips"),
+                Tab(text: "Search All Trips"),
+              ],
+            ),
+          ),
+
+          // 3. Expanded Tab View (Scrollable Content inside)
+          Expanded(
+            child: TabBarView(
               children: [
-                TabBar(
-                  labelColor: AppTheme.primaryColor,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: AppTheme.primaryColor,
-                  tabs: const [
-                    Tab(text: "My Assigned Trips"),
-                    Tab(text: "Search All Trips"),
-                  ],
-                ),
-                SizedBox(
-                  height:
-                      800, // Fixed height for now, or use Expanded if parent allows
-                  child: TabBarView(
-                    children: [
-                      _buildMyTripsTab(isDesktop),
-                      _buildSearchTripsTab(isDesktop),
-                    ],
-                  ),
-                ),
+                _buildMyTripsTab(isDesktop),
+                _buildSearchTripsTab(isDesktop),
               ],
             ),
           ),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/trip_model.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TripController extends ChangeNotifier {
   final FirestoreService _service = FirestoreService();
@@ -27,8 +28,16 @@ class TripController extends ChangeNotifier {
   bool isAdminMode = false;
   bool isPreviewMode = false; // For Admin "Preview App" banner persistence
 
-  void setPreviewMode(bool value) {
+  Future<void> initializePersistence() async {
+    final prefs = await SharedPreferences.getInstance();
+    isPreviewMode = prefs.getBool('admin_preview_mode') ?? false;
+    notifyListeners();
+  }
+
+  Future<void> setPreviewMode(bool value) async {
     isPreviewMode = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('admin_preview_mode', value);
     notifyListeners();
   }
 

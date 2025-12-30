@@ -122,6 +122,9 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   }
 
   Future<void> _downloadPdf(Ticket ticket) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Generating Ticket PDF...")),
+    );
     final doc = pw.Document();
 
     // Construct Trip from Ticket Data (Snapshot)
@@ -387,7 +390,9 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                       _message,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontFamily: 'Inter', color: Colors.grey.shade600),
+                          fontFamily: 'Inter',
+                          color:
+                              isDark ? Colors.white70 : Colors.grey.shade600),
                     ),
                     const SizedBox(height: 32),
                     SizedBox(
@@ -441,10 +446,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         child: Column(
           children: [
             Text(dateStr,
-                style: const TextStyle(
+                style: TextStyle(
                     fontFamily: 'Outfit',
                     fontWeight: FontWeight.bold,
-                    fontSize: 16)),
+                    fontSize: 16,
+                    color: isDark ? Colors.white : Colors.black)),
             Text("${tData['fromCity']} ➔ ${tData['toCity']}",
                 style: const TextStyle(
                     fontFamily: 'Inter', fontSize: 14, color: Colors.grey)),
@@ -464,6 +470,12 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
               height: 40,
               child: OutlinedButton.icon(
                 onPressed: () => _downloadPdf(ticket),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor:
+                      isDark ? Colors.white : AppTheme.primaryColor,
+                  side: BorderSide(
+                      color: isDark ? Colors.white24 : AppTheme.primaryColor),
+                ),
                 icon: const Icon(Icons.download_rounded, size: 16),
                 label: const Text("Download PDF"),
               ),

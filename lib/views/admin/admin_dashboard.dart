@@ -311,7 +311,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         child: _buildSearchInput(context, controller, true)),
                     const SizedBox(width: 16),
                     SizedBox(
-                      height: 50,
+                      height: 56, // Increased from 50
                       child: ElevatedButton(
                         onPressed: () => controller.searchTrips(context),
                         style: ElevatedButton.styleFrom(
@@ -319,8 +319,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: const Text("Search"),
+                        child: const Text("Search",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
                       ),
                     ),
                   ],
@@ -332,7 +337,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
+                      height: 56, // Increased from 50
                       child: ElevatedButton(
                         onPressed: () => controller.searchTrips(context),
                         style: ElevatedButton.styleFrom(
@@ -340,8 +345,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: const Text("Search"),
+                        child: const Text("Search",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
                       ),
                     ),
                   ],

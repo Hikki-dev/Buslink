@@ -173,6 +173,33 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _selectReturnDate(BuildContext context) async {
+    final DateTime start = _selectedDate; // Can't return before departure
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedReturnDate ?? start.add(const Duration(days: 1)),
+      firstDate: start,
+      lastDate: start.add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppTheme.primaryColor,
+              primary: AppTheme.primaryColor,
+              brightness: Theme.of(context).brightness,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedReturnDate) {
+      setState(() {
+        _selectedReturnDate = picked;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDesktop = MediaQuery.of(context).size.width > 900;
@@ -192,8 +219,42 @@ class _HomeScreenState extends State<HomeScreen> {
             controller: _scrollController,
             slivers: [
               if (isDesktop)
-                const SliverToBoxAdapter(
-                    child: DesktopNavBar(selectedIndex: 0)),
+                const SliverToBoxAdapter(child: DesktopNavBar(selectedIndex: 0))
+              else
+                SliverAppBar(
+                  pinned: true,
+                  floating: true,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  elevation: 0,
+                  automaticallyImplyLeading: false,
+                  title: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8)),
+                        child: const Icon(Icons.directions_bus,
+                            color: AppTheme.primaryColor, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Text("BusLink",
+                          style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge?.color,
+                              fontSize: 22)),
+                    ],
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none_rounded),
+                      onPressed: () {}, // Todo: Notifications
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ),
               SliverToBoxAdapter(
                 child: _HeroSection(
                   isDesktop: isDesktop,
@@ -208,8 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   isBulkBooking: _isBulkBooking,
                   // NEW: Pass Return Date Logic
                   selectedReturnDate: _selectedReturnDate,
-                  onReturnDateChanged: (val) =>
-                      setState(() => _selectedReturnDate = val),
+                  onReturnDateTap: () => _selectReturnDate(context),
                   onRoundTripChanged: (val) =>
                       setState(() => _isRoundTrip = val),
                   onBulkBookingChanged: (val) =>
@@ -364,7 +424,7 @@ class _HeroSection extends StatefulWidget {
   final bool isBulkBooking;
   // NEW: Return Date Fields
   final DateTime? selectedReturnDate;
-  final ValueChanged<DateTime> onReturnDateChanged;
+  final VoidCallback onReturnDateTap;
   final ValueChanged<bool> onRoundTripChanged;
   final ValueChanged<bool> onBulkBookingChanged;
 
@@ -380,7 +440,7 @@ class _HeroSection extends StatefulWidget {
     required this.isRoundTrip,
     required this.isBulkBooking,
     required this.selectedReturnDate,
-    required this.onReturnDateChanged,
+    required this.onReturnDateTap,
     required this.onRoundTripChanged,
     required this.onBulkBookingChanged,
   });
@@ -757,30 +817,7 @@ class _HeroSectionState extends State<_HeroSection> {
                   Expanded(
                     flex: 2,
                     child: InkWell(
-                      onTap: () async {
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: widget.selectedReturnDate ??
-                              widget.selectedDate.add(const Duration(days: 1)),
-                          firstDate: widget.selectedDate,
-                          lastDate: DateTime(2026),
-                          builder: (context, child) {
-                            return Theme(
-                              data: Theme.of(context).copyWith(
-                                colorScheme: ColorScheme.fromSeed(
-                                  seedColor: AppTheme.primaryColor,
-                                  primary: AppTheme.primaryColor,
-                                  brightness: Theme.of(context).brightness,
-                                ),
-                              ),
-                              child: child!,
-                            );
-                          },
-                        );
-                        if (picked != null) {
-                          widget.onReturnDateChanged(picked);
-                        }
-                      },
+                      onTap: widget.onReturnDateTap,
                       child: Row(
                         children: [
                           const Icon(Icons.event_repeat,
@@ -1061,42 +1098,123 @@ class _HeroSectionState extends State<_HeroSection> {
             isDark: isDark,
           ),
           const SizedBox(height: 16),
-          InkWell(
-            onTap: widget.onDateTap,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).dividerColor),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today,
-                      color: AppTheme.primaryColor),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Departure Date",
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? const Color.fromARGB(255, 255, 255, 255)
-                                  : const Color.fromARGB(255, 0, 0, 0))),
-                      Text(
-                          DateFormat('EEE, d MMMM').format(widget.selectedDate),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: isDark
-                                  ? const Color.fromARGB(255, 255, 255, 255)
-                                  : const Color.fromARGB(255, 0, 0, 0))),
-                    ],
+          widget.isRoundTrip
+              ? Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: widget.onDateTap,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: Theme.of(context).dividerColor),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Departure",
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? Colors.white70
+                                          : Colors.black54)),
+                              const SizedBox(height: 4),
+                              Text(
+                                  DateFormat('d MMM')
+                                      .format(widget.selectedDate),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15, // slightly smaller
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: widget.onReturnDateTap,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: Theme.of(context).dividerColor),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Return",
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? Colors.white70
+                                          : Colors.black54)),
+                              const SizedBox(height: 4),
+                              Text(
+                                  widget.selectedReturnDate != null
+                                      ? DateFormat('d MMM')
+                                          .format(widget.selectedReturnDate!)
+                                      : "Select Date",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: widget.selectedReturnDate != null
+                                          ? (isDark
+                                              ? Colors.white
+                                              : Colors.black)
+                                          : Colors.grey)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : InkWell(
+                  onTap: widget.onDateTap,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Theme.of(context).dividerColor),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today,
+                            color: AppTheme.primaryColor),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Departure Date",
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDark
+                                        ? const Color.fromARGB(
+                                            255, 255, 255, 255)
+                                        : const Color.fromARGB(255, 0, 0, 0))),
+                            Text(
+                                DateFormat('EEE, d MMMM')
+                                    .format(widget.selectedDate),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: isDark
+                                        ? const Color.fromARGB(
+                                            255, 255, 255, 255)
+                                        : const Color.fromARGB(255, 0, 0, 0))),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ),
-          ),
+                ),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -1207,7 +1325,9 @@ class _HeroSectionState extends State<_HeroSection> {
                             color: isDark ? Colors.white38 : Colors.black38),
                         border: InputBorder.none,
                         isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical:
+                                12), // Increased from 4 for better spacing
                       ),
                       onSubmitted: (String value) {
                         onFieldSubmitted();
