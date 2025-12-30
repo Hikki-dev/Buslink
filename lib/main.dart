@@ -142,6 +142,10 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
     }
   }
 
+  // Global Navigator Key for context-less navigation
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   @override
   Widget build(BuildContext context) {
     // Aggressive removal on build for web spinner
@@ -162,6 +166,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
       child: Consumer<ThemeController>(
         builder: (context, themeController, child) {
           return MaterialApp(
+            navigatorKey: _AppBootstrapperState.navigatorKey, // Assign Key
             title: 'BusLink',
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
@@ -171,7 +176,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
               '/': (context) => const AuthWrapper(),
             },
             onGenerateRoute: (settings) {
-              // Handle deep link for success page
+              // Handle deep link for payment success
               if (settings.name?.startsWith('/payment_success') ?? false) {
                 return MaterialPageRoute(
                     settings: settings,
@@ -218,57 +223,58 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
                 return child;
               }
 
-              return Stack(
+              return Column(
                 children: [
-                  child,
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: Material(
-                      elevation: 4,
-                      child: Container(
-                        width: double.infinity,
-                        color: Colors.amber,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 16),
-                        child: SafeArea(
-                          bottom: false,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text("Welcome Admin - Preview Mode",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                      decoration: TextDecoration.none,
-                                      fontSize: 14)),
-                              const SizedBox(width: 16),
-                              InkWell(
-                                onTap: () {
-                                  tripController.setPreviewMode(false);
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 4),
-                                  decoration: BoxDecoration(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(12)),
-                                  child: const Text("EXIT",
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black)),
-                                ),
-                              )
-                            ],
-                          ),
+                  Material(
+                    elevation: 4,
+                    child: Container(
+                      width: double.infinity,
+                      color: Colors.amber,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 16),
+                      child: SafeArea(
+                        bottom: false,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text("Welcome Admin - Preview Mode",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    decoration: TextDecoration.none,
+                                    fontSize: 14)),
+                            const SizedBox(width: 16),
+                            InkWell(
+                              onTap: () async {
+                                // Update State
+                                await tripController.setPreviewMode(false);
+
+                                // Navigate using Global Key
+                                // We go to '/' which triggers AuthWrapper -> AdminDashboard
+                                _AppBootstrapperState.navigatorKey.currentState
+                                    ?.pushNamedAndRemoveUntil(
+                                        '/', (route) => false);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12)),
+                                child: const Text("EXIT",
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black)),
+                              ),
+                            )
+                          ],
                         ),
                       ),
                     ),
                   ),
+                  Expanded(child: child),
                 ],
               );
             },

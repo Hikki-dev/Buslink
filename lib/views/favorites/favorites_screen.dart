@@ -13,8 +13,10 @@ import '../layout/custom_app_bar.dart';
 class FavoritesScreen extends StatelessWidget {
   final bool showBackButton;
   final VoidCallback? onBookNow;
+  final VoidCallback? onBack;
+
   const FavoritesScreen(
-      {super.key, this.showBackButton = true, this.onBookNow});
+      {super.key, this.showBackButton = true, this.onBookNow, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +39,18 @@ class FavoritesScreen extends StatelessWidget {
             // Use theme background
             appBar: CustomAppBar(
               hideActions: isDesktop,
+              automaticallyImplyLeading: showBackButton && !isDesktop,
+              leading: showBackButton && !isDesktop
+                  ? BackButton(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      onPressed: () {
+                        if (onBack != null) {
+                          onBack!();
+                        } else {
+                          Navigator.pop(context);
+                        }
+                      })
+                  : null,
               title: Text("My Favourites",
                   style: TextStyle(
                       fontFamily: 'Outfit',

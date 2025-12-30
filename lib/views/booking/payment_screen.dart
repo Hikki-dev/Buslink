@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:provider/provider.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,6 +10,7 @@ import '../../services/payment_service.dart';
 import '../../utils/app_theme.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
+import 'payment_success_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
@@ -40,29 +42,58 @@ class _PaymentScreenState extends State<PaymentScreen> {
         throw Exception("Failed to initialize booking.");
       }
 
+      final trip = controller.selectedTrip!;
+      final seats = controller.selectedSeats;
+
+      // Fix Price Calculation (include days)
+      int days = 1;
+      if (controller.isBulkBooking && controller.bulkDates.isNotEmpty) {
+        days = controller.bulkDates.length;
+      }
+      final double totalAmountVal = trip.price * seats.length * days;
+      final String totalAmountStr = totalAmountVal.toStringAsFixed(2);
+
+      // --- NATIVE MOBILE PAYMENT ---
+      if (!kIsWeb) {
+        final success = await _paymentService.processPaymentMobile(
+          context,
+          amount: totalAmountStr,
+          currency: 'LKR',
+        );
+
+        if (success) {
+          // Native Payment Success
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const PaymentSuccessScreen(),
+                settings: RouteSettings(
+                  name: '/payment_success',
+                  arguments: {'booking_id': bookingId},
+                ),
+              ),
+            );
+          }
+        } else {
+          setState(() => _isProcessing = false);
+        }
+        return; // Don't proceed to Web Logic
+      }
+
+      // --- WEB PAYMENT (Redirect) ---
       // 2. Construct Dynamic Redirect URLs
-      // Use Uri.base to get the current domain (works for localhost & vercel)
       String origin = Uri.base.origin;
-      // Normalize origin: remove trailing slash if present to avoid double slash with /#/
       if (origin.endsWith('/')) {
         origin = origin.substring(0, origin.length - 1);
       }
 
-      // Note: We use a hash-friendly pattern if HashRouting is used, or path if PathUrlStrategy.
-      // Default Flutter web uses Hash (#).
-      // Stripe Success URL: origin + /#/payment_success?session_id={CHECKOUT_SESSION_ID} ... but Stripe replaces {}
-      // We'll point to a clean route.
       String successUrl =
           "$origin/#/payment_success?booking_id=$bookingId&session_id={CHECKOUT_SESSION_ID}";
       String cancelUrl = "$origin/#/";
 
-      final trip = controller.selectedTrip!;
-      final seats = controller.selectedSeats;
-      final totalAmount = (trip.price * seats.length).toStringAsFixed(2);
-
-      // 3. Create Stripe Checkout Session via API
+      // 3. Create Stripe Checkout Session
       final redirectUrl = await _paymentService.createCheckoutSession(
-        amount: totalAmount,
+        amount: totalAmountStr,
         currency: "LKR",
         successUrl: successUrl,
         cancelUrl: cancelUrl,
@@ -70,11 +101,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
 
       if (redirectUrl != null) {
-        // 4. Redirect User
         final uri = Uri.parse(redirectUrl);
         if (await canLaunchUrl(uri)) {
-          await launchUrl(uri,
-              webOnlyWindowName: '_self'); // Redirect in same tab
+          await launchUrl(uri, webOnlyWindowName: '_self');
         } else {
           throw Exception("Could not launch Stripe Checkout.");
         }

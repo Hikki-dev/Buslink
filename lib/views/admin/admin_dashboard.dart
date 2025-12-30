@@ -55,24 +55,40 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           constraints: const BoxConstraints(maxWidth: 1000),
                           child: Row(
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Route Management",
-                                      style: TextStyle(
-                                          fontFamily: 'Outfit',
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface)),
-                                  Text(
-                                      "Manage bus schedules, fares, and availability.",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          color: Colors.grey,
-                                          fontSize: 16)),
-                                ],
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ShaderMask(
+                                      shaderCallback: (bounds) =>
+                                          const LinearGradient(
+                                        colors: [
+                                          AppTheme.primaryColor,
+                                          Color(0xFFFF8A65)
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ).createShader(bounds),
+                                      child: const Text("Route Management",
+                                          style: TextStyle(
+                                              fontFamily: 'Outfit',
+                                              fontSize: 34,
+                                              height: 1.1,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white)),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                        "Manage bus schedules, fares, and availability.",
+                                        style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withOpacity(0.7),
+                                            fontSize: 16)),
+                                  ],
+                                ),
                               ),
                               const Spacer(),
                               if (isDesktop) ...[
@@ -117,9 +133,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _buildAddRouteButton(context),
+                            Flexible(child: _buildAddRouteButton(context)),
                             const SizedBox(width: 16),
-                            _buildAddRouteSimpleButton(context),
+                            Flexible(
+                                child: _buildAddRouteSimpleButton(context)),
                           ],
                         ),
                         const SizedBox(height: 24),

@@ -19,19 +19,16 @@ class CustomerMainScreen extends StatefulWidget {
 
 class _CustomerMainScreenState extends State<CustomerMainScreen> {
   int _selectedIndex = 0;
-
-  late final List<Widget> _pages;
+  // History stack, starting with Home (0)
+  final List<int> _history = [0];
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
-    _pages = [
-      const HomeScreen(),
-      const MyTripsScreen(),
-      const FavoritesScreen(),
-      const ProfileScreen(),
-    ];
+    if (_selectedIndex != 0) {
+      _history.add(_selectedIndex);
+    }
     // Attempt to load preview state if not already set (failsafe)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<TripController>().initializePersistence();
@@ -39,9 +36,20 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   }
 
   void _onItemTapped(int index) {
+    if (_selectedIndex == index) return;
     setState(() {
+      _history.add(index);
       _selectedIndex = index;
     });
+  }
+
+  void _handleBack() {
+    if (_history.length > 1) {
+      setState(() {
+        _history.removeLast();
+        _selectedIndex = _history.last;
+      });
+    }
   }
 
   @override
@@ -58,94 +66,41 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     // Let's pass 'false' to children or refactor children to NOT have scaffold for mobile.
     // Refactoring children is cleaner.
 
+    // Re-build pages on every build? No, that's inefficient.
+    // Ideally we should keep state. But we need to pass dynamic updated callbacks.
+    // If we use 'IndexedStack', widgets are built once.
+    // So we can't simply change 'showBackButton' prop inside the list unless we rebuild the list
+    // OR the child widgets listen to something.
+    // Since 'MyTripsScreen' is stateless, invalidating the _pages list in build is okay
+    // provided the underlying keys or types don't change drastically to lose state?
+    // IndexedStack preserves state of children. If we replace the child widget with a new instance
+    // (same runtime type, different params), state is usually preserved if keys match or absent.
+    // Let's rebuild the list in build() to pass current 'showBackButton' state.
+
+    final bool showBack = _history.length > 1;
+
+    final pages = [
+      const HomeScreen(),
+      MyTripsScreen(showBackButton: showBack, onBack: _handleBack),
+      FavoritesScreen(showBackButton: showBack, onBack: _handleBack),
+      ProfileScreen(showBackButton: showBack, onBack: _handleBack),
+    ];
+
     final isDesktop = MediaQuery.of(context).size.width > 900;
 
     return Consumer<TripController>(builder: (context, controller, child) {
-      final isPreview = widget.isAdminView || controller.isPreviewMode;
-
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Material(
           color: Theme.of(context).scaffoldBackgroundColor,
-          child: Stack(
-            children: [
-              // Main Content
-              Column(children: [
-                Expanded(
-                  child: IndexedStack(
-                    index: _selectedIndex,
-                    children: _pages,
-                  ),
-                ),
-              ]),
-
-              // Persistent Admin Preview Pill
-              if (isPreview)
-                Positioned(
-                  top: MediaQuery.of(context).padding.top + 8,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                          color: Colors.amber,
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4))
-                          ]),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.info_outline,
-                              color: Colors.black, size: 16),
-                          const SizedBox(width: 8),
-                          const Text(
-                            "Admin Preview",
-                            style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            height: 24, // Smaller button
-                            decoration: BoxDecoration(
-                                border: Border.all(color: Colors.black),
-                                borderRadius: BorderRadius.circular(100)),
-                            child: TextButton(
-                              onPressed: () async {
-                                // Exit preview -> Reset state and Go back
-                                await controller.setPreviewMode(false);
-                                if (context.mounted) {
-                                  Navigator.pushNamedAndRemoveUntil(
-                                      context, '/admin', (route) => false);
-                                }
-                              },
-                              style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  foregroundColor: Colors.black),
-                              child: const Text("EXIT",
-                                  style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          child: Column(children: [
+            Expanded(
+              child: IndexedStack(
+                index: _selectedIndex,
+                children: pages,
+              ),
+            ),
+          ]),
         ),
         bottomNavigationBar: isDesktop
             ? null // Desktop usually handles its own or doesn't use bottom nav

@@ -411,28 +411,29 @@ class SeatSelectionScreen extends StatelessWidget {
   Widget _buildLegendItem(
       Color color, Color borderColor, String label, bool isDark,
       {IconData? icon}) {
-    return Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 32, // Bigger Box
-          height: 32, // Bigger Box
+          width: 28, // Compact Box
+          height: 28, // Compact Box
           decoration: BoxDecoration(
             color: color,
-            border: Border.all(color: borderColor, width: 2), // thicker border
+            border: Border.all(color: borderColor, width: 2),
             borderRadius: BorderRadius.circular(8),
           ),
           child: icon != null
-              ? Icon(icon, size: 20, color: Colors.white.withValues(alpha: 0.9))
+              ? Icon(icon, size: 16, color: Colors.white.withValues(alpha: 0.9))
               : null,
         ),
-        const SizedBox(width: 12),
+        const SizedBox(height: 8),
         Text(
           label,
           style: TextStyle(
-            fontFamily: 'Outfit', // Better font
-            fontSize: 16, // Bigger Text
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.grey.shade800,
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white70 : Colors.grey.shade700,
           ),
         ),
       ],
@@ -441,25 +442,23 @@ class SeatSelectionScreen extends StatelessWidget {
 
   Widget _buildLegend(bool isDark) {
     return Center(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildLegendItem(
-              isDark ? Colors.transparent : Colors.white,
-              isDark ? Colors.white54 : Colors.grey.shade300,
+              Colors.white,
+              isDark ? Colors.transparent : Colors.grey.shade300,
               "Available",
               isDark,
             ),
-            const SizedBox(width: 24),
             _buildLegendItem(
               AppTheme.primaryColor,
               AppTheme.primaryColor,
               "Selected",
               isDark,
             ),
-            const SizedBox(width: 24),
             _buildLegendItem(
               Colors.red.shade300,
               Colors.red.shade300,
@@ -467,7 +466,6 @@ class SeatSelectionScreen extends StatelessWidget {
               isDark,
               icon: Icons.close,
             ),
-            const SizedBox(width: 24),
             _buildLegendItem(
               Colors.amber,
               Colors.amber,

@@ -13,6 +13,7 @@ import '../layout/app_footer.dart';
 import '../admin/layout/admin_bottom_nav.dart';
 import 'conductor_trip_management_screen.dart';
 import '../booking/seat_selection_screen.dart';
+import '../layout/custom_app_bar.dart';
 
 class ConductorDashboard extends StatefulWidget {
   final bool isAdminView;
@@ -125,6 +126,12 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
         final isDesktop = constraints.maxWidth > 900;
 
         return Scaffold(
+          appBar: isDesktop
+              ? null
+              : CustomAppBar(
+                  isAdminView: widget.isAdminView,
+                  hideActions: false, // Show actions like theme/profile
+                ),
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           bottomNavigationBar: !isDesktop
               ? widget.isAdminView
@@ -255,23 +262,27 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                     ),
                     const SizedBox(height: 24),
                     // Quick Stats
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _StatCard(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCard(
                               label: "Scheduled Trips",
                               value: "${_todaysTrips.length}",
                               icon: Icons.directions_bus,
                               color: Colors.blue),
-                          const SizedBox(width: 20),
-                          const _StatCard(
+                        ),
+                        const SizedBox(width: 20),
+                        const Expanded(
+                          child: _StatCard(
                               label: "Pending Issues",
                               value: "0",
                               icon: Icons.warning_amber,
                               color: Colors.orange),
-                        ],
-                      ),
+                        ),
+                        // Placeholder for future cards to ensure 4 fit
+                        // const Expanded(child: SizedBox()),
+                        // const Expanded(child: SizedBox()),
+                      ],
                     ),
                   ],
                 ),
@@ -822,6 +833,21 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                                         _toController, Icons.location_on)),
                                 const SizedBox(width: 24),
                                 _buildDateSelector(),
+                                const SizedBox(width: 24),
+                                ElevatedButton.icon(
+                                  onPressed: () =>
+                                      _loadTripsForDate(_selectedDate),
+                                  icon: const Icon(Icons.search),
+                                  label: const Text("Search"),
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.primaryColor,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      fixedSize: const Size.fromHeight(56),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12))),
+                                ),
                               ],
                             )
                           : Column(
@@ -835,6 +861,27 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                                 SizedBox(
                                     width: double.infinity,
                                     child: _buildDateSelector()),
+                                const SizedBox(height: 24),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 56,
+                                  child: ElevatedButton(
+                                    onPressed: () =>
+                                        _loadTripsForDate(_selectedDate),
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.primaryColor,
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12))),
+                                    child: const Text("Search Trips",
+                                        style: TextStyle(
+                                            fontFamily: 'Outfit',
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold)),
+                                  ),
+                                )
                               ],
                             ),
                     ),
@@ -986,21 +1033,22 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               ],
             )
           : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _tripInfo(startTime, endTime),
-                    if (isMyTrip)
-                      _buildStatusActions(trip)
-                    else
-                      _updateButton(trip),
-                  ],
-                ),
+                _tripInfo(startTime, endTime),
+                const SizedBox(height: 12),
+                _busInfo(trip),
                 const SizedBox(height: 16),
                 const Divider(),
-                const SizedBox(height: 8),
-                Row(children: [_busInfo(trip)]),
+                const SizedBox(height: 12),
+                // Action Buttons moved to bottom
+                if (isMyTrip)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _buildStatusActions(trip),
+                  )
+                else
+                  _updateButton(trip),
               ],
             ),
     );
@@ -1041,53 +1089,57 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
   }
 
   Widget _updateButton(Trip trip) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      alignment: WrapAlignment.start,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        ElevatedButton.icon(
-          onPressed: () {
-            final controller =
-                Provider.of<TripController>(context, listen: false);
-            controller
-                .selectTrip(trip); // Ensure trip is selected in controller
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => SeatSelectionScreen(
-                        trip: trip, isConductorMode: true)));
-          },
-          icon: const Icon(Icons.confirmation_number, size: 16),
-          label: const Text("Sell Ticket"),
-          style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
+        Flexible(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              final controller =
+                  Provider.of<TripController>(context, listen: false);
+              controller
+                  .selectTrip(trip); // Ensure trip is selected in controller
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => SeatSelectionScreen(
+                          trip: trip, isConductorMode: true)));
+            },
+            icon: const Icon(Icons.confirmation_number, size: 16),
+            label: const Text("Sell Ticket", // Restored full label
+                overflow: TextOverflow.ellipsis),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
+          ),
         ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) =>
-                            ConductorTripManagementScreen(trip: trip)))
-                .then((_) => _loadTripsForDate(_selectedDate));
-          },
-          style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
-          child: const Text("Update",
-              style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white)),
+        const SizedBox(width: 8),
+        Flexible(
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              ConductorTripManagementScreen(trip: trip)))
+                  .then((_) => _loadTripsForDate(_selectedDate));
+            },
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
+            child: const Text("Update",
+                style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white)),
+          ),
         ),
       ],
     );
@@ -1153,7 +1205,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 150,
+      // width: 150, // Removed fixed width
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),

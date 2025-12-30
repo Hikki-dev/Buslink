@@ -16,7 +16,9 @@ import '../layout/custom_app_bar.dart';
 
 class MyTripsScreen extends StatelessWidget {
   final bool showBackButton;
-  const MyTripsScreen({super.key, this.showBackButton = true});
+  final VoidCallback? onBack;
+
+  const MyTripsScreen({super.key, this.showBackButton = true, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -47,10 +49,17 @@ class MyTripsScreen extends StatelessWidget {
               // Removed BottomNavigationBar
               appBar: CustomAppBar(
                 hideActions: isDesktop,
+                automaticallyImplyLeading: showBackButton && !isDesktop,
                 leading: showBackButton && !isDesktop
                     ? BackButton(
                         color: Theme.of(context).colorScheme.onSurface,
-                        onPressed: () => Navigator.pop(context))
+                        onPressed: () {
+                          if (onBack != null) {
+                            onBack!();
+                          } else {
+                            Navigator.pop(context);
+                          }
+                        })
                     : null,
                 title: Text("My Trips",
                     style: TextStyle(
@@ -344,15 +353,23 @@ class _BoardingPassCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _infoBadge(
-                              Icons.calendar_today,
-                              DateFormat('MMM d, y').format(depTime),
-                              subTextColor),
-                          const SizedBox(width: 16),
-                          _infoBadge(
-                              Icons.chair, "$seatsCount Seats", subTextColor),
-                          const Spacer(),
+                          Flexible(
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                _infoBadge(
+                                    Icons.calendar_today,
+                                    DateFormat('MMM d').format(depTime),
+                                    subTextColor),
+                                _infoBadge(Icons.chair, "$seatsCount Seats",
+                                    subTextColor),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           Text("LKR ${ticket.totalAmount.toStringAsFixed(0)}",
                               style: const TextStyle(
                                   fontFamily: 'Outfit',
@@ -462,6 +479,7 @@ class _BoardingPassCard extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12))),
                           child: const Text("Book Again",
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                   fontFamily: 'Inter',
                                   fontWeight: FontWeight.bold,

@@ -290,15 +290,18 @@ class _AdminScreenState extends State<AdminScreen> {
                                                 color: AppTheme.primaryColor),
                                           ),
                                           const SizedBox(width: 16),
-                                          Text(
-                                            isEditing
-                                                ? "Edit Trip Details"
-                                                : "Add New Trip / Route",
-                                            style: TextStyle(
-                                                fontFamily: 'Outfit',
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.bold,
-                                                color: textColor),
+                                          Expanded(
+                                            child: Text(
+                                              isEditing
+                                                  ? "Edit Trip Details"
+                                                  : "Add New Trip / Route",
+                                              style: TextStyle(
+                                                  fontFamily: 'Outfit',
+                                                  fontSize: 24,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: textColor),
+                                              overflow: TextOverflow.visible,
+                                            ),
                                           ),
                                         ],
                                       ),

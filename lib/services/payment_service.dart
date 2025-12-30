@@ -64,6 +64,7 @@ class PaymentService {
           paymentIntentClientSecret: paymentIntentClientSecret,
           merchantDisplayName: 'BusLink',
           style: ThemeMode.light,
+          allowsDelayedPaymentMethods: false, // Force simpler UI
           appearance: const stripe.PaymentSheetAppearance(
             colors: stripe.PaymentSheetAppearanceColors(
               primary: Color(0xFFD32F2F),

@@ -16,7 +16,9 @@ import '../favorites/favorites_screen.dart';
 import '../layout/custom_app_bar.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final bool showBackButton;
+  final VoidCallback? onBack;
+  const ProfileScreen({super.key, this.showBackButton = false, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +60,22 @@ class ProfileScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          appBar: isDesktop ? null : const CustomAppBar(),
+          appBar: isDesktop
+              ? null
+              : CustomAppBar(
+                  automaticallyImplyLeading: showBackButton,
+                  leading: showBackButton
+                      ? BackButton(
+                          onPressed: () {
+                            if (onBack != null) {
+                              onBack!();
+                            } else {
+                              Navigator.pop(context);
+                            }
+                          },
+                        )
+                      : null,
+                ),
           // bottomNavigationBar:
           //    isDesktop ? null : const MobileBottomNav(selectedIndex: 3),
           body: Column(

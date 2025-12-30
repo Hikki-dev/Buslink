@@ -61,21 +61,44 @@ class AppFooter extends StatelessWidget {
               const SizedBox(height: 60),
               Divider(color: Colors.grey.shade800),
               const SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("© 2024 BusLink. All rights reserved.",
-                      style: TextStyle(fontFamily: 'Inter', 
-                          color: Colors.grey.shade500, fontSize: 14)),
-                  Row(
-                    children: [
-                      Text("Made with ❤️ in Sri Lanka",
-                          style: TextStyle(fontFamily: 'Inter', 
-                              color: Colors.grey.shade500, fontSize: 14)),
-                    ],
-                  )
-                ],
-              )
+              if (isWide)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("© 2024 BusLink. All rights reserved.",
+                        style: TextStyle(
+                            fontFamily: 'Inter',
+                            color: Colors.grey.shade500,
+                            fontSize: 14)),
+                    Row(
+                      children: [
+                        Text("Made with ❤️ in Sri Lanka",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: Colors.grey.shade500,
+                                fontSize: 14)),
+                      ],
+                    )
+                  ],
+                )
+              else
+                Column(
+                  children: [
+                    Text("© 2024 BusLink. All rights reserved.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontFamily: 'Inter',
+                            color: Colors.grey.shade500,
+                            fontSize: 14)),
+                    const SizedBox(height: 12),
+                    Text("Made with ❤️ in Sri Lanka",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontFamily: 'Inter',
+                            color: Colors.grey.shade500,
+                            fontSize: 14)),
+                  ],
+                ),
             ],
           ),
         ),
@@ -92,7 +115,8 @@ class AppFooter extends StatelessWidget {
             Icon(Icons.directions_bus, color: Colors.white, size: 30),
             SizedBox(width: 8),
             Text("BusLink",
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.white)),
@@ -101,7 +125,8 @@ class AppFooter extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           "Sri Lanka's #1 Bus Booking Platform.\nTravel with comfort and style.",
-          style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade400, height: 1.6),
+          style: TextStyle(
+              fontFamily: 'Inter', color: Colors.grey.shade400, height: 1.6),
         ),
         const SizedBox(height: 24),
         Row(
@@ -120,7 +145,8 @@ class AppFooter extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title,
-            style: const TextStyle(fontFamily: 'Outfit', 
+            style: const TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white)),
@@ -135,7 +161,8 @@ class AppFooter extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text("Contact",
-            style: TextStyle(fontFamily: 'Outfit', 
+            style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white)),
@@ -161,7 +188,8 @@ class AppFooter extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(text,
-          style: TextStyle(fontFamily: 'Inter', color: Colors.grey.shade400, fontSize: 14)),
+          style: TextStyle(
+              fontFamily: 'Inter', color: Colors.grey.shade400, fontSize: 14)),
     );
   }
 
@@ -175,8 +203,11 @@ class AppFooter extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(text,
-                style: TextStyle(fontFamily: 'Inter', 
-                    color: Colors.grey.shade400, fontSize: 14, height: 1.2),
+                style: TextStyle(
+                    fontFamily: 'Inter',
+                    color: Colors.grey.shade400,
+                    fontSize: 14,
+                    height: 1.2),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis),
           ),

@@ -14,6 +14,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? title;
 
   final bool hideActions;
+  final bool automaticallyImplyLeading;
 
   const CustomAppBar({
     super.key,
@@ -23,6 +24,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.centerTitle = false,
     this.title,
     this.hideActions = false,
+    this.automaticallyImplyLeading = true,
   });
 
   @override
@@ -30,6 +32,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     final user = Provider.of<AuthService>(context).currentUser;
 
     return AppBar(
+      automaticallyImplyLeading: automaticallyImplyLeading,
       leading: leading,
       title: title ??
           Row(

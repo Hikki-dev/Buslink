@@ -7,6 +7,7 @@ import '../../data/cities.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:buslink/services/firestore_service.dart';
+import '../../services/auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/trip_model.dart';
@@ -248,10 +249,90 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   actions: [
+                    // Notification Icon
                     IconButton(
                       icon: const Icon(Icons.notifications_none_rounded),
                       onPressed: () {}, // Todo: Notifications
                     ),
+
+                    // Theme Switcher
+                    Consumer<ThemeController>(
+                      builder: (context, themeController, child) {
+                        return IconButton(
+                          icon: Icon(themeController.isDark
+                              ? Icons.light_mode
+                              : Icons.dark_mode),
+                          onPressed: () {
+                            themeController.toggleTheme();
+                          },
+                        );
+                      },
+                    ),
+
+                    // Profile Dropdown
+                    StreamBuilder<User?>(
+                        stream: FirebaseAuth.instance.authStateChanges(),
+                        builder: (context, snapshot) {
+                          final user = snapshot.data;
+                          return PopupMenuButton<String>(
+                            icon: const Icon(Icons.account_circle_outlined),
+                            onSelected: (value) {
+                              if (value == 'logout') {
+                                Provider.of<AuthService>(context, listen: false)
+                                    .signOut();
+                              } else if (value == 'login') {
+                                Navigator.pushNamed(context, '/');
+                              } else if (value == 'profile') {
+                                // Switch to Profile Tab (Index 3)
+                                // This requires access to CustomerMainScreen's state or a global controller.
+                                // simpler: Navigate to a dedicated profile page if needed,
+                                // OR rely on BottomNav.
+                                // Since we are in HomeScreen which is a child of CustomerMainScreen,
+                                // we can't easily switch the parent's tab index without a callback or provider.
+                                // For now, let's just show basic info or do nothing if already on home.
+                                // Actually, better to just show "Signed in as..." disabled item.
+                              }
+                            },
+                            itemBuilder: (BuildContext context) {
+                              if (user == null) {
+                                return [
+                                  const PopupMenuItem(
+                                    value: 'login',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.login, color: Colors.black),
+                                        SizedBox(width: 8),
+                                        Text("Log In"),
+                                      ],
+                                    ),
+                                  ),
+                                ];
+                              }
+                              return [
+                                PopupMenuItem(
+                                  enabled: false,
+                                  child: Text(
+                                      "Hi, ${user.displayName ?? 'User'}",
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.grey)),
+                                ),
+                                const PopupMenuDivider(),
+                                const PopupMenuItem(
+                                  value: 'logout',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.logout, color: Colors.red),
+                                      SizedBox(width: 8),
+                                      Text("Log Out",
+                                          style: TextStyle(color: Colors.red)),
+                                    ],
+                                  ),
+                                ),
+                              ];
+                            },
+                          );
+                        }),
                     const SizedBox(width: 8),
                   ],
                 ),
@@ -972,10 +1053,10 @@ class _HeroSectionState extends State<_HeroSection> {
                               title: Text(option,
                                   style: TextStyle(
                                       fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.bold,
                                       color: isDark
                                           ? Colors.white
-                                          : Colors.black87)),
+                                          : Colors.black)),
                               onTap: () => onSelected(option),
                               hoverColor: isDark
                                   ? Colors.white.withValues(alpha: 0.1)
@@ -1362,10 +1443,10 @@ class _HeroSectionState extends State<_HeroSection> {
                                     option,
                                     style: TextStyle(
                                         fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w500,
+                                        fontWeight: FontWeight.bold,
                                         color: isDark
                                             ? Colors.white
-                                            : Colors.black87),
+                                            : Colors.black),
                                   ),
                                 ),
                               );
