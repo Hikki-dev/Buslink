@@ -6,7 +6,7 @@ import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/app_theme.dart';
-import '../booking/seat_selection_screen.dart';
+
 import '../customer_main_screen.dart';
 import 'admin_screen.dart';
 import 'layout/admin_bottom_nav.dart';
@@ -59,39 +59,56 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    ShaderMask(
-                                      shaderCallback: (bounds) =>
-                                          const LinearGradient(
-                                        colors: [
-                                          AppTheme.primaryColor,
-                                          Color(0xFFFF8A65)
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ).createShader(bounds),
-                                      child: const Text("Route Management",
-                                          style: TextStyle(
-                                              fontFamily: 'Outfit',
-                                              fontSize: 34,
-                                              height: 1.1,
-                                              fontWeight: FontWeight.w800,
-                                              color: Colors.white)),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: ShaderMask(
+                                            shaderCallback: (bounds) =>
+                                                const LinearGradient(
+                                              colors: [
+                                                AppTheme.primaryColor,
+                                                Color(0xFFFF8A65)
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ).createShader(bounds),
+                                            child: const FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Text("Route Management",
+                                                  style: TextStyle(
+                                                      fontFamily: 'Outfit',
+                                                      fontSize: 34,
+                                                      height: 1.1,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: Colors.white)),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     const SizedBox(height: 8),
-                                    Text(
-                                        "Manage bus schedules, fares, and availability.",
-                                        style: TextStyle(
-                                            fontFamily: 'Inter',
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface
-                                                .withOpacity(0.7),
-                                            fontSize: 16)),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                              "Manage bus schedules, fares, and availability.",
+                                              style: TextStyle(
+                                                  fontFamily: 'Inter',
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withOpacity(0.7),
+                                                  fontSize: 16)),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),
-                              const Spacer(),
                               if (isDesktop) ...[
+                                const Spacer(),
                                 _buildAddRouteButton(context),
                                 const SizedBox(width: 16),
                                 _buildAddRouteSimpleButton(context),
@@ -199,12 +216,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                                       isAdminView: true),
                                             ),
                                           ).then((_) {
-                                            // Reset when coming back
+                                            // Reset when coming back (Delayed to prevent black screen)
                                             if (context.mounted) {
-                                              Provider.of<TripController>(
-                                                      context,
-                                                      listen: false)
-                                                  .setPreviewMode(false);
+                                              Future.delayed(
+                                                  const Duration(
+                                                      milliseconds: 300), () {
+                                                if (context.mounted) {
+                                                  Provider.of<TripController>(
+                                                          context,
+                                                          listen: false)
+                                                      .setPreviewMode(false);
+                                                }
+                                              });
                                             }
                                           });
                                         },
@@ -336,7 +359,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 16, horizontal: 32),
                         ),
                         child: const Text("Search",
                             style: TextStyle(
@@ -588,29 +612,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
           // Actions
           if (MediaQuery.of(context).size.width > 600) ...[
-            OutlinedButton.icon(
-                onPressed: () {
-                  // Navigate to Seat Selection as Admin
-                  // We need to pass the trip logic.
-                  // Assuming we can re-use search or pass trip directly
-                  // For now, let's navigate to seat selection.
-                  // But SeatSelection expects a Trip model and searches usually populate 'currentTrip'.
-                  // A cleaner way is to simply push the SeatSelectionScreen with the trip.
-                  // However, SeatSelectionScreen usually relies on `widget.trip`.
-
-                  // Import SeatSelectionScreen is needed.
-                  // We'll fix imports after.
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => SeatSelectionScreen(
-                                trip: trip,
-                                showBackButton: true,
-                              )));
-                },
-                icon: const Icon(Icons.event_seat, size: 18),
-                label: const Text("Book")),
-            const SizedBox(width: 12),
             OutlinedButton(
                 onPressed: () {
                   Navigator.push(
@@ -626,8 +627,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ] else ...[
             PopupMenuButton(
               itemBuilder: (context) => [
-                const PopupMenuItem(
-                    value: 'book', child: Text("Book This Trip")), // NEW
                 const PopupMenuItem(value: 'edit', child: Text("Edit Route")),
                 const PopupMenuItem(
                     value: 'delete',
@@ -635,15 +634,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         style: TextStyle(color: Colors.red))),
               ],
               onSelected: (val) {
-                if (val == 'book') {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => SeatSelectionScreen(
-                                trip: trip,
-                                showBackButton: true,
-                              )));
-                } else if (val == 'edit') {
+                if (val == 'edit') {
                   Navigator.push(
                       context,
                       MaterialPageRoute(

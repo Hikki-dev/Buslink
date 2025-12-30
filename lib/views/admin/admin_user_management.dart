@@ -402,16 +402,15 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                         const InputDecoration(labelText: "Display Name"),
                   ),
                   const SizedBox(height: 16),
+                  // Role Selection
                   const Text("Role:",
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  _buildRadioTile("Customer", "customer", selectedRole,
+                  _buildRadioTile(context, "Customer", "customer", selectedRole,
                       (v) => setState(() => selectedRole = v!)),
-                  _buildRadioTile("Conductor", "conductor", selectedRole,
-                      (v) => setState(() => selectedRole = v!)),
-                  _buildRadioTile("Manager", "manager", selectedRole,
-                      (v) => setState(() => selectedRole = v!)),
-                  _buildRadioTile("Admin", "admin", selectedRole,
+                  _buildRadioTile(context, "Conductor", "conductor",
+                      selectedRole, (v) => setState(() => selectedRole = v!)),
+                  _buildRadioTile(context, "Admin", "admin", selectedRole,
                       (v) => setState(() => selectedRole = v!)),
                 ],
               ),
@@ -421,13 +420,24 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                   child: const Text("Cancel"),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    controller.updateUserProfile(
-                        uid, nameCtrl.text.trim(), selectedRole);
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("User profile updated!")),
-                    );
+                  onPressed: () async {
+                    try {
+                      await controller.updateUserProfile(
+                          uid, nameCtrl.text.trim(), selectedRole);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text("User profile updated!")),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Update failed: $e")),
+                        );
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
@@ -479,9 +489,13 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                           SizedBox(width: 8),
                           Expanded(
                               child: Text(
-                                  "Creates a NEW login in Firebase Auth + Database Profile.",
-                                  style: TextStyle(
-                                      fontFamily: 'Inter', fontSize: 12))),
+                            "Creates a NEW login in Firebase Auth + Database Profile.",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                color: Colors
+                                    .black87), // Creating user info always dark on light bg
+                          )),
                         ],
                       ),
                     ),
@@ -517,7 +531,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                     DropdownButtonFormField<String>(
                       initialValue: role,
                       decoration: const InputDecoration(labelText: "Role"),
-                      items: ['customer', 'conductor', 'manager', 'admin']
+                      items: ['customer', 'conductor', 'admin']
                           .map((r) => DropdownMenuItem(
                               value: r, child: Text(r.toUpperCase())))
                           .toList(),
@@ -590,10 +604,21 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red, foregroundColor: Colors.white),
-            onPressed: () {
-              Provider.of<TripController>(context, listen: false)
-                  .deleteUserProfile(uid);
-              Navigator.pop(ctx);
+            onPressed: () async {
+              try {
+                await Provider.of<TripController>(context, listen: false)
+                    .deleteUserProfile(uid);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("User profile deleted.")));
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Delete failed: $e")));
+                }
+              }
             },
             child: const Text("Delete"),
           )
@@ -602,9 +627,11 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     );
   }
 
-  Widget _buildRadioTile(String label, String value, String groupValue,
-      Function(String?) onChanged) {
+  Widget _buildRadioTile(BuildContext context, String label, String value,
+      String groupValue, Function(String?) onChanged) {
     final bool isSelected = value == groupValue;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: () => onChanged(value),
       child: Padding(
@@ -621,7 +648,9 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? Colors.black : Colors.grey.shade700,
+                  color: isDark
+                      ? Colors.white
+                      : (isSelected ? Colors.black : Colors.grey.shade700),
                 )),
           ],
         ),

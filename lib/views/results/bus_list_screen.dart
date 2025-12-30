@@ -10,6 +10,8 @@ import '../../models/trip_model.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latlng;
 import '../booking/seat_selection_screen.dart';
+import '../booking/payment_screen.dart';
+import '../booking/bulk_quantity_dialog.dart';
 import '../../utils/app_theme.dart';
 import '../layout/desktop_navbar.dart';
 import 'dart:convert';
@@ -872,8 +874,6 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         children: [
           _buildCardHeader(trip),
           const SizedBox(height: 12),
-          _buildTripDetails(trip),
-          const SizedBox(height: 12),
           _buildTimeline(trip, duration),
           const SizedBox(height: 16),
           _buildAmenities(trip),
@@ -889,8 +889,6 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildCardHeader(trip),
-          const SizedBox(height: 12),
-          _buildTripDetails(trip),
           const SizedBox(height: 12),
           _buildTimeline(trip, duration),
           const SizedBox(height: 16),
@@ -932,35 +930,16 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 4),
-            Row(
-              children: [
-                _detailChip(Icons.directions_bus, trip.busNumber),
-                const SizedBox(width: 8),
-                if (trip.via.isNotEmpty)
-                  _detailChip(Icons.route, "Via ${trip.via}"),
-              ],
-            )
+            // Only Show Via
+            if (trip.via.isNotEmpty)
+              _detailChip(Icons.route, "Via ${trip.via}"),
           ],
         ),
-        // Amenities (Hardcoded for Demo feel as user requested "rich aesthetics")
       ],
     );
   }
 
-  Widget _buildTripDetails(Trip trip) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: [
-        if (trip.via.isNotEmpty)
-          _detailChip(Icons.directions, "Via ${trip.via}"),
-        if (trip.busNumber.isNotEmpty)
-          _detailChip(Icons.directions_bus, trip.busNumber),
-        if (trip.platformNumber.isNotEmpty && trip.platformNumber != 'TBD')
-          _detailChip(Icons.signpost, "Platform ${trip.platformNumber}"),
-      ],
-    );
-  }
+  // Details Removed as requested
 
   Widget _detailChip(IconData icon, String label) {
     return Container(
@@ -1097,6 +1076,39 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                     backgroundColor: Colors.red,
                     duration: Duration(seconds: 4),
                   ));
+                } else if (controller.isBulkBooking) {
+                  // Bulk Booking - Quantity Selection
+                  showDialog(
+                    context: context,
+                    builder: (context) => BulkQuantityDialog(
+                      trip: trip,
+                      days: controller.bulkDates.length,
+                      onConfirm: (qty) {
+                        // Check availability
+                        int available =
+                            trip.totalSeats - trip.bookedSeats.length;
+                        if (qty > available) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content:
+                                  Text("Only $available seats available")));
+                          return;
+                        }
+
+                        controller.setSeatsPerTrip(qty);
+                        // Auto-assign dummy seats for payment calculation
+                        // We use -1 to indicate auto-assignment
+                        controller.selectedSeats =
+                            List.generate(qty, (index) => -1);
+                        controller.selectTrip(trip);
+
+                        Navigator.pop(context); // Close dialog
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const PaymentScreen()));
+                      },
+                    ),
+                  );
                 } else {
                   controller.selectTrip(trip);
                   Navigator.push(

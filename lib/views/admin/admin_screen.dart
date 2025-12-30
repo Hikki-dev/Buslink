@@ -148,11 +148,10 @@ class _AdminScreenState extends State<AdminScreen> {
       'duration': _durationController.text,
       'operatingDays': _isRecurring ? _operatingDays : [],
       'price': double.parse(_fareController.text),
-      'busNumber': _busNumberController.text,
-      'operatorName': _operatorController.text,
+      'busNumber': 'Standard Bus', // Default
+      'operatorName': 'BusLink', // Default
       'totalSeats': int.parse(_seatsController.text),
-      'platformNumber':
-          _platformController.text.isEmpty ? 'TBD' : _platformController.text,
+      'platformNumber': 'TBD', // Default
       'blockedSeats': _blockedSeats,
     };
 
@@ -294,7 +293,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                             child: Text(
                                               isEditing
                                                   ? "Edit Trip Details"
-                                                  : "Add New Trip / Route",
+                                                  : "Add New Trip",
                                               style: TextStyle(
                                                   fontFamily: 'Outfit',
                                                   fontSize: 24,
@@ -656,38 +655,10 @@ class _AdminScreenState extends State<AdminScreen> {
                                           isNumber: true,
                                           icon: Icons.attach_money),
                                       const SizedBox(height: 16),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                              child: _buildTextField(
-                                                  "Bus Number",
-                                                  _busNumberController,
-                                                  icon: Icons.directions_bus)),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                              child: _buildTextField(
-                                                  "Operator Name",
-                                                  _operatorController,
-                                                  icon: Icons.person)),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                              child: _buildTextField(
-                                                  "Total Seats",
-                                                  _seatsController,
-                                                  isNumber: true,
-                                                  icon: Icons.event_seat)),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                              child: _buildTextField(
-                                                  "Platform No.",
-                                                  _platformController,
-                                                  icon: Icons.signpost)),
-                                        ],
-                                      ),
+                                      _buildTextField(
+                                          "Total Seats", _seatsController,
+                                          isNumber: true,
+                                          icon: Icons.event_seat),
 
                                       const SizedBox(height: 48),
                                       SizedBox(
@@ -706,7 +677,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                           child: Text(
                                               isEditing
                                                   ? "SAVE CHANGES"
-                                                  : "SAVE ROUTE / TRIP",
+                                                  : "SAVE TRIP",
                                               style: const TextStyle(
                                                   fontFamily: 'Outfit',
                                                   fontWeight: FontWeight.bold,
@@ -1178,8 +1149,8 @@ class _AdminScreenState extends State<AdminScreen> {
     // because initState logic handles it (see below addition to initState).
 
     Color bgColor = Colors.white;
-    Color? borderColor = Colors.grey.shade400;
-    Color textColor = Colors.black54;
+    Color? borderColor = Colors.red; // Changed to Red
+    Color textColor = Colors.red; // Changed to Red
 
     if (isBooked) {
       bgColor = Colors.red.shade100;

@@ -14,6 +14,7 @@ import '../../models/trip_model.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/language_provider.dart';
+import 'bulk_calendar_dialog.dart';
 import '../results/bus_list_screen.dart';
 import 'widgets/ongoing_trip_card.dart';
 import 'widgets/favorites_section.dart';
@@ -89,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isRoundTrip = false;
   bool _isBulkBooking = false;
+  List<DateTime> _bulkDates = []; // NEW: Bulk Dates
   DateTime? _selectedReturnDate; // NEW: Return Date State
 
   List<Map<String, dynamic>> _currentDestinations = [];
@@ -134,6 +136,14 @@ class _HomeScreenState extends State<HomeScreen> {
     tripController.setFromCity(_originController.text);
     tripController.setToCity(_destinationController.text);
     tripController.setDate(_selectedDate);
+    // NEW: Pass bulk dates
+    if (_isBulkBooking) {
+      if (_bulkDates.isEmpty) {
+        // Fallback to selected date if empty
+        _bulkDates = [_selectedDate];
+      }
+      tripController.setBulkDates(_bulkDates);
+    }
     tripController.setRoundTrip(_isRoundTrip);
     tripController.setBulkMode(_isBulkBooking);
 
@@ -149,28 +159,45 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 90)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppTheme.primaryColor,
-              primary: AppTheme.primaryColor,
-              brightness: Theme.of(context).brightness,
+    if (_isBulkBooking) {
+      final List<DateTime>? values = await showDialog<List<DateTime>>(
+        context: context,
+        builder: (context) => BulkCalendarDialog(initialDates: _bulkDates),
+      );
+
+      if (values != null && values.isNotEmpty) {
+        setState(() {
+          _bulkDates = values..sort();
+          if (_bulkDates.isNotEmpty) {
+            _selectedDate = _bulkDates.first;
+          }
+        });
+      }
+    } else {
+      // Standard Single Select
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: _selectedDate,
+        firstDate: DateTime.now(),
+        lastDate: DateTime.now().add(const Duration(days: 90)),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: AppTheme.primaryColor,
+                primary: AppTheme.primaryColor,
+                brightness: Theme.of(context).brightness,
+              ),
             ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
+            child: child!,
+          );
+        },
+      );
+      if (picked != null && picked != _selectedDate) {
+        setState(() {
+          _selectedDate = picked;
+        });
+      }
     }
   }
 
@@ -216,173 +243,189 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: [
         Expanded(
-          child: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              if (isDesktop)
-                const SliverToBoxAdapter(child: DesktopNavBar(selectedIndex: 0))
-              else
-                SliverAppBar(
-                  pinned: true,
-                  floating: true,
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  elevation: 0,
-                  automaticallyImplyLeading: false,
-                  title: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8)),
-                        child: const Icon(Icons.directions_bus,
-                            color: AppTheme.primaryColor, size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      Text("BusLink",
-                          style: TextStyle(
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.bold,
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: widget.isAdminView,
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                if (isDesktop)
+                  SliverToBoxAdapter(
+                      child: DesktopNavBar(
+                          selectedIndex: 0, isAdminView: widget.isAdminView))
+                else
+                  SliverAppBar(
+                    pinned: true,
+                    floating: true,
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    elevation: 0,
+                    automaticallyImplyLeading: false,
+                    title: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
                               color:
-                                  Theme.of(context).textTheme.bodyLarge?.color,
-                              fontSize: 22)),
-                    ],
-                  ),
-                  actions: [
-                    // Notification Icon
-                    IconButton(
-                      icon: const Icon(Icons.notifications_none_rounded),
-                      onPressed: () {}, // Todo: Notifications
+                                  AppTheme.primaryColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8)),
+                          child: const Icon(Icons.directions_bus,
+                              color: AppTheme.primaryColor, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Text("BusLink",
+                            style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color,
+                                fontSize: 22)),
+                      ],
                     ),
+                    actions: [
+                      // Notification Icon
+                      IconButton(
+                        icon: const Icon(Icons.notifications_none_rounded),
+                        onPressed: () {}, // Todo: Notifications
+                      ),
 
-                    // Theme Switcher
-                    Consumer<ThemeController>(
-                      builder: (context, themeController, child) {
-                        return IconButton(
-                          icon: Icon(themeController.isDark
-                              ? Icons.light_mode
-                              : Icons.dark_mode),
-                          onPressed: () {
-                            themeController.toggleTheme();
-                          },
-                        );
-                      },
-                    ),
-
-                    // Profile Dropdown
-                    StreamBuilder<User?>(
-                        stream: FirebaseAuth.instance.authStateChanges(),
-                        builder: (context, snapshot) {
-                          final user = snapshot.data;
-                          return PopupMenuButton<String>(
-                            icon: const Icon(Icons.account_circle_outlined),
-                            onSelected: (value) {
-                              if (value == 'logout') {
-                                Provider.of<AuthService>(context, listen: false)
-                                    .signOut();
-                              } else if (value == 'login') {
-                                Navigator.pushNamed(context, '/');
-                              } else if (value == 'profile') {
-                                // Switch to Profile Tab (Index 3)
-                                // This requires access to CustomerMainScreen's state or a global controller.
-                                // simpler: Navigate to a dedicated profile page if needed,
-                                // OR rely on BottomNav.
-                                // Since we are in HomeScreen which is a child of CustomerMainScreen,
-                                // we can't easily switch the parent's tab index without a callback or provider.
-                                // For now, let's just show basic info or do nothing if already on home.
-                                // Actually, better to just show "Signed in as..." disabled item.
-                              }
+                      // Theme Switcher
+                      Consumer<ThemeController>(
+                        builder: (context, themeController, child) {
+                          return IconButton(
+                            icon: Icon(themeController.isDark
+                                ? Icons.light_mode
+                                : Icons.dark_mode),
+                            onPressed: () {
+                              themeController.toggleTheme();
                             },
-                            itemBuilder: (BuildContext context) {
-                              if (user == null) {
+                          );
+                        },
+                      ),
+
+                      // Profile Dropdown
+                      StreamBuilder<User?>(
+                          stream: FirebaseAuth.instance.authStateChanges(),
+                          builder: (context, snapshot) {
+                            final user = snapshot.data;
+                            return PopupMenuButton<String>(
+                              icon: const Icon(Icons.account_circle_outlined),
+                              onSelected: (value) {
+                                if (value == 'logout') {
+                                  Provider.of<AuthService>(context,
+                                          listen: false)
+                                      .signOut();
+                                } else if (value == 'login') {
+                                  Navigator.pushNamed(context, '/');
+                                } else if (value == 'profile') {
+                                  // Switch to Profile Tab (Index 3)
+                                  // This requires access to CustomerMainScreen's state or a global controller.
+                                  // simpler: Navigate to a dedicated profile page if needed,
+                                  // OR rely on BottomNav.
+                                  // Since we are in HomeScreen which is a child of CustomerMainScreen,
+                                  // we can't easily switch the parent's tab index without a callback or provider.
+                                  // For now, let's just show basic info or do nothing if already on home.
+                                  // Actually, better to just show "Signed in as..." disabled item.
+                                }
+                              },
+                              itemBuilder: (BuildContext context) {
+                                if (user == null) {
+                                  return [
+                                    const PopupMenuItem(
+                                      value: 'login',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.login,
+                                              color: Colors.black),
+                                          SizedBox(width: 8),
+                                          Text("Log In"),
+                                        ],
+                                      ),
+                                    ),
+                                  ];
+                                }
                                 return [
+                                  PopupMenuItem(
+                                    enabled: false,
+                                    child: Text(
+                                        "Hi, ${user.displayName ?? 'User'}",
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey)),
+                                  ),
+                                  const PopupMenuDivider(),
                                   const PopupMenuItem(
-                                    value: 'login',
+                                    value: 'logout',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.login, color: Colors.black),
+                                        Icon(Icons.logout, color: Colors.red),
                                         SizedBox(width: 8),
-                                        Text("Log In"),
+                                        Text("Log Out",
+                                            style:
+                                                TextStyle(color: Colors.red)),
                                       ],
                                     ),
                                   ),
                                 ];
-                              }
-                              return [
-                                PopupMenuItem(
-                                  enabled: false,
-                                  child: Text(
-                                      "Hi, ${user.displayName ?? 'User'}",
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey)),
-                                ),
-                                const PopupMenuDivider(),
-                                const PopupMenuItem(
-                                  value: 'logout',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.logout, color: Colors.red),
-                                      SizedBox(width: 8),
-                                      Text("Log Out",
-                                          style: TextStyle(color: Colors.red)),
-                                    ],
-                                  ),
-                                ),
-                              ];
-                            },
-                          );
-                        }),
-                    const SizedBox(width: 8),
-                  ],
+                              },
+                            );
+                          }),
+                      const SizedBox(width: 8),
+                    ],
+                  ),
+                SliverToBoxAdapter(
+                  child: _HeroSection(
+                    isDesktop: isDesktop,
+                    originController: _originController,
+                    destinationController: _destinationController,
+                    originFocusNode: _originFocusNode,
+                    destinationFocusNode: _destinationFocusNode,
+                    selectedDate: _selectedDate,
+                    onDateTap: () => _selectDate(context),
+                    onSearchTap: _searchBuses,
+                    isRoundTrip: _isRoundTrip,
+                    isBulkBooking: _isBulkBooking,
+                    // NEW: Pass Return Date Logic
+                    selectedReturnDate: _selectedReturnDate,
+                    onReturnDateTap: () => _selectReturnDate(context),
+                    onRoundTripChanged: (val) =>
+                        setState(() => _isRoundTrip = val),
+                    onBulkBookingChanged: (val) =>
+                        setState(() => _isBulkBooking = val),
+                    // NEW: Pass bulk counts
+                    bulkDatesCount: _bulkDates.length,
+                    // NEW: Pass Admin View Context
+                    isAdminView: widget.isAdminView,
+                  ),
                 ),
-              SliverToBoxAdapter(
-                child: _HeroSection(
-                  isDesktop: isDesktop,
-                  originController: _originController,
-                  destinationController: _destinationController,
-                  originFocusNode: _originFocusNode,
-                  destinationFocusNode: _destinationFocusNode,
-                  selectedDate: _selectedDate,
-                  onDateTap: () => _selectDate(context),
-                  onSearchTap: _searchBuses,
-                  isRoundTrip: _isRoundTrip,
-                  isBulkBooking: _isBulkBooking,
-                  // NEW: Pass Return Date Logic
-                  selectedReturnDate: _selectedReturnDate,
-                  onReturnDateTap: () => _selectReturnDate(context),
-                  onRoundTripChanged: (val) =>
-                      setState(() => _isRoundTrip = val),
-                  onBulkBookingChanged: (val) =>
-                      setState(() => _isBulkBooking = val),
-                ),
-              ),
-              // --- ONGOING TRIPS & FAVORITES SECTION ---
-              StreamBuilder<User?>(
-                  stream: FirebaseAuth.instance.authStateChanges(),
-                  builder: (context, snapshot) {
-                    final user = snapshot.data;
-                    if (user == null) return const SliverToBoxAdapter();
+                // --- ONGOING TRIPS & FAVORITES SECTION ---
+                StreamBuilder<User?>(
+                    stream: FirebaseAuth.instance.authStateChanges(),
+                    builder: (context, snapshot) {
+                      final user = snapshot.data;
+                      if (user == null) return const SliverToBoxAdapter();
 
-                    return SliverToBoxAdapter(
-                      child: _buildDashboardSection(context, user, isDesktop),
-                    );
-                  }),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                sliver: SliverToBoxAdapter(
-                  child: _FeaturesSection(isDesktop: isDesktop),
+                      return SliverToBoxAdapter(
+                        child: _buildDashboardSection(context, user, isDesktop),
+                      );
+                    }),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  sliver: SliverToBoxAdapter(
+                    child: _FeaturesSection(isDesktop: isDesktop),
+                  ),
                 ),
-              ),
-              SliverToBoxAdapter(
-                child: _PopularDestinationsGrid(
-                  isDesktop: isDesktop,
-                  destinations: _currentDestinations,
+                SliverToBoxAdapter(
+                  child: _PopularDestinationsGrid(
+                    isDesktop: isDesktop,
+                    destinations: _currentDestinations,
+                  ),
                 ),
-              ),
-              const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
-              if (isDesktop) const SliverToBoxAdapter(child: AppFooter()),
-            ],
+                const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+                if (isDesktop) const SliverToBoxAdapter(child: AppFooter()),
+              ],
+            ),
           ),
         ),
       ],
@@ -397,14 +440,11 @@ class _HomeScreenState extends State<HomeScreen> {
           stream: Provider.of<FirestoreService>(context, listen: false)
               .getUserTickets(user.uid),
           builder: (context, ticketSnap) {
-            Ticket? activeTicket;
+            List<Ticket> upcomingTickets = [];
             if (ticketSnap.hasData && ticketSnap.data!.isNotEmpty) {
-              final tickets = ticketSnap.data!
+              upcomingTickets = ticketSnap.data!
                   .where((t) => t.status != 'cancelled')
                   .toList();
-              if (tickets.isNotEmpty) {
-                activeTicket = tickets.last;
-              }
             }
 
             return StreamBuilder<List<Map<String, dynamic>>>(
@@ -424,70 +464,206 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 );
 
-                if (activeTicket == null) {
+                if (upcomingTickets.isEmpty) {
                   return favoritesWidget;
                 }
 
-                return StreamBuilder<Trip>(
-                  stream: Provider.of<FirestoreService>(context, listen: false)
-                      .getTripStream(activeTicket.tripId),
-                  builder: (context, tripSnap) {
-                    if (!tripSnap.hasData) {
-                      return favoritesWidget;
-                    }
-
-                    final tripWidget = OngoingTripCard(
-                      trip: tripSnap.data!,
-                      seatCount: activeTicket!.seatNumbers.length,
-                      paidAmount: activeTicket.totalAmount,
-                    );
-
-                    // Wrap contents
-                    // Note: ActiveTicketCard & FavoritesSection might already have containers.
-                    // If they do, we shouldn't double wrap.
-                    // Checking code: ActiveTicketCard usually has its own style.
-                    // User said "properly put like why is it stretched... make it somewhat similar to the search bar".
-                    // The screenshots show they are full width black blocks.
-                    // I will wrap them in a constrained box to avoid "stretch" on desktop, but fill on mobile.
-
-                    // Since TripWidget and FavoritesWidget are instances of `ActiveTicketCard` and `FavoritesSection`
-                    // I'll wrap them here.
-
-                    if (isDesktop) {
-                      return Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 900),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            child: Column(
-                              children: [
-                                favoritesWidget,
-                                const SizedBox(height: 24),
-                                tripWidget,
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    } else {
-                      return Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            favoritesWidget,
-                            const SizedBox(height: 16),
-                            tripWidget,
-                          ],
-                        ),
-                      );
-                    }
-                  },
-                );
+                // Pass to Carousel
+                return _buildTripsCarousel(
+                    context, upcomingTickets, favoritesWidget, isDesktop);
               },
             );
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildTripsCarousel(BuildContext context, List<Ticket> tickets,
+      Widget favoritesWidget, bool isDesktop) {
+    if (tickets.isEmpty) return favoritesWidget;
+
+    // Ensure we sort tickets by date?
+    // Firestore query might not be sorted.
+    // Let's assume passed list order is acceptable or sort locally.
+    tickets.sort(
+        (a, b) => a.bookingTime.compareTo(b.bookingTime)); // Soonest first?
+    // Actually usually 'Upcoming' means future.
+
+    return _TripsCarouselWidget(
+        tickets: tickets,
+        favoritesWidget: favoritesWidget,
+        isDesktop: isDesktop);
+  }
+}
+
+class _TripsCarouselWidget extends StatefulWidget {
+  final List<Ticket> tickets;
+  final Widget favoritesWidget;
+  final bool isDesktop;
+
+  const _TripsCarouselWidget(
+      {required this.tickets,
+      required this.favoritesWidget,
+      required this.isDesktop});
+
+  @override
+  State<_TripsCarouselWidget> createState() => _TripsCarouselWidgetState();
+}
+
+class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
+  final PageController _pageController = PageController(viewportFraction: 0.85);
+  int _currentPage = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    // If only 1 ticket, show standard layout
+    if (widget.tickets.length == 1) {
+      return _buildSingleTicketLayout(widget.tickets.first);
+    }
+
+    // Carousel Layout
+    return Column(
+      children: [
+        if (widget.isDesktop)
+          Center(
+              child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  child: widget.favoritesWidget))
+        else
+          Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: widget.favoritesWidget),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (widget.isDesktop && widget.tickets.length > 1)
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios, size: 16),
+                onPressed: _currentPage > 0
+                    ? () {
+                        _pageController.previousPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut);
+                      }
+                    : null,
+              ),
+
+            // The Carousel
+            Expanded(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                    maxWidth: widget.isDesktop ? 600 : 800, maxHeight: 420),
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: widget.tickets.length,
+                  onPageChanged: (idx) => setState(() => _currentPage = idx),
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: StreamBuilder<Trip>(
+                          stream: Provider.of<FirestoreService>(context,
+                                  listen: false)
+                              .getTripStream(widget.tickets[index].tripId),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData)
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            return OngoingTripCard(
+                              trip: snapshot.data!,
+                              seatCount:
+                                  widget.tickets[index].seatNumbers.length,
+                              paidAmount: widget.tickets[index].totalAmount,
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 12),
+                            );
+                          }),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            if (widget.isDesktop && widget.tickets.length > 1)
+              IconButton(
+                icon: const Icon(Icons.arrow_forward_ios, size: 16),
+                onPressed: _currentPage < widget.tickets.length - 1
+                    ? () {
+                        _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut);
+                      }
+                    : null,
+              ),
+          ],
+        ),
+        // Swipe Hint (Mobile Only)
+        if (!widget.isDesktop && widget.tickets.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.swipe, size: 16, color: Colors.grey.shade500),
+                const SizedBox(width: 6),
+                Text(
+                  "Swipe to view more trips",
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSingleTicketLayout(Ticket ticket) {
+    return StreamBuilder<Trip>(
+      stream: Provider.of<FirestoreService>(context, listen: false)
+          .getTripStream(ticket.tripId),
+      builder: (context, tripSnap) {
+        if (!tripSnap.hasData) return widget.favoritesWidget;
+
+        final tripWidget = OngoingTripCard(
+          trip: tripSnap.data!,
+          seatCount: ticket.seatNumbers.length,
+          paidAmount: ticket.totalAmount,
+        );
+
+        if (widget.isDesktop) {
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Column(
+                  children: [
+                    widget.favoritesWidget,
+                    const SizedBox(height: 24),
+                    tripWidget,
+                  ],
+                ),
+              ),
+            ),
+          );
+        } else {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                widget.favoritesWidget,
+                const SizedBox(height: 16),
+                tripWidget,
+              ],
+            ),
+          );
+        }
+      },
     );
   }
 }
@@ -503,11 +679,13 @@ class _HeroSection extends StatefulWidget {
   final VoidCallback onSearchTap;
   final bool isRoundTrip;
   final bool isBulkBooking;
+  final int bulkDatesCount;
   // NEW: Return Date Fields
   final DateTime? selectedReturnDate;
   final VoidCallback onReturnDateTap;
   final ValueChanged<bool> onRoundTripChanged;
   final ValueChanged<bool> onBulkBookingChanged;
+  final bool isAdminView;
 
   const _HeroSection({
     required this.isDesktop,
@@ -520,10 +698,12 @@ class _HeroSection extends StatefulWidget {
     required this.onSearchTap,
     required this.isRoundTrip,
     required this.isBulkBooking,
+    required this.bulkDatesCount,
     required this.selectedReturnDate,
     required this.onReturnDateTap,
     required this.onRoundTripChanged,
     required this.onBulkBookingChanged,
+    required this.isAdminView,
   });
 
   @override
@@ -638,7 +818,11 @@ class _HeroSectionState extends State<_HeroSection> {
                 minHeight: widget.isDesktop ? 600 : 550,
               ),
               padding: EdgeInsets.only(
-                  top: widget.isDesktop ? 100 : 120,
+                  top: widget.isAdminView
+                      ? (widget.isDesktop
+                          ? 40
+                          : 20) // drastically reduced for admin preview
+                      : (widget.isDesktop ? 100 : 120),
                   bottom: 40,
                   left: 20,
                   right: 20),
@@ -1203,8 +1387,11 @@ class _HeroSectionState extends State<_HeroSection> {
                                           : Colors.black54)),
                               const SizedBox(height: 4),
                               Text(
-                                  DateFormat('d MMM')
-                                      .format(widget.selectedDate),
+                                  widget.isBulkBooking &&
+                                          widget.bulkDatesCount > 1
+                                      ? "${widget.bulkDatesCount} Dates Selected"
+                                      : DateFormat('d MMM')
+                                          .format(widget.selectedDate),
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15, // slightly smaller

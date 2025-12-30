@@ -7,12 +7,14 @@ class OngoingTripCard extends StatelessWidget {
   final Trip trip;
   final int seatCount;
   final double paidAmount;
+  final EdgeInsetsGeometry? margin;
 
   const OngoingTripCard({
     super.key,
     required this.trip,
     required this.seatCount,
     required this.paidAmount,
+    this.margin,
   });
 
   @override
@@ -20,7 +22,8 @@ class OngoingTripCard extends StatelessWidget {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      margin:
+          margin ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E2129) : Colors.white,
@@ -39,28 +42,33 @@ class OngoingTripCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Upcoming Trip",
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800, // Extra Bold
-                      color: isDark ? Colors.white : const Color(0xFF2D3142),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Upcoming Trip",
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
+                          ?.copyWith(
+                            fontFamily: 'Outfit',
+                            fontWeight: FontWeight.w800,
+                            fontSize: 20,
+                            color:
+                                isDark ? Colors.white : const Color(0xFF2D3142),
+                          ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Don't miss your bus!",
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      color: Colors.grey.shade500,
+                    const SizedBox(height: 4),
+                    Text(
+                      "Don't miss your bus!",
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color:
+                                isDark ? Colors.white70 : Colors.grey.shade600,
+                          ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               _buildStatusBadge(trip.status),
             ],
@@ -74,12 +82,12 @@ class OngoingTripCard extends StatelessWidget {
                 children: [
                   Text(
                     DateFormat('EEEE').format(trip.departureTime),
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : Colors.grey.shade800,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontFamily: 'Outfit',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: isDark ? Colors.white70 : Colors.grey.shade800,
+                        ),
                   ),
                   Text(
                     "Bus No: ${trip.busNumber}",
@@ -97,10 +105,17 @@ class OngoingTripCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildLocationInfo("ORIGIN", trip.fromCity, isDark),
-              Icon(Icons.arrow_right_alt, color: Colors.grey.shade400),
-              _buildLocationInfo("DESTINATION", trip.toCity, isDark,
-                  alignRight: true),
+              Expanded(
+                child: _buildLocationInfo("ORIGIN", trip.fromCity, isDark),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Icon(Icons.arrow_right_alt, color: Colors.grey.shade400),
+              ),
+              Expanded(
+                child: _buildLocationInfo("DESTINATION", trip.toCity, isDark,
+                    alignRight: true),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -151,10 +166,10 @@ class OngoingTripCard extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: 'Outfit',
             fontSize: 10,
             letterSpacing: 1.0,
-            color: Colors.grey.shade500,
+            color: isDark ? Colors.white54 : Colors.grey.shade600,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -162,7 +177,7 @@ class OngoingTripCard extends StatelessWidget {
         Text(
           city,
           style: TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: 'Outfit',
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : const Color(0xFF2D3142),

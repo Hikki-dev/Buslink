@@ -9,8 +9,9 @@ import '../../models/trip_model.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
 import '../layout/conductor_navbar.dart';
-import '../layout/app_footer.dart';
+// import '../layout/app_footer.dart';
 import '../admin/layout/admin_bottom_nav.dart';
+import '../admin/admin_dashboard.dart';
 import 'conductor_trip_management_screen.dart';
 import '../booking/seat_selection_screen.dart';
 import '../layout/custom_app_bar.dart';
@@ -50,7 +51,12 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
   // --- NEW: Load My Trips ---
   Future<void> _loadMyTrips() async {
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
-    if (user == null) return;
+    if (user == null || widget.isAdminView) {
+      if (widget.isAdminView && mounted) {
+        setState(() => _loadingMyTrips = false);
+      }
+      return;
+    }
 
     setState(() => _loadingMyTrips = true);
     final controller = Provider.of<TripController>(context, listen: false);
@@ -209,112 +215,195 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
     return DefaultTabController(
       length: 2,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Welcome Header (Static)
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(
-                vertical: isDesktop ? 48 : 24, horizontal: isDesktop ? 40 : 24),
-            decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                border: Border(
-                    bottom: BorderSide(color: Theme.of(context).dividerColor))),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1000),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor:
-                              AppTheme.primaryColor.withValues(alpha: 0.1),
-                          child: const Icon(Icons.person,
-                              size: 30, color: AppTheme.primaryColor),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Welcome back, $conductorName!",
-                                  style: TextStyle(
-                                      fontFamily: 'Outfit',
-                                      fontSize: isDesktop ? 32 : 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface)),
-                              Text("Here is your schedule for $_formattedDate.",
-                                  style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                      fontSize: 14)),
-                            ],
+          // Admin Preview Banner
+          if (widget.isAdminView)
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFB300), // Strong Amber
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(Icons.admin_panel_settings,
+                                size: 20, color: Colors.black87),
                           ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Admin Preview Mode",
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                      TextButton.icon(
+                        onPressed: () {
+                          // Force clean exit to root / Admin Dashboard
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const AdminDashboard()),
+                              (route) => false);
+                        },
+                        icon: const Icon(Icons.logout,
+                            size: 18, color: Colors.black87),
+                        label: const Text("Exit",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87)),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.25),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    // Quick Stats
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _StatCard(
-                              label: "Scheduled Trips",
-                              value: "${_todaysTrips.length}",
-                              icon: Icons.directions_bus,
-                              color: Colors.blue),
-                        ),
-                        const SizedBox(width: 20),
-                        const Expanded(
-                          child: _StatCard(
-                              label: "Pending Issues",
-                              value: "0",
-                              icon: Icons.warning_amber,
-                              color: Colors.orange),
-                        ),
-                        // Placeholder for future cards to ensure 4 fit
-                        // const Expanded(child: SizedBox()),
-                        // const Expanded(child: SizedBox()),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-
-          // 2. Tabs
-          Container(
-            color: Theme.of(context).cardColor,
-            child: TabBar(
-              labelColor: AppTheme.primaryColor,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: AppTheme.primaryColor,
-              tabs: const [
-                Tab(text: "My Assigned Trips"),
-                Tab(text: "Search All Trips"),
-              ],
-            ),
-          ),
-
-          // 3. Expanded Tab View (Scrollable Content inside)
           Expanded(
-            child: TabBarView(
-              children: [
-                _buildMyTripsTab(isDesktop),
-                _buildSearchTripsTab(isDesktop),
-              ],
+            child: NestedScrollView(
+              headerSliverBuilder:
+                  (BuildContext context, bool innerBoxIsScrolled) {
+                return <Widget>[
+                  SliverToBoxAdapter(
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                          vertical: isDesktop ? 48 : 24,
+                          horizontal: isDesktop ? 40 : 24),
+                      decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          border: Border(
+                              bottom: BorderSide(
+                                  color: Theme.of(context).dividerColor))),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1000),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 30,
+                                    backgroundColor: AppTheme.primaryColor
+                                        .withValues(alpha: 0.1),
+                                    child: const Icon(Icons.person,
+                                        size: 30, color: AppTheme.primaryColor),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Welcome back, $conductorName!",
+                                            style: TextStyle(
+                                                fontFamily: 'Outfit',
+                                                fontSize: isDesktop ? 32 : 24,
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface)),
+                                        Text(
+                                            "Here is your schedule for $_formattedDate.",
+                                            style: TextStyle(
+                                                fontFamily: 'Inter',
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                                fontSize: 14)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+                              // Quick Stats
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _StatCard(
+                                        label: "Scheduled Trips",
+                                        value: "${_myTrips.length}",
+                                        icon: Icons.directions_bus,
+                                        color: Colors.blue),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  const Expanded(
+                                    child: _StatCard(
+                                        label: "Pending Issues",
+                                        value: "0",
+                                        icon: Icons.warning_amber,
+                                        color: Colors.orange),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverAppBar(
+                    backgroundColor: Theme.of(context).cardColor,
+                    pinned: true,
+                    primary: false,
+                    automaticallyImplyLeading: false,
+                    toolbarHeight: 0,
+                    bottom: PreferredSize(
+                      preferredSize: const Size.fromHeight(48),
+                      child: TabBar(
+                        labelColor: AppTheme.primaryColor,
+                        unselectedLabelColor: Colors.grey,
+                        indicatorColor: AppTheme.primaryColor,
+                        tabs: const [
+                          Tab(text: "My Assigned Trips"),
+                          Tab(text: "Search All Trips"),
+                        ],
+                      ),
+                    ),
+                  ),
+                ];
+              },
+              body: TabBarView(
+                children: [
+                  _buildMyTripsTab(isDesktop),
+                  _buildSearchTripsTab(isDesktop),
+                ],
+              ),
             ),
           ),
-
-          if (isDesktop) const AppFooter(),
         ],
       ),
     );

@@ -23,6 +23,12 @@ class PaymentService {
       final double amountVal = double.parse(amount);
       final int amountCents = (amountVal * 100).toInt();
 
+      // MINIMUM AMOUNT CHECK (Approx $0.50 USD)
+      // LKR 150 is roughly $0.50.
+      if (currency.toLowerCase() == 'lkr' && amountVal < 150) {
+        throw Exception("Amount must be at least LKR 150 for online payment.");
+      }
+
       final response = await _client.post(
         Uri.parse('https://api.stripe.com/v1/payment_intents'),
         headers: {
@@ -156,6 +162,10 @@ class PaymentService {
 
       final double amountVal = double.parse(amount);
       final int amountCents = (amountVal * 100).toInt();
+
+      if (currency.toLowerCase() == 'lkr' && amountVal < 150) {
+        throw Exception("Amount must be at least LKR 150 for online payment.");
+      }
 
       debugPrint("Creating Checkout Session... Success: $successUrl");
 

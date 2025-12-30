@@ -10,10 +10,15 @@ import '../customer_main_screen.dart';
 
 class DesktopNavBar extends StatelessWidget {
   final int selectedIndex;
+  final bool isAdminView;
   // If null, it means we are not on the main tab view (e.g. booking flow)
   final Function(int)? onTap;
 
-  const DesktopNavBar({super.key, this.selectedIndex = -1, this.onTap});
+  const DesktopNavBar(
+      {super.key,
+      this.selectedIndex = -1,
+      this.isAdminView = false,
+      this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +41,8 @@ class DesktopNavBar extends StatelessWidget {
               Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
-                      builder: (_) =>
-                          const CustomerMainScreen(initialIndex: 0)),
+                      builder: (_) => CustomerMainScreen(
+                          initialIndex: 0, isAdminView: isAdminView)),
                   (route) => false);
             },
             child: const Row(
@@ -368,7 +373,8 @@ class DesktopNavBar extends StatelessWidget {
             Widget page;
 
             // Route everything through CustomerMainScreen to ensure Scaffold/Material exists
-            page = CustomerMainScreen(initialIndex: index);
+            page = CustomerMainScreen(
+                initialIndex: index, isAdminView: isAdminView);
 
             Navigator.pushAndRemoveUntil(context,
                 MaterialPageRoute(builder: (_) => page), (route) => false);

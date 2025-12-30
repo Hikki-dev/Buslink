@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart'; // For Redirect
+import 'package:intl/intl.dart';
 
 import '../../controllers/trip_controller.dart';
 import '../../services/payment_service.dart';
@@ -255,7 +256,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             children: [
               Container(width: 4, height: 24, color: AppTheme.primaryColor),
               const SizedBox(width: 12),
-              Text("Order Summary",
+              Text("Booking Summary",
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       fontSize: 22,
@@ -264,8 +265,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ],
           ),
           const SizedBox(height: 32),
-          _infoRow("Bus Operator", trip.operatorName, isDark),
-          const Divider(height: 32),
+          // User requested removal of Bus Operator name
+          // _infoRow("Bus Operator", trip.operatorName, isDark),
+          // const Divider(height: 32), // Also remove divider if it was separating Operator?
+          // Actually, let's keep the divider or check if "From" needs it above.
+          // The previous code had Operator -> Divider -> From.
+          // Now it starts with From. So no need for leading divider immediately after title spacing.
           _infoRow("From", trip.fromCity, isDark),
           _infoRow("To", trip.toCity, isDark),
           const Divider(height: 32),
@@ -277,14 +282,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     color: AppTheme.primaryColor)),
             const SizedBox(height: 8),
             // Show simplified range or list
-            _infoRow(
-                "Start Date",
-                "${controller.bulkDates.first.day}/${controller.bulkDates.first.month}/${controller.bulkDates.first.year}",
-                isDark),
-            _infoRow(
-                "End Date",
-                "${controller.bulkDates.last.day}/${controller.bulkDates.last.month}/${controller.bulkDates.last.year}",
-                isDark),
+            _infoRow("Selected Dates:", "", isDark),
+            ...controller.bulkDates.map((date) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4, left: 16),
+                  child: Text(
+                    DateFormat('EEE, d MMM y').format(date),
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                )),
+            const SizedBox(height: 8),
             _infoRow("Total Days", "${controller.bulkDates.length}", isDark),
           ] else ...[
             _infoRow(
@@ -300,7 +310,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
           _infoRow("Qty (Seats per trip)", "${seats.length}", isDark),
           _infoRow(
               "Base Price", "LKR ${trip.price.toStringAsFixed(0)}", isDark),
-          _infoRow("Selected Seats", seats.join(", "), isDark),
+          _infoRow(
+              "Selected Seats",
+              (seats.isNotEmpty && seats.contains(-1))
+                  ? "Auto-Assigned"
+                  : seats.join(", "),
+              isDark),
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(20),

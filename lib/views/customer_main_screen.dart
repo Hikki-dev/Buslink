@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../utils/app_theme.dart';
 import 'home/home_screen.dart';
 import 'booking/my_trips_screen.dart';
 import 'favorites/favorites_screen.dart';
@@ -80,10 +79,19 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     final bool showBack = _history.length > 1;
 
     final pages = [
-      const HomeScreen(),
-      MyTripsScreen(showBackButton: showBack, onBack: _handleBack),
-      FavoritesScreen(showBackButton: showBack, onBack: _handleBack),
-      ProfileScreen(showBackButton: showBack, onBack: _handleBack),
+      HomeScreen(isAdminView: widget.isAdminView), // Pass admin view
+      MyTripsScreen(
+          showBackButton: showBack,
+          onBack: _handleBack,
+          isAdminView: widget.isAdminView),
+      FavoritesScreen(
+          showBackButton: showBack,
+          onBack: _handleBack,
+          isAdminView: widget.isAdminView),
+      ProfileScreen(
+          showBackButton: showBack,
+          onBack: _handleBack,
+          isAdminView: widget.isAdminView),
     ];
 
     final isDesktop = MediaQuery.of(context).size.width > 900;
@@ -94,6 +102,77 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         body: Material(
           color: Theme.of(context).scaffoldBackgroundColor,
           child: Column(children: [
+            if (widget.isAdminView)
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFB300), // Strong Amber
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Icon(Icons.admin_panel_settings,
+                                  size: 20, color: Colors.black87),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              "Admin Preview Mode",
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            // Force clean exit to root to prevent navigator stack corruption
+                            Navigator.pushNamedAndRemoveUntil(
+                                context, '/', (route) => false);
+                          },
+                          icon: const Icon(Icons.logout,
+                              size: 18, color: Colors.black87),
+                          label: const Text("Exit",
+                              style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87)),
+                          style: TextButton.styleFrom(
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.25),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             Expanded(
               child: IndexedStack(
                 index: _selectedIndex,
@@ -119,8 +198,14 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                   onTap: _onItemTapped,
                   type: BottomNavigationBarType.fixed,
                   backgroundColor: Theme.of(context).cardColor,
-                  selectedItemColor: AppTheme.primaryColor,
-                  unselectedItemColor: Colors.grey,
+                  selectedItemColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
+                  unselectedItemColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
                   showUnselectedLabels: true,
                   selectedLabelStyle: const TextStyle(
                     fontFamily: 'Inter',
@@ -129,6 +214,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                   ),
                   unselectedLabelStyle: const TextStyle(
                     fontFamily: 'Inter',
+                    fontWeight: FontWeight.bold, // Bold for unselected too
                     fontSize: 12,
                   ),
                   items: const [

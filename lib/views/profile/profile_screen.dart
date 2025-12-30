@@ -18,7 +18,12 @@ import '../layout/custom_app_bar.dart';
 class ProfileScreen extends StatelessWidget {
   final bool showBackButton;
   final VoidCallback? onBack;
-  const ProfileScreen({super.key, this.showBackButton = false, this.onBack});
+  final bool isAdminView;
+  const ProfileScreen(
+      {super.key,
+      this.showBackButton = false,
+      this.onBack,
+      this.isAdminView = false});
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +88,8 @@ class ProfileScreen extends StatelessWidget {
               if (isDesktop)
                 Material(
                   elevation: 4,
-                  child: const DesktopNavBar(selectedIndex: 3),
+                  child:
+                      DesktopNavBar(selectedIndex: 3, isAdminView: isAdminView),
                 ), // Profile is index 3
               Expanded(
                 child: SingleChildScrollView(
@@ -239,6 +245,8 @@ class ProfileScreen extends StatelessWidget {
                                       onChanged: (v) {},
                                     ),
                                   ),
+                                  // Language selection removed as requested
+                                  /*
                                   const Divider(height: 1),
                                   ListTile(
                                     leading: Container(
@@ -261,71 +269,10 @@ class ProfileScreen extends StatelessWidget {
                                         style: const TextStyle(
                                             color: Colors.grey)),
                                     onTap: () {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        backgroundColor:
-                                            Theme.of(context).cardColor,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        builder: (context) {
-                                          return Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const SizedBox(height: 20),
-                                              Text(lp.translate('language'),
-                                                  style: const TextStyle(
-                                                      fontSize: 18,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                              const SizedBox(height: 20),
-                                              ListTile(
-                                                title: const Text("English"),
-                                                onTap: () {
-                                                  lp.setLanguage('en');
-                                                  Navigator.pop(context);
-                                                },
-                                                trailing: lp.currentLanguage ==
-                                                        'en'
-                                                    ? const Icon(Icons.check,
-                                                        color: AppTheme
-                                                            .primaryColor)
-                                                    : null,
-                                              ),
-                                              ListTile(
-                                                title: const Text("Sinhala"),
-                                                onTap: () {
-                                                  lp.setLanguage('si');
-                                                  Navigator.pop(context);
-                                                },
-                                                trailing: lp.currentLanguage ==
-                                                        'si'
-                                                    ? const Icon(Icons.check,
-                                                        color: AppTheme
-                                                            .primaryColor)
-                                                    : null,
-                                              ),
-                                              ListTile(
-                                                title: const Text("Tamil"),
-                                                onTap: () {
-                                                  lp.setLanguage('ta');
-                                                  Navigator.pop(context);
-                                                },
-                                                trailing: lp.currentLanguage ==
-                                                        'ta'
-                                                    ? const Icon(Icons.check,
-                                                        color: AppTheme
-                                                            .primaryColor)
-                                                    : null,
-                                              ),
-                                              const SizedBox(height: 20),
-                                            ],
-                                          );
-                                        },
-                                      );
+                                      // ...
                                     },
                                   ),
+                                  */
                                 ],
                               ),
                             ),

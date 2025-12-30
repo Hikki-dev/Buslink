@@ -17,8 +17,13 @@ import '../layout/custom_app_bar.dart';
 class MyTripsScreen extends StatelessWidget {
   final bool showBackButton;
   final VoidCallback? onBack;
+  final bool isAdminView;
 
-  const MyTripsScreen({super.key, this.showBackButton = true, this.onBack});
+  const MyTripsScreen(
+      {super.key,
+      this.showBackButton = true,
+      this.onBack,
+      this.isAdminView = false});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +39,7 @@ class MyTripsScreen extends StatelessWidget {
           if (isDesktop)
             Material(
               elevation: 4,
-              child: const DesktopNavBar(selectedIndex: 1),
+              child: DesktopNavBar(selectedIndex: 1, isAdminView: isAdminView),
             ),
           // App Bar Logic: currently MyTripsScreen has a CustomAppBar.
           // We need to keep the AppBar logic but remove the BottomNav.
@@ -213,7 +218,8 @@ class _TripsList extends StatelessWidget {
               itemCount: tickets.length,
               separatorBuilder: (_, __) => const SizedBox(height: 20),
               itemBuilder: (context, index) {
-                return _BoardingPassCard(ticket: tickets[index]);
+                return _BoardingPassCard(
+                    ticket: tickets[index], shouldListen: true);
               },
             ),
           ),
@@ -225,317 +231,322 @@ class _TripsList extends StatelessWidget {
 
 class _BoardingPassCard extends StatelessWidget {
   final Ticket ticket;
-  const _BoardingPassCard({required this.ticket});
+  final bool shouldListen;
+  const _BoardingPassCard({required this.ticket, this.shouldListen = true});
 
   @override
   Widget build(BuildContext context) {
-    // Listen to live trip updates for status
-    return StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('trips')
-            .doc(ticket.tripId)
-            .snapshots(),
-        builder: (context, snapshot) {
-          // Fallback to ticket data if loading or error
-          var tripData = ticket.tripData;
-          String statusStr = "SCHEDULED";
-          Color statusColor = Colors.grey;
+    if (shouldListen) {
+      return StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('trips')
+              .doc(ticket.tripId)
+              .snapshots(),
+          builder: (context, snapshot) {
+            return _buildCardContent(context, snapshot.data);
+          });
+    } else {
+      // Static render for history
+      return _buildCardContent(context, null);
+    }
+  }
 
-          if (snapshot.hasData &&
-              snapshot.data != null &&
-              snapshot.data!.exists) {
-            final data = snapshot.data!.data() as Map<String, dynamic>;
-            // Update local vars with live data if available
-            tripData = data;
+  Widget _buildCardContent(BuildContext context, DocumentSnapshot? snapshot) {
+    var tripData = ticket.tripData;
+    String statusStr = "SCHEDULED";
+    Color statusColor = Colors.grey;
 
-            // Determine Status
-            final rawStatus = data['status'] ?? 'scheduled';
-            final delayMin = data['delayMinutes'] ?? 0;
+    if (snapshot != null && snapshot.exists) {
+      final data = snapshot.data() as Map<String, dynamic>;
+      tripData = data;
+      // Determine Status from live data
+      final rawStatus = data['status'] ?? 'scheduled';
+      final delayMin = data['delayMinutes'] ?? 0;
 
-            if (rawStatus == 'delayed') {
-              statusStr = "DELAYED (+${delayMin}m)";
-              statusColor = Colors.red;
-            } else if (rawStatus == 'started' || rawStatus == 'departed') {
-              statusStr = "ON WAY";
-              statusColor = Colors.blue;
-            } else if (rawStatus == 'completed' || rawStatus == 'arrived') {
-              statusStr = "ARRIVED";
-              statusColor = Colors.green;
-            } else if (rawStatus == 'onTime' || rawStatus == 'scheduled') {
-              statusStr = "ON TIME";
-              statusColor = Colors.green;
-            } else if (rawStatus == 'cancelled') {
-              statusStr = "CANCELLED";
-              statusColor = Colors.red.shade900;
-            }
-          }
+      if (rawStatus == 'delayed') {
+        statusStr = "DELAYED (+${delayMin}m)";
+        statusColor = Colors.red;
+      } else if (rawStatus == 'started' || rawStatus == 'departed') {
+        statusStr = "ON WAY";
+        statusColor = Colors.blue;
+      } else if (rawStatus == 'completed' || rawStatus == 'arrived') {
+        statusStr = "ARRIVED";
+        statusColor = Colors.green;
+      } else if (rawStatus == 'onTime' || rawStatus == 'scheduled') {
+        statusStr = "ON TIME";
+        statusColor = Colors.green;
+      } else if (rawStatus == 'cancelled') {
+        statusStr = "CANCELLED";
+        statusColor = Colors.red.shade900;
+      }
+    } else {
+      // Fallback/Static Status (basic)
+      // For history, we assume it's done or use ticket data if available
+      statusStr = "HISTORY"; // Or derive from ticket if status was saved
+    }
 
-          final fromCity =
-              tripData['fromCity'] ?? ticket.tripData['fromCity'] ?? 'Unknown';
-          final toCity =
-              tripData['toCity'] ?? ticket.tripData['toCity'] ?? 'Unknown';
-          final seatsCount = ticket.seatNumbers.length;
+    // Common UI Logic
+    final fromCity =
+        tripData['fromCity'] ?? ticket.tripData['fromCity'] ?? 'Unknown';
+    final toCity = tripData['toCity'] ?? ticket.tripData['toCity'] ?? 'Unknown';
+    final seatsCount = ticket.seatNumbers.length;
 
-          // Format live times if available, else ticket times
-          DateTime depTime = ticket.bookingTime; // Fallback
-          if (tripData['departureTime'] is Timestamp) {
-            depTime = (tripData['departureTime'] as Timestamp).toDate();
-          }
+    DateTime depTime = ticket.bookingTime;
+    if (tripData['departureTime'] is Timestamp) {
+      depTime = (tripData['departureTime'] as Timestamp).toDate();
+    }
 
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          final cardColor = Theme.of(context).cardColor;
-          final textColor = Theme.of(context).textTheme.bodyLarge?.color;
-          final subTextColor =
-              Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
 
-          return Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Top Part
+          Padding(
+            padding: const EdgeInsets.all(24.0),
             child: Column(
               children: [
-                // Top Part
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(statusStr,
-                                style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: statusColor)),
-                          ),
-                          Text(
-                              "Ref: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
-                              style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: subTextColor)),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("FROM",
-                                  style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 10,
-                                      color: subTextColor)),
-                              const SizedBox(height: 4),
-                              Text(fromCity,
-                                  style: TextStyle(
-                                      fontFamily: 'Outfit',
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: textColor)),
-                            ],
-                          ),
-                          Icon(Icons.arrow_forward, color: subTextColor),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text("TO",
-                                  style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 10,
-                                      color: subTextColor)),
-                              const SizedBox(height: 4),
-                              Text(toCity,
-                                  style: TextStyle(
-                                      fontFamily: 'Outfit',
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: textColor)),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: [
-                                _infoBadge(
-                                    Icons.calendar_today,
-                                    DateFormat('MMM d').format(depTime),
-                                    subTextColor),
-                                _infoBadge(Icons.chair, "$seatsCount Seats",
-                                    subTextColor),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text("LKR ${ticket.totalAmount.toStringAsFixed(0)}",
-                              style: const TextStyle(
-                                  fontFamily: 'Outfit',
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryColor))
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-
-                // Dotted Line
-                Stack(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: List.generate(
-                          40,
-                          (index) => Expanded(
-                                child: Container(
-                                  color: index % 2 == 0
-                                      ? Colors.transparent
-                                      : (isDark
-                                          ? Colors.grey.shade800
-                                          : Colors.grey.shade200),
-                                  height: 2,
-                                ),
-                              )),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(statusStr,
+                          style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: statusColor)),
                     ),
-                    Positioned(
-                        left: -10,
-                        top: -10,
-                        child: CircleAvatar(
-                            radius: 10,
-                            backgroundColor:
-                                Theme.of(context).scaffoldBackgroundColor)),
-                    Positioned(
-                        right: -10,
-                        top: -10,
-                        child: CircleAvatar(
-                            radius: 10,
-                            backgroundColor:
-                                Theme.of(context).scaffoldBackgroundColor)),
+                    Text(
+                        "Ref: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
+                        style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: subTextColor)),
                   ],
                 ),
-
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 48,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              try {
-                                final trip = Trip.fromMap(
-                                    ticket.tripData, ticket.tripId);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => TicketScreen(
-                                        ticketArg: ticket, tripArg: trip),
-                                  ),
-                                );
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content:
-                                          Text("Error opening ticket: $e")),
-                                );
-                              }
-                            },
-                            style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8), // Fix clipping
-                                side: BorderSide(
-                                    color: isDark
-                                        ? Colors.grey.shade700
-                                        : Colors.grey.shade300),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12))),
-                            child: Text("View Ticket",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: textColor)),
-                          ),
-                        ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("FROM",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 10,
+                                color: subTextColor)),
+                        const SizedBox(height: 4),
+                        Text(fromCity,
+                            style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: textColor)),
+                      ],
+                    ),
+                    Icon(Icons.arrow_forward, color: subTextColor),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text("TO",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 10,
+                                color: subTextColor)),
+                        const SizedBox(height: 4),
+                        Text(toCity,
+                            style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: textColor)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          _infoBadge(
+                              Icons.calendar_today,
+                              DateFormat('MMM d').format(depTime),
+                              subTextColor),
+                          _infoBadge(
+                              Icons.chair, "$seatsCount Seats", subTextColor),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: SizedBox(
-                          height: 48,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Book Again Logic
-                              final controller = Provider.of<TripController>(
-                                  context,
-                                  listen: false);
-                              controller.setFromCity(
-                                  ticket.tripData['fromCity'] ?? 'Colombo');
-                              controller.setToCity(
-                                  ticket.tripData['toCity'] ?? 'Kandy');
-                              controller.setDepartureDate(DateTime.now());
-                              controller.searchTrips(context);
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const BusListScreen()),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8), // Fix clipping
-                                backgroundColor: AppTheme.primaryColor,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12))),
-                            child: const Text("Book Again",
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: Colors.white)),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text("LKR ${ticket.totalAmount.toStringAsFixed(0)}",
+                        style: const TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor))
+                  ],
                 )
               ],
             ),
-          );
-        });
+          ),
+
+          // Dotted Line (Optimized)
+          Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: SizedBox(
+                  height: 1,
+                  width: double.infinity,
+                  child: CustomPaint(
+                    painter: DashedLinePainter(
+                      color:
+                          isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+                      dashWidth: 6,
+                      dashSpace: 4,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                  left: -10,
+                  top: -10,
+                  child: CircleAvatar(
+                      radius: 10,
+                      backgroundColor:
+                          Theme.of(context).scaffoldBackgroundColor)),
+              Positioned(
+                  right: -10,
+                  top: -10,
+                  child: CircleAvatar(
+                      radius: 10,
+                      backgroundColor:
+                          Theme.of(context).scaffoldBackgroundColor)),
+            ],
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        try {
+                          final trip =
+                              Trip.fromMap(ticket.tripData, ticket.tripId);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TicketScreen(
+                                  ticketArg: ticket, tripArg: trip),
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Error opening ticket: $e")),
+                          );
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8), // Fix clipping
+                          side: BorderSide(
+                              color: isDark
+                                  ? Colors.grey.shade700
+                                  : Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                      child: Text("View Ticket",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: textColor)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Book Again Logic
+                        final controller =
+                            Provider.of<TripController>(context, listen: false);
+                        controller.setFromCity(
+                            ticket.tripData['fromCity'] ?? 'Colombo');
+                        controller
+                            .setToCity(ticket.tripData['toCity'] ?? 'Kandy');
+                        controller.setDepartureDate(DateTime.now());
+                        controller.searchTrips(context);
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const BusListScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8), // Fix clipping
+                          backgroundColor: AppTheme.primaryColor,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                      child: const Text("Book Again",
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: Colors.white)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
   }
 
   Widget _infoBadge(IconData icon, String text, Color color) {
@@ -549,4 +560,32 @@ class _BoardingPassCard extends StatelessWidget {
       ],
     );
   }
+}
+
+class DashedLinePainter extends CustomPainter {
+  final Color color;
+  final double dashWidth;
+  final double dashSpace;
+
+  DashedLinePainter({
+    this.color = Colors.grey,
+    this.dashWidth = 6,
+    this.dashSpace = 4,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double startX = 0;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+
+    while (startX < size.width) {
+      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
+      startX += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

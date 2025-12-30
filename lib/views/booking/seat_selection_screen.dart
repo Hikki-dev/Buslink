@@ -118,32 +118,26 @@ class SeatSelectionScreen extends StatelessWidget {
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Icon(Icons.exit_to_app,
+                                          // FRONT EXIT
+                                          const Text("EXIT",
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.red,
+                                                  fontWeight: FontWeight.bold)),
+
+                                          // DRIVER (Steering Wheel)
+                                          Image.asset(
+                                              "assets/steering_wheel.png",
+                                              width: 40,
+                                              height: 40,
                                               color: isDark
                                                   ? Colors.white54
-                                                  : Colors.grey),
-                                          Column(
-                                            children: [
-                                              Icon(Icons.print,
-                                                  size: 20,
-                                                  color: isDark
-                                                      ? Colors.white54
-                                                      : Colors.grey),
-                                              const SizedBox(height: 8),
-                                              Image.asset(
-                                                  "assets/steering_wheel.png",
-                                                  width: 34,
-                                                  height: 34,
-                                                  color: isDark
-                                                      ? Colors.white54
-                                                      : null, // Tint icon in dark mode?
-                                                  errorBuilder: (_, __, ___) =>
-                                                      Icon(Icons.settings,
-                                                          size: 34,
-                                                          color: Colors
-                                                              .grey.shade400))
-                                            ],
-                                          )
+                                                  : Colors.black54,
+                                              errorBuilder: (_, __, ___) =>
+                                                  const Icon(
+                                                      Icons.directions_car,
+                                                      size: 34,
+                                                      color: Colors.grey))
                                         ],
                                       ),
                                     ),
@@ -154,89 +148,171 @@ class SeatSelectionScreen extends StatelessWidget {
                                         stream: FirestoreService()
                                             .getTripStream(trip.id),
                                         builder: (context, snapshot) {
-                                          // Use the latest trip data if available, else fallback to initial 'trip'
                                           final currentTrip =
                                               snapshot.data ?? trip;
+
+                                          // Calculate rows. Last row has 5 seats. Others have 4.
+                                          // Formula: Total - 5 (last row) = Remainder. Remainder / 4 = Normal Rows.
+                                          // Total Rows = Normal Rows + 1.
+                                          final int totalSeats =
+                                              currentTrip.totalSeats;
+                                          final int normalRows =
+                                              ((totalSeats - 5) / 4).ceil();
+                                          final int totalRowCount =
+                                              normalRows + 1;
 
                                           return ListView.builder(
                                             physics:
                                                 const NeverScrollableScrollPhysics(),
                                             shrinkWrap: true,
-                                            itemCount:
-                                                (currentTrip.totalSeats / 4)
-                                                    .ceil(),
+                                            itemCount: totalRowCount,
                                             itemBuilder: (context, index) {
+                                              // LAST ROW (5 Seats)
+                                              if (index == totalRowCount - 1) {
+                                                int start = normalRows * 4;
+                                                // Determine how many actual seats are left
+                                                int remainingSeats =
+                                                    totalSeats - start;
+                                                // Cap at 5 if for some reason it's more (though formula implies <= 5)
+                                                int seatsToShow =
+                                                    remainingSeats > 5
+                                                        ? 5
+                                                        : remainingSeats;
+
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 16),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center, // Center the seats
+                                                    children: List.generate(
+                                                        seatsToShow, (i) {
+                                                      int seatNum =
+                                                          start + i + 1;
+                                                      return Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal:
+                                                                    4.0), // Gap
+                                                        child: _SeatItem(
+                                                          seatNum: seatNum,
+                                                          trip: currentTrip,
+                                                          isSelected:
+                                                              selectedSeats
+                                                                  .contains(
+                                                                      seatNum),
+                                                          // Make slightly smaller to fit 5?
+                                                          width:
+                                                              50, // slightly tighter
+                                                        ),
+                                                      );
+                                                    }),
+                                                  ),
+                                                );
+                                              }
+
+                                              // EXIT BEFORE LAST ROW
+                                              // The user said "Exit at the end should be placed before the last seat row"
+                                              // So render the exit label visually between NormalRows-1 and LastRow?
+                                              // Or just add it as part of the row?
+                                              // Let's interpret: In the gap before the 5-seat row.
+
+                                              // Standard 4-seat row
                                               int rowStart = index * 4;
-                                              return Padding(
-                                                padding: const EdgeInsets.only(
-                                                    bottom: 16),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    // Left
-                                                    Row(
+
+                                              return Column(
+                                                children: [
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            bottom: 16),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
                                                       children: [
-                                                        _SeatItem(
-                                                            seatNum:
-                                                                rowStart + 1,
-                                                            trip: currentTrip,
-                                                            isSelected:
-                                                                selectedSeats
+                                                        // Left Pair
+                                                        Row(
+                                                          children: [
+                                                            _SeatItem(
+                                                                seatNum:
+                                                                    rowStart +
+                                                                        1,
+                                                                trip:
+                                                                    currentTrip,
+                                                                isSelected: selectedSeats
                                                                     .contains(
                                                                         rowStart +
                                                                             1)),
-                                                        const SizedBox(
-                                                            width: 14),
-                                                        _SeatItem(
-                                                            seatNum:
-                                                                rowStart + 2,
-                                                            trip: currentTrip,
-                                                            isSelected:
-                                                                selectedSeats
+                                                            const SizedBox(
+                                                                width: 14),
+                                                            _SeatItem(
+                                                                seatNum:
+                                                                    rowStart +
+                                                                        2,
+                                                                trip:
+                                                                    currentTrip,
+                                                                isSelected: selectedSeats
                                                                     .contains(
                                                                         rowStart +
                                                                             2)),
+                                                          ],
+                                                        ),
+
+                                                        // Right Pair
+                                                        Row(
+                                                          children: [
+                                                            _SeatItem(
+                                                                seatNum:
+                                                                    rowStart +
+                                                                        3,
+                                                                trip:
+                                                                    currentTrip,
+                                                                isSelected: selectedSeats
+                                                                    .contains(
+                                                                        rowStart +
+                                                                            3)),
+                                                            const SizedBox(
+                                                                width: 14),
+                                                            _SeatItem(
+                                                                seatNum:
+                                                                    rowStart +
+                                                                        4,
+                                                                trip:
+                                                                    currentTrip,
+                                                                isSelected: selectedSeats
+                                                                    .contains(
+                                                                        rowStart +
+                                                                            4)),
+                                                          ],
+                                                        ),
                                                       ],
                                                     ),
-                                                    // Aisle text
-                                                    if (index == 4)
-                                                      const Text("EXIT",
+                                                  ),
+                                                  // CHECK FOR EXIT POSITION
+                                                  // "Before the last seat row".
+                                                  // So if next index is last row, show Exit.
+                                                  if (index ==
+                                                      totalRowCount - 2)
+                                                    Container(
+                                                      alignment:
+                                                          Alignment.centerRight,
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              bottom: 16,
+                                                              right: 8),
+                                                      child: const Text("EXIT",
                                                           style: TextStyle(
-                                                              fontSize: 10,
+                                                              fontSize: 12,
                                                               color: Colors.red,
                                                               fontWeight:
                                                                   FontWeight
                                                                       .bold)),
-
-                                                    // Right
-                                                    Row(
-                                                      children: [
-                                                        _SeatItem(
-                                                            seatNum:
-                                                                rowStart + 3,
-                                                            trip: currentTrip,
-                                                            isSelected:
-                                                                selectedSeats
-                                                                    .contains(
-                                                                        rowStart +
-                                                                            3)),
-                                                        const SizedBox(
-                                                            width: 14),
-                                                        _SeatItem(
-                                                            seatNum:
-                                                                rowStart + 4,
-                                                            trip: currentTrip,
-                                                            isSelected:
-                                                                selectedSeats
-                                                                    .contains(
-                                                                        rowStart +
-                                                                            4)),
-                                                      ],
                                                     ),
-                                                  ],
-                                                ),
+                                                ],
                                               );
                                             },
                                           );
@@ -566,9 +642,13 @@ class _SeatItem extends StatefulWidget {
   final int seatNum;
   final Trip trip;
   final bool isSelected;
+  final double width;
 
   const _SeatItem(
-      {required this.seatNum, required this.trip, required this.isSelected});
+      {required this.seatNum,
+      required this.trip,
+      required this.isSelected,
+      this.width = 44});
 
   @override
   State<_SeatItem> createState() => _SeatItemState();
@@ -636,7 +716,7 @@ class _SeatItemState extends State<_SeatItem> {
             isUnavailable ? null : () => controller.toggleSeat(widget.seatNum),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          width: 44,
+          width: widget.width,
           height: 44,
           decoration: BoxDecoration(
             color: isBlocked
@@ -690,7 +770,11 @@ class _SeatItemState extends State<_SeatItem> {
                               ? Colors.white
                               : isHovered
                                   ? AppTheme.primaryColor
-                                  : Colors.grey.shade700,
+                                  : Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors
+                                          .black, // Dark mode white, Light mode black
                         ),
                       ),
           ),

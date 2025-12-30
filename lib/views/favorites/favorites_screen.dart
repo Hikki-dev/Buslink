@@ -4,19 +4,26 @@ import 'package:provider/provider.dart';
 import '../../utils/app_theme.dart';
 import '../../controllers/trip_controller.dart';
 import '../../services/auth_service.dart';
-import '../results/bus_list_screen.dart';
+// import '../results/bus_list_screen.dart';
 import '../layout/desktop_navbar.dart';
 
 // import '../layout/mobile_navbar.dart';
 import '../layout/custom_app_bar.dart';
+import '../home/home_screen.dart';
 
 class FavoritesScreen extends StatelessWidget {
   final bool showBackButton;
   final VoidCallback? onBookNow;
   final VoidCallback? onBack;
 
+  final bool isAdminView;
+
   const FavoritesScreen(
-      {super.key, this.showBackButton = true, this.onBookNow, this.onBack});
+      {super.key,
+      this.showBackButton = true,
+      this.onBookNow,
+      this.onBack,
+      this.isAdminView = false});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +37,7 @@ class FavoritesScreen extends StatelessWidget {
         if (isDesktop)
           Material(
             elevation: 4,
-            child: const DesktopNavBar(selectedIndex: 2),
+            child: DesktopNavBar(selectedIndex: 2, isAdminView: isAdminView),
           ),
         Expanded(
           child: Scaffold(
@@ -127,14 +134,16 @@ class FavoritesScreen extends StatelessWidget {
                               // 1. Pre-fill Search
                               controller.setFromCity(fav['fromCity']);
                               controller.setToCity(fav['toCity']);
+                              // Set date to today or let user pick. User wants manual selection.
+                              // Setting it to today ensures the field isn't empty, but user can change it.
                               controller.setDepartureDate(DateTime.now());
 
-                              // 2. Navigate
-                              controller.searchTrips(context); // Trigger search
-                              Navigator.push(
-                                context,
+                              // 2. Navigate to Home Screen for Manual Date Selection
+                              // We use pushAndRemoveUntil to reset the stack to Home
+                              Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(
-                                    builder: (_) => const BusListScreen()),
+                                    builder: (context) => const HomeScreen()),
+                                (route) => false,
                               );
                             },
                           );
