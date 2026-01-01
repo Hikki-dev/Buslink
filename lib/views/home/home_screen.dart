@@ -26,35 +26,35 @@ final List<Map<String, dynamic>> _allDestinations = [
   {
     'city': 'Colombo',
     'image':
-        'https://images.unsplash.com/photo-1578124223229-87c24727187a?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1588258524675-c61d3364e9a6?auto=format&fit=crop&q=80&w=800',
     'buses': 45,
     'desc': 'Discover the vibrant capital and commercial hub.'
   },
   {
     'city': 'Kandy',
     'image':
-        'https://images.unsplash.com/photo-1588258524675-c63d59663b6d?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1587595431973-160d0d94add1?auto=format&fit=crop&q=80&w=800',
     'buses': 32,
     'desc': 'Visit the Temple of the Tooth and scenic lake.'
   },
   {
     'city': 'Galle',
     'image':
-        'https://images.unsplash.com/photo-1548058742-16b718919f8e?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1578583489240-629424601b0b?auto=format&fit=crop&q=80&w=800',
     'buses': 64,
     'desc': 'Explore the historic Dutch Fort and beaches.'
   },
   {
     'city': 'Ella',
     'image':
-        'https://images.unsplash.com/photo-1596557675764-77e48383827d?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1534313314376-a72289b6181e?auto=format&fit=crop&q=80&w=800',
     'buses': 18,
     'desc': 'Hiking trails, waterfalls and the Nine Arch Bridge.'
   },
   {
     'city': 'Nuwara Eliya',
     'image':
-        'https://images.unsplash.com/photo-1625756683833-281b3749774d?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1586095033777-6e42b8d0034a?auto=format&fit=crop&q=80&w=800',
     'buses': 24,
     'desc': 'Little England of Sri Lanka with cool climate.'
   },
@@ -68,14 +68,14 @@ final List<Map<String, dynamic>> _allDestinations = [
   {
     'city': 'Jaffna',
     'image':
-        'https://images.unsplash.com/photo-1633596683562-4a0374a58c73?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1596555184756-3c58b4566b59?auto=format&fit=crop&q=80&w=800',
     'buses': 20,
     'desc': 'Rich history and unique northern culture.'
   },
   {
     'city': 'Trincomalee',
     'image':
-        'https://images.unsplash.com/photo-1589139268789-548c227d88c4?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1629864276707-1b033620023e?auto=format&fit=crop&q=80&w=800',
     'buses': 35,
     'desc': 'Beautiful beaches and diving spots.'
   }

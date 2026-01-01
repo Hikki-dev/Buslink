@@ -606,24 +606,24 @@ class _BusListScreenState extends State<BusListScreen> {
     for (var trip in controller.searchResults) {
       List<latlng.LatLng> points = [];
       // Start
-      if (_cityCoordinates.containsKey(trip.fromCity))
+      if (_cityCoordinates.containsKey(trip.fromCity)) {
         points.add(_cityCoordinates[trip.fromCity]!);
+      }
 
       // Via logic: try to find intermediate city in 'via' string
-      bool addedVia = false;
       for (var city in _cityCoordinates.keys) {
         if (trip.via.contains(city) &&
             city != trip.fromCity &&
             city != trip.toCity) {
           points.add(_cityCoordinates[city]!);
-          addedVia = true;
         }
       }
       // If no known via city found, but it says "Via", we sadly skip intermediate point unless we have coordinates
 
       // End
-      if (_cityCoordinates.containsKey(trip.toCity))
+      if (_cityCoordinates.containsKey(trip.toCity)) {
         points.add(_cityCoordinates[trip.toCity]!);
+      }
 
       if (points.length >= 2) {
         // Sort points? No, relying on Start -> Via -> End order.

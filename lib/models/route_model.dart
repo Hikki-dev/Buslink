@@ -33,6 +33,26 @@ class RouteModel {
     required this.recurrenceDays,
   });
 
+  factory RouteModel.fromMap(Map<String, dynamic> map, String id) {
+    return RouteModel(
+      id: id,
+      fromCity: map['fromCity'] ?? '',
+      toCity: map['toCity'] ?? '',
+      departureHour: map['departureHour'] ?? 0,
+      departureMinute: map['departureMinute'] ?? 0,
+      arrivalHour: map['arrivalHour'] ?? 0,
+      arrivalMinute: map['arrivalMinute'] ?? 0,
+      price: (map['price'] ?? 0).toDouble(),
+      operatorName: map['operatorName'] ?? '',
+      busNumber: map['busNumber'] ?? '',
+      busType: map['busType'] ?? '',
+      platformNumber: map['platformNumber'] ?? '',
+      stops: List<String>.from(map['stops'] ?? []),
+      features: List<String>.from(map['features'] ?? []),
+      recurrenceDays: List<int>.from(map['recurrenceDays'] ?? []),
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'fromCity': fromCity,

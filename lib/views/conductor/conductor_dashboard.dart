@@ -13,7 +13,11 @@ import '../admin/admin_dashboard.dart';
 import 'conductor_trip_management_screen.dart';
 import '../layout/custom_app_bar.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart'; // for kIsWeb
 import '../../views/auth/login_screen.dart';
+import 'qr_scan_screen.dart';
+
+import '../booking/bus_layout_widget.dart';
 
 class ConductorDashboard extends StatefulWidget {
   final bool isAdminView;
@@ -42,7 +46,6 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<AuthService>(context).currentUser;
     // final String conductorName =
     //     user?.displayName?.split(' ').first ?? 'Conductor';
 
@@ -291,10 +294,27 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text(
-                            "Camera permission required for Web Scanning")));
+                  onPressed: () async {
+                    if (kIsWeb) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text(
+                              "Web scanning not fully supported yet in this demo.")));
+                      // In real web app, MobileScanner works but requires HTTPS and permissions
+                    }
+
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const QRScanScreen()),
+                    );
+
+                    if (result != null && result is String) {
+                      setState(() {
+                        _ticketIdController.text = result;
+                      });
+                      if (context.mounted) {
+                        _verifyTicket(result);
+                      }
+                    }
                   },
                   icon: const Icon(Icons.camera_alt),
                   label: const Text("Use Camera"),
@@ -391,6 +411,26 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   _ticketDetailRow(
                       "From", ticket.tripData['fromCity'] ?? 'N/A'),
                   _ticketDetailRow("To", ticket.tripData['toCity'] ?? 'N/A'),
+
+                  const SizedBox(height: 16),
+                  const Text("Seat Location:",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+
+                  // Visual Seat Verification
+                  SizedBox(
+                    height: 300,
+                    child: SingleChildScrollView(
+                      child: BusLayoutWidget(
+                        trip: Trip.fromMap(ticket.tripData, ticket.tripId),
+                        highlightedSeats: ticket.seatNumbers,
+                        isReadOnly: true,
+                        isDark:
+                            false, // Dialog is usually light or adaptive, but hardcoding false for now to match white background
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,

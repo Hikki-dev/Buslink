@@ -207,6 +207,7 @@ class Ticket {
   final double totalAmount;
   final Map<String, dynamic> tripData;
   final String status;
+  final String? shortId; // New field for manual entry
 
   Ticket({
     required this.ticketId,
@@ -219,6 +220,7 @@ class Ticket {
     required this.totalAmount,
     required this.tripData,
     this.status = 'confirmed',
+    this.shortId,
   });
 
   // --- ADDED: fromMap for deserialization ---
@@ -234,6 +236,7 @@ class Ticket {
       totalAmount: (data['totalAmount'] ?? 0).toDouble(),
       tripData: data['tripData'] as Map<String, dynamic>? ?? {},
       status: data['status'] ?? 'confirmed',
+      shortId: data['shortId'],
     );
   }
 
@@ -254,6 +257,7 @@ class Ticket {
       'totalAmount': totalAmount,
       'tripData': tripData,
       'status': status,
+      'shortId': shortId,
     };
   }
 }

@@ -13,6 +13,7 @@ import 'layout/admin_bottom_nav.dart';
 import 'layout/admin_footer.dart';
 import 'layout/admin_navbar.dart';
 import 'admin_route_screen.dart';
+import 'route_management_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -113,6 +114,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 const SizedBox(width: 16),
                                 _buildAddRouteSimpleButton(context),
                                 const SizedBox(width: 16),
+                                _buildManageRoutesButton(context),
+                                const SizedBox(width: 16),
                                 // Theme Toggle
                                 Consumer<ThemeController>(
                                   builder: (context, themeController, _) {
@@ -154,6 +157,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             const SizedBox(width: 16),
                             Flexible(
                                 child: _buildAddRouteSimpleButton(context)),
+                            const SizedBox(width: 16),
+                            Flexible(child: _buildManageRoutesButton(context)),
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -288,6 +293,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
       style: ElevatedButton.styleFrom(
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        textStyle:
+            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildManageRoutesButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const RouteManagementScreen()));
+      },
+      icon: const Icon(Icons.alt_route),
+      label: const Text("Manage Routes"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         textStyle:
             const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),

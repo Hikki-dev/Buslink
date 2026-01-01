@@ -421,6 +421,17 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                         ),
                       ),
                     ],
+                    const SizedBox(height: 16),
+                    // Add to Favorites Button
+                    if (_verifiedTickets.isNotEmpty)
+                      _FavoriteRouteButton(
+                        userId: _verifiedTickets.first.userId,
+                        fromCity:
+                            _verifiedTickets.first.tripData['fromCity'] ?? '',
+                        toCity: _verifiedTickets.first.tripData['toCity'] ?? '',
+                        operatorName:
+                            _verifiedTickets.first.tripData['operatorName'],
+                      ),
                     const SizedBox(height: 40),
                     Row(
                       children: [
@@ -592,5 +603,85 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                 ))),
           ],
         ));
+  }
+}
+
+class _FavoriteRouteButton extends StatefulWidget {
+  final String userId;
+  final String fromCity;
+  final String toCity;
+  final String? operatorName;
+
+  const _FavoriteRouteButton({
+    required this.userId,
+    required this.fromCity,
+    required this.toCity,
+    this.operatorName,
+  });
+
+  @override
+  State<_FavoriteRouteButton> createState() => _FavoriteRouteButtonState();
+}
+
+class _FavoriteRouteButtonState extends State<_FavoriteRouteButton> {
+  bool _isFavorite = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFavorite();
+  }
+
+  Future<void> _checkFavorite() async {
+    final controller = Provider.of<TripController>(context, listen: false);
+    final fav = await controller.isRouteFavorite(
+        widget.userId, widget.fromCity, widget.toCity);
+    if (mounted) {
+      setState(() {
+        _isFavorite = fav;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _toggle() async {
+    setState(() => _isLoading = true);
+    final controller = Provider.of<TripController>(context, listen: false);
+    await controller.toggleRouteFavorite(
+        widget.userId, widget.fromCity, widget.toCity,
+        operatorName: widget.operatorName);
+
+    // Toggle state locally
+    if (mounted) {
+      setState(() {
+        _isFavorite = !_isFavorite;
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(_isFavorite
+              ? "Route added to Favorites"
+              : "Route removed from Favorites")));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) return const SizedBox.shrink();
+
+    return TextButton.icon(
+      onPressed: _toggle,
+      icon: Icon(
+        _isFavorite ? Icons.favorite : Icons.favorite_border,
+        color: _isFavorite ? Colors.red : Colors.grey,
+      ),
+      label: Text(
+        _isFavorite ? "Favorited Route" : "Add Route to Favorites",
+        style: TextStyle(
+          color: _isFavorite ? Colors.red : Colors.grey,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 }

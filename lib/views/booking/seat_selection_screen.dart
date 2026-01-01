@@ -3,15 +3,17 @@ import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_theme.dart';
-import '../../services/firestore_service.dart'; // Import Service
+
 import 'payment_screen.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
 import '../../services/auth_service.dart';
 import 'payment_success_screen.dart';
+import 'bus_layout_widget.dart';
+import '../../services/firestore_service.dart';
 
-class SeatSelectionScreen extends StatelessWidget {
+class SeatSelectionScreen extends StatefulWidget {
   final Trip trip;
   final bool showBackButton;
   final bool isConductorMode;
@@ -21,6 +23,50 @@ class SeatSelectionScreen extends StatelessWidget {
       required this.trip,
       this.showBackButton = true,
       this.isConductorMode = false});
+
+  @override
+  State<SeatSelectionScreen> createState() => _SeatSelectionScreenState();
+}
+
+class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _autoSelectForBulk();
+    });
+  }
+
+  void _autoSelectForBulk() {
+    final controller = Provider.of<TripController>(context, listen: false);
+
+    // Only auto-select if we have a defined passenger count > 0 (Bulk Flow)
+    // AND currently no seats are selected (Initial Load)
+    if (controller.seatsPerTrip > 0 && controller.selectedSeats.isEmpty) {
+      List<int> availableSeats = [];
+      // Assuming 49 seats maximum roughly
+      for (int i = 1; i <= 49; i++) {
+        if (!widget.trip.bookedSeats.contains(i)) {
+          availableSeats.add(i);
+        }
+      }
+
+      // Take first N available
+      int countNeeded = controller.seatsPerTrip;
+      if (countNeeded > availableSeats.length) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Not enough available seats for this bus!")));
+        return;
+      }
+
+      final autoSelected = availableSeats.take(countNeeded).toList();
+
+      // Update Controller
+      for (int seat in autoSelected) {
+        controller.toggleSeat(seat);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +79,7 @@ class SeatSelectionScreen extends StatelessWidget {
     // Determine if we need an AppBar
     // - On Mobile: Yes (unless specific case?)
     // - On Desktop: Only if showBackButton is true
-    final bool showAppBar = !isDesktop || showBackButton;
+    final bool showAppBar = !isDesktop || widget.showBackButton;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -50,7 +96,7 @@ class SeatSelectionScreen extends StatelessWidget {
               elevation: 0,
               iconTheme:
                   IconThemeData(color: isDark ? Colors.white : Colors.black),
-              leading: showBackButton
+              leading: widget.showBackButton
                   ? const BackButton()
                   : null, // Default auto-leading is usually fine
             )
@@ -72,274 +118,19 @@ class SeatSelectionScreen extends StatelessWidget {
                           constraints: const BoxConstraints(maxWidth: 1200),
                           child: Column(
                             children: [
-                              _buildHeader(context, trip, isDark),
+                              _buildHeader(context, widget.trip, isDark),
                               const SizedBox(height: 40),
                               _buildLegend(isDark),
                               const SizedBox(height: 40),
 
-                              // The Bus Visual
-                              Container(
-                                width: 340, // Fixed bus width
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 40),
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0xFF2D3142)
-                                      : Colors.white, // Bus Interior Color
-                                  borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(60),
-                                      bottom: Radius.circular(30)),
-                                  border: Border.all(
-                                      color: isDark
-                                          ? Colors.white10
-                                          : Colors.grey.shade200,
-                                      width: 2),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: Colors.black
-                                            .withValues(alpha: 0.08),
-                                        blurRadius: 30,
-                                        offset: const Offset(0, 10))
-                                  ],
-                                ),
-                                child: Column(
-                                  children: [
-                                    // Driver / Front
-                                    Container(
-                                      padding:
-                                          const EdgeInsets.only(bottom: 20),
-                                      decoration: BoxDecoration(
-                                          border: Border(
-                                              bottom: BorderSide(
-                                                  color: isDark
-                                                      ? Colors.white10
-                                                      : Colors.black12))),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          // FRONT EXIT
-                                          Column(
-                                            children: [
-                                              const Icon(
-                                                  Icons.sensor_door_outlined,
-                                                  color: Colors.red,
-                                                  size: 24),
-                                              const SizedBox(height: 4),
-                                              Text("EXIT",
-                                                  style: TextStyle(
-                                                      fontSize: 10,
-                                                      color: Colors.red
-                                                          .withOpacity(0.8),
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                            ],
-                                          ),
-
-                                          // DRIVER (Steering Wheel)
-                                          Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                  color: isDark
-                                                      ? Colors.white24
-                                                      : Colors.black12,
-                                                  width: 2),
-                                            ),
-                                            child: Icon(
-                                              Icons.directions_car,
-                                              size: 28,
-                                              color: isDark
-                                                  ? Colors.white54
-                                                  : Colors.black54,
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 24),
-
-                                    // REAL-TIME SEAT GRID
-                                    StreamBuilder<Trip>(
-                                        stream: FirestoreService()
-                                            .getTripStream(trip.id),
-                                        builder: (context, snapshot) {
-                                          final currentTrip =
-                                              snapshot.data ?? trip;
-
-                                          // Calculate rows based on Seat Count
-                                          final int totalSeats =
-                                              currentTrip.totalSeats;
-                                          if (totalSeats < 4) {
-                                            return const SizedBox();
-                                          }
-
-                                          // Logic: Check if it fits the "5-seat back" pattern (Total = 4N + 5)
-                                          // e.g. 29, 33, 37, 41, 45, 49
-                                          bool isFiveSeatRear =
-                                              (totalSeats - 5) % 4 == 0;
-
-                                          int lastRowSeats;
-                                          int normalRowsCount;
-
-                                          if (isFiveSeatRear) {
-                                            lastRowSeats = 5;
-                                            normalRowsCount =
-                                                (totalSeats - 5) ~/ 4;
-                                          } else {
-                                            // Fallback for standard 4-seat multiples (e.g. 40, 44)
-                                            // or irregular remainders
-                                            int remainder = totalSeats % 4;
-                                            if (remainder == 0) {
-                                              lastRowSeats = 4;
-                                              normalRowsCount =
-                                                  (totalSeats ~/ 4) - 1;
-                                            } else {
-                                              lastRowSeats = remainder;
-                                              normalRowsCount = totalSeats ~/ 4;
-                                            }
-                                          }
-
-                                          return Column(
-                                            children: [
-                                              // 1. Normal Rows (4 seats)
-                                              ...List.generate(normalRowsCount,
-                                                  (index) {
-                                                int rowStart = index * 4;
-                                                return Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          bottom: 16),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      // Left Pair
-                                                      Row(children: [
-                                                        _SeatItem(
-                                                            seatNum:
-                                                                rowStart + 1,
-                                                            trip: currentTrip,
-                                                            isSelected:
-                                                                selectedSeats
-                                                                    .contains(
-                                                                        rowStart +
-                                                                            1)),
-                                                        const SizedBox(
-                                                            width: 14),
-                                                        _SeatItem(
-                                                            seatNum:
-                                                                rowStart + 2,
-                                                            trip: currentTrip,
-                                                            isSelected:
-                                                                selectedSeats
-                                                                    .contains(
-                                                                        rowStart +
-                                                                            2)),
-                                                      ]),
-                                                      // Right Pair
-                                                      Row(children: [
-                                                        _SeatItem(
-                                                            seatNum:
-                                                                rowStart + 3,
-                                                            trip: currentTrip,
-                                                            isSelected:
-                                                                selectedSeats
-                                                                    .contains(
-                                                                        rowStart +
-                                                                            3)),
-                                                        const SizedBox(
-                                                            width: 14),
-                                                        _SeatItem(
-                                                            seatNum:
-                                                                rowStart + 4,
-                                                            trip: currentTrip,
-                                                            isSelected:
-                                                                selectedSeats
-                                                                    .contains(
-                                                                        rowStart +
-                                                                            4)),
-                                                      ]),
-                                                    ],
-                                                  ),
-                                                );
-                                              }),
-
-                                              // 2. Rear Exit Area (Before last row)
-                                              Container(
-                                                alignment:
-                                                    Alignment.centerRight,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 8),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.end,
-                                                  children: [
-                                                    Text("EXIT",
-                                                        style: TextStyle(
-                                                            fontSize: 10,
-                                                            color: Colors.red
-                                                                .withOpacity(
-                                                                    0.8),
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)),
-                                                    const SizedBox(width: 4),
-                                                    const Icon(
-                                                        Icons
-                                                            .sensor_door_outlined,
-                                                        color: Colors.red,
-                                                        size: 20),
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-
-                                              // 3. Last Row (Variable Seats, Contiguous)
-                                              Builder(builder: (context) {
-                                                int start = normalRowsCount * 4;
-
-                                                return Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween, // Distribute evenly
-                                                  children: List.generate(
-                                                      lastRowSeats, (i) {
-                                                    int seatNum = start + i + 1;
-                                                    return _SeatItem(
-                                                      seatNum: seatNum,
-                                                      trip: currentTrip,
-                                                      isSelected: selectedSeats
-                                                          .contains(seatNum),
-                                                      width:
-                                                          44, // Keep standard size
-                                                    );
-                                                  }),
-                                                );
-                                              }),
-                                            ],
-                                          );
-                                        }),
-
-                                    const SizedBox(height: 20),
-                                    // Back of bus
-                                    Container(
-                                      height: 10,
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                          color: isDark
-                                              ? Colors.white10
-                                              : Colors.grey.shade100,
-                                          borderRadius:
-                                              BorderRadius.circular(10)),
-                                    )
-                                  ],
-                                ),
+                              // The Bus Visual (Refactored)
+                              BusLayoutWidget(
+                                trip: widget.trip,
+                                selectedSeats: selectedSeats,
+                                isDark: isDark,
+                                onSeatToggle: (seatNum) {
+                                  controller.toggleSeat(seatNum);
+                                },
                               ),
 
                               const SizedBox(height: 100),
@@ -390,7 +181,7 @@ class SeatSelectionScreen extends StatelessWidget {
                                             fontWeight: FontWeight.w500)),
                                     const SizedBox(height: 4),
                                     Text(
-                                        "LKR ${(trip.price * selectedSeats.length).toStringAsFixed(0)}",
+                                        "LKR ${(widget.trip.price * selectedSeats.length).toStringAsFixed(0)}",
                                         style: TextStyle(
                                             fontFamily: 'Outfit',
                                             fontSize: 28,
@@ -409,7 +200,7 @@ class SeatSelectionScreen extends StatelessWidget {
                               const SizedBox(width: 16),
                               ElevatedButton(
                                 onPressed: () {
-                                  if (isConductorMode) {
+                                  if (widget.isConductorMode) {
                                     _handleConductorBooking(
                                         context, controller);
                                   } else {
@@ -421,7 +212,7 @@ class SeatSelectionScreen extends StatelessWidget {
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
-                                    backgroundColor: isConductorMode
+                                    backgroundColor: widget.isConductorMode
                                         ? Colors.green
                                         : AppTheme.primaryColor,
                                     padding: const EdgeInsets.symmetric(
@@ -431,7 +222,7 @@ class SeatSelectionScreen extends StatelessWidget {
                                         borderRadius:
                                             BorderRadius.circular(12))),
                                 child: Text(
-                                    isConductorMode
+                                    widget.isConductorMode
                                         ? "Issue Ticket (Cash)"
                                         : "Proceed to Pay",
                                     style: const TextStyle(
@@ -575,7 +366,7 @@ class SeatSelectionScreen extends StatelessWidget {
       return;
     }
 
-    final total = trip.price * controller.selectedSeats.length;
+    final total = widget.trip.price * controller.selectedSeats.length;
     final TextEditingController nameController = TextEditingController();
 
     showDialog(
@@ -621,12 +412,24 @@ class SeatSelectionScreen extends StatelessWidget {
                           ? "Offline Passenger"
                           : nameController.text;
 
-                      final success = await controller.createOfflineBooking(
-                          context, pName, user);
+                      // Use Controller method for consistency
+                      try {
+                        // Direct Service Call for Offline Ticket
+                        final ticket = await FirestoreService()
+                            .createOfflineBooking(widget.trip,
+                                controller.selectedSeats, pName, user);
 
-                      if (success && context.mounted) {
-                        final ticket = controller.currentTicket;
-                        if (ticket != null) {
+                        // Refresh trip to show taken seats
+                        if (context.mounted) {
+                          Provider.of<TripController>(context, listen: false)
+                              .selectTrip(widget.trip);
+                        }
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(
+                                  "Ticket Issued! ID: ${ticket.ticketId.substring(0, 5)}...")));
+
                           Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -634,6 +437,11 @@ class SeatSelectionScreen extends StatelessWidget {
                                   settings: RouteSettings(arguments: {
                                     'booking_id': ticket.ticketId
                                   })));
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Error: $e")));
                         }
                       }
                     },
@@ -643,151 +451,5 @@ class SeatSelectionScreen extends StatelessWidget {
                     child: const Text("Confirm & Print"))
               ],
             ));
-  }
-}
-
-class _SeatItem extends StatefulWidget {
-  final int seatNum;
-  final Trip trip;
-  final bool isSelected;
-  final double width;
-
-  const _SeatItem(
-      {required this.seatNum,
-      required this.trip,
-      required this.isSelected,
-      this.width = 44});
-
-  @override
-  State<_SeatItem> createState() => _SeatItemState();
-}
-
-class _SeatItemState extends State<_SeatItem> {
-  bool isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = Provider.of<TripController>(context);
-
-    // --- BULK AVAILABILITY LOGIC ---
-    // If bulk mode is on, we must check if seat is booked in ANY of the qualifying trips
-    bool isBooked = false;
-    bool isBlocked = false;
-
-    if (controller.isBulkBooking &&
-        controller.bulkSearchResults.isNotEmpty &&
-        controller.bulkDates.length > 1) {
-      // We need to find the "corresponding" trip in each day for the currently viewed trip.
-      // The `widget.trip` is the "Day 0" trip.
-
-      // Iterate through all days 0..duration-1
-      for (int i = 0; i < controller.bulkSearchResults.length; i++) {
-        final dayTrips = controller.bulkSearchResults[i];
-
-        // Find matching bus
-        final match = dayTrips
-                .where((t) =>
-                    t.busNumber == widget.trip.busNumber &&
-                    t.operatorName == widget.trip.operatorName)
-                .firstOrNull ??
-            widget.trip;
-
-        if (match.bookedSeats.contains(widget.seatNum)) {
-          isBooked = true;
-        }
-        if (match.blockedSeats.contains(widget.seatNum)) {
-          isBlocked = true;
-        }
-        if (isBooked || isBlocked) break; // Optimization
-      }
-    } else {
-      // Standard single trip check
-      isBooked = widget.trip.bookedSeats.contains(widget.seatNum);
-      isBlocked = widget.trip.blockedSeats.contains(widget.seatNum);
-    }
-    // -------------------------------
-
-    if (widget.seatNum > widget.trip.totalSeats) {
-      return const SizedBox(width: 44, height: 44);
-    }
-
-    final isUnavailable = isBooked || isBlocked;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
-      cursor: isUnavailable
-          ? SystemMouseCursors.forbidden
-          : SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap:
-            isUnavailable ? null : () => controller.toggleSeat(widget.seatNum),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: widget.width,
-          height: 44,
-          decoration: BoxDecoration(
-            color: isBlocked
-                ? Colors.amber // Blocked = Yellow
-                : isBooked
-                    ? Colors.red.shade300 // Booked = Red
-                    : widget.isSelected
-                        ? null
-                        : isHovered
-                            ? AppTheme.primaryColor.withValues(alpha: 0.1)
-                            : Colors.white,
-            gradient: widget.isSelected
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                        AppTheme.primaryColor,
-                        AppTheme.primaryColor.withValues(alpha: 0.8)
-                      ])
-                : null,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-                color: widget.isSelected
-                    ? AppTheme.primaryColor
-                    : isUnavailable
-                        ? Colors.transparent
-                        : isHovered
-                            ? AppTheme.primaryColor
-                            : Colors.grey.shade300,
-                width: widget.isSelected || isHovered ? 2 : 1),
-            boxShadow: widget.isSelected || isHovered
-                ? [
-                    BoxShadow(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4))
-                  ]
-                : null,
-          ),
-          child: Center(
-            child: isBlocked
-                ? const Icon(Icons.block, size: 16, color: Colors.black54)
-                : isBooked
-                    ? const Icon(Icons.close, size: 16, color: Colors.grey)
-                    : Text(
-                        "${widget.seatNum}",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: widget.isSelected
-                              ? Colors.white
-                              : isHovered
-                                  ? AppTheme.primaryColor
-                                  : Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white
-                                      : Colors
-                                          .black, // Dark mode white, Light mode black
-                        ),
-                      ),
-          ),
-        ),
-      ),
-    );
   }
 }

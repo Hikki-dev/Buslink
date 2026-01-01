@@ -2,7 +2,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/trip_model.dart';
+import '../models/route_model.dart';
 
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 class FirestoreService {
@@ -10,6 +12,15 @@ class FirestoreService {
   final String tripCollection = 'trips';
   final String ticketCollection = 'tickets';
   final String userCollection = 'users';
+  final String routeCollection = 'routes';
+
+  // Helper to generate 6-char alphanumeric ID
+  String _generateShortId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rnd = Random();
+    return String.fromCharCodes(Iterable.generate(
+        6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))));
+  }
 
   Future<DocumentSnapshot> getUserData(String uid) {
     return _db.collection(userCollection).doc(uid).get();
@@ -183,6 +194,7 @@ class FirestoreService {
         'departureTime': Timestamp.fromDate(trip.departureTime),
         'arrivalTime': Timestamp.fromDate(trip.arrivalTime),
       },
+      shortId: _generateShortId(),
     );
 
     await ticketRef.set(newTicket.toJson());
@@ -190,11 +202,6 @@ class FirestoreService {
   }
 
   // --- ADDED: Route Handling ---
-  final String routeCollection = 'routes';
-
-  Future<DocumentReference> addRoute(Map<String, dynamic> data) {
-    return _db.collection(routeCollection).add(data);
-  }
 
   // --- ADDED: Dynamic City List ---
   Future<List<String>> getAvailableCities() async {
@@ -611,6 +618,7 @@ class FirestoreService {
         'paymentMethod': 'cash',
         'issuedBy': conductor?.email ?? 'System',
         'tripData': trip.toMap(),
+        'shortId': _generateShortId(),
       };
 
       transaction.set(ticketRef, ticketData);
@@ -621,5 +629,50 @@ class FirestoreService {
   // Feedback
   Future<void> submitFeedback(Map<String, dynamic> feedbackData) async {
     await _db.collection('feedback').add(feedbackData);
+  }
+
+  // --- ADDED: Verify Ticket (manual or scan) ---
+  Future<Ticket?> verifyTicket(String ticketId) async {
+    if (ticketId.isEmpty) return null;
+
+    // 1. Check Full ID
+    final docRef = _db.collection(ticketCollection).doc(ticketId);
+    final docSnap = await docRef.get();
+    if (docSnap.exists) {
+      return Ticket.fromFirestore(docSnap);
+    }
+
+    // 2. Check Short ID (Case Insensitive)
+    final querySnap = await _db
+        .collection(ticketCollection)
+        .where('shortId', isEqualTo: ticketId.toUpperCase())
+        .limit(1)
+        .get();
+
+    if (querySnap.docs.isNotEmpty) {
+      return Ticket.fromFirestore(querySnap.docs.first);
+    }
+
+    return null;
+  }
+  // --- ROUTE MANAGEMENT ---
+
+  Stream<List<RouteModel>> getRoutesStream() {
+    return _db.collection(routeCollection).snapshots().map((snapshot) =>
+        snapshot.docs
+            .map((doc) => RouteModel.fromMap(doc.data(), doc.id))
+            .toList());
+  }
+
+  Future<DocumentReference> addRoute(RouteModel route) {
+    return _db.collection(routeCollection).add(route.toJson());
+  }
+
+  Future<void> updateRoute(RouteModel route) async {
+    await _db.collection(routeCollection).doc(route.id).update(route.toJson());
+  }
+
+  Future<void> deleteRoute(String routeId) async {
+    await _db.collection(routeCollection).doc(routeId).delete();
   }
 }

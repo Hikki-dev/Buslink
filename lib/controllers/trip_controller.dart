@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/trip_model.dart';
+import '../models/route_model.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -115,11 +116,25 @@ class TripController extends ChangeNotifier {
   }
 
   Future<void> searchTrips(BuildContext context) async {
-    if (fromCity == null ||
-        toCity == null ||
-        (bulkDates.isEmpty && travelDate == null)) {
+    if ((fromCity == null || fromCity!.isEmpty) &&
+        (toCity == null || toCity!.isEmpty)) {
+      // Empty Search: Show all trips for next 30 days
+      _setLoading(true);
+      try {
+        final now = DateTime.now();
+        searchResults = await _service.getTripsByDate(
+            now, now.add(const Duration(days: 30)));
+      } catch (e) {
+        debugPrint("Error fetching all trips: $e");
+        searchResults = [];
+      }
+      _setLoading(false);
+      return;
+    }
+
+    if (bulkDates.isEmpty && travelDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select cities and date(s)")),
+        const SnackBar(content: Text("Please select a date")),
       );
       return;
     }
@@ -336,8 +351,9 @@ class TripController extends ChangeNotifier {
         'createdAt': FieldValue.serverTimestamp(),
       };
 
-      final DocumentReference routeRef =
-          await _service.addRoute(routeStorageData);
+      // Convert to RouteModel before adding
+      final tempRoute = RouteModel.fromMap(routeStorageData, '');
+      final DocumentReference routeRef = await _service.addRoute(tempRoute);
       debugPrint("Route created with ID: ${routeRef.id}");
 
       // 2. Generate Trips for next 60 days (2 Months)
@@ -415,7 +431,7 @@ class TripController extends ChangeNotifier {
 
   Future<void> saveRoute(Map<String, dynamic> routeData) async {
     try {
-      await _service.addRoute(routeData);
+      await _service.addRoute(RouteModel.fromMap(routeData, ''));
       notifyListeners();
     } catch (e) {
       debugPrint("Error saving route: $e");
@@ -845,9 +861,6 @@ class TripController extends ChangeNotifier {
   }
 
   // --- Ticket Verification ---
-  Future<Ticket?> verifyTicket(String ticketId) async {
-    return await _service.getTicket(ticketId);
-  }
 
   Future<Ticket?> getTicketById(String ticketId) async {
     return await _service.getTicket(ticketId);
@@ -904,5 +917,18 @@ class TripController extends ChangeNotifier {
       'comment': comment,
       'timestamp': FieldValue.serverTimestamp(),
     });
+  }
+
+  Future<Ticket?> verifyTicket(String ticketId) async {
+    _setLoading(true);
+    try {
+      final ticket = await _service.verifyTicket(ticketId);
+      _setLoading(false);
+      return ticket;
+    } catch (e) {
+      debugPrint("Verify Error: $e");
+      _setLoading(false);
+      return null;
+    }
   }
 }
