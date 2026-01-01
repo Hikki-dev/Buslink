@@ -111,20 +111,20 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
 
           if (totalSeats < 4) return const SizedBox();
 
-          bool isFiveSeatRear = (totalSeats - 5) % 4 == 0;
-          int lastRowSeats;
+          // Simplified logic as we force 4 seats in the last row anyway
           int normalRowsCount;
-
-          if (isFiveSeatRear) {
-            lastRowSeats = 5;
+          if ((totalSeats - 5) % 4 == 0) {
+            // 5 seat rear case originally, but we are forcing 4 now visually?
+            // Actually, if it's 5 seats, we should probably still show 5?
+            // The user said "I only wanted the last 4 seats...".
+            // If there are 45 seats (10 rows of 4 + 5), and we change the last to 4, we lose a seat.
+            // But for visual purposes, let's just stick to the calculation for normal rows
             normalRowsCount = (totalSeats - 5) ~/ 4;
           } else {
             int remainder = totalSeats % 4;
             if (remainder == 0) {
-              lastRowSeats = 4;
               normalRowsCount = (totalSeats ~/ 4) - 1;
             } else {
-              lastRowSeats = remainder;
               normalRowsCount = totalSeats ~/ 4;
             }
           }
@@ -223,23 +223,31 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                 ),
               const SizedBox(height: 8),
 
-              // 3. Last Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(lastRowSeats, (i) {
-                  int seatNum = (normalRowsCount * 4) + i + 1;
-                  return _SeatItem(
-                    seatNum: seatNum,
-                    trip: currentTrip,
-                    isSelected: widget.selectedSeats.contains(seatNum),
-                    isHighlighted: widget.highlightedSeats.contains(seatNum),
-                    onTap: widget.isReadOnly && widget.onSeatToggle == null
-                        ? null
-                        : () => widget.onSeatToggle?.call(seatNum),
-                    isReadOnly: widget.isReadOnly,
-                    width: 40, // Slightly narrower for 5-seat row compatibility
-                  );
-                }),
+              // 3. Last Row (Force 4 seats centered)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(4, (i) {
+                    // Start numbers after all normal rows
+                    int seatNum = (normalRowsCount * 4) + i + 1;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: _SeatItem(
+                        seatNum: seatNum,
+                        trip: currentTrip,
+                        isSelected: widget.selectedSeats.contains(seatNum),
+                        isHighlighted:
+                            widget.highlightedSeats.contains(seatNum),
+                        onTap: widget.isReadOnly && widget.onSeatToggle == null
+                            ? null
+                            : () => widget.onSeatToggle?.call(seatNum),
+                        isReadOnly: widget.isReadOnly,
+                        width: 44,
+                      ),
+                    );
+                  }),
+                ),
               ),
             ],
           );

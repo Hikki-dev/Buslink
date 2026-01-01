@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
 import '../../data/cities.dart';
 import '../../models/trip_model.dart';
+import '../../models/route_model.dart';
 import '../../utils/app_theme.dart';
 import 'layout/admin_navbar.dart';
 import 'layout/admin_footer.dart';
@@ -33,6 +34,7 @@ class _AdminScreenState extends State<AdminScreen> {
   final List<String> _operatingDays = []; // Mon, Tue...
   bool _isRecurring = true;
   DateTime? _tripDate;
+  TripStatus _tripStatus = TripStatus.scheduled;
 
   // C) Fare
   final TextEditingController _fareController = TextEditingController();
@@ -93,13 +95,18 @@ class _AdminScreenState extends State<AdminScreen> {
       _isRecurring = false;
       _tripDate = t.departureTime;
       _blockedSeats.addAll(t.blockedSeats);
+      _tripStatus = t.status;
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<TripController>(context, listen: false)
           .fetchAvailableCities();
+      Provider.of<TripController>(context, listen: false)
+          .fetchAvailableRoutes();
     });
   }
+
+  RouteModel? _selectedRoute;
 
   void _calculateArrival() {
     // If duration matches HH:MM, update arrival
@@ -162,6 +169,7 @@ class _AdminScreenState extends State<AdminScreen> {
           ? _platformController.text
           : 'TBD',
       'blockedSeats': _blockedSeats,
+      'status': _tripStatus.name, // Pass status to save
     };
 
     try {
@@ -334,6 +342,9 @@ class _AdminScreenState extends State<AdminScreen> {
                                         ],
                                       ),
                                       const SizedBox(height: 32),
+
+                                      _buildRouteSelector(),
+                                      const SizedBox(height: 24),
 
                                       _buildSectionHeader("A) Route Details"),
 
@@ -572,6 +583,41 @@ class _AdminScreenState extends State<AdminScreen> {
                                           isNumber: true,
                                           icon: Icons.event_seat),
 
+                                      // Status Dropdown (Edits Only)
+                                      if (isEditing) ...[
+                                        const SizedBox(height: 16),
+                                        DropdownButtonFormField<TripStatus>(
+                                          value: _tripStatus,
+                                          decoration: InputDecoration(
+                                            labelText: "Trip Status",
+                                            filled: true,
+                                            fillColor: isDark
+                                                ? Colors.grey
+                                                    .withValues(alpha: 0.1)
+                                                : Colors.grey.shade50,
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          items: TripStatus.values.map((s) {
+                                            return DropdownMenuItem(
+                                              value: s,
+                                              child: Text(
+                                                s.name.toUpperCase(),
+                                                style:
+                                                    TextStyle(color: textColor),
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (val) {
+                                            if (val != null) {
+                                              setState(() => _tripStatus = val);
+                                            }
+                                          },
+                                        ),
+                                      ],
+
                                       const SizedBox(height: 48),
                                       SizedBox(
                                         width: double.infinity,
@@ -762,11 +808,17 @@ class _AdminScreenState extends State<AdminScreen> {
         onSelected: onChanged,
         fieldViewBuilder:
             (context, textEditingController, focusNode, onFieldSubmitted) {
+          // Fix: Ensure controller matches initial value if not edited yet
           if (value != null &&
               textEditingController.text.isEmpty &&
               value != textEditingController.text) {
+            // Only set if completely empty to avoid overwriting user typing?
+            // Actually initialValue handles start.
+            // This logic tracks external updates (setState) to the field.
+            // Use a PostFrameCallback or just text assignment if safe.
             textEditingController.text = value;
           }
+
           return TextFormField(
             controller: textEditingController,
             focusNode: focusNode,
@@ -776,7 +828,7 @@ class _AdminScreenState extends State<AdminScreen> {
               onChanged(val);
             },
             onChanged: (val) {
-              onChanged(val);
+              // Allow free text or filtering
             },
             decoration: InputDecoration(
               labelText: label,
@@ -790,9 +842,7 @@ class _AdminScreenState extends State<AdminScreen> {
                   OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               filled: true,
               fillColor: inputFillColor,
-              suffixIcon: const Icon(Icons.edit_road, color: Colors.grey),
-              hintText: "Select or Type New",
-              hintStyle: TextStyle(color: Colors.grey.shade500),
+              suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
             ),
             validator: (v) => v == null || v.isEmpty ? "Required" : null,
           );
@@ -826,6 +876,87 @@ class _AdminScreenState extends State<AdminScreen> {
             ),
           );
         },
+      );
+    });
+  }
+
+  Widget _buildRouteSelector() {
+    return Consumer<TripController>(builder: (context, controller, _) {
+      final routes = controller.availableRoutes;
+      if (routes.isEmpty) {
+        return const SizedBox(); // Hide if no routes
+      }
+
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final textColor = Theme.of(context).colorScheme.onSurface;
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border:
+              Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.alt_route,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                    size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  "Load details from saved route",
+                  style: TextStyle(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<RouteModel>(
+              value: _selectedRoute,
+              isExpanded: true,
+              decoration: InputDecoration(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none),
+                filled: true,
+                fillColor:
+                    isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.white,
+                hintText: "Select a Route...",
+                hintStyle: TextStyle(color: Colors.grey.shade500),
+              ),
+              items: routes.map((r) {
+                return DropdownMenuItem(
+                  value: r,
+                  child: Text(
+                    "${r.fromCity} ➔ ${r.toCity}",
+                    style: TextStyle(color: textColor),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: (RouteModel? route) {
+                if (route != null) {
+                  setState(() {
+                    _selectedRoute = route;
+                    _fromCity = route.fromCity;
+                    _toCity = route.toCity;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("Route details populated!"),
+                      duration: Duration(milliseconds: 800)));
+                }
+              },
+            ),
+          ],
+        ),
       );
     });
   }

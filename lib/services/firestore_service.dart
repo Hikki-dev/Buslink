@@ -14,12 +14,12 @@ class FirestoreService {
   final String userCollection = 'users';
   final String routeCollection = 'routes';
 
-  // Helper to generate 6-char alphanumeric ID
+  // Helper to generate 4-char alphanumeric ID
   String _generateShortId() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rnd = Random();
     return String.fromCharCodes(Iterable.generate(
-        6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))));
+        4, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))));
   }
 
   Future<DocumentSnapshot> getUserData(String uid) {
@@ -97,7 +97,7 @@ class FirestoreService {
   Future<Trip?> getTripByBusNumber(String busNumber) async {
     final now = DateTime.now();
     final dayStart = now.subtract(const Duration(hours: 6));
-    final dayEnd = now.add(const Duration(hours: 12));
+    final dayEnd = now.add(const Duration(hours: 4));
 
     final snapshot = await _db
         .collection(tripCollection)
@@ -560,14 +560,17 @@ class FirestoreService {
       debugPrint("Trip $tripId updated with booked seats: $seats");
 
       // Confirm ticket
+      final shortId = _generateShortId();
       transaction.update(ticketRef, {
         'status': 'confirmed',
         'confirmedAt': FieldValue.serverTimestamp(),
+        'shortId': shortId,
       });
 
       return Ticket.fromMap({
         ...ticketData,
         'status': 'confirmed',
+        'shortId': shortId,
         'id': bookingId,
       }, bookingId);
     });

@@ -29,6 +29,7 @@ class TripController extends ChangeNotifier {
   List<Trip> searchResults = [];
   List<Trip> allTripsForAdmin = [];
   List<String> availableCities = []; // Dynamic list
+  List<RouteModel> availableRoutes = [];
 
   Future<void> fetchAvailableCities() async {
     try {
@@ -36,6 +37,26 @@ class TripController extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint("Error fetching cities: $e");
+    }
+  }
+
+  Future<void> fetchAvailableRoutes() async {
+    try {
+      // Since getRoutesStream is a stream, we can't await it easily for a single fetch?
+      // Actually service has getRoutesStream. Let's add a getRoutes Future in service or just consume stream.
+      // We will listen to the stream in the UI usually, but for Dropdown logic a simple fetch or list cache is fine.
+      // Let's assume we want a one-time fetch for the dropdown when opening the dialog.
+
+      // We'll create a temporary logic to get cached routes from stream if we subscribed?
+      // Or just fetch once. To avoid complexity, I'll add a getRoutes Future to logic.
+      // But service only has getRoutesStream.
+      // I'll add a simple getRoutes to service first or just use .first on stream.
+
+      final snapshot = await _service.getRoutesStream().first;
+      availableRoutes = snapshot;
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error fetching routes: $e");
     }
   }
 
@@ -776,29 +797,39 @@ class TripController extends ChangeNotifier {
 
   Future<void> updateTripStatusAsConductor(
       BuildContext context, Trip trip, TripStatus status, int delay) async {
-    _setLoading(true);
+    // OPTIMISTIC UPDATE: Update UI immediately
+    final oldStatus = conductorSelectedTrip?.status;
+    final oldDelay = conductorSelectedTrip?.delayMinutes;
+
+    conductorSelectedTrip?.status = status;
+    conductorSelectedTrip?.delayMinutes = delay;
+    notifyListeners();
+
     try {
-      // In static mode this might fail if trip doesn't exist in DB, but keeping logic for robustness
+      // API Call in background
       if (trip.id != "static_trip_id") {
         await _service.updateStatus(trip.id, status, delay);
       }
 
-      conductorSelectedTrip?.status = status;
-      conductorSelectedTrip?.delayMinutes = delay;
-
-      _setLoading(false);
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Success! Trip status set to ${status.name}.")),
-      );
-      notifyListeners();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Status updated to ${status.name.toUpperCase()}"),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
     } catch (e) {
-      _setLoading(false);
-      // Swallow error for static mode demo
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Status updated (Simulation): ${status.name}")),
-      );
+      // Revert on failure
+      conductorSelectedTrip?.status = oldStatus ?? TripStatus.scheduled;
+      conductorSelectedTrip?.delayMinutes = oldDelay ?? 0;
+      notifyListeners();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to update status: $e")),
+        );
+      }
     }
   }
 

@@ -17,24 +17,8 @@ class _RouteManagementScreenState extends State<RouteManagementScreen> {
   void _showRouteDialog({RouteModel? route}) {
     final isEditing = route != null;
     final formKey = GlobalKey<FormState>();
-
-    // Controllers
     final fromController = TextEditingController(text: route?.fromCity ?? '');
     final toController = TextEditingController(text: route?.toCity ?? '');
-    final priceController =
-        TextEditingController(text: route?.price.toString() ?? '');
-    final operatorController =
-        TextEditingController(text: route?.operatorName ?? 'NTC');
-    final busNoController = TextEditingController(text: route?.busNumber ?? '');
-
-    // Time & Duration
-    TimeOfDay departureTime = isEditing
-        ? TimeOfDay(hour: route.departureHour, minute: route.departureMinute)
-        : const TimeOfDay(hour: 8, minute: 0);
-
-    TimeOfDay arrivalTime = isEditing
-        ? TimeOfDay(hour: route.arrivalHour, minute: route.arrivalMinute)
-        : const TimeOfDay(hour: 12, minute: 0);
 
     showDialog(
       context: context,
@@ -58,59 +42,6 @@ class _RouteManagementScreenState extends State<RouteManagementScreen> {
                       decoration: const InputDecoration(labelText: "To City"),
                       validator: (v) => v!.isEmpty ? "Required" : null,
                     ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: priceController,
-                            decoration:
-                                const InputDecoration(labelText: "Price (LKR)"),
-                            keyboardType: TextInputType.number,
-                            validator: (v) => v!.isEmpty ? "Required" : null,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextFormField(
-                            controller: busNoController,
-                            decoration: const InputDecoration(
-                                labelText: "Default Bus No"),
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextFormField(
-                      controller: operatorController,
-                      decoration:
-                          const InputDecoration(labelText: "Operator Name"),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () async {
-                              final t = await showTimePicker(
-                                  context: context, initialTime: departureTime);
-                              if (t != null) setState(() => departureTime = t);
-                            },
-                            child:
-                                Text("Dep: ${departureTime.format(context)}"),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () async {
-                              final t = await showTimePicker(
-                                  context: context, initialTime: arrivalTime);
-                              if (t != null) setState(() => arrivalTime = t);
-                            },
-                            child: Text("Arr: ${arrivalTime.format(context)}"),
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),
@@ -123,18 +54,16 @@ class _RouteManagementScreenState extends State<RouteManagementScreen> {
                 onPressed: () async {
                   if (formKey.currentState!.validate()) {
                     final newRoute = RouteModel(
-                      id: isEditing
-                          ? route.id
-                          : '', // ID ignored on create, kept on update
+                      id: isEditing ? route.id : '',
                       fromCity: fromController.text.trim(),
                       toCity: toController.text.trim(),
-                      departureHour: departureTime.hour,
-                      departureMinute: departureTime.minute,
-                      arrivalHour: arrivalTime.hour,
-                      arrivalMinute: arrivalTime.minute,
-                      price: double.tryParse(priceController.text) ?? 0,
-                      operatorName: operatorController.text.trim(),
-                      busNumber: busNoController.text.trim(),
+                      departureHour: 8,
+                      departureMinute: 0,
+                      arrivalHour: 12,
+                      arrivalMinute: 0,
+                      price: 0,
+                      operatorName: 'NTC',
+                      busNumber: '0000',
                       busType: route?.busType ?? 'Normal',
                       platformNumber: route?.platformNumber ?? '1',
                       stops: route?.stops ?? [],
@@ -194,6 +123,12 @@ class _RouteManagementScreenState extends State<RouteManagementScreen> {
         title: const Text("Route Management"),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _showRouteDialog(),
+          )
+        ],
       ),
       body: StreamBuilder<List<RouteModel>>(
         stream: _service.getRoutesStream(),
@@ -228,8 +163,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen> {
                   ),
                   title: Text("${route.fromCity} ➔ ${route.toCity}",
                       style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(
-                      "${route.operatorName} • LKR ${route.price.toStringAsFixed(0)}"),
+                  subtitle: null,
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -248,12 +182,6 @@ class _RouteManagementScreenState extends State<RouteManagementScreen> {
             },
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showRouteDialog(),
-        label: const Text("Add Route"),
-        icon: const Icon(Icons.add),
-        backgroundColor: AppTheme.primaryColor,
       ),
     );
   }

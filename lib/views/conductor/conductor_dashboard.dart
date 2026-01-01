@@ -375,14 +375,15 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
 
   void _showTicketDetailsDialog(Ticket ticket) {
     showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              constraints: const BoxConstraints(maxWidth: 400),
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -395,8 +396,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                         color: Colors.green, size: 48),
                   ),
                   const SizedBox(height: 16),
-                  const Text("Valid Ticket",
-                      style: TextStyle(
+                  Text("Valid Ticket: ${ticket.shortId ?? 'N/A'}",
+                      style: const TextStyle(
                           fontFamily: 'Outfit',
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -446,8 +447,10 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 ],
               ),
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
   }
 
   Widget _ticketDetailRow(String label, String value) {

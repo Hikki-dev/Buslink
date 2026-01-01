@@ -195,9 +195,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                                     pw.MainAxisAlignment.spaceBetween,
                                 children: [
                                   pw.Text(
-                                      "Ticket ID: ${ticket.ticketId.toUpperCase().substring(0, 8)}",
+                                      "Ticket Code: ${ticket.shortId ?? ticket.ticketId.substring(0, 8).toUpperCase()}",
                                       style: pw.TextStyle(
-                                          fontWeight: pw.FontWeight.bold)),
+                                          fontWeight: pw.FontWeight.bold,
+                                          fontSize: 18)),
                                   pw.Text(
                                       "Date: ${DateFormat('yyyy-MM-dd').format(tripDate)}"),
                                 ]),
@@ -228,7 +229,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                   pw.SizedBox(height: 20),
                   pw.BarcodeWidget(
                     barcode: pw.Barcode.qrCode(),
-                    data: ticket.ticketId,
+                    data: ticket.shortId ?? ticket.ticketId,
                     width: 150,
                     height: 150,
                   ),
@@ -582,12 +583,19 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     fontFamily: 'Inter', fontSize: 14, color: Colors.black54)),
             const SizedBox(height: 12),
             QrImageView(
-              data: ticket.ticketId,
+              data: ticket.shortId ?? ticket.ticketId,
               version: QrVersions.auto,
               size: 150,
             ),
             const SizedBox(height: 8),
-            Text("Ticket ID: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
+            Text("TICKET CODE: ${ticket.shortId ?? 'N/A'}",
+                style: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black)),
+            const SizedBox(height: 4),
+            Text("Full ID: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
                 style: const TextStyle(
                     fontFamily: 'Inter', fontSize: 12, color: Colors.black54)),
             const SizedBox(height: 16),

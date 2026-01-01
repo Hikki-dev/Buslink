@@ -285,7 +285,21 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
       BuildContext context, Map<String, dynamic> user, bool isDark) {
     final String role = user['role'] ?? 'customer';
     final String email = user['email'] ?? 'No Email';
-    final String name = user['displayName'] ?? 'Unknown User';
+    String name = user['displayName'] ?? '';
+    // Fix: Derive name from email if missing or explicit "Unknown User" default
+    if (name.isEmpty || name == 'Unknown User') {
+      if (email.contains('@')) {
+        final rawName = email.split('@')[0];
+        // Capitalize first letter
+        if (rawName.isNotEmpty) {
+          name = rawName[0].toUpperCase() + rawName.substring(1);
+        } else {
+          name = rawName;
+        }
+      } else {
+        name = 'Unknown User';
+      }
+    }
     final String uid = user['uid'] ?? '';
 
     return Padding(
