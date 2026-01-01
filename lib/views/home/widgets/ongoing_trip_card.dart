@@ -81,7 +81,7 @@ class OngoingTripCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    DateFormat('EEEE').format(trip.departureTime),
+                    DateFormat('E, MMM d • h:mm a').format(trip.departureTime),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontFamily: 'Outfit',
                           fontWeight: FontWeight.w600,

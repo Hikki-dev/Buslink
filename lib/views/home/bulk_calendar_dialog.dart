@@ -14,6 +14,7 @@ class BulkCalendarDialog extends StatefulWidget {
 
 class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
   late List<DateTime> _selectedDates;
+  int _seats = 1;
 
   @override
   void initState() {
@@ -26,10 +27,9 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
 
   @override
   Widget build(BuildContext context) {
-    // Peach aesthetic from user request / screenshot
-    // Using a light peach for header background
-    final headerColor = const Color(0xFFFFDBCF);
-    final onHeaderColor = const Color(0xFF5E1600);
+    // Peach aesthetic
+    const headerColor = Color(0xFFFFDBCF);
+    const onHeaderColor = Color(0xFF5E1600);
 
     return Dialog(
       backgroundColor: Colors.white,
@@ -42,32 +42,84 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
               color: headerColor,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Select dates",
+                const Text(
+                  "How many seats do you want to book?",
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
-                    color: onHeaderColor.withOpacity(0.8),
+                    color: onHeaderColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Seat Counter Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _seats == 1 ? "1 Passenger" : "$_seats Passengers",
+                      style: const TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 32,
+                        color: onHeaderColor,
+                        fontWeight: FontWeight.bold,
+                        height: 1.1,
+                      ),
+                    ),
+                    Card(
+                      elevation: 0,
+                      color: Colors.white.withValues(alpha: 0.5),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon:
+                                const Icon(Icons.remove, color: onHeaderColor),
+                            onPressed: _seats > 1
+                                ? () => setState(() => _seats--)
+                                : null,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add, color: onHeaderColor),
+                            onPressed: () => setState(() => _seats++),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+                const Divider(color: Colors.white54),
+                const SizedBox(height: 8),
+                const Text(
+                  "Select specific travel dates:",
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    color: onHeaderColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   _getHeaderText(),
                   style: TextStyle(
-                    fontFamily: 'Outfit', // Or appropriate serif if intended
-                    fontSize: 32, // Large text like screenshot
-                    color: onHeaderColor,
-                    height: 1.1,
+                    fontFamily: 'Outfit',
+                    fontSize: 18,
+                    color: onHeaderColor.withOpacity(0.9),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -78,13 +130,12 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: SizedBox(
-              width: 328, // Standard M3 dialog width
-              height: 300,
+              width: 328,
+              height: 280,
               child: CalendarDatePicker2(
                 config: CalendarDatePicker2Config(
                   calendarType: CalendarDatePicker2Type.multi,
-                  selectedDayHighlightColor:
-                      const Color(0xFFFF8A65), // Stronger Peach for selection
+                  selectedDayHighlightColor: const Color(0xFFFF8A65),
                   selectedDayTextStyle: const TextStyle(
                       color: Colors.white, fontWeight: FontWeight.bold),
                   todayTextStyle: const TextStyle(
@@ -94,15 +145,6 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
                   controlsTextStyle: const TextStyle(
                     color: Colors.black87,
                     fontWeight: FontWeight.bold,
-                  ),
-                  weekdayLabelTextStyle: const TextStyle(
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                  dayTextStyle: const TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 value: _selectedDates,
@@ -118,13 +160,13 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
 
           // Actions
           Padding(
-            padding: const EdgeInsets.all(16), // M3 padding
+            padding: const EdgeInsets.all(16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, null),
-                  child: Text(
+                  child: const Text(
                     "Cancel",
                     style: TextStyle(
                       color: AppTheme.primaryColor,
@@ -134,8 +176,9 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
                 ),
                 const SizedBox(width: 8),
                 TextButton(
-                  onPressed: () => Navigator.pop(context, _selectedDates),
-                  child: Text(
+                  onPressed: () => Navigator.pop(
+                      context, {'dates': _selectedDates, 'seats': _seats}),
+                  child: const Text(
                     "OK",
                     style: TextStyle(
                       color: AppTheme.primaryColor,

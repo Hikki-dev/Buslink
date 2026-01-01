@@ -12,6 +12,8 @@ import '../../utils/app_theme.dart';
 import '../admin/admin_dashboard.dart';
 import 'conductor_trip_management_screen.dart';
 import '../layout/custom_app_bar.dart';
+import 'package:intl/intl.dart';
+import '../../views/auth/login_screen.dart';
 
 class ConductorDashboard extends StatefulWidget {
   final bool isAdminView;
@@ -88,6 +90,35 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                         child: _buildBusSearchSection(isDark),
                       ),
                     ),
+
+                    const SizedBox(height: 48),
+
+                    // 3. LOGOUT BUTTON
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        await Provider.of<AuthService>(context, listen: false)
+                            .signOut();
+                        if (context.mounted) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (_) => const LoginScreen()),
+                              (route) => false);
+                        }
+                      },
+                      icon: const Icon(Icons.logout, color: Colors.red),
+                      label: const Text("Logout",
+                          style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red)),
+                      style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 16),
+                          side: const BorderSide(color: Colors.red, width: 2),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50))),
+                    ),
+                    const SizedBox(height: 48),
                   ],
                 ),
               ),
@@ -122,8 +153,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               color: Colors.blue.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child:
-                const Icon(Icons.directions_bus, size: 64, color: Colors.blue),
+            child: const Icon(Icons.search, size: 64, color: Colors.blue),
           ),
           const SizedBox(height: 24),
           Text("Manage Trip",
@@ -133,13 +163,31 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
-          Text("Use the scanner to manage trips.",
+          Text("Find your trip to sell tickets or update status.",
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontFamily: 'Inter',
                   color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 32),
-          // Bus Number Search Removed
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                showDialog(
+                    context: context, builder: (_) => const FindTripDialog());
+              },
+              icon: const Icon(Icons.search),
+              label: const Text("Find & Manage Trip",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          )
         ],
       ),
     );
@@ -377,5 +425,198 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
         ],
       ),
     );
+  }
+}
+
+class FindTripDialog extends StatefulWidget {
+  const FindTripDialog({super.key});
+
+  @override
+  State<FindTripDialog> createState() => _FindTripDialogState();
+}
+
+class _FindTripDialogState extends State<FindTripDialog> {
+  final _fromController = TextEditingController();
+  final _toController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
+  bool _isLoading = false;
+  List<Trip> _results = [];
+  bool _hasSearched = false;
+
+  @override
+  void dispose() {
+    _fromController.dispose();
+    _toController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _search() async {
+    if (_fromController.text.isEmpty || _toController.text.isEmpty) return;
+    setState(() {
+      _isLoading = true;
+      _hasSearched = true;
+      _results = [];
+    });
+
+    try {
+      final controller = Provider.of<TripController>(context, listen: false);
+      // We use the same search logic as Home
+      final trips = await controller.service
+          .searchTrips(_fromController.text, _toController.text, _selectedDate);
+
+      setState(() {
+        _results = trips;
+      });
+    } catch (e) {
+      debugPrint("Error searching trips: $e");
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+            padding: const EdgeInsets.all(24),
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("Find Trip",
+                        style: TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    )
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (!_hasSearched ||
+                    (_hasSearched && _results.isEmpty && _isLoading)) ...[
+                  // --- INPUT FORM ---
+                  TextField(
+                    controller: _fromController,
+                    decoration: const InputDecoration(
+                        labelText: "From City",
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.location_on_outlined)),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _toController,
+                    decoration: const InputDecoration(
+                        labelText: "To City",
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.flag_outlined)),
+                  ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () async {
+                      final d = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedDate,
+                          firstDate:
+                              DateTime.now().subtract(const Duration(days: 1)),
+                          lastDate:
+                              DateTime.now().add(const Duration(days: 60)));
+                      if (d != null) setState(() => _selectedDate = d);
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                          labelText: "Date",
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.calendar_today)),
+                      child:
+                          Text(DateFormat('yyyy-MM-dd').format(_selectedDate)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _search,
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text("Search Trips",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  )
+                ] else ...[
+                  // --- RESULTS LIST ---
+                  Text(
+                      "Results for ${DateFormat('MMM d').format(_selectedDate)}",
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const SizedBox(height: 12),
+                  if (_isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_results.isEmpty)
+                    const Center(
+                        child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Text("No trips found."),
+                    ))
+                  else
+                    SizedBox(
+                      height: 300,
+                      child: ListView.separated(
+                        itemCount: _results.length,
+                        separatorBuilder: (_, __) => const Divider(),
+                        itemBuilder: (context, index) {
+                          final trip = _results[index];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                    color: Colors.blue.withOpacity(0.1),
+                                    shape: BoxShape.circle),
+                                child: const Icon(Icons.directions_bus,
+                                    color: Colors.blue)),
+                            title: Text("${trip.fromCity} - ${trip.toCity}",
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            subtitle: Text(
+                                "${DateFormat('hh:mm a').format(trip.departureTime)} • Bus ${trip.busNumber}"),
+                            trailing:
+                                const Icon(Icons.arrow_forward_ios, size: 16),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Provider.of<TripController>(context,
+                                      listen: false)
+                                  .setConductorTrip(trip);
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          ConductorTripManagementScreen(
+                                              trip: trip)));
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                      onPressed: () => setState(() {
+                            _hasSearched = false;
+                            _results = [];
+                          }),
+                      child: const Text("Search Again"))
+                ]
+              ],
+            )));
   }
 }

@@ -606,7 +606,7 @@ class FirestoreService {
         'userEmail': 'offline@buslink.com',
         'seatNumbers': seats,
         'totalAmount': trip.price * seats.length,
-        'bookingTime': FieldValue.serverTimestamp(),
+        'bookingTime': Timestamp.fromDate(DateTime.now()),
         'status': 'confirmed',
         'paymentMethod': 'cash',
         'issuedBy': conductor?.email ?? 'System',

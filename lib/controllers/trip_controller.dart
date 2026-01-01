@@ -11,6 +11,13 @@ class TripController extends ChangeNotifier {
   final FirestoreService _service = FirestoreService();
   final AuthService _authService = AuthService();
 
+  FirestoreService get service => _service;
+
+  void setConductorTrip(Trip trip) {
+    conductorSelectedTrip = trip;
+    notifyListeners();
+  }
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 

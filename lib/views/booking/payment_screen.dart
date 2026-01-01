@@ -130,6 +130,33 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
+
+    // GUARD: Handle Web Refresh / State Loss
+    if (controller.selectedTrip == null || controller.selectedSeats.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Session Expired")),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.orange),
+              const SizedBox(height: 16),
+              const Text("Your session has expired or no seats selected.",
+                  style: TextStyle(fontSize: 16)),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/', (r) => false);
+                },
+                child: const Text("Return to Home"),
+              )
+            ],
+          ),
+        ),
+      );
+    }
+
     final trip = controller.selectedTrip!;
     final seats = controller.selectedSeats;
     final isDark = Theme.of(context).brightness == Brightness.dark;

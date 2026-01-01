@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 
-import '../../services/auth_service.dart';
+import '../booking/seat_selection_screen.dart';
 
 class ConductorTripManagementScreen extends StatelessWidget {
   final Trip trip;
@@ -275,92 +275,19 @@ class ConductorTripManagementScreen extends StatelessWidget {
 
   void _showCashBookingDialog(
       BuildContext context, TripController controller, Trip trip) {
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController seatsController = TextEditingController();
-    final user = Provider.of<AuthService>(context, listen: false).currentUser;
+    // Initialize Controller State
+    controller.selectedTrip = trip;
+    controller.selectedSeats = [];
 
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Error: No conductor logged in.")));
-      return;
-    }
-
-    showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-              title: const Text("Issue Cash Ticket"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                        labelText: "Passenger Name",
-                        hintText: "John Doe",
-                        border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: seatsController,
-                    decoration: const InputDecoration(
-                        labelText: "Seat Numbers",
-                        hintText: "e.g. 1, 2, 5",
-                        border: OutlineInputBorder()),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Note: Ensure these seats are physically available before issuing.",
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text("Cancel")),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.isEmpty ||
-                        seatsController.text.isEmpty) {
-                      return; // Add validation feedback if needed
-                    }
-
-                    // Parse seats
-                    List<int> seats = [];
-                    try {
-                      seats = seatsController.text
-                          .split(',')
-                          .map((e) => int.parse(e.trim()))
-                          .toList();
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text("Invalid seat numbers format")));
-                      return;
-                    }
-
-                    if (seats.isEmpty) return;
-
-                    Navigator.pop(ctx); // Close dialog
-
-                    // Setup controller state
-                    controller.selectTrip(trip);
-                    controller.selectedSeats = seats;
-
-                    final success = await controller.createOfflineBooking(
-                        context, nameController.text.trim(), user);
-
-                    if (success) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text("Ticket Issued Successfully!")));
-                      }
-                    }
-                  },
-                  child: const Text("Issue Ticket"),
-                )
-              ],
-            ));
+    // Navigate to Visual Seat Selection in Conductor Mode
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SeatSelectionScreen(
+          trip: trip,
+          isConductorMode: true,
+        ),
+      ),
+    );
   }
 }
