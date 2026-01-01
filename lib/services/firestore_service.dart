@@ -30,10 +30,19 @@ class FirestoreService {
       59,
     );
 
+    // Normalize inputs (Title Case)
+    // Assumes DB stores "Colombo", "Kandy" etc.
+    final String safeFrom = fromCity.isEmpty
+        ? ""
+        : fromCity[0].toUpperCase() + fromCity.substring(1).toLowerCase();
+    final String safeTo = toCity.isEmpty
+        ? ""
+        : toCity[0].toUpperCase() + toCity.substring(1).toLowerCase();
+
     final snapshot = await _db
         .collection(tripCollection)
-        .where('fromCity', isEqualTo: fromCity)
-        .where('toCity', isEqualTo: toCity)
+        .where('fromCity', isEqualTo: safeFrom)
+        .where('toCity', isEqualTo: safeTo)
         .where('departureTime', isGreaterThanOrEqualTo: dayStart)
         .where('departureTime', isLessThanOrEqualTo: dayEnd)
         .get();
@@ -185,6 +194,50 @@ class FirestoreService {
 
   Future<DocumentReference> addRoute(Map<String, dynamic> data) {
     return _db.collection(routeCollection).add(data);
+  }
+
+  // --- ADDED: Dynamic City List ---
+  Future<List<String>> getAvailableCities() async {
+    // 1. Try fetching from 'routes' collection first (cleaner source)
+    final routeSnap = await _db.collection(routeCollection).get();
+    final Set<String> cities = {};
+
+    if (routeSnap.docs.isNotEmpty) {
+      for (var doc in routeSnap.docs) {
+        final data = doc.data();
+        if (data['fromCity'] != null) cities.add(data['fromCity'].toString());
+        if (data['toCity'] != null) cities.add(data['toCity'].toString());
+      }
+    } else {
+      // 2. Fallback to 'trips' if no routes defined
+      final tripSnap = await _db.collection(tripCollection).limit(50).get();
+      for (var doc in tripSnap.docs) {
+        final data = doc.data();
+        if (data['fromCity'] != null) cities.add(data['fromCity'].toString());
+        if (data['toCity'] != null) cities.add(data['toCity'].toString());
+      }
+    }
+
+    // If absolutely nothing, return defaults
+    if (cities.isEmpty) {
+      return [
+        "Colombo",
+        "Kandy",
+        "Galle",
+        "Matara",
+        "Jaffna",
+        "Negombo",
+        "Anuradhapura",
+        "Trincomalee",
+        "Batticaloa",
+        "Ella",
+        "Nuwara Eliya",
+        "Dambulla",
+        "Sigiriya"
+      ];
+    }
+
+    return cities.toList()..sort();
   }
 
   Future<List<Trip>> getAllTrips() async {

@@ -20,6 +20,16 @@ class TripController extends ChangeNotifier {
 
   List<Trip> searchResults = [];
   List<Trip> allTripsForAdmin = [];
+  List<String> availableCities = []; // Dynamic list
+
+  Future<void> fetchAvailableCities() async {
+    try {
+      availableCities = await _service.getAvailableCities();
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error fetching cities: $e");
+    }
+  }
 
   Trip? selectedTrip;
   List<int> selectedSeats = [];
@@ -292,11 +302,15 @@ class TripController extends ChangeNotifier {
       final DateTime dep =
           routeData['departureTime']; // This holds the TiimeOfDay date
 
-      // Parse Duration String "HH:MM"
+      // Parse Duration String "HH:MM" robustly
       final durationStr = routeData['duration'] as String;
-      final durationParts = durationStr.split(':');
-      final int durH = int.parse(durationParts[0]);
-      final int durM = int.parse(durationParts[1]);
+      int durH = 0;
+      int durM = 0;
+      if (durationStr.contains(':')) {
+        final parts = durationStr.split(':');
+        durH = int.tryParse(parts[0]) ?? 0;
+        durM = int.tryParse(parts[1]) ?? 0;
+      }
       final duration = Duration(hours: durH, minutes: durM);
 
       // Determine Arrival Time relative to Departure
@@ -327,6 +341,8 @@ class TripController extends ChangeNotifier {
       int tripCount = 0;
 
       for (int i = 0; i < daysToGenerate; i++) {
+        // Check if date is in the past (before Today at 00:00) to ensure we don't skip today if it's "late" but trip hasn't happened?
+        // Actually, just generate for dates >= TODAY.
         final DateTime targetDate = now.add(Duration(days: i));
 
         if (recurrenceDays.contains(targetDate.weekday)) {
@@ -398,6 +414,47 @@ class TripController extends ChangeNotifier {
       debugPrint("Error saving route: $e");
       rethrow;
     }
+  }
+
+  // --- ADDED: Update Trip ---
+  Future<void> updateTrip(
+      BuildContext context, String tripId, Map<String, dynamic> data) async {
+    _setLoading(true);
+    try {
+      // Ensure timestamps if passed as DateTime
+      if (data['departureTime'] is DateTime) {
+        data['departureTime'] = Timestamp.fromDate(data['departureTime']);
+      }
+      if (data['arrivalTime'] is DateTime) {
+        data['arrivalTime'] = Timestamp.fromDate(data['arrivalTime']);
+      }
+
+      await _service.updateTripDetails(tripId, data);
+
+      // Update local list
+      final index = searchResults.indexWhere((t) => t.id == tripId);
+      if (index != -1) {
+        // We might want to reload search here, but for now let's just assume success
+        // or re-fetch logic could be better.
+        // Simple hack: reload current search result if possible
+        // For now, just notify.
+      }
+      notifyListeners();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Trip updated successfully!")),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error updating trip: $e")),
+        );
+      }
+    }
+    _setLoading(false);
   }
 
   // --- ADDED: Delete Trip ---

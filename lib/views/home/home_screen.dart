@@ -25,49 +25,57 @@ import '../layout/app_footer.dart';
 final List<Map<String, dynamic>> _allDestinations = [
   {
     'city': 'Colombo',
-    'image': 'https://loremflickr.com/800/600/colombo,srilanka',
+    'image':
+        'https://images.unsplash.com/photo-1578124223229-87c24727187a?auto=format&fit=crop&q=80&w=800',
     'buses': 45,
-    'desc': 'Discover the vibrant Tamil culture and northern cuisine.'
+    'desc': 'Discover the vibrant capital and commercial hub.'
   },
   {
     'city': 'Kandy',
-    'image': 'https://loremflickr.com/800/600/kandy,temple',
+    'image':
+        'https://images.unsplash.com/photo-1588258524675-c63d59663b6d?auto=format&fit=crop&q=80&w=800',
     'buses': 32,
     'desc': 'Visit the Temple of the Tooth and scenic lake.'
   },
   {
     'city': 'Galle',
-    'image': 'https://loremflickr.com/800/600/galle,fort',
+    'image':
+        'https://images.unsplash.com/photo-1548058742-16b718919f8e?auto=format&fit=crop&q=80&w=800',
     'buses': 64,
     'desc': 'Explore the historic Dutch Fort and beaches.'
   },
   {
     'city': 'Ella',
-    'image': 'https://loremflickr.com/800/600/ella,srilanka',
+    'image':
+        'https://images.unsplash.com/photo-1596557675764-77e48383827d?auto=format&fit=crop&q=80&w=800',
     'buses': 18,
     'desc': 'Hiking trails, waterfalls and the Nine Arch Bridge.'
   },
   {
     'city': 'Nuwara Eliya',
-    'image': 'https://loremflickr.com/800/600/nuwaraeliya,tea',
+    'image':
+        'https://images.unsplash.com/photo-1625756683833-281b3749774d?auto=format&fit=crop&q=80&w=800',
     'buses': 24,
     'desc': 'Little England of Sri Lanka with cool climate.'
   },
   {
     'city': 'Sigiriya',
-    'image': 'https://loremflickr.com/800/600/sigiriya,rock',
+    'image':
+        'https://images.unsplash.com/photo-1620619767323-b95185694386?auto=format&fit=crop&q=80&w=800',
     'buses': 25,
     'desc': 'The ancient rock fortress and palace ruins.'
   },
   {
     'city': 'Jaffna',
-    'image': 'https://loremflickr.com/800/600/jaffna,temple',
+    'image':
+        'https://images.unsplash.com/photo-1633596683562-4a0374a58c73?auto=format&fit=crop&q=80&w=800',
     'buses': 20,
     'desc': 'Rich history and unique northern culture.'
   },
   {
     'city': 'Trincomalee',
-    'image': 'https://loremflickr.com/800/600/trincomalee,beach',
+    'image':
+        'https://images.unsplash.com/photo-1589139268789-548c227d88c4?auto=format&fit=crop&q=80&w=800',
     'buses': 35,
     'desc': 'Beautiful beaches and diving spots.'
   }
@@ -122,15 +130,15 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    // NEW: Round Trip Validation
-    if (_isRoundTrip && _selectedReturnDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text(
-                'Please select a Return Date for Round Trip booking.')), // Professional Error
-      );
-      return;
-    }
+    // Round Trip Validation REMOVED as per request to remove feature
+    // if (_isRoundTrip && _selectedReturnDate == null) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(
+    //         content: Text(
+    //             'Please select a Return Date for Round Trip booking.')), // Professional Error
+    //   );
+    //   return;
+    // }
 
     final tripController = Provider.of<TripController>(context, listen: false);
     tripController.setFromCity(_originController.text);
@@ -144,7 +152,8 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       tripController.setBulkDates(_bulkDates);
     }
-    tripController.setRoundTrip(_isRoundTrip);
+    // Round Trip logic disabled
+    tripController.setRoundTrip(false);
     tripController.setBulkMode(_isBulkBooking);
 
     // Trigger the actual Firestore search
@@ -304,72 +313,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       ),
 
-                      // Profile Dropdown
+                      // Profile Dropdown (New Animated One)
                       StreamBuilder<User?>(
                           stream: FirebaseAuth.instance.authStateChanges(),
                           builder: (context, snapshot) {
                             final user = snapshot.data;
-                            return PopupMenuButton<String>(
-                              icon: const Icon(Icons.account_circle_outlined),
-                              onSelected: (value) {
-                                if (value == 'logout') {
-                                  Provider.of<AuthService>(context,
-                                          listen: false)
-                                      .signOut();
-                                } else if (value == 'login') {
-                                  Navigator.pushNamed(context, '/');
-                                } else if (value == 'profile') {
-                                  // Switch to Profile Tab (Index 3)
-                                  // This requires access to CustomerMainScreen's state or a global controller.
-                                  // simpler: Navigate to a dedicated profile page if needed,
-                                  // OR rely on BottomNav.
-                                  // Since we are in HomeScreen which is a child of CustomerMainScreen,
-                                  // we can't easily switch the parent's tab index without a callback or provider.
-                                  // For now, let's just show basic info or do nothing if already on home.
-                                  // Actually, better to just show "Signed in as..." disabled item.
-                                }
-                              },
-                              itemBuilder: (BuildContext context) {
-                                if (user == null) {
-                                  return [
-                                    const PopupMenuItem(
-                                      value: 'login',
-                                      child: Row(
-                                        children: [
-                                          Icon(Icons.login,
-                                              color: Colors.black),
-                                          SizedBox(width: 8),
-                                          Text("Log In"),
-                                        ],
-                                      ),
-                                    ),
-                                  ];
-                                }
-                                return [
-                                  PopupMenuItem(
-                                    enabled: false,
-                                    child: Text(
-                                        "Hi, ${user.displayName ?? 'User'}",
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.grey)),
-                                  ),
-                                  const PopupMenuDivider(),
-                                  const PopupMenuItem(
-                                    value: 'logout',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.logout, color: Colors.red),
-                                        SizedBox(width: 8),
-                                        Text("Log Out",
-                                            style:
-                                                TextStyle(color: Colors.red)),
-                                      ],
-                                    ),
-                                  ),
-                                ];
-                              },
-                            );
+                            if (user == null) {
+                              return IconButton(
+                                icon: const Icon(Icons.login),
+                                onPressed: () =>
+                                    Navigator.pushNamed(context, '/'),
+                              );
+                            }
+                            return FloatingProfileMenu(user: user);
                           }),
                       const SizedBox(width: 8),
                     ],
@@ -440,21 +396,37 @@ class _HomeScreenState extends State<HomeScreen> {
           stream: Provider.of<FirestoreService>(context, listen: false)
               .getUserTickets(user.uid),
           builder: (context, ticketSnap) {
-            List<Ticket> upcomingTickets = [];
-            if (ticketSnap.hasData && ticketSnap.data!.isNotEmpty) {
-              upcomingTickets = ticketSnap.data!
-                  .where((t) => t.status != 'cancelled')
-                  .toList();
+            // Logic to filter tickets will be inside the inner StreamBuilder
+            // because we need the Trip object to know arrival time/status
+
+            if (!ticketSnap.hasData || ticketSnap.data!.isEmpty) {
+              return _buildFavoritesOnly(context, user.uid);
             }
+
+            final tickets = ticketSnap.data!;
+
+            // We need to fetch Trip details for EACH ticket to filter them.
+            // This is a bit complex with Streams.
+            // For simplicity/performance, let's just show the loading state or
+            // proceed to the carousel which will handle filtering internally?
+            // BETTER APPROACH: The Carousel should filter.
+            // But if we pass all tickets, the carousel count might be wrong.
+            // Let's do a solution where we check the trip status inside the carousel item builder,
+            // OR ideally we should query differently.
+            // Given the current structure, let's filter in the Carousel widget by
+            // wrapping the list in a widget that fetches/filters or just checks logic.
+
+            // However, to decide whether to show "No Trips" state, we need to know.
+            // Let's pass ALL candidates to the carousel, and let the carousel
+            // hide the ones that are completed.
 
             return StreamBuilder<List<Map<String, dynamic>>>(
               stream: Provider.of<FirestoreService>(context, listen: false)
                   .getUserFavoriteRoutes(user.uid),
               builder: (context, favSnap) {
                 final favorites = favSnap.data ?? [];
-
                 final favoritesWidget = FavoritesSection(
-                  favorites: favorites, // Pass list (empty or not)
+                  favorites: favorites,
                   onTap: (fav) {
                     setState(() {
                       _originController.text = fav['fromCity'];
@@ -464,13 +436,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 );
 
-                if (upcomingTickets.isEmpty) {
-                  return favoritesWidget;
-                }
-
-                // Pass to Carousel
-                return _buildTripsCarousel(
-                    context, upcomingTickets, favoritesWidget, isDesktop);
+                return _TripsCarouselWidget(
+                    tickets: tickets,
+                    favoritesWidget: favoritesWidget,
+                    isDesktop: isDesktop);
               },
             );
           },
@@ -479,21 +448,197 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTripsCarousel(BuildContext context, List<Ticket> tickets,
-      Widget favoritesWidget, bool isDesktop) {
-    if (tickets.isEmpty) return favoritesWidget;
+  Widget _buildFavoritesOnly(BuildContext context, String uid) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+        stream: Provider.of<FirestoreService>(context, listen: false)
+            .getUserFavoriteRoutes(uid),
+        builder: (context, favSnap) {
+          final favorites = favSnap.data ?? [];
+          return FavoritesSection(
+            favorites: favorites,
+            onTap: (fav) {
+              setState(() {
+                _originController.text = fav['fromCity'];
+                _destinationController.text = fav['toCity'];
+                _searchBuses();
+              });
+            },
+          );
+        });
+  }
+}
 
-    // Ensure we sort tickets by date?
-    // Firestore query might not be sorted.
-    // Let's assume passed list order is acceptable or sort locally.
-    tickets.sort(
-        (a, b) => a.bookingTime.compareTo(b.bookingTime)); // Soonest first?
-    // Actually usually 'Upcoming' means future.
+class FloatingProfileMenu extends StatefulWidget {
+  final User user;
+  const FloatingProfileMenu({super.key, required this.user});
 
-    return _TripsCarouselWidget(
-        tickets: tickets,
-        favoritesWidget: favoritesWidget,
-        isDesktop: isDesktop);
+  @override
+  State<FloatingProfileMenu> createState() => _FloatingProfileMenuState();
+}
+
+class _FloatingProfileMenuState extends State<FloatingProfileMenu>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _expandAnimation;
+  bool _isOpen = false;
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 200));
+    _expandAnimation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _overlayEntry?.remove();
+    super.dispose();
+  }
+
+  void _toggleMenu() {
+    if (_isOpen) {
+      _controller.reverse().then((value) {
+        _overlayEntry?.remove();
+        _overlayEntry = null;
+        setState(() => _isOpen = false);
+      });
+    } else {
+      setState(() => _isOpen = true);
+      _overlayEntry = _createOverlayEntry();
+      Overlay.of(context).insert(_overlayEntry!);
+      _controller.forward();
+    }
+  }
+
+  OverlayEntry _createOverlayEntry() {
+    return OverlayEntry(
+      builder: (context) => Positioned(
+        width: 200,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(-150, 50), // Position below and left-aligned
+          child: Material(
+            color: Colors.transparent,
+            child: ScaleTransition(
+              scale: _expandAnimation,
+              alignment: Alignment.topRight,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    )
+                  ],
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: AppTheme.primaryColor,
+                            child: Text(
+                                widget.user.displayName?[0].toUpperCase() ??
+                                    "U",
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 14)),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(widget.user.displayName ?? "User",
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 13),
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(),
+                    ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.person_outline, size: 20),
+                      title: const Text("Profile"),
+                      onTap: () {
+                        // Close menu
+                        _toggleMenu();
+                        // In a real app we would navigate
+                      },
+                    ),
+                    ListTile(
+                      dense: true,
+                      leading:
+                          const Icon(Icons.logout, size: 20, color: Colors.red),
+                      title: const Text("Logout",
+                          style: TextStyle(color: Colors.red)),
+                      onTap: () {
+                        _toggleMenu();
+                        Provider.of<AuthService>(context, listen: false)
+                            .signOut();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: GestureDetector(
+        onTap: _toggleMenu,
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: _isOpen
+                ? AppTheme.primaryColor.withValues(alpha: 0.1)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: Colors.grey.shade200,
+                backgroundImage: widget.user.photoURL != null
+                    ? NetworkImage(widget.user.photoURL!)
+                    : null,
+                child: widget.user.photoURL == null
+                    ? const Icon(Icons.person, size: 16, color: Colors.grey)
+                    : null,
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.keyboard_arrow_down,
+                  size: 16, color: Colors.grey),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -512,17 +657,30 @@ class _TripsCarouselWidget extends StatefulWidget {
 }
 
 class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
-  final PageController _pageController = PageController(viewportFraction: 0.85);
+  final PageController _pageController = PageController(viewportFraction: 0.90);
   int _currentPage = 0;
+  late Stream<List<Trip>> _tripsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _tripsStream = _getTripsForTickets(widget.tickets);
+  }
+
+  @override
+  void didUpdateWidget(_TripsCarouselWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.tickets.length != oldWidget.tickets.length ||
+        (widget.tickets.isNotEmpty &&
+            oldWidget.tickets.isNotEmpty &&
+            widget.tickets.first.ticketId !=
+                oldWidget.tickets.first.ticketId)) {
+      _tripsStream = _getTripsForTickets(widget.tickets);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // If only 1 ticket, show standard layout
-    if (widget.tickets.length == 1) {
-      return _buildSingleTicketLayout(widget.tickets.first);
-    }
-
-    // Carousel Layout
     return Column(
       children: [
         if (widget.isDesktop)
@@ -535,136 +693,121 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: widget.favoritesWidget),
         const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (widget.isDesktop && widget.tickets.length > 1)
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios, size: 16),
-                onPressed: _currentPage > 0
-                    ? () {
-                        _pageController.previousPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut);
-                      }
-                    : null,
-              ),
 
-            // The Carousel
-            Expanded(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                    maxWidth: widget.isDesktop ? 600 : 800, maxHeight: 420),
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: widget.tickets.length,
-                  onPageChanged: (idx) => setState(() => _currentPage = idx),
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: StreamBuilder<Trip>(
-                          stream: Provider.of<FirestoreService>(context,
-                                  listen: false)
-                              .getTripStream(widget.tickets[index].tripId),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData)
-                              return const Center(
-                                  child: CircularProgressIndicator());
-                            return OngoingTripCard(
-                              trip: snapshot.data!,
-                              seatCount:
-                                  widget.tickets[index].seatNumbers.length,
-                              paidAmount: widget.tickets[index].totalAmount,
-                              margin: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 12),
-                            );
-                          }),
-                    );
-                  },
-                ),
-              ),
-            ),
+        // StreamBuilder uses the persistent stream now
+        StreamBuilder<List<Trip>>(
+          stream: _tripsStream,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const SizedBox.shrink();
 
-            if (widget.isDesktop && widget.tickets.length > 1)
-              IconButton(
-                icon: const Icon(Icons.arrow_forward_ios, size: 16),
-                onPressed: _currentPage < widget.tickets.length - 1
-                    ? () {
-                        _pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut);
-                      }
-                    : null,
-              ),
-          ],
-        ),
-        // Swipe Hint (Mobile Only)
-        if (!widget.isDesktop && widget.tickets.length > 1)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            var ongoingTrips = snapshot.data!.where((t) {
+              // FILTER LOGIC
+              if (t.status == TripStatus.completed) return false;
+              if (DateTime.now().isAfter(t.arrivalTime)) return false;
+              return true;
+            }).toList();
+
+            if (ongoingTrips.isEmpty) return const SizedBox.shrink();
+
+            ongoingTrips
+                .sort((a, b) => a.departureTime.compareTo(b.departureTime));
+
+            if (ongoingTrips.length == 1) {
+              return _buildSingleTrip(ongoingTrips.first);
+            }
+
+            return Stack(
+              alignment: Alignment.center,
               children: [
-                Icon(Icons.swipe, size: 16, color: Colors.grey.shade500),
-                const SizedBox(width: 6),
-                Text(
-                  "Swipe to view more trips",
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    color: Colors.grey.shade500,
+                SizedBox(
+                  height: 420,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: ongoingTrips.length,
+                    onPageChanged: (i) => setState(() => _currentPage = i),
+                    itemBuilder: (context, index) {
+                      final ticket = widget.tickets.firstWhere(
+                          (tk) => tk.tripId == ongoingTrips[index].id,
+                          orElse: () => widget.tickets[0]);
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: OngoingTripCard(
+                          trip: ongoingTrips[index],
+                          seatCount: ticket.seatNumbers.length,
+                          paidAmount: ticket.totalAmount,
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 12),
+                        ),
+                      );
+                    },
                   ),
                 ),
+                if (_currentPage > 0)
+                  Positioned(
+                    left: 10,
+                    child: _buildArrowButton(Icons.arrow_back_ios_new, () {
+                      _pageController.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut);
+                    }),
+                  ),
+                if (_currentPage < ongoingTrips.length - 1)
+                  Positioned(
+                    right: 10,
+                    child: _buildArrowButton(Icons.arrow_forward_ios, () {
+                      _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut);
+                    }),
+                  ),
               ],
-            ),
-          ),
+            );
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildSingleTicketLayout(Ticket ticket) {
-    return StreamBuilder<Trip>(
-      stream: Provider.of<FirestoreService>(context, listen: false)
-          .getTripStream(ticket.tripId),
-      builder: (context, tripSnap) {
-        if (!tripSnap.hasData) return widget.favoritesWidget;
-
-        final tripWidget = OngoingTripCard(
-          trip: tripSnap.data!,
-          seatCount: ticket.seatNumbers.length,
-          paidAmount: ticket.totalAmount,
-        );
-
-        if (widget.isDesktop) {
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Column(
-                  children: [
-                    widget.favoritesWidget,
-                    const SizedBox(height: 24),
-                    tripWidget,
-                  ],
-                ),
-              ),
-            ),
-          );
-        } else {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                widget.favoritesWidget,
-                const SizedBox(height: 16),
-                tripWidget,
-              ],
-            ),
-          );
-        }
-      },
+  Widget _buildArrowButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+            color: Theme.of(context).cardColor.withOpacity(0.9),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4))
+            ]),
+        child: Icon(icon, size: 16, color: AppTheme.primaryColor),
+      ),
     );
+  }
+
+  Widget _buildSingleTrip(Trip trip) {
+    final ticket = widget.tickets.firstWhere((tk) => tk.tripId == trip.id,
+        orElse: () => widget.tickets[0]);
+    return OngoingTripCard(
+      trip: trip,
+      seatCount: ticket.seatNumbers.length,
+      paidAmount: ticket.totalAmount,
+    );
+  }
+
+  Stream<List<Trip>> _getTripsForTickets(List<Ticket> tickets) {
+    final tripIds = tickets.map((t) => t.tripId).toSet().toList();
+    if (tripIds.isEmpty) return Stream.value([]);
+
+    return FirebaseFirestore.instance
+        .collection('trips')
+        .where(FieldPath.documentId, whereIn: tripIds.take(10).toList())
+        .snapshots()
+        .map(
+            (snap) => snap.docs.map((doc) => Trip.fromFirestore(doc)).toList());
   }
 }
 
@@ -717,25 +860,30 @@ class _HeroSectionState extends State<_HeroSection> {
   final List<Map<String, String>> _heroData = [
     {
       "image":
-          "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1280",
+          "https://upload.wikimedia.org/wikipedia/commons/c/c8/Sri_Lanka_Bus.jpg",
       "subtitle":
           "Book your bus tickets instantly with BusLink. Reliable, fast, and secure."
     },
     {
       "image":
-          "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&q=80&w=1280",
+          "https://upload.wikimedia.org/wikipedia/commons/2/2e/Lanka_Ashok_Leyland_bus_on_Colombo_road.jpg",
       "subtitle":
           "Discover the most beautiful routes across the island in comfort."
     },
     {
       "image":
-          "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&q=80&w=1280",
+          "https://upload.wikimedia.org/wikipedia/commons/4/46/SLTB_inter-city_bus_%287568869668%29.jpg",
       "subtitle": "Seamless payments and real-time tracking for your journey."
     },
     {
       "image":
-          "https://images.unsplash.com/photo-1557223562-6c77ef16210f?auto=format&fit=crop&q=80&w=1280",
+          "https://upload.wikimedia.org/wikipedia/commons/e/e6/SLTB_Kandy_South_Depot_Mercedes-Benz_OP312_Bus_-_II.jpg",
       "subtitle": "Experience premium travel with our top-rated bus operators."
+    },
+    {
+      "image":
+          "https://upload.wikimedia.org/wikipedia/commons/8/87/CTB_bus_no._290.JPG",
+      "subtitle": "Smart Transit for a Smarter Sri Lanka."
     },
   ];
 
@@ -744,6 +892,12 @@ class _HeroSectionState extends State<_HeroSection> {
     super.initState();
     _currentImageIndex = Random().nextInt(_heroData.length);
     _startTimer();
+
+    // Fetch dynamic cities
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<TripController>(context, listen: false)
+          .fetchAvailableCities();
+    });
   }
 
   @override
@@ -774,6 +928,7 @@ class _HeroSectionState extends State<_HeroSection> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = FirebaseAuth.instance.currentUser;
+    // ... rest of build method untouched mostly, just Autocomplete below ...
 
     return SizedBox(
       child: Stack(
@@ -946,21 +1101,10 @@ class _HeroSectionState extends State<_HeroSection> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 1. Tabs View
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start, // Left aligned tabs
-              children: [
-                _buildTabItem("One Way", !widget.isRoundTrip,
-                    () => widget.onRoundTripChanged(false)),
-                const SizedBox(width: 32),
-                _buildTabItem("Round Trip", widget.isRoundTrip,
-                    () => widget.onRoundTripChanged(true)),
-              ],
-            ),
-          ),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
+          // Tabs Removed (Round Trip Disabled)
+          // Just a spacer or Title if needed?
+          const SizedBox(height: 20),
+          // const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)), // Divider removed too
 
           // 2. Bulk Booking Strip
           Container(
@@ -1162,30 +1306,7 @@ class _HeroSectionState extends State<_HeroSection> {
     );
   }
 
-  Widget _buildTabItem(String label, bool isActive, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isActive ? AppTheme.primaryColor : Colors.transparent,
-              width: 3,
-            ),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isActive ? AppTheme.primaryColor : Colors.grey.shade500,
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
-    );
-  }
+  // _buildTabItem Removed (Unused)
 
   Widget _buildInputNoBorder({
     required TextEditingController controller,
@@ -1204,81 +1325,89 @@ class _HeroSectionState extends State<_HeroSection> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // No label, just hint as placeholder if empty
-              RawAutocomplete<String>(
-                textEditingController: controller,
-                focusNode: focusNode,
-                optionsBuilder: (TextEditingValue textEditingValue) {
-                  if (textEditingValue.text.isEmpty) {
-                    return const Iterable<String>.empty();
-                  }
-                  return kSriLankanCities.where((String option) {
-                    return option
-                        .toLowerCase()
-                        .contains(textEditingValue.text.toLowerCase());
-                  });
-                },
-                optionsViewBuilder: (context, onSelected, options) {
-                  return Align(
-                    alignment: Alignment.topLeft,
-                    child: Material(
-                      elevation: 4.0,
-                      color: isDark ? const Color(0xFF1E2129) : Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        width: 300,
-                        constraints: const BoxConstraints(maxHeight: 200),
-                        child: ListView.builder(
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          itemCount: options.length,
-                          itemBuilder: (context, index) {
-                            final String option = options.elementAt(index);
-                            return ListTile(
-                              title: Text(option,
-                                  style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.black)),
-                              onTap: () => onSelected(option),
-                              hoverColor: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.grey.shade100,
-                            );
-                          },
+              Consumer<TripController>(builder: (context, tripCtrl, child) {
+                return RawAutocomplete<String>(
+                  textEditingController:
+                      controller, // Use the TextController passed to widget
+                  focusNode: focusNode,
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      return const Iterable<String>.empty();
+                    }
+                    // Use dynamic list or fallback
+                    final cities = tripCtrl.availableCities.isNotEmpty
+                        ? tripCtrl.availableCities
+                        : kSriLankanCities;
+
+                    return cities.where((String option) {
+                      return option
+                          .toLowerCase()
+                          .contains(textEditingValue.text.toLowerCase());
+                    });
+                  },
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4.0,
+                        color: isDark ? const Color(0xFF1E2129) : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          width: 300,
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: options.length,
+                            itemBuilder: (context, index) {
+                              final String option = options.elementAt(index);
+                              return ListTile(
+                                title: Text(option,
+                                    style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black)),
+                                onTap: () => onSelected(option),
+                                hoverColor: isDark
+                                    ? Colors.white.withValues(alpha: 0.1)
+                                    : Colors.grey.shade100,
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-                fieldViewBuilder: (context, fieldController, fieldFocusNode,
-                    onFieldSubmitted) {
-                  return TextField(
-                    controller: fieldController,
-                    focusNode: fieldFocusNode,
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : Colors.black87),
-                    decoration: InputDecoration(
-                      hintText: hint,
-                      hintStyle: TextStyle(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.5)
-                              : Colors.grey.shade400,
-                          fontWeight: FontWeight.w600),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none, // Totally clean
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                      filled: false,
-                    ),
-                    onSubmitted: (val) => onFieldSubmitted(),
-                  );
-                },
-              ),
+                    );
+                  },
+                  fieldViewBuilder: (context, fieldController, fieldFocusNode,
+                      onFieldSubmitted) {
+                    return TextField(
+                      controller: fieldController,
+                      focusNode: fieldFocusNode,
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : Colors.black87),
+                      decoration: InputDecoration(
+                        hintText: hint,
+                        hintStyle: TextStyle(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.5)
+                                : Colors.grey.shade400,
+                            fontWeight: FontWeight.w600),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none, // Totally clean
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                        filled: false,
+                      ),
+                      onSubmitted: (val) => onFieldSubmitted(),
+                    );
+                  },
+                );
+              }),
             ],
           ),
         ),
@@ -1302,19 +1431,21 @@ class _HeroSectionState extends State<_HeroSection> {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: buildTabButton("One Way", !widget.isRoundTrip,
-                    () => widget.onRoundTripChanged(false), isDark),
-              ),
-              const SizedBox(width: 12), // Added Spacing
-              Expanded(
-                child: buildTabButton("Round Trip", widget.isRoundTrip,
-                    () => widget.onRoundTripChanged(true), isDark),
-              ),
-            ],
-          ),
+          // Round Trip Toggle Removed
+          // Row(
+          //   children: [
+          //     Expanded(
+          //       child: buildTabButton("One Way", !widget.isRoundTrip,
+          //           () => widget.onRoundTripChanged(false), isDark),
+          //     ),
+          //     const SizedBox(width: 12),
+          //     Expanded(
+          //       child: buildTabButton("Round Trip", widget.isRoundTrip,
+          //           () => widget.onRoundTripChanged(true), isDark),
+          //     ),
+          //   ],
+          // ),
+          const SizedBox(height: 12),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
@@ -1507,31 +1638,7 @@ class _HeroSectionState extends State<_HeroSection> {
     );
   }
 
-  Widget buildTabButton(
-      String text, bool isActive, VoidCallback onTap, bool isDark) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isActive
-              ? AppTheme.primaryColor
-              : (isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          style: TextStyle(
-            color: isActive
-                ? Colors.white
-                : (isDark ? Colors.white38 : Colors.black38),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
+  // buildTabButton Removed (Unused)
 
   Widget _buildSearchInput({
     required TextEditingController controller,

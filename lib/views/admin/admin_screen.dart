@@ -94,6 +94,11 @@ class _AdminScreenState extends State<AdminScreen> {
       _tripDate = t.departureTime;
       _blockedSeats.addAll(t.blockedSeats);
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<TripController>(context, listen: false)
+          .fetchAvailableCities();
+    });
   }
 
   void _calculateArrival() {
@@ -112,17 +117,7 @@ class _AdminScreenState extends State<AdminScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Check operating days if creating a route
-    // For simplicity, we treat this form as creating a Recurring Route if days are selected,
-    // or a single trip if no days selected (default to today/tomorrow logic if we were booking,
-    // but for Admin "Add Route", let's assume recurrence or at least single definition).
-    // The requirement implies Route Creation.
-
-    // If no days selected, maybe default to "Daily" or error?
-    // Let's assume empty days means "One time trip for the selected date" (but we don't have a date picker for single trip here, only time).
-    // The prompt says "Operating Days ... (Mon-Sun)". We'll enforce at least one day or handle as 'Daily' if all unchecked?
-    // Let's just enforce selection or warn.
-    // Validation for new fields
+    // Validation
     if (_isRecurring) {
       if (_operatingDays.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -138,75 +133,109 @@ class _AdminScreenState extends State<AdminScreen> {
       }
     }
 
+    // Verify Duration Format
+    final durationStr = _durationController.text;
+    if (!durationStr.contains(':')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid duration (00:00).")));
+      return;
+    }
+
     final controller = Provider.of<TripController>(context, listen: false);
 
-    // Prepare Base Data (Time component is in _departureTime/_arrivalTime)
+    // Prepare Base Data
     final tripData = {
       'fromCity': _fromCity,
       'toCity': _toCity,
       'via': _viaRoute,
-      'duration': _durationController.text,
+      'duration': durationStr,
       'operatingDays': _isRecurring ? _operatingDays : [],
-      'price': double.parse(_fareController.text),
-      'busNumber': 'Standard Bus', // Default
-      'operatorName': 'BusLink', // Default
-      'totalSeats': int.parse(_seatsController.text),
-      'platformNumber': 'TBD', // Default
+      'price': double.tryParse(_fareController.text) ?? 0.0,
+      'busNumber': _busNumberController.text.isNotEmpty
+          ? _busNumberController.text
+          : 'Standard Bus',
+      'operatorName': _operatorController.text.isNotEmpty
+          ? _operatorController.text
+          : 'BusLink',
+      'totalSeats': int.tryParse(_seatsController.text) ?? 40,
+      'platformNumber': _platformController.text.isNotEmpty
+          ? _platformController.text
+          : 'TBD',
       'blockedSeats': _blockedSeats,
     };
 
-    if (isEditing) {
-      // Editing existing trip -> Just update it. Recurrence doesn't apply here usually.
-      // We assume editing means editing a specific trip instance.
-      // Re-construct full datetime if we allow date editing
-      if (_tripDate != null) {
-        final d = _tripDate!;
-        final newDep = DateTime(
-            d.year, d.month, d.day, _departureTime.hour, _departureTime.minute);
-        // Calculate arrival based on duration or existing diff
-        final durationDiff = _arrivalTime.difference(_departureTime);
-        final newArr = newDep.add(durationDiff);
+    try {
+      if (isEditing) {
+        // UPDATE EXISTING TRIP
+        if (_tripDate != null) {
+          final d = _tripDate!;
+          final newDep = DateTime(d.year, d.month, d.day, _departureTime.hour,
+              _departureTime.minute);
 
-        tripData['departureTime'] = newDep;
-        tripData['arrivalTime'] = newArr;
-      } else {
-        tripData['departureTime'] = _departureTime;
-        tripData['arrivalTime'] = _arrivalTime;
-      }
+          // Re-calculate arrival based on new duration
+          final parts = durationStr.split(':');
+          final durH = int.tryParse(parts[0]) ?? 0;
+          final durM = int.tryParse(parts[1]) ?? 0;
+          final newArr = newDep.add(Duration(hours: durH, minutes: durM));
 
-      await controller.updateTripDetails(context, widget.trip!.id, tripData);
-    } else {
-      // ADDING NEW
-      if (_isRecurring) {
-        // RECURRING ROUTE
-        // We pass the dummy times, addRoute will extract HH:MM and use days to generate
-        tripData['departureTime'] = _departureTime;
-        tripData['arrivalTime'] = _arrivalTime;
-
-        List<int> recurrenceDays =
-            _operatingDays.map((d) => _daysOfWeek.indexOf(d) + 1).toList();
-        await controller.createRecurringRoute(
-            context, tripData, recurrenceDays);
-      } else {
-        // SINGLE TRIP (ONE-TIME)
-        final d = _tripDate!;
-        final newDep = DateTime(
-            d.year, d.month, d.day, _departureTime.hour, _departureTime.minute);
-
-        // Check for overnight arrival logic based on time
-        // If arrival time (HH:MM) is before departure time (HH:MM), it's next day
-        DateTime newArr = DateTime(
-            d.year, d.month, d.day, _arrivalTime.hour, _arrivalTime.minute);
-
-        if (newArr.isBefore(newDep)) {
-          newArr = newArr.add(const Duration(days: 1));
+          tripData['departureTime'] = newDep;
+          tripData['arrivalTime'] = newArr;
+        } else {
+          // If no tripDate (e.g. recurring template fallback or just keeping old dates but changing time)
+          // We generally expect _tripDate to be set for single trips.
+          // For editing a generic recurring route "template" (if that existed), it's different.
+          // But here we are usually editing a specific Trip Instance.
+          tripData['departureTime'] = _departureTime;
+          // Recalc arrival
+          final parts = durationStr.split(':');
+          final durH = int.tryParse(parts[0]) ?? 0;
+          final durM = int.tryParse(parts[1]) ?? 0;
+          final newArr =
+              _departureTime.add(Duration(hours: durH, minutes: durM));
+          tripData['arrivalTime'] = newArr;
         }
 
-        tripData['departureTime'] = newDep;
-        tripData['arrivalTime'] = newArr;
-        tripData['isGenerated'] = false; // Manually added
+        await controller.updateTrip(context, widget.trip!.id, tripData);
+      } else {
+        // ADD NEW
+        if (_isRecurring) {
+          // RECURRING ROUTE GENERATION
+          tripData['departureTime'] = _departureTime;
+          // Arrival calc is done inside createRecurringRoute or here?
+          // createRecurringRoute handles it based on Duration string.
+          // We just pass the base time.
+          tripData['arrivalTime'] = _arrivalTime; // Placeholder
 
-        await controller.addTrip(context, tripData);
+          List<int> recurrenceDays =
+              _operatingDays.map((d) => _daysOfWeek.indexOf(d) + 1).toList();
+          await controller.createRecurringRoute(
+              context, tripData, recurrenceDays);
+        } else {
+          // SINGLE TRIP
+          final d = _tripDate!;
+          final newDep = DateTime(d.year, d.month, d.day, _departureTime.hour,
+              _departureTime.minute);
+
+          final parts = durationStr.split(':');
+          final durH = int.tryParse(parts[0]) ?? 0;
+          final durM = int.tryParse(parts[1]) ?? 0;
+          DateTime newArr = newDep.add(Duration(hours: durH, minutes: durM));
+
+          if (newArr.isBefore(newDep)) {
+            newArr = newArr.add(const Duration(days: 1));
+          }
+
+          tripData['departureTime'] = newDep;
+          tripData['arrivalTime'] = newArr;
+          tripData['isGenerated'] = false;
+
+          await controller.addTrip(context, tripData);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error saving: ${e.toString()}")));
       }
     }
   }
@@ -327,132 +356,15 @@ class _AdminScreenState extends State<AdminScreen> {
                                       const SizedBox(height: 16),
 
                                       // Via / Duration
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                              child: _buildDropdown(
-                                                  "Via / Route Variant",
-                                                  _viaRoute,
-                                                  _viaOptions,
-                                                  (v) => _viaRoute = v)),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Builder(builder: (context) {
-                                              final isDark = Theme.of(context)
-                                                      .brightness ==
-                                                  Brightness.dark;
-                                              final textColor =
-                                                  Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurface;
-                                              final inputFillColor = isDark
-                                                  ? Colors.grey
-                                                      .withValues(alpha: 0.1)
-                                                  : Colors.grey.shade50;
-                                              final borderColor = isDark
-                                                  ? Colors.grey
-                                                      .withValues(alpha: 0.2)
-                                                  : Colors.grey.shade300;
-
-                                              return TextFormField(
-                                                controller: _durationController,
-                                                readOnly: true,
-                                                style:
-                                                    TextStyle(color: textColor),
-                                                onTap: () async {
-                                                  TimeOfDay initial =
-                                                      const TimeOfDay(
-                                                          hour: 3, minute: 30);
-                                                  if (_durationController.text
-                                                      .contains(':')) {
-                                                    final parts =
-                                                        _durationController.text
-                                                            .split(':');
-                                                    if (parts.length == 2) {
-                                                      initial = TimeOfDay(
-                                                          hour: int.tryParse(
-                                                                  parts[0]) ??
-                                                              3,
-                                                          minute: int.tryParse(
-                                                                  parts[1]) ??
-                                                              30);
-                                                    }
-                                                  }
-
-                                                  final TimeOfDay? picked =
-                                                      await showTimePicker(
-                                                    context: context,
-                                                    initialTime: initial,
-                                                    helpText:
-                                                        "SELECT TRAVEL DURATION",
-                                                    initialEntryMode:
-                                                        TimePickerEntryMode
-                                                            .input,
-                                                    builder: (context, child) {
-                                                      return MediaQuery(
-                                                        data: MediaQuery.of(
-                                                                context)
-                                                            .copyWith(
-                                                                alwaysUse24HourFormat:
-                                                                    true),
-                                                        child: child!,
-                                                      );
-                                                    },
-                                                  );
-
-                                                  if (picked != null) {
-                                                    final h = picked.hour
-                                                        .toString()
-                                                        .padLeft(2, '0');
-                                                    final m = picked.minute
-                                                        .toString()
-                                                        .padLeft(2, '0');
-                                                    setState(() {
-                                                      _durationController.text =
-                                                          "$h:$m";
-                                                      _calculateArrival();
-                                                    });
-                                                  }
-                                                },
-                                                decoration: InputDecoration(
-                                                  labelText: "Duration (HH:MM)",
-                                                  labelStyle: TextStyle(
-                                                      color:
-                                                          Colors.grey.shade500),
-                                                  enabledBorder:
-                                                      OutlineInputBorder(
-                                                          borderSide: BorderSide(
-                                                              color:
-                                                                  borderColor)),
-                                                  focusedBorder:
-                                                      const OutlineInputBorder(
-                                                          borderSide: BorderSide(
-                                                              color: AppTheme
-                                                                  .primaryColor,
-                                                              width: 2)),
-                                                  border:
-                                                      const OutlineInputBorder(),
-                                                  hintText: "Tap to select",
-                                                  hintStyle: TextStyle(
-                                                      color:
-                                                          Colors.grey.shade500),
-                                                  suffixIcon: const Icon(
-                                                      Icons.timer_outlined,
-                                                      color: Colors.grey),
-                                                  filled: true,
-                                                  fillColor: inputFillColor,
-                                                ),
-                                                validator: (v) {
-                                                  if (v == null || v.isEmpty) {
-                                                    return "Required";
-                                                  }
-                                                  return null;
-                                                },
-                                              );
-                                            }),
-                                          ),
-                                        ],
-                                      ),
+                                      _buildViaDurationRow(
+                                          isDesktop,
+                                          _viaOptions,
+                                          _viaRoute,
+                                          _durationController, (val) {
+                                        setState(() {
+                                          _viaRoute = val;
+                                        });
+                                      }),
 
                                       const SizedBox(height: 32),
                                       _buildSectionHeader("B) Schedule"),
@@ -749,7 +661,12 @@ class _AdminScreenState extends State<AdminScreen> {
           if (textEditingValue.text == '') {
             return const Iterable<String>.empty();
           }
-          return kSriLankanCities.where((String option) {
+          final controller = Provider.of<TripController>(context);
+          final cities = controller.availableCities.isNotEmpty
+              ? controller.availableCities
+              : kSriLankanCities;
+
+          return cities.where((String option) {
             return option
                 .toLowerCase()
                 .contains(textEditingValue.text.toLowerCase());
@@ -1039,22 +956,30 @@ class _AdminScreenState extends State<AdminScreen> {
                           Border(bottom: BorderSide(color: Colors.black12))),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Icon(Icons.exit_to_app, color: Colors.grey),
+                      // FRONT EXIT
                       Column(
                         children: [
-                          const Icon(Icons.print, size: 20, color: Colors.grey),
-                          const SizedBox(height: 8),
-                          // Simple Steering Wheel Icon replacement
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.grey)),
-                            child: const Icon(Icons.directions_car,
-                                size: 20, color: Colors.grey),
-                          )
+                          const Icon(Icons.sensor_door_outlined,
+                              color: Colors.red, size: 24),
+                          const SizedBox(height: 4),
+                          Text("EXIT",
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.red.withOpacity(0.8),
+                                  fontWeight: FontWeight.bold)),
                         ],
+                      ),
+
+                      // Steering Wheel
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.grey)),
+                        child: const Icon(Icons.directions_car,
+                            size: 20, color: Colors.grey),
                       )
                     ],
                   ),
@@ -1062,45 +987,73 @@ class _AdminScreenState extends State<AdminScreen> {
                 const SizedBox(height: 24),
 
                 // Seat Grid
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 10, // 10 Rows
-                  itemBuilder: (context, rowIndex) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Left Side (2 Seats)
-                          Row(
+                // We use a Builder to calculate rows based on current input
+                Builder(builder: (context) {
+                  int totalSeats = int.tryParse(_seatsController.text) ?? 40;
+                  // If less than 5, just show empty or basic
+                  if (totalSeats < 5) return const SizedBox();
+
+                  int normalRows = ((totalSeats - 5) / 4).floor();
+                  // Total items = Normal Rows + Last Row (which is handled manually)
+                  // We'll just generate the normal rows list + exit + last row
+
+                  return Column(
+                    children: [
+                      ...List.generate(normalRows, (index) {
+                        int rowStart = index * 4;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              _seatItem(rowIndex * 4 + 1),
-                              const SizedBox(width: 14), // Gap between seats
-                              _seatItem(rowIndex * 4 + 2),
+                              Row(children: [
+                                _seatItem(rowStart + 1),
+                                const SizedBox(width: 14),
+                                _seatItem(rowStart + 2),
+                              ]),
+                              Row(children: [
+                                _seatItem(rowStart + 3),
+                                const SizedBox(width: 14),
+                                _seatItem(rowStart + 4),
+                              ]),
                             ],
                           ),
-                          // Aisle Text (Middle)
-                          if (rowIndex == 4)
-                            const Text("EXIT",
+                        );
+                      }),
+
+                      // Rear Exit
+                      Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(bottom: 12, right: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text("EXIT",
                                 style: TextStyle(
                                     fontSize: 10,
-                                    color: Colors.red,
+                                    color: Colors.red.withOpacity(0.8),
                                     fontWeight: FontWeight.bold)),
-
-                          // Right Side (2 Seats)
-                          Row(
-                            children: [
-                              _seatItem(rowIndex * 4 + 3),
-                              const SizedBox(width: 14), // Gap between seats
-                              _seatItem(rowIndex * 4 + 4),
-                            ],
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            const Icon(Icons.sensor_door_outlined,
+                                color: Colors.red, size: 20),
+                          ],
+                        ),
                       ),
-                    );
-                  },
-                ),
+
+                      // Last Row (5 seats)
+                      Builder(builder: (context) {
+                        int start = normalRows * 4;
+                        int seatsToShow = totalSeats - start;
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: List.generate(seatsToShow, (i) {
+                            return _seatItem(start + i + 1);
+                          }),
+                        );
+                      })
+                    ],
+                  );
+                }),
 
                 const SizedBox(height: 20),
                 // Back of bus line
@@ -1201,5 +1154,120 @@ class _AdminScreenState extends State<AdminScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildViaDurationRow(bool isDesktop, List<String> items, String? value,
+      TextEditingController durationCtrl, Function(String?) onViaChanged) {
+    // Via Dropdown
+    final viaWidget = _buildDropdown(
+        "Via / Route Variant", value, items, (v) => onViaChanged(v));
+
+    // Duration Fields (H & M)
+    final durationWidget = Builder(builder: (context) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final inputFillColor =
+          isDark ? Colors.grey.withValues(alpha: 0.1) : Colors.grey.shade50;
+      final borderColor =
+          isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade300;
+
+      // Parse current duration controller text (HH:MM) to init fields
+      String initH = "";
+      String initM = "";
+      if (durationCtrl.text.contains(':')) {
+        final parts = durationCtrl.text.split(':');
+        if (parts.length == 2) {
+          initH = parts[0];
+          initM = parts[1];
+        }
+      }
+
+      // Local controllers for the small fields
+      // NOTE: We can't easily rely on local controllers if we want to sync perfectly with parent state
+      // without keeping them in State. But since this is a build method, we'll initialize them
+      // and update the main controller on change.
+      // Ideally these should be in State, but for quick fix:
+      return Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              initialValue: initH,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                labelText: "Hrs",
+                filled: true,
+                fillColor: inputFillColor,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderColor)),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderColor)),
+              ),
+              onChanged: (v) {
+                final m = durationCtrl.text.contains(':')
+                    ? durationCtrl.text.split(':')[1]
+                    : "00";
+                durationCtrl.text = "${v.padLeft(2, '0')}:$m";
+                _calculateArrival();
+              },
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(":", style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+          Expanded(
+            child: TextFormField(
+              initialValue: initM,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                labelText: "Mins",
+                filled: true,
+                fillColor: inputFillColor,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderColor)),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderColor)),
+              ),
+              onChanged: (v) {
+                final h = durationCtrl.text.contains(':')
+                    ? durationCtrl.text.split(':')[0]
+                    : "00";
+                durationCtrl.text = "$h:${v.padLeft(2, '0')}";
+                _calculateArrival();
+              },
+            ),
+          ),
+        ],
+      );
+    });
+
+    if (isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: viaWidget),
+          const SizedBox(width: 16),
+          Expanded(child: durationWidget), // Now holds the Row of H:M
+        ],
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          viaWidget,
+          const SizedBox(height: 16),
+          durationWidget,
+        ],
+      );
+    }
   }
 }

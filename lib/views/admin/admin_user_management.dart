@@ -348,10 +348,6 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         bg = Colors.red.shade100;
         text = Colors.red.shade800;
         break;
-      case 'manager':
-        bg = Colors.purple.shade100;
-        text = Colors.purple.shade800;
-        break;
       case 'conductor':
         bg = Colors.blue.shade100;
         text = Colors.blue.shade800;

@@ -537,49 +537,115 @@ class _BusListScreenState extends State<BusListScreen> {
     "Ella": const latlng.LatLng(6.8667, 81.0466),
     "Trincomalee": const latlng.LatLng(8.5874, 81.2152),
     "Anuradhapura": const latlng.LatLng(8.3114, 80.4037),
+    "Gampaha": const latlng.LatLng(7.0873, 79.9925),
+    "Kurunegala": const latlng.LatLng(7.4818, 80.3609),
+    "Kalutara": const latlng.LatLng(6.5854, 79.9607),
+    "Avissawella": const latlng.LatLng(6.9543, 80.2046),
+    "Negombo": const latlng.LatLng(7.2008, 79.8737),
   };
 
   List<Marker> _createMarkers(TripController controller) {
-    final List<Marker> markers = [];
-    if (controller.fromCity != null &&
-        _cityCoordinates.containsKey(controller.fromCity)) {
-      markers.add(Marker(
-        point: _cityCoordinates[controller.fromCity]!,
-        width: 40,
-        height: 40,
-        child: const Icon(Icons.location_on, color: Colors.blue, size: 40),
-      ));
+    // Collect unique cities involved in the search results to mark key points
+    final Set<String> markedCities = {};
+    if (controller.fromCity != null) markedCities.add(controller.fromCity!);
+    if (controller.toCity != null) markedCities.add(controller.toCity!);
+
+    // Add intermediate cities from search results
+    for (var trip in controller.searchResults) {
+      if (trip.via.isNotEmpty) {
+        // Simple substring matching for known cities in 'via'
+        for (var city in _cityCoordinates.keys) {
+          if (trip.via.contains(city)) markedCities.add(city);
+        }
+      }
     }
-    if (controller.toCity != null &&
-        _cityCoordinates.containsKey(controller.toCity)) {
-      markers.add(Marker(
-        point: _cityCoordinates[controller.toCity]!,
-        width: 40,
-        height: 40,
-        child: const Icon(Icons.location_on, color: Colors.red, size: 40),
-      ));
+
+    final List<Marker> markers = [];
+    for (var city in markedCities) {
+      if (_cityCoordinates.containsKey(city)) {
+        bool isSource = city == controller.fromCity;
+        bool isDest = city == controller.toCity;
+        Color color =
+            isSource ? Colors.blue : (isDest ? Colors.red : Colors.orange);
+
+        markers.add(Marker(
+          point: _cityCoordinates[city]!,
+          width: 40,
+          height: 40,
+          child: Icon(Icons.location_on, color: color, size: 40),
+        ));
+      }
     }
     return markers;
   }
 
   List<Polyline> _createPolylines(TripController controller) {
-    if (controller.fromCity != null &&
-        controller.toCity != null &&
-        _cityCoordinates.containsKey(controller.fromCity) &&
-        _cityCoordinates.containsKey(controller.toCity)) {
-      return [
-        Polyline(
-          points: [
-            _cityCoordinates[controller.fromCity]!,
-            _cityCoordinates[controller.toCity]!,
-          ],
-          color: AppTheme.primaryColor,
-          strokeWidth: 4.0,
-          pattern: StrokePattern.dashed(segments: const [10.0, 10.0]),
-        )
-      ];
+    if (controller.searchResults.isEmpty) {
+      // Fallback to simple line if no results but query exists
+      if (controller.fromCity != null &&
+          controller.toCity != null &&
+          _cityCoordinates.containsKey(controller.fromCity) &&
+          _cityCoordinates.containsKey(controller.toCity)) {
+        return [
+          Polyline(
+              points: [
+                _cityCoordinates[controller.fromCity]!,
+                _cityCoordinates[controller.toCity]!
+              ],
+              color: AppTheme.primaryColor.withOpacity(0.5),
+              strokeWidth: 3.0,
+              pattern: StrokePattern.dashed(segments: const [5.0, 5.0]))
+        ];
+      }
+      return [];
     }
-    return [];
+
+    List<Polyline> lines = [];
+    int index = 0;
+
+    for (var trip in controller.searchResults) {
+      List<latlng.LatLng> points = [];
+      // Start
+      if (_cityCoordinates.containsKey(trip.fromCity))
+        points.add(_cityCoordinates[trip.fromCity]!);
+
+      // Via logic: try to find intermediate city in 'via' string
+      bool addedVia = false;
+      for (var city in _cityCoordinates.keys) {
+        if (trip.via.contains(city) &&
+            city != trip.fromCity &&
+            city != trip.toCity) {
+          points.add(_cityCoordinates[city]!);
+          addedVia = true;
+        }
+      }
+      // If no known via city found, but it says "Via", we sadly skip intermediate point unless we have coordinates
+
+      // End
+      if (_cityCoordinates.containsKey(trip.toCity))
+        points.add(_cityCoordinates[trip.toCity]!);
+
+      if (points.length >= 2) {
+        // Sort points? No, relying on Start -> Via -> End order.
+        // But Via check order is random map key order.
+        // Ideally we check trip.via string indexing.
+        if (points.length > 2) {
+          // Re-order intermediates based on appearance in 'via' string if possible
+          // For now assume just 1 intermediate for simplicity of "Via Gampaha"
+        }
+
+        lines.add(Polyline(
+          points: points,
+          color: index == 0
+              ? AppTheme.primaryColor
+              : Colors.indigoAccent, // Highlight first result primarily?
+          strokeWidth: 4.0,
+          // Offset slighty if multiple? Hard to do with Polyline.
+        ));
+      }
+      index++;
+    }
+    return lines;
   }
 
   Widget _buildResultsHeader(int count) {

@@ -236,63 +236,71 @@ class OngoingTripCard extends StatelessWidget {
   }
 
   Widget _buildTrackingBar(TripStatus status) {
-    // 3 states: Departed, On Way, Arrived
-    // Map TripStatus to these states
-    bool departed = status == TripStatus.departed ||
-        status == TripStatus.onWay ||
-        status == TripStatus.arrived ||
-        status == TripStatus.completed ||
-        status == TripStatus.boarding;
-
-    bool onWay = status == TripStatus.onWay ||
-        status == TripStatus.arrived ||
-        status == TripStatus.completed;
-
-    bool arrived =
-        status == TripStatus.arrived || status == TripStatus.completed;
+    // Single Active State Logic as requested by User
+    // "if it changes from 1 to another it should remove it... 1 should be greyed out and on 2"
 
     return Row(
       children: [
-        Expanded(child: _buildTrackStep("Departed", departed)),
+        Expanded(
+          child: _buildTrackStep(
+            "Departed",
+            status == TripStatus.departed,
+            Colors.green,
+            Icons.directions_bus,
+          ),
+        ),
         const SizedBox(width: 8),
-        Expanded(child: _buildTrackStep("On Way", onWay)),
+        Expanded(
+          child: _buildTrackStep(
+            "On Way",
+            status == TripStatus.onWay,
+            Colors.blue,
+            Icons.map,
+          ),
+        ),
         const SizedBox(width: 8),
-        Expanded(child: _buildTrackStep("Arrived", arrived)),
+        Expanded(
+          child: _buildTrackStep(
+            "Arrived",
+            status == TripStatus.arrived,
+            Colors.orange,
+            Icons.check_circle,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildTrackStep(String label, bool isActive) {
-    return Container(
+  Widget _buildTrackStep(
+      String label, bool isActive, Color activeColor, IconData icon) {
+    // If NOT active, grey it out completely
+    final color = isActive ? activeColor : Colors.grey.shade300;
+    final textColor = isActive ? activeColor : Colors.grey.shade500;
+    final bgColor =
+        isActive ? activeColor.withValues(alpha: 0.1) : const Color(0xFFF5F5F5);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: isActive
-            ? const Color(0xFFE8F5E9) // Light Green
-            : const Color(0xFFF5F5F5), // Grey
-        borderRadius: BorderRadius.circular(8),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isActive
-              ? Colors.green.withValues(alpha: 0.3)
+              ? activeColor.withValues(alpha: 0.3)
               : Colors.transparent,
         ),
       ),
       child: Column(
         children: [
-          Container(
-            height: 8,
-            width: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isActive ? Colors.green : Colors.grey.shade400,
-            ),
-          ),
+          Icon(icon, size: 20, color: color),
           const SizedBox(height: 8),
           Text(
             label,
             style: TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: isActive ? Colors.green.shade700 : Colors.grey.shade500,
+              fontWeight: FontWeight.bold,
+              color: textColor,
             ),
           ),
         ],

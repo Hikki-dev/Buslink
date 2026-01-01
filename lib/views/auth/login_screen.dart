@@ -24,10 +24,11 @@ class _LoginScreenState extends State<LoginScreen> {
   int _currentBgIndex = 0;
   Timer? _bgTimer;
   final List<String> _bgImages = [
-    "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1557223562-6c77ef16210f?auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&q=80",
+    "https://upload.wikimedia.org/wikipedia/commons/c/c8/Sri_Lanka_Bus.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/2/2e/Lanka_Ashok_Leyland_bus_on_Colombo_road.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/4/46/SLTB_inter-city_bus_%287568869668%29.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/e/e6/SLTB_Kandy_South_Depot_Mercedes-Benz_OP312_Bus_-_II.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/8/87/CTB_bus_no._290.JPG",
   ];
 
   @override
@@ -35,6 +36,18 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _currentBgIndex = Random().nextInt(_bgImages.length);
     _startBgTimer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _precacheImages();
+  }
+
+  void _precacheImages() {
+    for (String url in _bgImages) {
+      precacheImage(NetworkImage(url), context);
+    }
   }
 
   @override
@@ -177,10 +190,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       _bgImages[_currentBgIndex],
                       key: ValueKey(_bgImages[_currentBgIndex]),
                       fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(color: const Color(0xFF0A0B10));
-                      },
                     ),
                   ),
                 ),
@@ -695,10 +704,6 @@ class _IllustrationPanel extends StatelessWidget {
                       key: ValueKey(bgImage),
                       fit: BoxFit.cover,
                       alignment: Alignment.center,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(color: const Color(0xFF0A0A0B));
-                      },
                     ),
                   ),
                 ),
