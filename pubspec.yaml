@@ -1,0 +1,71 @@
+name: buslink
+description: "A new Flutter project."
+version: 1.0.0+1
+
+publish_to: "none" # Prevents accidental publishing to pub.dev
+environment:
+  # FIX 1: Corrected the backtick to a single quote
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  firebase_core: ^4.2.1
+  cloud_firestore: ^6.1.0
+  firebase_auth: ^6.1.2
+  google_sign_in: ^7.2.0
+  flutter_dotenv: ^6.0.0
+  mockito: ^5.4.4
+  build_runner: ^2.4.9
+
+  provider: ^6.0.0
+  intl: ^0.20.2
+  calendar_date_picker2: ^1.1.0
+  qr_flutter: ^4.1.0
+  cupertino_icons: ^1.0.8
+  url_launcher: ^6.3.2
+  flutter_stripe: ^12.1.1
+  flutter_stripe_web: ^7.1.1
+  pdf: ^3.10.7
+  printing: ^5.11.1
+  path_provider: ^2.1.2
+  http: ^1.6.0
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+  firebase_messaging: ^16.1.0
+  google_fonts: ^6.1.0
+  shared_preferences: ^2.5.4
+  cached_network_image: ^3.4.1
+  mobile_scanner: ^7.1.4
+  web: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/fonts/
+    - .env
+
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Variable.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/Noto_Sans/NotoSans-VariableFont_wdth,wght.ttf
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat/Montserrat-VariableFont_wght.ttf
+    - family: Cormorant
+      fonts:
+        - asset: assets/fonts/Cormorant_Garamond/CormorantGaramond-VariableFont_wght.ttf

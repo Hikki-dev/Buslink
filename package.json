@@ -1,0 +1,25 @@
+{
+  "name": "buslink-main",
+  "version": "1.0.0",
+  "description": "A modern Flutter application for bus ticket booking and management, featuring real-time seat selection, Firebase authentication, and cross-platform support.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hikki-dev/Buslink.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Hikki-dev/Buslink/issues"
+  },
+  "homepage": "https://github.com/Hikki-dev/Buslink#readme"
+}

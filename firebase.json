@@ -1,0 +1,6 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {"platforms":{"android":{"default":{"projectId":"buslink-416e1","appId":"1:621148800955:android:fe54bf4c0f1bd9d5eea69e","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"buslink-416e1","appId":"1:621148800955:ios:b2f2c81facbbaae3eea69e","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"macos":{"default":{"projectId":"buslink-416e1","appId":"1:621148800955:ios:b2f2c81facbbaae3eea69e","uploadDebugSymbols":false,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"buslink-416e1","configurations":{"android":"1:621148800955:android:fe54bf4c0f1bd9d5eea69e","ios":"1:621148800955:ios:b2f2c81facbbaae3eea69e","macos":"1:621148800955:ios:b2f2c81facbbaae3eea69e","web":"1:621148800955:web:3d267b90b25962c8eea69e","windows":"1:621148800955:web:906ac17744f69ffeeea69e"}}}}}
+}
