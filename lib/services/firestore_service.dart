@@ -225,23 +225,9 @@ class FirestoreService {
       }
     }
 
-    // If absolutely nothing, return defaults
+    // If absolutely nothing, return empty list
     if (cities.isEmpty) {
-      return [
-        "Colombo",
-        "Kandy",
-        "Galle",
-        "Matara",
-        "Jaffna",
-        "Negombo",
-        "Anuradhapura",
-        "Trincomalee",
-        "Batticaloa",
-        "Ella",
-        "Nuwara Eliya",
-        "Dambulla",
-        "Sigiriya"
-      ];
+      return [];
     }
 
     return cities.toList()..sort();

@@ -10,8 +10,6 @@ import '../../models/trip_model.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latlng;
 import '../booking/seat_selection_screen.dart';
-import '../booking/payment_screen.dart';
-import '../booking/bulk_quantity_dialog.dart';
 import '../../utils/app_theme.dart';
 import '../layout/desktop_navbar.dart';
 import 'dart:convert';
@@ -20,6 +18,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../layout/app_footer.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../booking/bulk_confirmation_screen.dart';
 
 part 'parts/clock_widget.dart';
 
@@ -1143,36 +1142,36 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                     duration: Duration(seconds: 4),
                   ));
                 } else if (controller.isBulkBooking) {
-                  // Bulk Booking - Quantity Selection
-                  showDialog(
-                    context: context,
-                    builder: (context) => BulkQuantityDialog(
-                      trip: trip,
-                      days: controller.bulkDates.length,
-                      onConfirm: (qty) {
-                        // Check availability
-                        int available =
-                            trip.totalSeats - trip.bookedSeats.length;
-                        if (qty > available) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content:
-                                  Text("Only $available seats available")));
-                          return;
-                        }
+                  // Bulk Booking - Auto-Assign & Confirm
+                  // Seats count already set from Home Screen
+                  int qty = controller.seatsPerTrip;
 
-                        controller.setSeatsPerTrip(qty);
-                        // Auto-assign dummy seats for payment calculation
-                        // We use -1 to indicate auto-assignment
-                        controller.selectedSeats =
-                            List.generate(qty, (index) => -1);
-                        controller.selectTrip(trip);
+                  // Auto-assign dummy seats for payment calculation
+                  controller.selectedSeats = List.generate(qty, (index) => -1);
+                  // Assuming selectTrip exists as used below (if not, use selectedTrip = trip)
+                  // controller.selectTrip(trip);
+                  // EDIT: The existing code used controller.selectTrip(trip).
+                  // If it's a setter, we might need controller.selectedTrip = trip?
+                  // Let's trust existing code for method name, but if it fails I'll fix it.
+                  // Actually, looking at controller file, I didn't see selectTrip method.
+                  // But lines 1180 used it.
+                  // Let's assume it exists.
+                  controller.selectedTrip =
+                      trip; // Using setter directly just in case?
+                  // Wait, controller source I read earlier had logic for 'selectedTrip' variable.
+                  // It didn't have 'selectTrip' method in lines 1-800.
+                  // Line 1180 in BusListScreen calls `controller.selectTrip(trip)`.
+                  // If I change it to `controller.selectedTrip = trip` it creates a mismatch with existing code style?
+                  // I'll check if I can just use the property setter if it's public.
+                  // Line 63: Trip? selectedTrip;
+                  // So setter is implicit.
 
-                        Navigator.pop(context); // Close dialog
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const PaymentScreen()));
-                      },
+                  controller.selectedTrip = trip;
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BulkConfirmationScreen(trip: trip),
                     ),
                   );
                 } else {

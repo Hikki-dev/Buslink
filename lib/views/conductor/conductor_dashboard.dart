@@ -296,12 +296,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () async {
-                    if (kIsWeb) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text(
-                              "Web scanning not fully supported yet in this demo.")));
-                      // In real web app, MobileScanner works but requires HTTPS and permissions
-                    }
+                    // Web scanning works on HTTPS (e.g. Vercel)
+                    // Ensure camera permissions are granted.
 
                     final result = await Navigator.push(
                       context,
@@ -397,7 +393,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                         color: Colors.green, size: 48),
                   ),
                   const SizedBox(height: 16),
-                  Text("Valid Ticket: ${ticket.shortId ?? 'N/A'}",
+                  Text("Verified Code: ${ticket.shortId ?? 'N/A'}",
                       style: const TextStyle(
                           fontFamily: 'Outfit',
                           fontSize: 24,
@@ -546,7 +542,7 @@ class _FindTripDialogState extends State<FindTripDialog> {
                     (_hasSearched && _results.isEmpty && _isLoading)) ...[
                   // --- INPUT FORM ---
                   DropdownButtonFormField<String>(
-                    key: ValueKey(_selectedFromCity),
+                    key: const Key('fromCityDropdown'),
                     initialValue: _selectedFromCity,
                     items: AppConstants.cities
                         .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -559,7 +555,7 @@ class _FindTripDialogState extends State<FindTripDialog> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    key: ValueKey(_selectedToCity),
+                    key: const Key('toCityDropdown'),
                     initialValue: _selectedToCity,
                     items: AppConstants.cities
                         .map((c) => DropdownMenuItem(value: c, child: Text(c)))

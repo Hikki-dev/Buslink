@@ -109,142 +109,99 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
           final currentTrip = snapshot.data ?? widget.trip;
           final int totalSeats = currentTrip.totalSeats;
 
-          if (totalSeats < 4) return const SizedBox();
+          if (totalSeats < 1) return const SizedBox();
 
-          // Standard Bus Logic: Last row has 5 seats, others have 4.
-          // IF total seats doesn't fit 4xN + 5, we assume the remainder is in the last row.
-          // e.g. 49 seats -> 11 rows of 4 (44) + 5 seats = 49.
-          int normalRowsCount = (totalSeats - 5) ~/ 4;
-          if (normalRowsCount < 0) normalRowsCount = 0; // Safety
-
-          // Calculate how many seats are actually left for the last row
-          int seatsInLastRow = totalSeats - (normalRowsCount * 4);
+          // Calculate number of rows (4 seats per row)
+          int rowCount = (totalSeats / 4).ceil();
 
           return Column(
-            children: [
-              // 1. Normal Rows
-              ...List.generate(normalRowsCount, (index) {
-                int rowStart = index * 4;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(children: [
-                        _SeatItem(
-                          seatNum: rowStart + 1,
-                          trip: currentTrip,
-                          isSelected:
-                              widget.selectedSeats.contains(rowStart + 1),
-                          isHighlighted:
-                              widget.highlightedSeats.contains(rowStart + 1),
-                          onTap: widget.isReadOnly &&
-                                  widget.onSeatToggle == null
-                              ? null
-                              : () => widget.onSeatToggle?.call(rowStart + 1),
-                          isReadOnly: widget.isReadOnly,
-                        ),
-                        const SizedBox(width: 10),
-                        _SeatItem(
-                          seatNum: rowStart + 2,
-                          trip: currentTrip,
-                          isSelected:
-                              widget.selectedSeats.contains(rowStart + 2),
-                          isHighlighted:
-                              widget.highlightedSeats.contains(rowStart + 2),
-                          onTap: widget.isReadOnly &&
-                                  widget.onSeatToggle == null
-                              ? null
-                              : () => widget.onSeatToggle?.call(rowStart + 2),
-                          isReadOnly: widget.isReadOnly,
-                        ),
-                      ]),
-                      Row(children: [
-                        _SeatItem(
-                          seatNum: rowStart + 3,
-                          trip: currentTrip,
-                          isSelected:
-                              widget.selectedSeats.contains(rowStart + 3),
-                          isHighlighted:
-                              widget.highlightedSeats.contains(rowStart + 3),
-                          onTap: widget.isReadOnly &&
-                                  widget.onSeatToggle == null
-                              ? null
-                              : () => widget.onSeatToggle?.call(rowStart + 3),
-                          isReadOnly: widget.isReadOnly,
-                        ),
-                        const SizedBox(width: 10),
-                        _SeatItem(
-                          seatNum: rowStart + 4,
-                          trip: currentTrip,
-                          isSelected:
-                              widget.selectedSeats.contains(rowStart + 4),
-                          isHighlighted:
-                              widget.highlightedSeats.contains(rowStart + 4),
-                          onTap: widget.isReadOnly &&
-                                  widget.onSeatToggle == null
-                              ? null
-                              : () => widget.onSeatToggle?.call(rowStart + 4),
-                          isReadOnly: widget.isReadOnly,
-                        ),
-                      ]),
-                    ],
-                  ),
-                );
-              }),
+            children: List.generate(rowCount, (rowIndex) {
+              int startSeat = rowIndex * 4 + 1;
 
-              // 2. Rear Exit Area (MOVED TO LEFT)
-              if (normalRowsCount > 0)
-                Container(
-                  alignment: Alignment.centerLeft, // Left alignment
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start, // Start aligned
-                    children: [
-                      const Icon(Icons.sensor_door_outlined,
-                          color: Colors.red, size: 20),
-                      const SizedBox(width: 4),
-                      Text("EXIT",
-                          style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.red.withValues(alpha: 0.8),
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 8),
+              // Helper to check if seat exists
+              bool seatExists(int offset) => (startSeat + offset) <= totalSeats;
 
-              // 3. Last Row (Dynamic Seat Count, usually 5)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
                 child: Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween, // Distribute evenly
-                  children: List.generate(seatsInLastRow, (i) {
-                    // Start numbers after all normal rows
-                    int seatNum = (normalRowsCount * 4) + i + 1;
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Left Side (Seat 1 & 2)
+                    Row(children: [
+                      if (seatExists(0))
+                        _SeatItem(
+                          seatNum: startSeat,
+                          trip: currentTrip,
+                          isSelected: widget.selectedSeats.contains(startSeat),
+                          isHighlighted:
+                              widget.highlightedSeats.contains(startSeat),
+                          onTap:
+                              widget.isReadOnly && widget.onSeatToggle == null
+                                  ? null
+                                  : () => widget.onSeatToggle?.call(startSeat),
+                          isReadOnly: widget.isReadOnly,
+                        )
+                      else
+                        const SizedBox(width: 44, height: 44),
+                      const SizedBox(width: 10),
+                      if (seatExists(1))
+                        _SeatItem(
+                          seatNum: startSeat + 1,
+                          trip: currentTrip,
+                          isSelected:
+                              widget.selectedSeats.contains(startSeat + 1),
+                          isHighlighted:
+                              widget.highlightedSeats.contains(startSeat + 1),
+                          onTap: widget.isReadOnly &&
+                                  widget.onSeatToggle == null
+                              ? null
+                              : () => widget.onSeatToggle?.call(startSeat + 1),
+                          isReadOnly: widget.isReadOnly,
+                        )
+                      else
+                        const SizedBox(width: 44, height: 44),
+                    ]),
 
-                    // Dynamic width calculation to fit 5 seats
-                    // Available width ~260px. 5 seats -> ~48px each max including gap.
-                    // If we have 5 seats, we need them smaller or less gap.
-                    // Let's use a flexible/expanded approach or fixed smaller size for dense rows.
-                    double seatWidth = seatsInLastRow > 4 ? 40 : 44;
-
-                    return _SeatItem(
-                      seatNum: seatNum,
-                      trip: currentTrip,
-                      isSelected: widget.selectedSeats.contains(seatNum),
-                      isHighlighted: widget.highlightedSeats.contains(seatNum),
-                      onTap: widget.isReadOnly && widget.onSeatToggle == null
-                          ? null
-                          : () => widget.onSeatToggle?.call(seatNum),
-                      isReadOnly: widget.isReadOnly,
-                      width: seatWidth,
-                    );
-                  }),
+                    // Right Side (Seat 3 & 4)
+                    Row(children: [
+                      if (seatExists(2))
+                        _SeatItem(
+                          seatNum: startSeat + 2,
+                          trip: currentTrip,
+                          isSelected:
+                              widget.selectedSeats.contains(startSeat + 2),
+                          isHighlighted:
+                              widget.highlightedSeats.contains(startSeat + 2),
+                          onTap: widget.isReadOnly &&
+                                  widget.onSeatToggle == null
+                              ? null
+                              : () => widget.onSeatToggle?.call(startSeat + 2),
+                          isReadOnly: widget.isReadOnly,
+                        )
+                      else
+                        const SizedBox(width: 44, height: 44),
+                      const SizedBox(width: 10),
+                      if (seatExists(3))
+                        _SeatItem(
+                          seatNum: startSeat + 3,
+                          trip: currentTrip,
+                          isSelected:
+                              widget.selectedSeats.contains(startSeat + 3),
+                          isHighlighted:
+                              widget.highlightedSeats.contains(startSeat + 3),
+                          onTap: widget.isReadOnly &&
+                                  widget.onSeatToggle == null
+                              ? null
+                              : () => widget.onSeatToggle?.call(startSeat + 3),
+                          isReadOnly: widget.isReadOnly,
+                        )
+                      else
+                        const SizedBox(width: 44, height: 44),
+                    ]),
+                  ],
                 ),
-              ),
-            ],
+              );
+            }),
           );
         });
   }
@@ -266,7 +223,6 @@ class _SeatItem extends StatefulWidget {
   final bool isSelected;
   final bool isHighlighted; // For Conductor Verification
   final VoidCallback? onTap;
-  final double width;
   final bool isReadOnly;
 
   const _SeatItem({
@@ -275,7 +231,6 @@ class _SeatItem extends StatefulWidget {
     required this.isSelected,
     this.isHighlighted = false,
     this.onTap,
-    this.width = 44,
     this.isReadOnly = false,
   });
 
@@ -289,7 +244,7 @@ class _SeatItemState extends State<_SeatItem> {
   @override
   Widget build(BuildContext context) {
     if (widget.seatNum > widget.trip.totalSeats) {
-      return SizedBox(width: widget.width, height: 44);
+      return const SizedBox(width: 44, height: 44);
     }
 
     final isBooked = widget.trip.bookedSeats.contains(widget.seatNum);
@@ -328,7 +283,7 @@ class _SeatItemState extends State<_SeatItem> {
         onTap: isUnavailable && !widget.isReadOnly ? null : widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          width: widget.width,
+          width: 44,
           height: 44,
           decoration: BoxDecoration(
             color: seatColor,

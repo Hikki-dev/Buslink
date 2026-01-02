@@ -3,7 +3,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import '../../data/cities.dart';
+
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:buslink/services/firestore_service.dart';
@@ -365,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       originFocusNode: _originFocusNode,
                       destinationFocusNode: _destinationFocusNode,
                       selectedDate: _selectedDate,
-                      onDateTap: () => _selectDate(context),
+                      onDateTap: _selectDate,
                       onSearchTap: _searchBuses,
                       isRoundTrip: _isRoundTrip,
                       isBulkBooking: _isBulkBooking,
@@ -1356,14 +1356,10 @@ class _HeroSectionState extends State<_HeroSection> {
                       controller, // Use the TextController passed to widget
                   focusNode: focusNode,
                   optionsBuilder: (TextEditingValue textEditingValue) {
+                    final cities = tripCtrl.availableCities;
                     if (textEditingValue.text.isEmpty) {
-                      return const Iterable<String>.empty();
+                      return cities;
                     }
-                    // Use dynamic list or fallback
-                    final cities = tripCtrl.availableCities.isNotEmpty
-                        ? tripCtrl.availableCities
-                        : kSriLankanCities;
-
                     return cities.where((String option) {
                       return option
                           .toLowerCase()
@@ -1577,10 +1573,22 @@ class _HeroSectionState extends State<_HeroSection> {
                   textEditingController: controller,
                   focusNode: focusNode, // Use provided FocusNode
                   optionsBuilder: (TextEditingValue textEditingValue) {
+                    // Access provider inside optionsBuilder if needed, or better, pass updated list from parent rebuild
+                    // But accessing Context here might be tricky if not in a builder.
+                    // Actually _HeroSection build has context. We can access Provider via context or widget if passed.
+                    // But _buildSearchInput is a method. We need direct access.
+                    // Let's use Provider.of<TripController>(context, listen: false).availableCities
+                    // Note: listen: false is okay because we want the current list?
+                    // Or better, let Consumer wrap this? In this specific method, there is no Consumer wrapper around this RawAutocomplete like in the desktop one.
+                    // I will verify if I can wrap it or just use Provider.
+                    final tripCtrl =
+                        Provider.of<TripController>(context, listen: false);
+                    final cities = tripCtrl.availableCities;
+
                     if (textEditingValue.text.isEmpty) {
-                      return const Iterable<String>.empty();
+                      return cities;
                     }
-                    return kSriLankanCities.where((String option) {
+                    return cities.where((String option) {
                       return option
                           .toLowerCase()
                           .contains(textEditingValue.text.toLowerCase());

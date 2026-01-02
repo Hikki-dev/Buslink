@@ -234,7 +234,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     height: 150,
                   ),
                   pw.SizedBox(height: 20),
-                  pw.Text("Please show this QR code to the conductor.",
+                  pw.Text(
+                      "SHOW the 4 DIGIT CODE TO CONDUCTOR or TELL CONDUCTOR TO SCAN QR",
                       style: const pw.TextStyle(color: PdfColors.grey)),
                   if (tickets.length > 1) ...[
                     pw.SizedBox(height: 10),
@@ -586,6 +587,15 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
               data: ticket.shortId ?? ticket.ticketId,
               version: QrVersions.auto,
               size: 150,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "SHOW 4-DIGIT CODE OR SCAN QR",
+              style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red),
             ),
             const SizedBox(height: 8),
             Text("TICKET CODE: ${ticket.shortId ?? 'N/A'}",

@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart'; // For Redirect
 import 'package:intl/intl.dart';
 
 import '../../controllers/trip_controller.dart';
+import '../../models/trip_model.dart';
 import '../../services/payment_service.dart';
 import '../../utils/app_theme.dart';
 import '../layout/desktop_navbar.dart';
@@ -14,7 +15,18 @@ import '../layout/app_footer.dart';
 import 'payment_success_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
-  const PaymentScreen({super.key});
+  final String? bookingId;
+  final double? amount;
+  final Trip? trip;
+  final bool? isBulk;
+
+  const PaymentScreen({
+    super.key,
+    this.bookingId,
+    this.amount,
+    this.trip,
+    this.isBulk,
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -38,20 +50,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     try {
       // 1. Create Pending Booking in DB (State Persistence)
-      final bookingId = await controller.createPendingBooking(user);
-      if (bookingId == null) {
-        throw Exception("Failed to initialize booking.");
+      String bookingId;
+      if (widget.bookingId != null) {
+        bookingId = widget.bookingId!;
+      } else {
+        final id = await controller.createPendingBooking(user);
+        if (id == null) {
+          throw Exception("Failed to initialize booking.");
+        }
+        bookingId = id;
       }
 
-      final trip = controller.selectedTrip!;
+      final trip = widget.trip ?? controller.selectedTrip!;
       final seats = controller.selectedSeats;
 
-      // Fix Price Calculation (include days)
-      int days = 1;
-      if (controller.isBulkBooking && controller.bulkDates.isNotEmpty) {
-        days = controller.bulkDates.length;
-      }
-      final double totalAmountVal = trip.price * seats.length * days;
+      final double totalAmountVal = widget.amount ??
+          (trip.price *
+              seats.length *
+              (controller.isBulkBooking ? controller.bulkDates.length : 1));
       final String totalAmountStr = totalAmountVal.toStringAsFixed(2);
 
       if (!mounted) return;
@@ -132,7 +148,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final controller = Provider.of<TripController>(context);
 
     // GUARD: Handle Web Refresh / State Loss
-    if (controller.selectedTrip == null || controller.selectedSeats.isEmpty) {
+    if ((controller.selectedTrip == null || controller.selectedSeats.isEmpty) &&
+        widget.trip == null) {
       return Scaffold(
         appBar: AppBar(title: const Text("Session Expired")),
         body: Center(
@@ -157,16 +174,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
     }
 
-    final trip = controller.selectedTrip!;
+    final trip = widget.trip ?? controller.selectedTrip!;
     final seats = controller.selectedSeats;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Calculate total: Price * Seats * Days
-    int days = 1;
-    if (controller.isBulkBooking && controller.bulkDates.isNotEmpty) {
-      days = controller.bulkDates.length;
+    // Calculate total
+    double totalAmount;
+    if (widget.amount != null) {
+      totalAmount = widget.amount!;
+    } else {
+      int days = 1;
+      if (controller.isBulkBooking && controller.bulkDates.isNotEmpty) {
+        days = controller.bulkDates.length;
+      }
+      totalAmount = trip.price * seats.length * days;
     }
-    final totalAmount = trip.price * seats.length * days;
 
     final isDesktop = MediaQuery.of(context).size.width > 900;
 

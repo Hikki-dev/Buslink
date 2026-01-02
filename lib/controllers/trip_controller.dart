@@ -136,6 +136,12 @@ class TripController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // --- ADDED: Bulk Total Calculation ---
+  double calculateBulkTotal(double unitPrice) {
+    if (!isBulkBooking || bulkDates.isEmpty) return unitPrice * seatsPerTrip;
+    return unitPrice * seatsPerTrip * bulkDates.length;
+  }
+
   Future<void> searchTrips(BuildContext context) async {
     if ((fromCity == null || fromCity!.isEmpty) &&
         (toCity == null || toCity!.isEmpty)) {
@@ -238,6 +244,19 @@ class TripController extends ChangeNotifier {
           toCity!,
           travelDate!,
         );
+
+        // Filter out past trips if searching for TODAY
+        final now = DateTime.now();
+        final isToday = travelDate!.year == now.year &&
+            travelDate!.month == now.month &&
+            travelDate!.day == now.day;
+
+        if (isToday) {
+          searchResults = searchResults.where((t) {
+            return t.departureTime.isAfter(now);
+          }).toList();
+        }
+
         debugPrint("TripController: Found ${searchResults.length} trips.");
       }
     } catch (e) {
@@ -586,24 +605,44 @@ class TripController extends ChangeNotifier {
   }
 
   // --- Booking Confirmation ---
+  List<Ticket> confirmedTickets = [];
+
   Future<bool> confirmBooking(String bookingId) async {
     _setLoading(true);
+    confirmedTickets = []; // Clear previous
     try {
-      // NOW calls the Transactional confirm method in Service
-      final ticket = await _service.confirmBooking(bookingId);
+      if (bookingId.contains(',')) {
+        // Bulk Confirmation
+        final ids = bookingId.split(',');
+        for (final id in ids) {
+          final ticket = await _service.confirmBooking(id.trim());
+          confirmedTickets.add(ticket);
+        }
+        currentTicket = confirmedTickets.first; // For backward compatibility
 
-      currentTicket = ticket;
-      // Refresh Trip Data to reflect new booked seats immediately
-      final trip = await _service.getTrip(ticket.tripId);
-      if (trip != null) {
-        selectedTrip = trip;
+        // Refresh Trip Data (for the first on, or all? Ideally all involved trips)
+        // For simplicity, refresh selectedTrip
+        final trip = await _service.getTrip(currentTicket!.tripId);
+        if (trip != null) {
+          selectedTrip = trip;
+        }
+        notifyListeners();
+        _setLoading(false);
+        return true;
+      } else {
+        // Single Confirmation
+        final ticket = await _service.confirmBooking(bookingId);
+        currentTicket = ticket;
+        confirmedTickets.add(ticket);
+
+        final trip = await _service.getTrip(ticket.tripId);
+        if (trip != null) {
+          selectedTrip = trip;
+        }
         notifyListeners();
         _setLoading(false);
         return true;
       }
-
-      _setLoading(false);
-      return false;
     } catch (e) {
       debugPrint('Error confirming booking: $e');
       _setLoading(false);

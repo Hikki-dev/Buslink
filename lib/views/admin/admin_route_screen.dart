@@ -17,7 +17,9 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
   final TextEditingController _originController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
   final TextEditingController _viaController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController();
+  // final TextEditingController _priceController = TextEditingController(); // Price Removed
+  final TextEditingController _busNumberController = TextEditingController();
+  final TextEditingController _operatorController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -36,11 +38,14 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
       'fromCity': _originController.text,
       'toCity': _destinationController.text,
       'via': _viaController.text,
-      'price': double.tryParse(_priceController.text) ?? 0.0,
+      'price': 0.0, // Default to 0
       'duration': durationStr,
-      // 'departureTime': REMOVED as per request
-      'operatorName': 'BusLink Official',
-      'busNumber': 'TEMPLATE',
+      'operatorName': _operatorController.text.isNotEmpty
+          ? _operatorController.text
+          : 'BusLink Official',
+      'busNumber': _busNumberController.text.isNotEmpty
+          ? _busNumberController.text
+          : 'Standard',
       'isRouteDefinition': true,
     };
 
@@ -137,6 +142,9 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
 
                         // DEPARTURE TIME REMOVED
 
+                        // DEPARTURE TIME REMOVED
+
+                        const SizedBox(height: 24),
                         const SizedBox(height: 24),
                         const Divider(),
                         const SizedBox(height: 24),
@@ -148,20 +156,7 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Price",
-                                        style: TextStyle(
-                                            fontFamily: 'Inter',
-                                            fontSize: 12,
-                                            color: Colors.grey.shade500,
-                                            fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 8),
-                                    _buildTextField(
-                                        "Amount (LKR)", _priceController,
-                                        icon: Icons.attach_money,
-                                        isNumber: true,
-                                        fillColor: inputFillColor,
-                                        borderColor: borderColor,
-                                        textColor: textColor),
+                                    // Price field removed
                                   ],
                                 )),
                           ],

@@ -169,7 +169,8 @@ class _AdminScreenState extends State<AdminScreen> {
           ? _platformController.text
           : 'TBD',
       'blockedSeats': _blockedSeats,
-      'status': _tripStatus.name, // Pass status to save
+      'status': _tripStatus.name,
+      'routeId': _selectedRoute?.id, // Saving Route ID
     };
 
     try {
@@ -938,7 +939,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 return DropdownMenuItem(
                   value: r,
                   child: Text(
-                    "${r.fromCity} ➔ ${r.toCity}",
+                    "${r.fromCity} ➔ ${r.toCity} (Via: ${r.via.isNotEmpty ? r.via : 'Direct'}) - ${r.operatorName}",
                     style: TextStyle(color: textColor),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -950,6 +951,47 @@ class _AdminScreenState extends State<AdminScreen> {
                     _selectedRoute = route;
                     _fromCity = route.fromCity;
                     _toCity = route.toCity;
+                    _viaRoute = route.via;
+
+                    // Populate Price
+                    _fareController.text = route.price.toStringAsFixed(0);
+
+                    // Populate Bus Details
+                    _operatorController.text = route.operatorName;
+                    _busNumberController.text = route.busNumber;
+                    _platformController.text = route.platformNumber;
+
+                    // Populate Schedule (Time)
+                    // We combine current date (or default) with route times
+                    final now = DateTime.now();
+                    _departureTime = DateTime(now.year, now.month, now.day,
+                        route.departureHour, route.departureMinute);
+                    _arrivalTime = DateTime(now.year, now.month, now.day,
+                        route.arrivalHour, route.arrivalMinute);
+
+                    // Calculate Duration String for the controller
+                    final difference = _arrivalTime.difference(_departureTime);
+                    final dH = difference.inHours;
+                    final dM = difference.inMinutes.remainder(60);
+                    _durationController.text =
+                        "${dH.toString().padLeft(2, '0')}:${dM.toString().padLeft(2, '0')}";
+
+                    // Populate Operating Days
+                    _operatingDays.clear();
+                    const daysMap = {
+                      1: "Monday",
+                      2: "Tuesday",
+                      3: "Wednesday",
+                      4: "Thursday",
+                      5: "Friday",
+                      6: "Saturday",
+                      7: "Sunday"
+                    };
+                    for (int d in route.recurrenceDays) {
+                      if (daysMap.containsKey(d)) {
+                        _operatingDays.add(daysMap[d]!);
+                      }
+                    }
                   });
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text("Route details populated!"),

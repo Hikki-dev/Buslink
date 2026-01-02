@@ -242,7 +242,6 @@ class _TicketScreenState extends State<TicketScreen> {
                         "Date", DateFormat('MMM d').format(trip.departureTime)),
                     _infoCol("Time",
                         DateFormat('hh:mm a').format(trip.departureTime)),
-                    _infoCol("Bus", trip.busNumber),
                     _infoCol("Seats", "${ticket.seatNumbers.length}"),
                   ],
                 ),
@@ -266,23 +265,34 @@ class _TicketScreenState extends State<TicketScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                SelectableText("ID: ${ticket.ticketId}",
+                SelectableText("REF: ${ticket.ticketId}",
                     style: const TextStyle(
                         fontFamily: 'Inter',
                         letterSpacing: 1,
                         fontSize: 10,
                         color: Colors.grey)),
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
                 const Text(
-                  "HERE IS YOUR BOOKING QR\nSHOW THIS TO CONDUCTOR",
+                  "SHOW 4-DIGIT CODE OR SCAN QR",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontFamily: 'Outfit',
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w900,
-                      color: Colors.white, // Fixed: White text for visibility
+                      color: Colors.red,
                       height: 1.2),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  "CODE: ${ticket.shortId}",
+                  style: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 24),
 
                 // Passenger & Total
                 Row(
@@ -425,7 +435,6 @@ class _TicketScreenState extends State<TicketScreen> {
                                   fontSize: 18,
                                   fontWeight: pw.FontWeight.bold)),
                           pw.SizedBox(height: 10),
-                          pw.Text("Bus: ${trip.busNumber}"),
                           pw.Text(
                               "Departure: ${DateFormat('hh:mm a').format(trip.departureTime)}"),
                           pw.Text("Platform: ${trip.platformNumber}"),
@@ -443,14 +452,25 @@ class _TicketScreenState extends State<TicketScreen> {
                                       color: PdfColors.red900)))
                         ])),
                 pw.SizedBox(height: 20),
+                pw.SizedBox(height: 20),
+                pw.Text("SHOW 4-DIGIT CODE TO CONDUCTOR",
+                    style: pw.TextStyle(
+                        fontSize: 14,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.red900)),
+                pw.SizedBox(height: 5),
+                pw.Text("CODE: ${ticket.shortId}",
+                    style: pw.TextStyle(
+                        fontSize: 32, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 10),
                 pw.BarcodeWidget(
                   barcode: pw.Barcode.qrCode(),
                   data: ticket.ticketId,
-                  width: 150,
-                  height: 150,
+                  width: 120,
+                  height: 120,
                 ),
-                pw.SizedBox(height: 20),
-                pw.Text("Please show this QR code to the conductor.",
+                pw.SizedBox(height: 10),
+                pw.Text("OR SCAN QR",
                     style: const pw.TextStyle(color: PdfColors.grey)),
               ],
             ),

@@ -11,6 +11,7 @@ class RouteModel {
   final String busNumber;
   final String busType;
   final String platformNumber;
+  final String via; // Added 'via' field
   final List<String> stops;
   final List<String> features;
   final List<int> recurrenceDays; // 1 = Mon, 7 = Sun
@@ -28,6 +29,7 @@ class RouteModel {
     required this.busNumber,
     required this.busType,
     required this.platformNumber,
+    this.via = '', // Default empty
     required this.stops,
     required this.features,
     required this.recurrenceDays,
@@ -47,6 +49,7 @@ class RouteModel {
       busNumber: map['busNumber'] ?? '',
       busType: map['busType'] ?? '',
       platformNumber: map['platformNumber'] ?? '',
+      via: map['via'] ?? '',
       stops: List<String>.from(map['stops'] ?? []),
       features: List<String>.from(map['features'] ?? []),
       recurrenceDays: List<int>.from(map['recurrenceDays'] ?? []),
@@ -66,6 +69,7 @@ class RouteModel {
       'busNumber': busNumber,
       'busType': busType,
       'platformNumber': platformNumber,
+      'via': via,
       'stops': stops,
       'features': features,
       'recurrenceDays': recurrenceDays,
