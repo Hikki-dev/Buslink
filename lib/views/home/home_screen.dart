@@ -273,142 +273,147 @@ class _HomeScreenState extends State<HomeScreen> {
     // If we just return the CustomScrollView, it needs a Material/Scaffold ancestor for some widgets?
     // CustomerMainScreen provides Scaffold.
 
-    return Column(
-      children: [
-        Expanded(
-          child: MediaQuery.removePadding(
-            context: context,
-            removeTop: widget.isAdminView,
-            child: CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                if (isDesktop)
-                  SliverToBoxAdapter(
-                      child: DesktopNavBar(
-                          selectedIndex: 0, isAdminView: widget.isAdminView))
-                else
-                  SliverAppBar(
-                    pinned: true,
-                    floating: true,
-                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    elevation: 0,
-                    automaticallyImplyLeading: false,
-                    title: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                              color:
-                                  AppTheme.primaryColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.directions_bus,
-                              color: AppTheme.primaryColor, size: 20),
+    return Material(
+      type: MaterialType.transparency,
+      child: Column(
+        children: [
+          Expanded(
+            child: MediaQuery.removePadding(
+              context: context,
+              removeTop: widget.isAdminView,
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  if (isDesktop)
+                    SliverToBoxAdapter(
+                        child: DesktopNavBar(
+                            selectedIndex: 0, isAdminView: widget.isAdminView))
+                  else
+                    SliverAppBar(
+                      pinned: true,
+                      floating: true,
+                      backgroundColor:
+                          Theme.of(context).scaffoldBackgroundColor,
+                      elevation: 0,
+                      automaticallyImplyLeading: false,
+                      title: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                                color: AppTheme.primaryColor
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8)),
+                            child: const Icon(Icons.directions_bus,
+                                color: AppTheme.primaryColor, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Text("BusLink",
+                              style: TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color,
+                                  fontSize: 22)),
+                        ],
+                      ),
+                      actions: [
+                        // Notification Icon
+                        IconButton(
+                          icon: const Icon(Icons.notifications_none_rounded),
+                          onPressed: () {}, // Todo: Notifications
                         ),
-                        const SizedBox(width: 12),
-                        Text("BusLink",
-                            style: TextStyle(
-                                fontFamily: 'Outfit',
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge
-                                    ?.color,
-                                fontSize: 22)),
+
+                        // Theme Switcher
+                        Consumer<ThemeController>(
+                          builder: (context, themeController, child) {
+                            return IconButton(
+                              icon: Icon(themeController.isDark
+                                  ? Icons.light_mode
+                                  : Icons.dark_mode),
+                              onPressed: () {
+                                themeController.toggleTheme();
+                              },
+                            );
+                          },
+                        ),
+
+                        // Profile Dropdown (New Animated One)
+                        StreamBuilder<User?>(
+                            stream: FirebaseAuth.instance.authStateChanges(),
+                            builder: (context, snapshot) {
+                              final user = snapshot.data;
+                              if (user == null) {
+                                return IconButton(
+                                  icon: const Icon(Icons.login),
+                                  onPressed: () =>
+                                      Navigator.pushNamed(context, '/'),
+                                );
+                              }
+                              return FloatingProfileMenu(user: user);
+                            }),
+                        const SizedBox(width: 8),
                       ],
                     ),
-                    actions: [
-                      // Notification Icon
-                      IconButton(
-                        icon: const Icon(Icons.notifications_none_rounded),
-                        onPressed: () {}, // Todo: Notifications
-                      ),
+                  SliverToBoxAdapter(
+                    child: _HeroSection(
+                      isDesktop: isDesktop,
+                      originController: _originController,
+                      destinationController: _destinationController,
+                      originFocusNode: _originFocusNode,
+                      destinationFocusNode: _destinationFocusNode,
+                      selectedDate: _selectedDate,
+                      onDateTap: () => _selectDate(context),
+                      onSearchTap: _searchBuses,
+                      isRoundTrip: _isRoundTrip,
+                      isBulkBooking: _isBulkBooking,
+                      // NEW: Pass Return Date Logic
+                      selectedReturnDate: _selectedReturnDate,
+                      onReturnDateTap: () => _selectReturnDate(context),
+                      onRoundTripChanged: (val) =>
+                          setState(() => _isRoundTrip = val),
+                      onBulkBookingChanged: (val) =>
+                          setState(() => _isBulkBooking = val),
+                      // NEW: Pass bulk counts
+                      bulkDatesCount: _bulkDates.length,
+                      // NEW: Pass Admin View Context
+                      isAdminView: widget.isAdminView,
+                    ),
+                  ),
+                  // --- ONGOING TRIPS & FAVORITES SECTION ---
+                  StreamBuilder<User?>(
+                      stream: FirebaseAuth.instance.authStateChanges(),
+                      builder: (context, snapshot) {
+                        final user = snapshot.data;
+                        if (user == null) return const SliverToBoxAdapter();
 
-                      // Theme Switcher
-                      Consumer<ThemeController>(
-                        builder: (context, themeController, child) {
-                          return IconButton(
-                            icon: Icon(themeController.isDark
-                                ? Icons.light_mode
-                                : Icons.dark_mode),
-                            onPressed: () {
-                              themeController.toggleTheme();
-                            },
-                          );
-                        },
-                      ),
-
-                      // Profile Dropdown (New Animated One)
-                      StreamBuilder<User?>(
-                          stream: FirebaseAuth.instance.authStateChanges(),
-                          builder: (context, snapshot) {
-                            final user = snapshot.data;
-                            if (user == null) {
-                              return IconButton(
-                                icon: const Icon(Icons.login),
-                                onPressed: () =>
-                                    Navigator.pushNamed(context, '/'),
-                              );
-                            }
-                            return FloatingProfileMenu(user: user);
-                          }),
-                      const SizedBox(width: 8),
-                    ],
+                        return SliverToBoxAdapter(
+                          child:
+                              _buildDashboardSection(context, user, isDesktop),
+                        );
+                      }),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    sliver: SliverToBoxAdapter(
+                      child: _FeaturesSection(isDesktop: isDesktop),
+                    ),
                   ),
-                SliverToBoxAdapter(
-                  child: _HeroSection(
-                    isDesktop: isDesktop,
-                    originController: _originController,
-                    destinationController: _destinationController,
-                    originFocusNode: _originFocusNode,
-                    destinationFocusNode: _destinationFocusNode,
-                    selectedDate: _selectedDate,
-                    onDateTap: () => _selectDate(),
-                    onSearchTap: _searchBuses,
-                    isRoundTrip: _isRoundTrip,
-                    isBulkBooking: _isBulkBooking,
-                    // NEW: Pass Return Date Logic
-                    selectedReturnDate: _selectedReturnDate,
-                    onReturnDateTap: () => _selectReturnDate(context),
-                    onRoundTripChanged: (val) =>
-                        setState(() => _isRoundTrip = val),
-                    onBulkBookingChanged: (val) =>
-                        setState(() => _isBulkBooking = val),
-                    // NEW: Pass bulk counts
-                    bulkDatesCount: _bulkDates.length,
-                    // NEW: Pass Admin View Context
-                    isAdminView: widget.isAdminView,
+                  SliverToBoxAdapter(
+                    child: _PopularDestinationsGrid(
+                      isDesktop: isDesktop,
+                      destinations: _currentDestinations,
+                    ),
                   ),
-                ),
-                // --- ONGOING TRIPS & FAVORITES SECTION ---
-                StreamBuilder<User?>(
-                    stream: FirebaseAuth.instance.authStateChanges(),
-                    builder: (context, snapshot) {
-                      final user = snapshot.data;
-                      if (user == null) return const SliverToBoxAdapter();
-
-                      return SliverToBoxAdapter(
-                        child: _buildDashboardSection(context, user, isDesktop),
-                      );
-                    }),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  sliver: SliverToBoxAdapter(
-                    child: _FeaturesSection(isDesktop: isDesktop),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: _PopularDestinationsGrid(
-                    isDesktop: isDesktop,
-                    destinations: _currentDestinations,
-                  ),
-                ),
-                const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
-                if (isDesktop) const SliverToBoxAdapter(child: AppFooter()),
-              ],
+                  const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+                  if (isDesktop) const SliverToBoxAdapter(child: AppFooter()),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1150,173 +1155,178 @@ class _HeroSectionState extends State<_HeroSection> {
 
   // New "Card Style" Desktop Search
   Widget _buildDesktopSearchCard(bool isDark) {
-    return Container(
-      width: 900, // Constrain width for the "Card" look
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor, // Adaptive Color
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
-          )
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Tabs Removed (Round Trip Disabled)
-          // Just a spacer or Title if needed?
-          const SizedBox(height: 20),
-          // const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)), // Divider removed too
+    return Material(
+      type: MaterialType.transparency,
+      child: Container(
+        width: 900, // Constrain width for the "Card" look
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor, // Adaptive Color
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 40,
+              offset: const Offset(0, 20),
+            )
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Tabs Removed (Round Trip Disabled)
+            // Just a spacer or Title if needed?
+            const SizedBox(height: 20),
+            // const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)), // Divider removed too
 
-          // 2. Bulk Booking Strip
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-            color: AppTheme.primaryColor
-                .withValues(alpha: 0.08), // Light Red Strip
-            child: Row(
-              children: [
-                SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: Checkbox(
-                    value: widget.isBulkBooking,
-                    activeColor: AppTheme.primaryColor,
-                    onChanged: (v) => widget.onBulkBookingChanged(v!),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  "Bulk / Multi-day Booking",
-                  style: TextStyle(
-                    color: isDark
-                        ? Colors.white
-                        : Colors.black.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // 3. Inputs Row
-          Padding(
-            padding:
-                const EdgeInsets.only(left: 40, right: 20, top: 24, bottom: 24),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _buildInputNoBorder(
-                    controller: widget.originController,
-                    focusNode: widget.originFocusNode,
-                    icon: Icons.my_location, // Target Icon
-                    hint: 'Where from?',
-                    isDark: isDark,
-                  ),
-                ),
-                Container(
-                  height: 30,
-                  width: 1,
-                  color: Colors.grey.shade300,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: _buildInputNoBorder(
-                    controller: widget.destinationController,
-                    focusNode: widget.destinationFocusNode,
-                    icon: Icons.location_on, // Pin Icon
-                    hint: 'Where to?',
-                    isDark: isDark,
-                  ),
-                ),
-                Container(
-                  height: 30,
-                  width: 1,
-                  color: Colors.grey.shade300,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                ),
-                // DEPARTURE DATE
-                Expanded(
-                  flex: 2,
-                  child: InkWell(
-                    onTap: widget.onDateTap,
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_month,
-                            color: AppTheme.primaryColor, size: 22),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Departure",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                    ? Colors.white70
-                                    : Colors.grey.shade600,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              DateFormat('EEE, d MMM')
-                                  .format(widget.selectedDate),
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: isDark ? Colors.white : Colors.black87,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+            // 2. Bulk Booking Strip
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+              color: AppTheme.primaryColor
+                  .withValues(alpha: 0.08), // Light Red Strip
+              child: Row(
+                children: [
+                  SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: Checkbox(
+                      value: widget.isBulkBooking,
+                      activeColor: AppTheme.primaryColor,
+                      onChanged: (v) => widget.onBulkBookingChanged(v!),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "Bulk / Multi-day Booking",
+                    style: TextStyle(
+                      color: isDark
+                          ? Colors.white
+                          : Colors.black.withValues(alpha: 0.7),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-                const SizedBox(width: 22),
-                SizedBox(
-                  height: 54, // Slightly taller
-                  width: 180, // Wider to prevent wrapping
-                  child: ElevatedButton(
-                    onPressed: widget.onSearchTap,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      elevation: 8, // More pop
-                      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12), // More rounded
+            // 3. Inputs Row
+            Padding(
+              padding: const EdgeInsets.only(
+                  left: 40, right: 20, top: 24, bottom: 24),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: _buildInputNoBorder(
+                      controller: widget.originController,
+                      focusNode: widget.originFocusNode,
+                      icon: Icons.my_location, // Target Icon
+                      hint: 'Where from?',
+                      isDark: isDark,
+                    ),
+                  ),
+                  Container(
+                    height: 30,
+                    width: 1,
+                    color: Colors.grey.shade300,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: _buildInputNoBorder(
+                      controller: widget.destinationController,
+                      focusNode: widget.destinationFocusNode,
+                      icon: Icons.location_on, // Pin Icon
+                      hint: 'Where to?',
+                      isDark: isDark,
+                    ),
+                  ),
+                  Container(
+                    height: 30,
+                    width: 1,
+                    color: Colors.grey.shade300,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  // DEPARTURE DATE
+                  Expanded(
+                    flex: 2,
+                    child: InkWell(
+                      onTap: widget.onDateTap,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_month,
+                              color: AppTheme.primaryColor, size: 22),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Departure",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.grey.shade600,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                DateFormat('EEE, d MMM')
+                                    .format(widget.selectedDate),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.search, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'SEARCH', // concise
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.0,
-                          ),
+                  ),
+
+                  const SizedBox(width: 22),
+                  SizedBox(
+                    height: 54, // Slightly taller
+                    width: 180, // Wider to prevent wrapping
+                    child: ElevatedButton(
+                      onPressed: widget.onSearchTap,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 8, // More pop
+                        shadowColor:
+                            AppTheme.primaryColor.withValues(alpha: 0.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(12), // More rounded
                         ),
-                      ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.search, size: 20),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'SEARCH', // concise
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1431,140 +1441,102 @@ class _HeroSectionState extends State<_HeroSection> {
   }
 
   Widget _buildMobileSearch(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(12), // REDUCED PADDING
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Round Trip Toggle Removed
-          // Row(
-          //   children: [
-          //     Expanded(
-          //       child: buildTabButton("One Way", !widget.isRoundTrip,
-          //           () => widget.onRoundTripChanged(false), isDark),
-          //     ),
-          //     const SizedBox(width: 12),
-          //     Expanded(
-          //       child: buildTabButton("Round Trip", widget.isRoundTrip,
-          //           () => widget.onRoundTripChanged(true), isDark),
-          //     ),
-          //   ],
-          // ),
-          const SizedBox(height: 12),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(8),
+    return Material(
+      type: MaterialType.transparency,
+      child: Container(
+        padding: const EdgeInsets.all(12), // REDUCED PADDING
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
-            child: Row(
-              children: [
-                SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: Checkbox(
-                    value: widget.isBulkBooking,
-                    activeColor: AppTheme.primaryColor,
-                    onChanged: (v) => widget.onBulkBookingChanged(v!),
-                  ),
+          ],
+        ),
+        child: Column(
+          children: [
+            _buildSearchInput(
+              controller: widget.originController,
+              icon: Icons.my_location,
+              label: 'From',
+              hint: 'Origin City',
+              focusNode: widget.originFocusNode,
+              isLast: false,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+            _buildSearchInput(
+              controller: widget.destinationController,
+              icon: Icons.navigation,
+              label: 'To',
+              hint: 'Destination City',
+              focusNode: widget.destinationFocusNode,
+              isLast: false,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: widget.onDateTap,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text("Bulk / Multi-day Booking",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                )
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildSearchInput(
-            controller: widget.originController,
-            icon: Icons.location_on,
-            label: 'From',
-            hint: 'Origin City',
-            focusNode: widget.originFocusNode,
-            isLast: false,
-            isDark: isDark,
-          ),
-          const SizedBox(height: 16),
-          _buildSearchInput(
-            controller: widget.destinationController,
-            icon: Icons.navigation,
-            label: 'To',
-            hint: 'Destination City',
-            focusNode: widget.destinationFocusNode,
-            isLast: false,
-            isDark: isDark,
-          ),
-          const SizedBox(height: 16),
-          InkWell(
-            onTap: widget.onDateTap,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).dividerColor),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today,
-                      color: AppTheme.primaryColor),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Departure Date",
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? const Color.fromARGB(255, 255, 255, 255)
-                                  : const Color.fromARGB(255, 0, 0, 0))),
-                      Text(
-                          DateFormat('EEE, d MMMM').format(widget.selectedDate),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: isDark
-                                  ? const Color.fromARGB(255, 255, 255, 255)
-                                  : const Color.fromARGB(255, 0, 0, 0))),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: widget.onSearchTap,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_today,
+                        color: AppTheme.primaryColor),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Departure Date",
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: isDark
+                                    ? const Color.fromARGB(255, 255, 255, 255)
+                                    : const Color.fromARGB(255, 0, 0, 0))),
+                        Text(
+                            DateFormat('EEE, d MMMM')
+                                .format(widget.selectedDate),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: isDark
+                                    ? const Color.fromARGB(255, 255, 255, 255)
+                                    : const Color.fromARGB(255, 0, 0, 0))),
+                      ],
+                    ),
+                  ],
                 ),
-                elevation: 4,
-                shadowColor: AppTheme.primaryColor.withValues(alpha: 0.4),
               ),
-              child: const Text("SEARCH BUSES",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: widget.onSearchTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 4,
+                  shadowColor: AppTheme.primaryColor.withValues(alpha: 0.4),
+                ),
+                child: const Text("SEARCH BUSES",
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
