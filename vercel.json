@@ -11,5 +11,6 @@
         "Cross-Origin-Embedder-Policy": "require-corp"
       }
     }
-  ]
+  ],
+  "outputDirectory": "build/web"
 }
