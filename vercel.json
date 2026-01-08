@@ -8,11 +8,11 @@
       "dest": "/api/$0"
     },
     {
-      "src": "/.*",
+      "src": "/(?!api/|.*\\.(?:js|json|css|png|jpg|jpeg|gif|ico|svg|ttf|woff|woff2|otf|eot)).*",
       "dest": "/index.html",
       "headers": {
-        "Cross-Origin-Opener-Policy": "same-origin",
-        "Cross-Origin-Embedder-Policy": "require-corp"
+        "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+        "Cross-Origin-Embedder-Policy": "credentialless"
       }
     }
   ],
