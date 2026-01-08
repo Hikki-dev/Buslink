@@ -37,6 +37,11 @@ sed -e "s/__API_KEY_WEB__/$FIREBASE_API_KEY_WEB/g" \
     -e "s/__MEASUREMENT_ID__/$FIREBASE_MEASUREMENT_ID/g" \
     lib/firebase_options_template.dart > lib/firebase_options.dart
 
+# 5. Generate .env for Web Assets (Public Keys Only)
+echo "Generating .env..."
+echo "STRIPE_PUBLISHABLE_KEY=$STRIPE_PUBLISHABLE_KEY" > .env
+
+# 6. Build Web Release
 flutter build web --release
 
 echo "------------------------------------------"
