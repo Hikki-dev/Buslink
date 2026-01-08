@@ -12,6 +12,8 @@ import '../../services/auth_service.dart';
 import 'payment_success_screen.dart';
 import 'bus_layout_widget.dart';
 import '../../services/firestore_service.dart';
+import '../auth/login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
   final Trip trip;
@@ -204,11 +206,21 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                     _handleConductorBooking(
                                         context, controller);
                                   } else {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const PaymentScreen()));
+                                    final user = Provider.of<User?>(context,
+                                        listen: false);
+                                    if (user == null) {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const LoginScreen()));
+                                    } else {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const PaymentScreen()));
+                                    }
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(

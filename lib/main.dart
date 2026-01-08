@@ -6,6 +6,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'dart:async'; // Added for Completer/Timer if needed
+
 import 'firebase_options.dart';
 import 'utils/platform/platform_utils.dart'; // Cross-platform utils
 
@@ -17,14 +19,17 @@ import 'utils/language_provider.dart';
 import 'utils/translations.dart';
 import 'utils/app_theme.dart';
 import 'views/admin/admin_dashboard.dart';
-import 'views/auth/login_screen.dart';
+
 import 'views/conductor/conductor_dashboard.dart';
 
 import 'views/booking/payment_success_screen.dart';
 import 'views/customer_main_screen.dart';
 
-void main() {
+import 'package:intl/date_symbol_data_local.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting();
   runApp(const AppBootstrapper());
 }
 
@@ -86,7 +91,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
 
       try {
         await NotificationService.initialize().timeout(
-          const Duration(seconds: 3),
+          const Duration(seconds: 10),
           onTimeout: () {
             debugPrint("NotificationService init timed out - skipping");
           },
@@ -100,6 +105,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
       if (dotenv.isInitialized) {
         stripeKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
       }
+
       if (stripeKey != null) {
         try {
           stripe.Stripe.publishableKey = stripeKey;
@@ -165,117 +171,136 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
       ],
       child: Consumer<ThemeController>(
         builder: (context, themeController, child) {
-          return MaterialApp(
-            navigatorKey: _AppBootstrapperState.navigatorKey, // Assign Key
-            title: 'BusLink',
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeController.themeMode,
-            // initialRoute: '/', // REMOVED: Let Flutter Web handle URL from browser
-            routes: {
-              '/': (context) => const AuthWrapper(),
-            },
-            onGenerateRoute: (settings) {
-              // Handle deep link for payment success
-              if (settings.name?.startsWith('/payment_success') ?? false) {
-                return MaterialPageRoute(
-                    settings: settings,
-                    builder: (_) => const PaymentSuccessScreen());
-              }
-              return null;
-            },
-            debugShowCheckedModeBanner: false,
-            builder: (context, child) {
-              // 1. LOADING SCREEN OVERLAY
-              if (!_isInitialized) {
-                return Scaffold(
-                  backgroundColor: Colors.white,
-                  body: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.directions_bus,
-                            size: 80, color: AppTheme.primaryColor),
-                        const SizedBox(height: 24),
-                        const CircularProgressIndicator(
-                            color: AppTheme.primaryColor, strokeWidth: 6),
-                        const SizedBox(height: 16),
-                        Text(
-                            Translations.translate(
-                                _statusKey, getPlatformLanguage()),
-                            style: const TextStyle(
-                                color: AppTheme.primaryColor,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              // 2. CHILD (NAVIGATOR)
-              if (child == null) return const SizedBox();
-
-              // 3. GLOBAL ADMIN BANNER OVERLAY
-              final tripController = Provider.of<TripController>(context);
-
-              if (!tripController.isPreviewMode) {
-                return child;
-              }
-
-              return Column(
-                children: [
-                  Material(
-                    elevation: 4,
-                    child: Container(
-                      width: double.infinity,
-                      color: Colors.amber,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 16),
-                      child: SafeArea(
-                        bottom: false,
-                        child: Row(
+          return Consumer<LanguageProvider>(
+            builder: (context, languageProvider, _) {
+              return MaterialApp(
+                locale: Locale(languageProvider.currentLanguage),
+                supportedLocales: const [
+                  Locale('en'),
+                  Locale('si'),
+                  Locale('ta'),
+                ],
+                localizationsDelegates: const [
+                  // Add flutter localizations delegates if needed, for now manual
+                  // GlobalMaterialLocalizations.delegate,
+                  // GlobalWidgetsLocalizations.delegate,
+                  // GlobalCupertinoLocalizations.delegate,
+                ],
+                navigatorKey: _AppBootstrapperState.navigatorKey, // Assign Key
+                title: 'BusLink',
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: themeController.themeMode,
+                // initialRoute: '/', // REMOVED: Let Flutter Web handle URL from browser
+                routes: {
+                  '/': (context) => const AuthWrapper(),
+                },
+                onGenerateRoute: (settings) {
+                  // Handle deep link for payment success
+                  if (settings.name?.startsWith('/payment_success') ?? false) {
+                    return MaterialPageRoute(
+                        settings: settings,
+                        builder: (_) => const PaymentSuccessScreen());
+                  }
+                  return null;
+                },
+                debugShowCheckedModeBanner: false,
+                builder: (context, child) {
+                  // 1. LOADING SCREEN OVERLAY
+                  if (!_isInitialized) {
+                    return Scaffold(
+                      backgroundColor: Colors.white,
+                      body: Center(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text("Welcome Admin - Preview Mode",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                    decoration: TextDecoration.none,
-                                    fontSize: 14)),
-                            const SizedBox(width: 16),
-                            InkWell(
-                              onTap: () async {
-                                // Update State
-                                await tripController.setPreviewMode(false);
-
-                                // Navigate using Global Key
-                                // We go to '/' which triggers AuthWrapper -> AdminDashboard
-                                _AppBootstrapperState.navigatorKey.currentState
-                                    ?.pushNamedAndRemoveUntil(
-                                        '/', (route) => false);
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12)),
-                                child: const Text("EXIT",
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black)),
-                              ),
-                            )
+                            const Icon(Icons.directions_bus,
+                                size: 80, color: AppTheme.primaryColor),
+                            const SizedBox(height: 24),
+                            const CircularProgressIndicator(
+                                color: AppTheme.primaryColor, strokeWidth: 6),
+                            const SizedBox(height: 16),
+                            Text(
+                                Translations.translate(
+                                    _statusKey, getPlatformLanguage()),
+                                style: const TextStyle(
+                                    color: AppTheme.primaryColor,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
-                    ),
-                  ),
-                  Expanded(child: child),
-                ],
+                    );
+                  }
+
+                  // 2. CHILD (NAVIGATOR)
+                  if (child == null) return const SizedBox();
+
+                  // 3. GLOBAL ADMIN BANNER OVERLAY
+                  final tripController = Provider.of<TripController>(context);
+
+                  if (!tripController.isPreviewMode) {
+                    return child;
+                  }
+
+                  return Column(
+                    children: [
+                      Material(
+                        elevation: 4,
+                        child: Container(
+                          width: double.infinity,
+                          color: Colors.amber,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 16),
+                          child: SafeArea(
+                            bottom: false,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text("Welcome Admin - Preview Mode",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                        decoration: TextDecoration.none,
+                                        fontSize: 14)),
+                                const SizedBox(width: 16),
+                                InkWell(
+                                  onTap: () async {
+                                    // Update State
+                                    await tripController.setPreviewMode(false);
+
+                                    // Navigate using Global Key
+                                    // We go to '/' which triggers AuthWrapper -> AdminDashboard
+                                    _AppBootstrapperState
+                                        .navigatorKey.currentState
+                                        ?.pushNamedAndRemoveUntil(
+                                            '/', (route) => false);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                        color:
+                                            Colors.black.withValues(alpha: 0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                    child: const Text("EXIT",
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black)),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(child: child),
+                    ],
+                  );
+                },
               );
             },
           );
@@ -293,7 +318,8 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
     if (user == null) {
-      return const LoginScreen();
+      // Lazy Login: Allow guests to see the main screen
+      return const CustomerMainScreen();
     } else {
       return RoleDispatcher(user: user);
     }
@@ -318,15 +344,27 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
     _userFuture = _fetchUserData();
   }
 
-  Future<DocumentSnapshot> _fetchUserData() {
+  Future<DocumentSnapshot> _fetchUserData() async {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    return firestoreService.getUserData(widget.user.uid).timeout(
-      const Duration(seconds: 5),
-      onTimeout: () {
-        throw "Firestore Timeout";
-      },
-    );
+
+    // GUEST MODE CHECK
+    if (widget.user.isAnonymous) {
+      return await firestoreService.getUserData(widget.user.uid);
+    }
+
+    try {
+      final result =
+          await firestoreService.getUserData(widget.user.uid).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw "Firestore Timeout";
+        },
+      );
+      return result;
+    } catch (e) {
+      rethrow;
+    }
   }
 
   @override
@@ -339,6 +377,10 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.user.isAnonymous) {
+      return const CustomerMainScreen();
+    }
+
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
 

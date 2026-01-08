@@ -17,9 +17,6 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
   final TextEditingController _originController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
   final TextEditingController _viaController = TextEditingController();
-  // final TextEditingController _priceController = TextEditingController(); // Price Removed
-  final TextEditingController _busNumberController = TextEditingController();
-  final TextEditingController _operatorController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -37,16 +34,9 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
     final routeData = {
       'fromCity': _originController.text,
       'toCity': _destinationController.text,
-      'via': _viaController.text,
-      'price': 0.0, // Default to 0
       'duration': durationStr,
-      'operatorName': _operatorController.text.isNotEmpty
-          ? _operatorController.text
-          : 'BusLink Official',
-      'busNumber': _busNumberController.text.isNotEmpty
-          ? _busNumberController.text
-          : 'Standard',
       'isRouteDefinition': true,
+      // Removed operatorName and busNumber as requested
     };
 
     try {

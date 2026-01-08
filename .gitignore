@@ -70,3 +70,5 @@ android/key.properties
 *.p12
 *.cer
 .vercel
+node_modules/
+push.json

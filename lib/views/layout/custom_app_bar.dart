@@ -15,6 +15,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   final bool hideActions;
   final bool automaticallyImplyLeading;
+  final List<Widget>? actions;
 
   const CustomAppBar({
     super.key,
@@ -25,6 +26,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.title,
     this.hideActions = false,
     this.automaticallyImplyLeading = true,
+    this.actions,
   });
 
   @override
@@ -58,6 +60,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: hideActions
           ? []
           : [
+              if (actions != null) ...actions!,
               // ... (actions remain same)
               // Theme Toggle
               Consumer<ThemeController>(

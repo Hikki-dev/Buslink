@@ -6,6 +6,8 @@ import '../models/route_model.dart';
 
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -13,6 +15,30 @@ class FirestoreService {
   final String ticketCollection = 'tickets';
   final String userCollection = 'users';
   final String routeCollection = 'routes';
+  
+  // #region agent log
+  Future<void> _debugLog(String location, String message, Map<String, dynamic> data, {String? hypothesisId, String runId = 'initial'}) async {
+    try {
+      final logEntry = {
+        'id': 'log_${DateTime.now().millisecondsSinceEpoch}_${message.hashCode}',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'location': location,
+        'message': message,
+        'data': data,
+        'sessionId': 'debug-session',
+        'runId': runId,
+        if (hypothesisId != null) 'hypothesisId': hypothesisId,
+      };
+      await http.post(
+        Uri.parse('http://127.0.0.1:7242/ingest/83c725d0-037f-4fb1-92e2-a0f363f9b49a'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(logEntry),
+      ).timeout(const Duration(seconds: 1), onTimeout: () => http.Response('', 408));
+    } catch (e) {
+      // Silently fail - don't break app
+    }
+  }
+  // #endregion
 
   // Helper to generate 4-char alphanumeric ID
   String _generateShortId() {
@@ -31,6 +57,10 @@ class FirestoreService {
     String toCity,
     DateTime date,
   ) async {
+    // #region agent log
+    await _debugLog('firestore_service.dart:searchTrips', 'Trip search started', {'fromCity': fromCity, 'toCity': toCity, 'date': date.toString()}, hypothesisId: 'H4');
+    // #endregion
+    
     final DateTime dayStart = DateTime(date.year, date.month, date.day);
     final DateTime dayEnd = DateTime(
       date.year,
@@ -50,6 +80,13 @@ class FirestoreService {
         ? ""
         : toCity[0].toUpperCase() + toCity.substring(1).toLowerCase();
 
+    // #region agent log
+    await _debugLog('firestore_service.dart:searchTrips', 'City names normalized', {'originalFrom': fromCity, 'normalizedFrom': safeFrom, 'originalTo': toCity, 'normalizedTo': safeTo}, hypothesisId: 'H4');
+    // #endregion
+
+    // #region agent log
+    await _debugLog('firestore_service.dart:searchTrips', 'Executing Firestore query', {'dayStart': dayStart.toString(), 'dayEnd': dayEnd.toString()}, hypothesisId: 'H4');
+    // #endregion
     final snapshot = await _db
         .collection(tripCollection)
         .where('fromCity', isEqualTo: safeFrom)
@@ -58,10 +95,21 @@ class FirestoreService {
         .where('departureTime', isLessThanOrEqualTo: dayEnd)
         .get();
 
+    // #region agent log
+    await _debugLog('firestore_service.dart:searchTrips', 'Firestore query completed', {'resultCount': snapshot.docs.length}, hypothesisId: 'H4');
+    // #endregion
+
     if (snapshot.docs.isEmpty) {
+      // #region agent log
+      await _debugLog('firestore_service.dart:searchTrips', 'No trips found', {}, hypothesisId: 'H4');
+      // #endregion
       return [];
     }
-    return snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
+    final trips = snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
+    // #region agent log
+    await _debugLog('firestore_service.dart:searchTrips', 'Trips parsed successfully', {'tripCount': trips.length}, hypothesisId: 'H4');
+    // #endregion
+    return trips;
   }
 
   Future<List<Trip>> getTripsByDate(DateTime start, DateTime end) async {

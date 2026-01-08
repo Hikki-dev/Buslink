@@ -68,34 +68,45 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // FRONT EXIT
+          // FRONT ENTRANCE
           Column(
             children: [
               const Icon(Icons.sensor_door_outlined,
-                  color: Colors.red, size: 24),
+                  color: Colors.green,
+                  size: 24), // Changed to Green for Entrance
               const SizedBox(height: 4),
-              Text("EXIT",
+              Text("Entrance",
                   style: TextStyle(
                       fontSize: 10,
-                      color: Colors.red.withValues(alpha: 0.8),
+                      color: widget.isDark ? Colors.white70 : Colors.black54,
                       fontWeight: FontWeight.bold)),
             ],
           ),
 
           // DRIVER (Steering Wheel)
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                  color: widget.isDark ? Colors.white24 : Colors.black12,
-                  width: 2),
-            ),
-            child: Icon(
-              Icons.directions_car,
-              size: 28,
-              color: widget.isDark ? Colors.white54 : Colors.black54,
-            ),
+          Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: widget.isDark ? Colors.white24 : Colors.black12,
+                      width: 2),
+                ),
+                child: Icon(
+                  Icons.directions_car,
+                  size: 24,
+                  color: widget.isDark ? Colors.white54 : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text("Driver",
+                  style: TextStyle(
+                      fontSize: 10,
+                      color: widget.isDark ? Colors.white70 : Colors.black54,
+                      fontWeight: FontWeight.bold)),
+            ],
           )
         ],
       ),

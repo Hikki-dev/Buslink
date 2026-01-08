@@ -13,6 +13,8 @@ import '../results/bus_list_screen.dart';
 import '../layout/desktop_navbar.dart';
 // import '../layout/mobile_navbar.dart';
 import '../layout/custom_app_bar.dart';
+import '../analytics/travel_stats_screen.dart';
+import 'refund_request_screen.dart';
 
 class MyTripsScreen extends StatelessWidget {
   final bool showBackButton;
@@ -72,6 +74,18 @@ class MyTripsScreen extends StatelessWidget {
                         color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold)),
                 centerTitle: true,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.bar_chart),
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const TravelStatsScreen()));
+                    },
+                    tooltip: "Travel Stats",
+                  )
+                ],
                 bottom: const TabBar(
                   labelColor: AppTheme.primaryColor,
                   unselectedLabelColor: Colors.grey,
@@ -543,7 +557,35 @@ class _BoardingPassCard extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
+
+          // NEW: Refund Link for Upcoming Trips
+          if (!shouldListen) // implies isHistory == false (wait check calling logic) -- Actually shouldListen is true for upcoming usually
+            const SizedBox.shrink(),
+
+          if (tripData['status'] != 'completed' &&
+              tripData['status'] != 'cancelled' &&
+              tripData['status'] != 'arrived')
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: TextButton.icon(
+                onPressed: () {
+                  try {
+                    final trip = Trip.fromMap(tripData, ticket.tripId);
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => RefundRequestScreen(
+                                ticket: ticket, trip: trip)));
+                  } catch (e) {
+                    print("Error nav to refund: $e");
+                  }
+                },
+                icon: const Icon(Icons.undo, size: 16, color: Colors.grey),
+                label: const Text("Request Refund / Cancel",
+                    style: TextStyle(color: Colors.grey, fontSize: 12)),
+              ),
+            ),
         ],
       ),
     );

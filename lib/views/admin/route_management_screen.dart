@@ -116,8 +116,9 @@ class _RouteManagementScreenState extends State<RouteManagementScreen> {
                               onTap: () async {
                                 final t =
                                     await _pickTime(context, departureTime);
-                                if (t != null)
+                                if (t != null) {
                                   setState(() => departureTime = t);
+                                }
                               },
                               child: InputDecorator(
                                 decoration: const InputDecoration(

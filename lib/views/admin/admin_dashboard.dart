@@ -15,6 +15,9 @@ import 'layout/admin_navbar.dart';
 import 'admin_route_screen.dart';
 import 'route_management_screen.dart';
 import 'package:buslink/views/booking/bus_layout_widget.dart';
+import 'refunds/admin_refund_list.dart';
+import 'bookings/admin_booking_list.dart';
+import 'analytics/late_departures_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -54,116 +57,220 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1000),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: ShaderMask(
-                                            shaderCallback: (bounds) =>
-                                                const LinearGradient(
-                                              colors: [
-                                                AppTheme.primaryColor,
-                                                Color(0xFFFF8A65)
-                                              ],
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                            ).createShader(bounds),
-                                            child: const FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              alignment: Alignment.centerLeft,
-                                              child: Text("Route Management",
-                                                  style: TextStyle(
-                                                      fontFamily: 'Outfit',
-                                                      fontSize: 34,
-                                                      height: 1.1,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      color: Colors.white)),
+                          constraints: const BoxConstraints(maxWidth: 1200),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (isDesktop)
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text("Route Management",
+                                          style: TextStyle(
+                                              fontFamily: 'Outfit',
+                                              fontSize: 34,
+                                              height: 1.1,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppTheme.primaryColor)),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                          "Manage bus schedules, fares, and availability.",
+                                          style: TextStyle(
+                                              fontFamily: 'Inter',
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withValues(alpha: 0.7),
+                                              fontSize: 16)),
+                                      const SizedBox(height: 24),
+                                      Center(
+                                        child: Wrap(
+                                          spacing: 16,
+                                          runSpacing: 16,
+                                          children: [
+                                            _buildAddRouteButton(context),
+                                            _buildAddRouteSimpleButton(context),
+                                            _buildManageRoutesButton(context),
+                                            _buildRefundButton(context),
+                                            _buildBookingsButton(context),
+                                            _buildAnalyticsButton(context),
+                                            Consumer<ThemeController>(
+                                              builder: (context,
+                                                  themeController, _) {
+                                                final isDark = Theme.of(context)
+                                                        .brightness ==
+                                                    Brightness.dark;
+                                                return IconButton(
+                                                  onPressed: () {
+                                                    themeController.setTheme(
+                                                        isDark
+                                                            ? ThemeMode.light
+                                                            : ThemeMode.dark);
+                                                  },
+                                                  icon: Icon(
+                                                      isDark
+                                                          ? Icons.light_mode
+                                                          : Icons.dark_mode,
+                                                      color: isDark
+                                                          ? Colors.white
+                                                          : Colors.black87),
+                                                  tooltip: "Toggle Theme",
+                                                );
+                                              },
                                             ),
-                                          ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                              "Manage bus schedules, fares, and availability.",
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text("Route Management",
                                               style: TextStyle(
-                                                  fontFamily: 'Inter',
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurface
-                                                      .withValues(alpha: 0.7),
-                                                  fontSize: 16)),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (isDesktop) ...[
-                                const Spacer(),
-                                _buildAddRouteButton(context),
-                                const SizedBox(width: 16),
-                                _buildAddRouteSimpleButton(context),
-                                const SizedBox(width: 16),
-                                _buildManageRoutesButton(context),
-                                const SizedBox(width: 16),
-                                // Theme Toggle
-                                Consumer<ThemeController>(
-                                  builder: (context, themeController, _) {
-                                    final isDark =
-                                        Theme.of(context).brightness ==
-                                            Brightness.dark;
-                                    return IconButton(
-                                      onPressed: () {
-                                        themeController.setTheme(isDark
-                                            ? ThemeMode.light
-                                            : ThemeMode.dark);
-                                      },
-                                      icon: Icon(
-                                          isDark
-                                              ? Icons.light_mode // Sun in Dark
-                                              : Icons
-                                                  .dark_mode, // Moon in Light
-                                          color: isDark
-                                              ? Colors.white
-                                              : Colors.black87),
-                                      tooltip: "Toggle Theme",
-                                    );
-                                  },
-                                )
-                              ]
-                            ],
+                                                  fontFamily: 'Outfit',
+                                                  fontSize: 34,
+                                                  height: 1.1,
+                                                  fontWeight: FontWeight.w800,
+                                                  color:
+                                                      AppTheme.primaryColor)),
+                                          Consumer<ThemeController>(
+                                            builder:
+                                                (context, themeController, _) {
+                                              final isDark = Theme.of(context)
+                                                      .brightness ==
+                                                  Brightness.dark;
+                                              return IconButton(
+                                                onPressed: () {
+                                                  themeController.setTheme(
+                                                      isDark
+                                                          ? ThemeMode.light
+                                                          : ThemeMode.dark);
+                                                },
+                                                icon: Icon(
+                                                    isDark
+                                                        ? Icons.light_mode
+                                                        : Icons.dark_mode,
+                                                    color: isDark
+                                                        ? Colors.white
+                                                        : Colors.black87),
+                                                tooltip: "Toggle Theme",
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                          "Manage bus schedules, fares, and availability.",
+                                          style: TextStyle(
+                                              fontFamily: 'Inter',
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withValues(alpha: 0.7),
+                                              fontSize: 16)),
+                                    ],
+                                  ),
+
+                                // Mobile Actions (Grid Layout)
+                                if (!isDesktop) ...[
+                                  const SizedBox(height: 32),
+                                  Column(
+                                    children: [
+                                      Row(
+                                        children: [
+                                          _buildMobileActionCard(
+                                              context,
+                                              Icons.add_circle_outline,
+                                              "Add Trip",
+                                              () => Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const AdminScreen(
+                                                              trip: null))),
+                                              isPrimary: true),
+                                          const SizedBox(width: 16),
+                                          _buildMobileActionCard(
+                                              context,
+                                              Icons.alt_route,
+                                              "Add Route",
+                                              () => Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const AdminRouteScreen())),
+                                              isPrimary: true),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          _buildMobileActionCard(
+                                              context,
+                                              Icons.map_outlined,
+                                              "Manage Routes",
+                                              () => Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const RouteManagementScreen()))),
+                                          const SizedBox(width: 16),
+                                          _buildMobileActionCard(
+                                              context,
+                                              Icons
+                                                  .confirmation_number_outlined,
+                                              "Bookings",
+                                              () => Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const AdminBookingListScreen()))),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          _buildMobileActionCard(
+                                              context,
+                                              Icons.monetization_on_outlined,
+                                              "Refunds",
+                                              () => Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const AdminRefundListScreen()))),
+                                          const SizedBox(width: 16),
+                                          _buildMobileActionCard(
+                                              context,
+                                              Icons.analytics_outlined,
+                                              "Analytics",
+                                              () => Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const AdminAnalyticsDashboard()))),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 32),
-
-                      // Mobile Add Button
-                      if (!isDesktop) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Flexible(child: _buildAddRouteButton(context)),
-                            const SizedBox(width: 16),
-                            Flexible(
-                                child: _buildAddRouteSimpleButton(context)),
-                            const SizedBox(width: 16),
-                            Flexible(child: _buildManageRoutesButton(context)),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                      ],
 
                       // Search Section
                       _buildSearchSection(context, controller, isDesktop),
@@ -174,7 +281,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1000),
+                          constraints: const BoxConstraints(maxWidth: 1200),
                           child: Consumer<TripController>(
                             builder: (context, ctl, _) {
                               if (ctl.isLoading) {
@@ -341,7 +448,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       BuildContext context, TripController controller, bool isDesktop) {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1000),
+        constraints: const BoxConstraints(maxWidth: 1200),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
           padding: const EdgeInsets.all(24),
@@ -741,6 +848,101 @@ class _AdminDashboardState extends State<AdminDashboard> {
               },
               child: const Text("Delete")),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRefundButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AdminRefundListScreen()));
+      },
+      icon: const Icon(Icons.monetization_on),
+      label: const Text("Refunds"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        textStyle:
+            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildBookingsButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AdminBookingListScreen()));
+      },
+      icon: const Icon(Icons.confirmation_number),
+      label: const Text("Bookings"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        textStyle:
+            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AdminAnalyticsDashboard()));
+      },
+      icon: const Icon(Icons.analytics),
+      label: const Text("Analytics"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        textStyle:
+            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildMobileActionCard(
+      BuildContext context, IconData icon, String label, VoidCallback onTap,
+      {bool isPrimary = false}) {
+    return Expanded(
+      child: Material(
+        color: isPrimary ? AppTheme.primaryColor : Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: isPrimary
+                ? BorderSide.none
+                : BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon,
+                    size: 28,
+                    color: isPrimary ? Colors.white : AppTheme.primaryColor),
+                const SizedBox(height: 12),
+                Text(label,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isPrimary
+                            ? Colors.white
+                            : Theme.of(context).textTheme.bodyLarge?.color,
+                        fontSize: 14),
+                    textAlign: TextAlign.center)
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

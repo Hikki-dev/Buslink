@@ -303,49 +303,77 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     final String uid = user['uid'] ?? '';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      padding: const EdgeInsets.symmetric(
+          vertical: 24.0, horizontal: 8), // Increased vertical padding
       child: Row(
         children: [
           CircleAvatar(
+            radius: 24, // Slightly larger avatar
             backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : 'U',
               style: const TextStyle(
-                  color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 16), // Reduced gap
           Expanded(
             flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, // prevent expansion
               children: [
-                Text(name,
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: isDark ? Colors.white : Colors.black87)),
-                Text(email,
-                    style: TextStyle(
-                        color: isDark ? Colors.white54 : Colors.grey.shade500,
-                        fontSize: 14)),
+                Text(
+                  name,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14, // Slightly smaller
+                      color: isDark ? Colors.white : Colors.black87),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                Text(
+                  email,
+                  style: TextStyle(
+                      color: isDark ? Colors.white54 : Colors.grey.shade500,
+                      fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1, // Single line for email
+                ),
               ],
             ),
           ),
-          Expanded(
+          // Role Badge: Flexible to avoid taking too much space
+          Flexible(
             flex: 2,
+            fit: FlexFit.tight, // Force it to take space but allow shrink
             child: _buildRoleBadge(role),
           ),
-          IconButton(
-            icon: Icon(Icons.edit_outlined,
-                color: isDark ? Colors.white70 : Colors.grey.shade600),
-            tooltip: "Edit User",
-            onPressed: () => _showEditUserDialog(context, uid, name, role),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
-            tooltip: "Delete User Profile",
-            onPressed: () => _confirmDeleteUser(context, uid, name),
+          // Actions: Wrap in Row with minimal size
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(), // tight
+                icon: Icon(Icons.edit_outlined,
+                    size: 20,
+                    color: isDark ? Colors.white70 : Colors.grey.shade600),
+                tooltip: "Edit User",
+                onPressed: () => _showEditUserDialog(context, uid, name, role),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(), // tight
+                icon: const Icon(Icons.delete_outline,
+                    size: 20, color: Colors.red),
+                tooltip: "Delete User Profile",
+                onPressed: () => _confirmDeleteUser(context, uid, name),
+              ),
+            ],
           ),
         ],
       ),

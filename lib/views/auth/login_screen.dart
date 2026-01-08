@@ -7,6 +7,8 @@ import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/language_provider.dart';
 
+import 'phone_login_screen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -98,7 +100,11 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _isLoading = false);
         await Future.delayed(const Duration(milliseconds: 200));
         if (mounted) {
-          Navigator.of(context).pushReplacementNamed('/');
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          } else {
+            Navigator.of(context).pushReplacementNamed('/');
+          }
         }
         return;
       }
@@ -118,24 +124,30 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
       if (cred != null && cred.user != null) {
         await Future.delayed(const Duration(milliseconds: 200));
-        if (mounted) Navigator.of(context).pushReplacementNamed('/');
+        if (mounted) {
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          } else {
+            Navigator.of(context).pushReplacementNamed('/');
+          }
+        }
       }
     }
   }
 
-  void _appleSignIn() async {
-    setState(() => _isLoading = true);
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final cred = await authService.signInWithApple(context);
+  // void _appleSignIn() async {
+  //   setState(() => _isLoading = true);
+  //   final authService = Provider.of<AuthService>(context, listen: false);
+  //   final cred = await authService.signInWithApple(context);
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      if (cred != null && cred.user != null) {
-        await Future.delayed(const Duration(milliseconds: 200));
-        if (mounted) Navigator.of(context).pushReplacementNamed('/');
-      }
-    }
-  }
+  //   if (mounted) {
+  //     setState(() => _isLoading = false);
+  //     if (cred != null && cred.user != null) {
+  //       await Future.delayed(const Duration(milliseconds: 200));
+  //       if (mounted) Navigator.of(context).pushReplacementNamed('/');
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -356,11 +368,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(width: 12),
+              // Expanded(
+              //   child: _SocialButton(
+              //     onPressed: _appleSignIn,
+              //     icon: Icons.apple,
+              //     label: lp.translate('apple_login'),
+              //   ),
+              // ),
               Expanded(
                 child: _SocialButton(
-                  onPressed: _appleSignIn,
-                  icon: Icons.apple,
-                  label: lp.translate('apple_login'),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const PhoneLoginScreen()));
+                  },
+                  icon: Icons.phone_android_rounded,
+                  label: "Phone",
                 ),
               ),
             ],
@@ -449,7 +473,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

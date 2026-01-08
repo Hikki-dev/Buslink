@@ -136,35 +136,39 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
           ),
 
           // CALENDAR BODY
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: SizedBox(
-              width: 328,
-              height: 300,
-              child: CalendarDatePicker2(
-                config: CalendarDatePicker2Config(
-                  calendarType: CalendarDatePicker2Type.multi,
-                  selectedDayHighlightColor: primaryColor,
-                  selectedDayTextStyle: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
-                  todayTextStyle: TextStyle(
-                    color: primaryColor,
-                    fontWeight: FontWeight.bold,
+          Flexible(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: SizedBox(
+                  // Allow natural sizing with max width constraint standard for pickers
+                  width: 360,
+                  child: CalendarDatePicker2(
+                    config: CalendarDatePicker2Config(
+                      calendarType: CalendarDatePicker2Type.multi,
+                      selectedDayHighlightColor: primaryColor,
+                      selectedDayTextStyle: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                      todayTextStyle: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      controlsTextStyle: const TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      // Mimic Material 3 rounded selection
+                      dayBorderRadius: BorderRadius.circular(20),
+                    ),
+                    value: _selectedDates,
+                    onValueChanged: (dates) {
+                      setState(() {
+                        _selectedDates = dates.whereType<DateTime>().toList()
+                          ..sort();
+                      });
+                    },
                   ),
-                  controlsTextStyle: const TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  // Mimic Material 3 rounded selection
-                  dayBorderRadius: BorderRadius.circular(20),
                 ),
-                value: _selectedDates,
-                onValueChanged: (dates) {
-                  setState(() {
-                    _selectedDates = dates.whereType<DateTime>().toList()
-                      ..sort();
-                  });
-                },
               ),
             ),
           ),

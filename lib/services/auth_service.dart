@@ -32,11 +32,14 @@ class AuthService {
         userCredential = await _auth.signInWithPopup(googleProvider);
       } else {
         // --- MOBILE FLOW (Android/iOS) ---
-
         // 1. *** THIS IS THE FIX ***
         // As your guides correctly pointed out, v7 uses 'authenticate()'.
-        final GoogleSignInAccount googleUser =
-            await _googleSignIn.authenticate(scopeHint: ['email']);
+        GoogleSignInAccount? googleUser;
+        try {
+          googleUser = await _googleSignIn.authenticate(scopeHint: ['email']);
+        } catch (e) {
+          rethrow;
+        }
 
         final GoogleSignInClientAuthorization? authorization =
             await googleUser.authorizationClient.authorizationForScopes(
@@ -181,16 +184,76 @@ class AuthService {
     }
   }
 
+  // --- PHONE AUTHENTICATION METHODS ---
+
+  Future<void> verifyPhoneNumber({
+    required String phoneNumber,
+    required Function(PhoneAuthCredential) verificationCompleted,
+    required Function(FirebaseAuthException) verificationFailed,
+    required Function(String, int?) codeSent,
+    required Function(String) codeAutoRetrievalTimeout,
+  }) async {
+    await _auth.verifyPhoneNumber(
+      phoneNumber: phoneNumber,
+      verificationCompleted: verificationCompleted,
+      verificationFailed: verificationFailed,
+      codeSent: codeSent,
+      codeAutoRetrievalTimeout: codeAutoRetrievalTimeout,
+    );
+  }
+
+  Future<UserCredential?> signInWithPhoneCredential(
+      BuildContext context, PhoneAuthCredential credential) async {
+    try {
+      final userCredential = await _auth.signInWithCredential(credential);
+      final user = userCredential.user;
+
+      if (user != null) {
+        // Ensure user document exists (same logic as Google/Email)
+        await _ensureUserDocument(user);
+      }
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      if (!context.mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Phone Auth failed: ${e.message}")));
+      return null;
+    }
+  }
+
+  Future<UserCredential?> signInAnonymously() async {
+    try {
+      return await _auth.signInAnonymously();
+    } catch (e) {
+      debugPrint("Anonymous auth failed: $e");
+      return null;
+    }
+  }
+
   Future<void> _ensureUserDocument(User user) async {
     final docStats = await _db.collection('users').doc(user.uid).get();
     if (!docStats.exists) {
       await _db.collection('users').doc(user.uid).set({
         'uid': user.uid,
         'email': user.email,
-        'displayName': user.displayName ?? user.email?.split('@')[0],
+        'phoneNumber': user.phoneNumber, // Build phoneNumber
+        'displayName': user.displayName ?? user.email?.split('@')[0] ?? 'User',
         'role': 'customer',
         'createdAt': FieldValue.serverTimestamp(),
       });
+    } else {
+      // If the user logs in via a different method (link phone to existing account??)
+      // OR simply just update the phone number if it was missing.
+      // For now, let's just update phoneNumber if it's null in DB but present in Auth
+      final data = docStats.data();
+      if (data != null &&
+          (data['phoneNumber'] == null || data['phoneNumber'] == "") &&
+          user.phoneNumber != null) {
+        await _db
+            .collection('users')
+            .doc(user.uid)
+            .update({'phoneNumber': user.phoneNumber});
+      }
     }
   }
 

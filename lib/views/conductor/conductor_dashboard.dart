@@ -14,7 +14,7 @@ import '../admin/admin_dashboard.dart';
 import 'conductor_trip_management_screen.dart';
 import '../layout/custom_app_bar.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/foundation.dart'; // for kIsWeb
+// for kIsWeb
 import '../../views/auth/login_screen.dart';
 import 'qr_scan_screen.dart';
 

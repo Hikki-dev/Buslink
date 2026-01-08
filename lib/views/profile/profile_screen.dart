@@ -11,6 +11,7 @@ import 'support_screen.dart';
 import 'feedback_dialog.dart';
 import '../layout/desktop_navbar.dart';
 import '../favorites/favorites_screen.dart';
+import '../settings/language_selection_screen.dart';
 
 // import '../layout/mobile_navbar.dart';
 import '../layout/custom_app_bar.dart';
@@ -245,8 +246,6 @@ class ProfileScreen extends StatelessWidget {
                                       onChanged: (v) {},
                                     ),
                                   ),
-                                  // Language selection removed as requested
-                                  /*
                                   const Divider(height: 1),
                                   ListTile(
                                     leading: Container(
@@ -269,10 +268,13 @@ class ProfileScreen extends StatelessWidget {
                                         style: const TextStyle(
                                             color: Colors.grey)),
                                     onTap: () {
-                                      // ...
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const LanguageSelectionScreen()));
                                     },
                                   ),
-                                  */
                                 ],
                               ),
                             ),
