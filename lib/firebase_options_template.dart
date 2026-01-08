@@ -41,13 +41,13 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDlo0Mwe-N-NOLaMEDdxy_tj4TBS46_YhI',
-    appId: '1:621148800955:web:3d267b90b25962c8eea69e',
-    messagingSenderId: '621148800955',
-    projectId: 'buslink-416e1',
-    authDomain: 'buslink-416e1.firebaseapp.com',
-    storageBucket: 'buslink-416e1.firebasestorage.app',
-    measurementId: 'G-HW4Z2KZLG6',
+    apiKey: '__API_KEY_WEB__',
+    appId: '__APP_ID_WEB__',
+    messagingSenderId: '__MESSAGING_SENDER_ID__',
+    projectId: '__PROJECT_ID__',
+    authDomain: '__AUTH_DOMAIN__',
+    storageBucket: '__STORAGE_BUCKET__',
+    measurementId: '__MEASUREMENT_ID__',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -64,8 +64,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '621148800955',
     projectId: 'buslink-416e1',
     storageBucket: 'buslink-416e1.firebasestorage.app',
-    androidClientId: '621148800955-g07n1vbvvr3s50rqsme86ufh1rt8mij4.apps.googleusercontent.com',
-    iosClientId: '621148800955-313pco6l33cvve7ll73rnphi4qf4skd6.apps.googleusercontent.com',
+    androidClientId:
+        '621148800955-g07n1vbvvr3s50rqsme86ufh1rt8mij4.apps.googleusercontent.com',
+    iosClientId:
+        '621148800955-313pco6l33cvve7ll73rnphi4qf4skd6.apps.googleusercontent.com',
     iosBundleId: 'com.example.buslink',
   );
 
@@ -75,8 +77,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '621148800955',
     projectId: 'buslink-416e1',
     storageBucket: 'buslink-416e1.firebasestorage.app',
-    androidClientId: '621148800955-g07n1vbvvr3s50rqsme86ufh1rt8mij4.apps.googleusercontent.com',
-    iosClientId: '621148800955-313pco6l33cvve7ll73rnphi4qf4skd6.apps.googleusercontent.com',
+    androidClientId:
+        '621148800955-g07n1vbvvr3s50rqsme86ufh1rt8mij4.apps.googleusercontent.com',
+    iosClientId:
+        '621148800955-313pco6l33cvve7ll73rnphi4qf4skd6.apps.googleusercontent.com',
     iosBundleId: 'com.example.buslink',
   );
 
@@ -89,5 +93,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'buslink-416e1.firebasestorage.app',
     measurementId: 'G-9BHY9T8KE4',
   );
-
 }
