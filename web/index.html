@@ -23,13 +23,14 @@
     />
 
     <title>BusLink - Book Your Journey</title>
-    <link rel="manifest" href="manifest.json" />
-  </head>
-  <body>
-    <!-- Initial Loading Spinner -->
-    <div
-      id="loading-indicator"
-      style="
+    <!-- Custom Flutter Bootstrap to Disable Service Worker (Fix Vercel 404s) -->
+    <script>
+      window.flutterConfiguration = {
+        serviceWorker: null, // Disable Service Worker
+      };
+    </script>
+    <script src="flutter_bootstrap.js" async></script>
+    <!-- <link rel="manifest" href="manifest.json" /> -->
         position: fixed;
         top: 0;
         left: 0;
