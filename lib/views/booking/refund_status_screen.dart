@@ -52,7 +52,7 @@ class RefundStatusScreen extends StatelessWidget {
                                 color: Colors.red,
                                 fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        Text(refund.rejectionReason ?? "No reason provided",
+                        Text(refund.reviewNote ?? "No reason provided",
                             textAlign: TextAlign.center),
                       ],
                     ),
@@ -106,12 +106,23 @@ class RefundStatusScreen extends StatelessWidget {
         icon = Icons.check_circle;
         text = "APPROVED";
         break;
+      case RefundStatus.processed:
+        color = Colors.green;
+        icon = Icons.check_circle_outline;
+        text = "PROCESSED";
+        break;
       case RefundStatus.rejected:
         color = Colors.red;
         icon = Icons.cancel;
         text = "REJECTED";
         break;
+      case RefundStatus.failed:
+        color = Colors.redAccent;
+        icon = Icons.error_outline;
+        text = "FAILED";
+        break;
       case RefundStatus.pending:
+      default:
         color = Colors.orange;
         icon = Icons.hourglass_top;
         text = "PENDING";

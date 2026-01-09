@@ -193,7 +193,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
         'status': 'approved',
         'processingStatus': 'completed',
         'refundedAt': FieldValue.serverTimestamp(),
-        'note': 'Refund processed via Admin Console (Direct API)',
+        'reviewNote': 'Refund processed via Admin Console (Direct API)',
       });
 
       // 2. Update Ticket Status (Cancel it)
@@ -291,7 +291,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
         'status': 'rejected',
         'processingStatus':
             'failed', // or completed but status is rejected? Spec says REJECTED.
-        'rejectionReason': reason,
+        'reviewNote': reason,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 

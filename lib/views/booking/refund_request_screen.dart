@@ -107,19 +107,21 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
       final refundReq = RefundRequest(
         id: '', // Auto-generated
         ticketId: widget.ticket.ticketId,
+        bookingId: widget.ticket.ticketId,
+        tripId: widget.trip.id,
         userId: widget.ticket.userId,
         passengerName: widget.ticket.passengerName,
-        tripId: widget.trip.id,
         reason: _selectedReason!,
         otherReasonText: _otherReasonController.text.trim(),
         status: RefundStatus.pending,
-        processingStatus: RefundProcessingStatus.initiated,
         tripPrice: widget.ticket.totalAmount,
         refundPercentage: refundPct,
         refundAmount: refundAmt,
         cancellationFee: fee,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        requestedAt: DateTime.now(),
+        amountRequested: refundAmt,
       );
 
       // Save to Firestore via Service
@@ -136,19 +138,21 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
       final fixedRequest = RefundRequest(
           id: newDocRef.id,
           ticketId: refundReq.ticketId,
+          bookingId: refundReq.bookingId,
           userId: refundReq.userId,
           passengerName: refundReq.passengerName,
           tripId: refundReq.tripId,
           reason: refundReq.reason,
           otherReasonText: refundReq.otherReasonText,
           status: refundReq.status,
-          processingStatus: refundReq.processingStatus,
           tripPrice: refundReq.tripPrice,
           refundPercentage: refundReq.refundPercentage,
           refundAmount: refundReq.refundAmount,
           cancellationFee: refundReq.cancellationFee,
           createdAt: refundReq.createdAt,
-          updatedAt: refundReq.updatedAt);
+          updatedAt: refundReq.updatedAt,
+          requestedAt: refundReq.requestedAt,
+          amountRequested: refundReq.amountRequested);
 
       await _refundService.createRefundRequest(fixedRequest);
 
