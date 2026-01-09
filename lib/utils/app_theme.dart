@@ -1,5 +1,6 @@
 // lib/utils/app_theme.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 // This class will manage and notify the app of theme changes
 class ThemeController extends ChangeNotifier {
@@ -34,7 +35,7 @@ class AppTheme {
     primaryColor: primaryColor,
     scaffoldBackgroundColor: Colors.white,
     fontFamily: 'Outfit',
-    fontFamilyFallback: const ['Montserrat', 'Inter', 'NotoSans', 'sans-serif'],
+    fontFamilyFallback: const ['Montserrat', 'Inter', 'sans-serif'],
     useMaterial3: true,
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
@@ -47,6 +48,7 @@ class AppTheme {
         fontWeight: FontWeight.w800, // Extra Bold
       ),
       surfaceTintColor: Colors.transparent,
+      systemOverlayStyle: SystemUiOverlayStyle.dark, // Black status bar icons
     ),
     colorScheme: ColorScheme.fromSeed(
       seedColor: primaryColor,
@@ -167,7 +169,7 @@ class AppTheme {
     primaryColor: primaryColor,
     scaffoldBackgroundColor: const Color(0xFF0D0D0D), // Almost Black
     fontFamily: 'Outfit',
-    fontFamilyFallback: const ['Montserrat', 'Inter', 'NotoSans', 'sans-serif'],
+    fontFamilyFallback: const ['Montserrat', 'Inter', 'sans-serif'],
     useMaterial3: true,
     brightness: Brightness.dark,
     appBarTheme: const AppBarTheme(
@@ -180,6 +182,7 @@ class AppTheme {
         fontSize: 22,
         fontWeight: FontWeight.w800,
       ),
+      systemOverlayStyle: SystemUiOverlayStyle.light, // White status bar icons
     ),
     colorScheme: ColorScheme.fromSeed(
       seedColor: primaryColor,

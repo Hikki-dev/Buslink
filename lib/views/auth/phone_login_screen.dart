@@ -29,14 +29,25 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
 
     String phoneNumber = _phoneController.text.trim();
     // Simple validation/formatting check
-    if (!phoneNumber.startsWith('+')) {
-      // Default to Sri Lanka if no code provided
-      if (phoneNumber.startsWith('0')) {
-        phoneNumber = '+94${phoneNumber.substring(1)}';
-      } else {
-        phoneNumber = '+94$phoneNumber';
-      }
+    // Remove all spaces and dashes
+    phoneNumber = phoneNumber.replaceAll(RegExp(r'\s+|-'), '');
+
+    // SRI LANKA NUMBER FORMATTING
+    // Case 1: 0771234567 -> +94771234567
+    if (RegExp(r'^07[0-9]{8}$').hasMatch(phoneNumber)) {
+      phoneNumber = '+94${phoneNumber.substring(1)}';
     }
+    // Case 2: 771234567 -> +94771234567
+    else if (RegExp(r'^7[0-9]{8}$').hasMatch(phoneNumber)) {
+      phoneNumber = '+94$phoneNumber';
+    }
+    // Case 3: Already has +94, ensure it's valid
+    else if (phoneNumber.startsWith('+94')) {
+      // Keep as is
+    }
+    // Fallback? If it doesn't match these, let it pass to Firebase which handles validation,
+    // OR we can show a specific error if we want to enforce SL numbers.
+    // For now, allow fallback for reliability.
 
     final authService = Provider.of<AuthService>(context, listen: false);
 

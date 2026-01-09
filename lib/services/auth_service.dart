@@ -4,7 +4,8 @@ import 'package:firebase_core/firebase_core.dart'; // Required for Firebase.init
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb; // We need this
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'cache_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -55,7 +56,8 @@ class AuthService {
         }
 
         // This is also correct (no 'await')
-        final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth =
+            googleUser.authentication;
 
         final OAuthCredential credential = GoogleAuthProvider.credential(
           accessToken: authorization.accessToken,
@@ -138,8 +140,8 @@ class AuthService {
     }
   }
 
-  Future<UserCredential?> signUpWithEmail(
-      BuildContext context, String email, String password) async {
+  Future<UserCredential?> signUpWithEmail(BuildContext context, String email,
+      String password, String? phoneNumber) async {
     try {
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -151,6 +153,7 @@ class AuthService {
         await _db.collection('users').doc(user.uid).set({
           'uid': user.uid,
           'email': user.email,
+          'phoneNumber': phoneNumber, // Save phone number
           'role': 'customer', // Default role
           'createdAt': FieldValue.serverTimestamp(),
         });
@@ -161,6 +164,62 @@ class AuthService {
       if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Sign up failed: ${e.message}")));
+      return null;
+    }
+  }
+
+  // --- LINKING ACCOUNTS ---
+
+  Future<UserCredential?> linkWithGoogle(BuildContext context) async {
+    try {
+      User? user = _auth.currentUser;
+      if (user == null) return null;
+
+      // 1. Get Google Credential (same logic as signIn)
+      OAuthCredential? credential;
+
+      if (kIsWeb) {
+        GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        // For linking, we use linkWithPopup
+        return await user.linkWithPopup(googleProvider);
+      } else {
+        // Mobile Flow (Android/iOS) - standard Google Sign In
+        // Use authenticate() as per v7
+        final GoogleSignInAccount googleUser =
+            await _googleSignIn.authenticate(scopeHint: ['email', 'profile']); // Cancelled
+
+        // Get Authorization for Access Token
+        final GoogleSignInClientAuthorization? authorization =
+            await googleUser.authorizationClient.authorizationForScopes(
+          ['email', 'profile'],
+        );
+
+        if (authorization == null) {
+          throw FirebaseAuthException(
+              code: 'auth-failed', message: 'Authorization failed');
+        }
+
+        // Get Authentication for ID Token
+        final GoogleSignInAuthentication googleAuth =
+            googleUser.authentication;
+
+        credential = GoogleAuthProvider.credential(
+          accessToken: authorization.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        return await user.linkWithCredential(credential);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!context.mounted) return null;
+      String msg = "Linking failed: ${e.message}";
+      if (e.code == 'credential-already-in-use') {
+        msg = "This Google account is already linked to another user.";
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      return null;
+    } catch (e) {
+      debugPrint("Link Error: $e");
       return null;
     }
   }
@@ -193,13 +252,43 @@ class AuthService {
     required Function(String, int?) codeSent,
     required Function(String) codeAutoRetrievalTimeout,
   }) async {
-    await _auth.verifyPhoneNumber(
-      phoneNumber: phoneNumber,
-      verificationCompleted: verificationCompleted,
-      verificationFailed: verificationFailed,
-      codeSent: codeSent,
-      codeAutoRetrievalTimeout: codeAutoRetrievalTimeout,
-    );
+    if (kIsWeb) {
+      // --- WEB SPECIFIC LOGIC ---
+      try {
+        // Use visible recaptcha via invisible flow (standard)
+        final ConfirmationResult result =
+            await _auth.signInWithPhoneNumber(phoneNumber);
+
+        debugPrint(
+            "Web Phone Auth: Code sent successfully. VerificationID: ${result.verificationId}");
+        codeSent(result.verificationId, null);
+      } on FirebaseAuthException catch (e) {
+        debugPrint(
+            "Web Phone Auth FirebaseAuthException: ${e.code} - ${e.message}");
+        verificationFailed(e);
+      } catch (e) {
+        debugPrint("Web Phone Auth Generic Error: $e");
+        String msg = "Web auth failed: $e";
+        if (e.toString().contains("internal-error")) {
+          msg =
+              "Firebase internal error. Check authorized domains (localhost/vercel) in Console.";
+        } else if (e.toString().contains("billing-not-enabled")) {
+          msg =
+              "Google requires a Billing Account for Phone Auth (even for free tier). Please link a card in Google Cloud Console.";
+        }
+        verificationFailed(
+            FirebaseAuthException(code: 'web-error', message: msg));
+      }
+    } else {
+      // --- MOBILE LOGIC ---
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        verificationCompleted: verificationCompleted,
+        verificationFailed: verificationFailed,
+        codeSent: codeSent,
+        codeAutoRetrievalTimeout: codeAutoRetrievalTimeout,
+      );
+    }
   }
 
   Future<UserCredential?> signInWithPhoneCredential(
@@ -309,6 +398,7 @@ class AuthService {
   }
 
   Future<void> signOut() async {
+    await CacheService().clearUserProfile();
     await _googleSignIn.signOut();
     await _auth.signOut();
   }

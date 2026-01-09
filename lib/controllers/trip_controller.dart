@@ -7,6 +7,7 @@ import '../models/route_model.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
 
 class TripController extends ChangeNotifier {
   final FirestoreService _service = FirestoreService();
@@ -840,12 +841,40 @@ class TripController extends ChangeNotifier {
     final oldStatus = conductorSelectedTrip?.status;
     final oldDelay = conductorSelectedTrip?.delayMinutes;
 
+    // FSM VALIDATION
+    if (oldStatus == TripStatus.completed && status == TripStatus.inProgress) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Cannot resume a completed trip.")),
+        );
+      }
+      return;
+    }
+
     conductorSelectedTrip?.status = status;
     conductorSelectedTrip?.delayMinutes = delay;
     notifyListeners();
 
     try {
-      // API Call in background
+      // 1. Audit Log
+      await _service.logTripStateChange(
+        tripId: trip.id,
+        oldState: oldStatus?.name ?? 'unknown',
+        newState: status.name,
+        changedBy:
+            FirebaseAuth.instance.currentUser?.uid ?? 'unknown_conductor',
+        location: await _getCurrentLocationData(),
+        reason: 'Manual update by conductor',
+      );
+
+      // 2. Real-time Update (High Freq Collection)
+      await _service.updateTripRealtimeStatus(trip.id, {
+        'status': status.name,
+        'delayMinutes': delay,
+        'anomalyDetected': false, // Reset on manual override
+      });
+
+      // 3. Legacy Update (Main Doc)
       if (trip.id != "static_trip_id") {
         await _service.updateStatus(trip.id, status, delay);
       }
@@ -864,9 +893,10 @@ class TripController extends ChangeNotifier {
       conductorSelectedTrip?.delayMinutes = oldDelay ?? 0;
       notifyListeners();
 
+      debugPrint("Trip Update Failed: $e");
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to update status: $e")),
+          SnackBar(content: Text("Failed to update status (Offline?): $e")),
         );
       }
     }
@@ -999,6 +1029,40 @@ class TripController extends ChangeNotifier {
       debugPrint("Verify Error: $e");
       _setLoading(false);
       return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> _getCurrentLocationData() async {
+    try {
+      // Check permissions first to avoid errors
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return {'error': 'Location permission denied'};
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        return {'error': 'Location permission denied forever'};
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+
+      return {
+        'lat': position.latitude,
+        'lng': position.longitude,
+        'accuracy': position.accuracy,
+        'timestamp': FieldValue.serverTimestamp(),
+      };
+    } catch (e) {
+      debugPrint("Error getting location for log: $e");
+      return {'error': e.toString()};
     }
   }
 }

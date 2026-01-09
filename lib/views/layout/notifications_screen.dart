@@ -14,8 +14,20 @@ class NotificationsScreen extends StatelessWidget {
     final user = Provider.of<User?>(context);
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text("Please login to view notifications")),
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new,
+                size: 20,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        body: const Center(child: Text("Please login to view notifications")),
       );
     }
 
@@ -27,7 +39,11 @@ class NotificationsScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new,
+              size: 20,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
       ),

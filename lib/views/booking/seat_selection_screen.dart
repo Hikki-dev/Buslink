@@ -35,39 +35,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _autoSelectForBulk();
+      // _autoSelectForBulk(); // User requested manual selection only
     });
-  }
-
-  void _autoSelectForBulk() {
-    final controller = Provider.of<TripController>(context, listen: false);
-
-    // Only auto-select if we have a defined passenger count > 0 (Bulk Flow)
-    // AND currently no seats are selected (Initial Load)
-    if (controller.seatsPerTrip > 0 && controller.selectedSeats.isEmpty) {
-      List<int> availableSeats = [];
-      // Assuming 49 seats maximum roughly
-      for (int i = 1; i <= 49; i++) {
-        if (!widget.trip.bookedSeats.contains(i)) {
-          availableSeats.add(i);
-        }
-      }
-
-      // Take first N available
-      int countNeeded = controller.seatsPerTrip;
-      if (countNeeded > availableSeats.length) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text("Not enough available seats for this bus!")));
-        return;
-      }
-
-      final autoSelected = availableSeats.take(countNeeded).toList();
-
-      // Update Controller
-      for (int seat in autoSelected) {
-        controller.toggleSeat(seat);
-      }
-    }
   }
 
   @override
@@ -144,116 +113,160 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                     ],
                   ),
                 ),
-
-                // Bottom Selection Bar
-                if (selectedSeats.isNotEmpty)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor, // Adaptive
-                        boxShadow: [
-                          BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 30,
-                              offset: const Offset(0, -5))
-                        ],
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 24, horizontal: 24), // Reduced padding
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1200),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Flexible(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                        "${selectedSeats.length} Seats Selected",
-                                        style: TextStyle(
-                                            fontFamily: 'Inter',
-                                            color: Colors.grey.shade600,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500)),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                        "LKR ${(widget.trip.price * selectedSeats.length).toStringAsFixed(0)}",
-                                        style: TextStyle(
-                                            fontFamily: 'Outfit',
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.bold,
-                                            color: isDark
-                                                ? Colors.white
-                                                : Colors.black)),
-                                    Text(selectedSeats.join(", "),
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                            fontFamily: 'Outfit',
-                                            color: AppTheme.primaryColor))
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              ElevatedButton(
-                                onPressed: () {
-                                  if (widget.isConductorMode) {
-                                    _handleConductorBooking(
-                                        context, controller);
-                                  } else {
-                                    final user = Provider.of<User?>(context,
-                                        listen: false);
-                                    if (user == null) {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const LoginScreen()));
-                                    } else {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const PaymentScreen()));
-                                    }
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    backgroundColor: widget.isConductorMode
-                                        ? Colors.green
-                                        : AppTheme.primaryColor,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 32,
-                                        vertical: 20), // Reduced btn padding
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12))),
-                                child: Text(
-                                    widget.isConductorMode
-                                        ? "Issue Ticket (Cash)"
-                                        : "Proceed to Pay",
-                                    style: const TextStyle(
-                                        fontFamily: 'Outfit',
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: Colors.white)),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
         ],
       ),
+      bottomNavigationBar: selectedSeats.isNotEmpty
+          ? Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 30,
+                      offset: const Offset(0, -5))
+                ],
+              ),
+              padding: const EdgeInsets.all(24),
+              child: SafeArea(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1200),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "${selectedSeats.length} Seats Selected",
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.7)
+                                    : Colors.black
+                                        .withValues(alpha: 0.7), // No Grey
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "LKR ${(widget.trip.price * selectedSeats.length).toStringAsFixed(0)}",
+                              style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? Colors.white
+                                    : Colors.black, // Strict
+                              ),
+                            ),
+                            Text(
+                              selectedSeats.join(", "),
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: 'Outfit',
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (widget.isConductorMode) {
+                            _handleConductorBooking(context, controller);
+                          } else {
+                            final user =
+                                Provider.of<User?>(context, listen: false);
+                            if (user == null) {
+                              // GUEST BOOKING ATTEMPT
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  backgroundColor: Theme.of(context).cardColor,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16)),
+                                  title: Text("Sign In Required",
+                                      style: TextStyle(
+                                          fontFamily: 'Outfit',
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? Colors.white
+                                              : Colors.black)),
+                                  content: Text(
+                                      "To confirm your booking, you need to sign in to your BusLink account.",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 15,
+                                          color: isDark
+                                              ? Colors.white
+                                              : Colors.black)),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: () => Navigator.pop(ctx),
+                                        child: Text("Close",
+                                            style: TextStyle(
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : Colors.black))),
+                                    ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pop(ctx);
+                                          Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const LoginScreen()));
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                AppTheme.primaryColor,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8))),
+                                        child: const Text("Sign In"))
+                                  ],
+                                ),
+                              );
+                            } else {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const PaymentScreen()));
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: widget.isConductorMode
+                                ? Colors.green
+                                : AppTheme.primaryColor,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 20),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12))),
+                        child: Text(
+                            widget.isConductorMode
+                                ? "Issue Ticket (Cash)"
+                                : "Proceed to Pay",
+                            style: const TextStyle(
+                                fontFamily: 'Outfit',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.white)),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 
@@ -288,7 +301,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
         Text("${trip.fromCity} ➔ ${trip.toCity}",
             style: TextStyle(
                 fontFamily: 'Inter',
-                color: isDark ? Colors.white70 : Colors.grey,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.7)
+                    : Colors.black.withValues(alpha: 0.7), // No Grey
                 fontSize: 16)),
       ],
     );
@@ -302,15 +317,17 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 28, // Compact Box
-          height: 28, // Compact Box
+          width: 32, // Increased size for visibility
+          height: 32,
           decoration: BoxDecoration(
             color: color,
-            border: Border.all(color: borderColor, width: 2),
+            border: Border.all(
+                color: borderColor.withValues(alpha: 0.5),
+                width: 2), // High contrast border
             borderRadius: BorderRadius.circular(8),
           ),
           child: icon != null
-              ? Icon(icon, size: 16, color: Colors.white.withValues(alpha: 0.9))
+              ? Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.9))
               : null,
         ),
         const SizedBox(height: 8),
@@ -320,7 +337,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
             fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white70 : Colors.grey.shade700,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.7)
+                : Colors.black.withValues(alpha: 0.7), // No Grey
           ),
         ),
       ],
@@ -335,8 +354,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildLegendItem(
-              Colors.white,
-              isDark ? Colors.transparent : Colors.grey.shade300,
+              isDark ? Colors.transparent : Colors.white,
+              isDark ? Colors.white : Colors.black, // High contrast border
               "Available",
               isDark,
             ),

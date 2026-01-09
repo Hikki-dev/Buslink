@@ -126,95 +126,176 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
           int rowCount = (totalSeats / 4).ceil();
 
           return Column(
-            children: List.generate(rowCount, (rowIndex) {
-              int startSeat = rowIndex * 4 + 1;
+            children: [
+              ...List.generate(rowCount, (rowIndex) {
+                int startSeat = rowIndex * 4 + 1;
+                bool isLastRow = rowIndex == rowCount - 1;
 
-              // Helper to check if seat exists
-              bool seatExists(int offset) => (startSeat + offset) <= totalSeats;
+                // Helper to check if seat exists
+                bool seatExists(int offset) =>
+                    (startSeat + offset) <= totalSeats;
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Left Side (Seat 1 & 2)
-                    Row(children: [
-                      if (seatExists(0))
-                        _SeatItem(
-                          seatNum: startSeat,
-                          trip: currentTrip,
-                          isSelected: widget.selectedSeats.contains(startSeat),
-                          isHighlighted:
-                              widget.highlightedSeats.contains(startSeat),
-                          onTap:
-                              widget.isReadOnly && widget.onSeatToggle == null
-                                  ? null
-                                  : () => widget.onSeatToggle?.call(startSeat),
-                          isReadOnly: widget.isReadOnly,
-                        )
-                      else
-                        const SizedBox(width: 44, height: 44),
-                      const SizedBox(width: 10),
-                      if (seatExists(1))
-                        _SeatItem(
-                          seatNum: startSeat + 1,
-                          trip: currentTrip,
-                          isSelected:
-                              widget.selectedSeats.contains(startSeat + 1),
-                          isHighlighted:
-                              widget.highlightedSeats.contains(startSeat + 1),
-                          onTap: widget.isReadOnly &&
-                                  widget.onSeatToggle == null
-                              ? null
-                              : () => widget.onSeatToggle?.call(startSeat + 1),
-                          isReadOnly: widget.isReadOnly,
-                        )
-                      else
-                        const SizedBox(width: 44, height: 44),
-                    ]),
+                // LAST ROW (Back Bench)
+                if (isLastRow) {
+                  return Column(
+                    children: [
+                      _buildRearExit(), // REAR EXIT MOVED HERE
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center, // Center them
+                          children: [
+                            for (int i = 0;
+                                i < 5;
+                                i++) // Try to fit 5? No, stick to existing logic but tight
+                              if (seatExists(i)) ...[
+                                _SeatItem(
+                                  seatNum: startSeat + i,
+                                  trip: currentTrip,
+                                  isSelected: widget.selectedSeats
+                                      .contains(startSeat + i),
+                                  isHighlighted: widget.highlightedSeats
+                                      .contains(startSeat + i),
+                                  onTap: widget.isReadOnly &&
+                                          widget.onSeatToggle == null
+                                      ? null
+                                      : () => widget.onSeatToggle
+                                          ?.call(startSeat + i),
+                                  isReadOnly: widget.isReadOnly,
+                                ),
+                                if (i < 4)
+                                  const SizedBox(
+                                      width:
+                                          8), // Small gap between linked seats
+                              ]
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
 
-                    // Right Side (Seat 3 & 4)
-                    Row(children: [
-                      if (seatExists(2))
-                        _SeatItem(
-                          seatNum: startSeat + 2,
-                          trip: currentTrip,
-                          isSelected:
-                              widget.selectedSeats.contains(startSeat + 2),
-                          isHighlighted:
-                              widget.highlightedSeats.contains(startSeat + 2),
-                          onTap: widget.isReadOnly &&
-                                  widget.onSeatToggle == null
-                              ? null
-                              : () => widget.onSeatToggle?.call(startSeat + 2),
-                          isReadOnly: widget.isReadOnly,
-                        )
-                      else
-                        const SizedBox(width: 44, height: 44),
-                      const SizedBox(width: 10),
-                      if (seatExists(3))
-                        _SeatItem(
-                          seatNum: startSeat + 3,
-                          trip: currentTrip,
-                          isSelected:
-                              widget.selectedSeats.contains(startSeat + 3),
-                          isHighlighted:
-                              widget.highlightedSeats.contains(startSeat + 3),
-                          onTap: widget.isReadOnly &&
-                                  widget.onSeatToggle == null
-                              ? null
-                              : () => widget.onSeatToggle?.call(startSeat + 3),
-                          isReadOnly: widget.isReadOnly,
-                        )
-                      else
-                        const SizedBox(width: 44, height: 44),
-                    ]),
-                  ],
-                ),
-              );
-            }),
+                // NORMAL ROWS
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Left Side (Seat 1 & 2)
+                      Row(children: [
+                        if (seatExists(0))
+                          _SeatItem(
+                            seatNum: startSeat,
+                            trip: currentTrip,
+                            isSelected:
+                                widget.selectedSeats.contains(startSeat),
+                            isHighlighted:
+                                widget.highlightedSeats.contains(startSeat),
+                            onTap: widget.isReadOnly &&
+                                    widget.onSeatToggle == null
+                                ? null
+                                : () => widget.onSeatToggle?.call(startSeat),
+                            isReadOnly: widget.isReadOnly,
+                          )
+                        else
+                          const SizedBox(width: 44, height: 44),
+                        const SizedBox(width: 10),
+                        if (seatExists(1))
+                          _SeatItem(
+                            seatNum: startSeat + 1,
+                            trip: currentTrip,
+                            isSelected:
+                                widget.selectedSeats.contains(startSeat + 1),
+                            isHighlighted:
+                                widget.highlightedSeats.contains(startSeat + 1),
+                            onTap: widget.isReadOnly &&
+                                    widget.onSeatToggle == null
+                                ? null
+                                : () =>
+                                    widget.onSeatToggle?.call(startSeat + 1),
+                            isReadOnly: widget.isReadOnly,
+                          )
+                        else
+                          const SizedBox(width: 44, height: 44),
+                      ]),
+
+                      // Right Side (Seat 3 & 4)
+                      Row(children: [
+                        if (seatExists(2))
+                          _SeatItem(
+                            seatNum: startSeat + 2,
+                            trip: currentTrip,
+                            isSelected:
+                                widget.selectedSeats.contains(startSeat + 2),
+                            isHighlighted:
+                                widget.highlightedSeats.contains(startSeat + 2),
+                            onTap: widget.isReadOnly &&
+                                    widget.onSeatToggle == null
+                                ? null
+                                : () =>
+                                    widget.onSeatToggle?.call(startSeat + 2),
+                            isReadOnly: widget.isReadOnly,
+                          )
+                        else
+                          const SizedBox(width: 44, height: 44),
+                        const SizedBox(width: 10),
+                        if (seatExists(3))
+                          _SeatItem(
+                            seatNum: startSeat + 3,
+                            trip: currentTrip,
+                            isSelected:
+                                widget.selectedSeats.contains(startSeat + 3),
+                            isHighlighted:
+                                widget.highlightedSeats.contains(startSeat + 3),
+                            onTap: widget.isReadOnly &&
+                                    widget.onSeatToggle == null
+                                ? null
+                                : () =>
+                                    widget.onSeatToggle?.call(startSeat + 3),
+                            isReadOnly: widget.isReadOnly,
+                          )
+                        else
+                          const SizedBox(width: 44, height: 44),
+                      ]),
+                    ],
+                  ),
+                );
+              }),
+            ],
           );
         });
+  }
+
+  Widget _buildRearExit() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              border: Border.all(
+                  color: widget.isDark ? Colors.white24 : Colors.black12),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Column(
+              children: [
+                const Icon(Icons.sensor_door_outlined,
+                    color: Colors.green, size: 20),
+                const SizedBox(height: 2),
+                Text("Exit",
+                    style: TextStyle(
+                        fontSize: 8,
+                        color: widget.isDark ? Colors.white70 : Colors.black54,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          const Spacer(), // Empty space to push Exit to left
+        ],
+      ),
+    );
   }
 
   Widget _buildBackOfBus() {

@@ -336,39 +336,44 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
   }
 
   Widget _buildPolicyTable() {
-    return Table(
-      border: TableBorder.all(color: Colors.grey.shade300),
-      children: const [
-        TableRow(children: [
-          Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text("Time Before",
-                  style: TextStyle(fontWeight: FontWeight.bold))),
-          Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text("Refund %",
-                  style: TextStyle(fontWeight: FontWeight.bold))),
-          Padding(
-              padding: EdgeInsets.all(8.0),
-              child:
-                  Text("Fee", style: TextStyle(fontWeight: FontWeight.bold))),
-        ]),
-        TableRow(children: [
-          Padding(padding: EdgeInsets.all(8.0), child: Text("> 24h")),
-          Padding(padding: EdgeInsets.all(8.0), child: Text("90%")),
-          Padding(padding: EdgeInsets.all(8.0), child: Text("10%")),
-        ]),
-        TableRow(children: [
-          Padding(padding: EdgeInsets.all(8.0), child: Text("6h - 24h")),
-          Padding(padding: EdgeInsets.all(8.0), child: Text("50%")),
-          Padding(padding: EdgeInsets.all(8.0), child: Text("50%")),
-        ]),
-        TableRow(children: [
-          Padding(padding: EdgeInsets.all(8.0), child: Text("< 6h")),
-          Padding(padding: EdgeInsets.all(8.0), child: Text("0%")),
-          Padding(padding: EdgeInsets.all(8.0), child: Text("No Refund")),
-        ]),
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _policyRow("> 24 Hours", "90% Refund", Colors.green),
+          const Divider(),
+          _policyRow("6 - 24 Hours", "50% Refund", Colors.orange),
+          const Divider(),
+          _policyRow("< 6 Hours", "No Refund", Colors.red),
+        ],
+      ),
+    );
+  }
+
+  Widget _policyRow(String time, String refund, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(time, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(refund,
+                style: TextStyle(
+                    color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+          ),
+        ],
+      ),
     );
   }
 

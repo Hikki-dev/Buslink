@@ -78,6 +78,21 @@ class Translations {
       'galle_desc': 'Historic fort city with Dutch colonial architecture.',
       'ella_desc': 'Mountain village famous for the Nine Arch Bridge.',
       'jaffna_desc': 'Cultural hub of the north with vibrant temples.',
+      'fast_booking': 'Fast Booking',
+      'fast_booking_desc': 'Book your seats in less than 60 seconds.',
+      'secure_payments': 'Secure Payments',
+      'secure_payments_desc': 'Protected with industry-standard encryption.',
+      'live_tracking': 'Live Tracking',
+      'live_tracking_desc':
+          'Track your bus in real-time and never miss your ride again.',
+      'support_24_7': '24/7 Support',
+      'support_desc':
+          'Our dedicated team is always here to help with your journey.',
+      'nav_home': 'Home',
+      'nav_login': 'Log In',
+      'nav_my_trips': 'My Trips',
+      'nav_favorites': 'Favorites',
+      'nav_profile': 'Profile',
     },
     'si': {
       'welcome': 'ආයුබෝවන්!',
@@ -152,6 +167,20 @@ class Translations {
       'galle_desc': 'ලන්දේසි ගෘහ නිර්මාණ ශිල්පය සහිත ඓතිහාසික බලකොටු නගරය.',
       'ella_desc': 'ආරුක්කු නවයේ පාලම සඳහා ප්‍රසිද්ධ කඳුකර ගම්මානය.',
       'jaffna_desc': 'විචිත්‍රවත් කෝවිල් සහිත උතුරේ සංස්කෘතික මධ්‍යස්ථානය.',
+      'fast_booking': 'ක්ෂණික වෙන්කිරීම්',
+      'fast_booking_desc': 'තත්පර 60කට අඩු කාලයකින් ඔබේ ආසන වෙන්කරවා ගන්න.',
+      'secure_payments': 'ආරක්ෂිත ගෙවීම්',
+      'secure_payments_desc': 'කර්මාන්ත සම්මත කේතීකරණය මගින් ආරක්ෂා කර ඇත.',
+      'live_tracking': 'සජීවී බස් හඹා යෑම්',
+      'live_tracking_desc':
+          'ඔබේ බස් රථය සජීවීව බලන්න, ඔබට කිසිදා ගමන මග නොහැරේ.',
+      'support_24_7': '24/7 සහාය',
+      'support_desc': 'ඔබේ ගමනට උදව් කිරීමට අපගේ කණ්ඩායම සැමවිටම සූදානම්.',
+      'nav_home': 'මුල් පිටුව',
+      'nav_login': 'ඇතුළු වන්න',
+      'nav_my_trips': 'මගේ ගමන්',
+      'nav_favorites': 'ප්‍රියතම',
+      'nav_profile': 'පැතිකඩ',
     },
     'ta': {
       'welcome': 'வரவேற்கிறோம்!',
@@ -229,6 +258,23 @@ class Translations {
           'டச்சு கட்டிடக்கலை கொண்ட வரலாற்று சிறப்புமிக்க கோட்டை நகரம்.',
       'ella_desc': 'ஒன்பது வளைவு பாலத்திற்கு புகழ்பெற்ற மலை கிராமம்.',
       'jaffna_desc': 'துடிப்பான கோவில்களைக் கொண்ட வடக்கின் கலாச்சார மையம்.',
+      'fast_booking': 'விரைவான முன்பதிவு',
+      'fast_booking_desc':
+          '60 வினாடிகளுக்குள் உங்கள் இருக்கைகளை முன்பதிவு செய்யுங்கள்.',
+      'secure_payments': 'பாதுகாப்பான கொடுப்பனவுகள்',
+      'secure_payments_desc':
+          'தொழில்முறை தர குறியாக்கத்துடன் பாதுகாக்கப்படுகிறது.',
+      'live_tracking': 'நிகழ்நேர கண்காணிப்பு',
+      'live_tracking_desc':
+          'உங்கள் பஸ்சை நிகழ்நேரத்தில் கண்காணிக்கவும், உங்கள் பயணத்தைத் தவறவிடாதீர்கள்.',
+      'support_24_7': '24/7 ஆதரவு',
+      'support_desc':
+          'உங்கள் பயணத்திற்கு உதவ எங்கள் குழு எப்போதும் தயாராக உள்ளது.',
+      'nav_home': 'முகப்பு',
+      'nav_login': 'உள்நுழைய',
+      'nav_my_trips': 'என் பயணங்கள்',
+      'nav_favorites': 'பிடித்தவை',
+      'nav_profile': 'விவரம்',
     }
   };
 

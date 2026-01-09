@@ -19,6 +19,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController(); // NEW
   final _passwordController = TextEditingController();
   bool _isLogin = true;
   bool _isLoading = false;
@@ -26,9 +27,9 @@ class _LoginScreenState extends State<LoginScreen> {
   int _currentBgIndex = 0;
   Timer? _bgTimer;
   final List<String> _bgImages = [
-    "https://upload.wikimedia.org/wikipedia/commons/c/c8/Sri_Lanka_Bus.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/2/2e/Lanka_Ashok_Leyland_bus_on_Colombo_road.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/4/46/SLTB_inter-city_bus_%287568869668%29.jpg",
+    "https://live.staticflickr.com/65535/55025510678_c31eb6da24_b.jpg", // Flickr 1
+    "https://live.staticflickr.com/65535/55025567979_f812048ac2_h.jpg", // Flickr 2
+    "https://live.staticflickr.com/65535/55015711501_a4d336d2c0_b.jpg", // Flickr 3
     "https://upload.wikimedia.org/wikipedia/commons/e/e6/SLTB_Kandy_South_Depot_Mercedes-Benz_OP312_Bus_-_II.jpg",
     "https://upload.wikimedia.org/wikipedia/commons/8/87/CTB_bus_no._290.JPG",
   ];
@@ -56,6 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _bgTimer?.cancel();
     _emailController.dispose();
+    _phoneController.dispose(); // NEW
     _passwordController.dispose();
     super.dispose();
   }
@@ -93,7 +95,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_isLogin) {
         cred = await authService.signInWithEmail(context, email, password);
       } else {
-        cred = await authService.signUpWithEmail(context, email, password);
+        cred = await authService.signUpWithEmail(
+            context, email, password, _phoneController.text.trim());
       }
 
       if (cred != null && cred.user != null && mounted) {
@@ -178,7 +181,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                        // ...
+                        // Theme & Language Switchers (Desktop)
+                        Positioned(
+                          top: 24,
+                          right: 24,
+                          child: Row(
+                            children: [
+                              const _ThemeSwitcher(),
+                              const SizedBox(width: 12),
+                              const _LanguageSwitcher(),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -414,6 +428,20 @@ class _LoginScreenState extends State<LoginScreen> {
             validator: (v) =>
                 v == null || !v.contains('@') ? 'Enter a valid email' : null,
           ),
+          // NEW PHONE FIELD FOR SIGNUP
+          if (!_isLogin) ...[
+            const SizedBox(height: 24),
+            _buildPremiumTextField(
+              controller: _phoneController,
+              label: lp.translate(
+                  'phone_number'), // Ensure key exists or add fallback
+              hint: '+94 7X XXX XXXX',
+              icon: Icons.phone_rounded,
+              theme: theme,
+              validator: (v) =>
+                  v == null || v.isEmpty ? 'Phone number is required' : null,
+            ),
+          ],
           const SizedBox(height: 24),
           _buildPremiumTextField(
             controller: _passwordController,
@@ -475,8 +503,11 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 16),
           const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 4, // Horizontal spacing
+            runSpacing: 4, // Vertical spacing if it wraps
             children: [
               Text(lp.translate(_isLogin ? 'no_account' : 'have_account'),
                   style: theme.textTheme.bodyMedium

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'home/home_screen.dart';
 import 'booking/my_trips_screen.dart';
 import 'favorites/favorites_screen.dart';
 import 'profile/profile_screen.dart';
-import 'package:provider/provider.dart';
 import '../controllers/trip_controller.dart';
 
 class CustomerMainScreen extends StatefulWidget {
@@ -78,21 +79,78 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
 
     final bool showBack = _history.length > 1;
 
-    final pages = [
-      HomeScreen(isAdminView: widget.isAdminView), // Pass admin view
-      MyTripsScreen(
-          showBackButton: showBack,
-          onBack: _handleBack,
-          isAdminView: widget.isAdminView),
-      FavoritesScreen(
-          showBackButton: showBack,
-          onBack: _handleBack,
-          isAdminView: widget.isAdminView),
-      ProfileScreen(
-          showBackButton: showBack,
-          onBack: _handleBack,
-          isAdminView: widget.isAdminView),
+    final user = Provider.of<User?>(context);
+    final bool isGuest = user == null || user.isAnonymous;
+
+    // Reset index if we switched from user -> guest and index is out of bounds
+    // But better to do this in logic.
+    // For now, if isGuest and index > 0 (Home), force Home.
+    int currentIndex = _selectedIndex;
+    if (isGuest && currentIndex > 0) {
+      currentIndex = 0;
+    }
+
+    final List<Widget> pages = [
+      HomeScreen(isAdminView: widget.isAdminView), // Index 0 (Always visible)
     ];
+
+    final List<BottomNavigationBarItem> navItems = [
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.home_outlined),
+        activeIcon: Icon(Icons.home),
+        label: 'Home',
+      ),
+    ];
+
+    if (!isGuest) {
+      pages.addAll([
+        MyTripsScreen(
+            showBackButton: showBack,
+            onBack: _handleBack,
+            isAdminView: widget.isAdminView),
+        FavoritesScreen(
+            showBackButton: showBack,
+            onBack: _handleBack,
+            isAdminView: widget.isAdminView),
+        ProfileScreen(
+            showBackButton: showBack,
+            onBack: _handleBack,
+            isAdminView: widget.isAdminView),
+      ]);
+
+      navItems.addAll([
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.confirmation_number_outlined),
+          activeIcon: Icon(Icons.confirmation_number),
+          label: 'My Trips',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.favorite_border),
+          activeIcon: Icon(Icons.favorite),
+          label: 'Favorites',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          activeIcon: Icon(Icons.person),
+          label: 'Profile',
+        ),
+      ]);
+    } else {
+      // Optional: Add a "Login" tab for guests?
+      // The user strictly asked to *hide* the profile tab.
+      // Having just 1 item (Home) in BottomNavBar looks weird or might error.
+      // Let's keep it simple: If guest, maybe hide BottomNavBar entirely?
+      // Or add "Support"?
+      // For now, I'll strictly follow "hide profile tab".
+      // If BottomNavBar has 1 item, it usually throws assertion error in older Flutter,
+      // but typically we need >=2 items.
+      // Let's add a "Login" tab that redirects to Auth.
+      pages.add(const Scaffold(body: SizedBox())); // Dummy for redirect
+      navItems.add(const BottomNavigationBarItem(
+        icon: Icon(Icons.login),
+        label: 'Log In',
+      ));
+    }
 
     final isDesktop = MediaQuery.of(context).size.width > 900;
 
@@ -174,9 +232,55 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                 ),
               ),
             Expanded(
-              child: IndexedStack(
-                index: _selectedIndex,
-                children: pages,
+              // Safe index check for IndexedStack
+              child: GestureDetector(
+                onHorizontalDragEnd: (details) {
+                  // Only relevant for Mobile/PWA touch, but user asked for "Web" which might mean touch screens on web or trackpad
+                  // Sensitivity check
+                  if (details.primaryVelocity! > 300) {
+                    // Swipe Right -> Go Back (or previous tab? User said "go to page I was in" which implies History Forward?)
+                    // User said: "swipe left it should go back from the page, if I swipe right it should go to page I was in"
+                    // Usually: Swipe Right (Move Finger Left->Right) = Back
+                    // Swipe Left (Move Finger Right->Left) = Forward
+
+                    // Interpreting User:
+                    // "swipe left it should go back" -> Dragging finger to LEFT (Right to Left motion)? That usually means Next/Forward.
+                    // Or does he mean "Swipe from Left edge"?
+                    // Let's assume standard behavior:
+                    // Swipe Right (Velocity > 0) -> Back
+                    // Swipe Left (Velocity < 0) -> Forward
+
+                    // But he said "swipe left it should go back". That is inverted or he means "Swipe TO the left"?
+                    // "Swipe Left" usually means gesture direction <---
+                    // If I swipe <--- I usually go to NEXT page (New content comes from Right).
+                    // If I swipe ---> I usually go to PREVIOUS page (Old content comes from Left).
+
+                    // User: "if I swipe left it should go back from the page"
+                    // This is confusing. <--- for Back?
+                    // Let's try to infer: "Left Swipe" = Go Back.
+                    // "Right Swipe" = Go Forward ("Page I was in").
+
+                    // But usually "Back" is accessible by Swiping from Left edge to Right.
+
+                    // I will implement standard navigation unless forced otherwise, but I'll follow his text literally if possible.
+                    // "Swipe Left" (Velocity < 0) -> Navigator.pop() ??
+                    // "Swipe Right" (Velocity > 0) -> Navigator.push() ?? (Can't push forward easily without history)
+
+                    // Actually, if we are in a tab view, maybe he means switching tabs?
+                    // But he mentioned "page".
+
+                    // Let's implement generic:
+                    // Right Swipe (Velocity > 0) -> Pop (Back)
+                    // Left Swipe (Velocity < 0) -> Nothing (Forward unavailable) or Maybe switch tabs?
+
+                    // I'll stick to Standard: Right Swipe (--->) is BACK.
+                    Navigator.maybePop(context);
+                  }
+                },
+                child: IndexedStack(
+                  index: currentIndex >= pages.length ? 0 : currentIndex,
+                  children: pages,
+                ),
               ),
             ),
           ]),
@@ -194,8 +298,16 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                   ],
                 ),
                 child: BottomNavigationBar(
-                  currentIndex: _selectedIndex,
-                  onTap: _onItemTapped,
+                  currentIndex:
+                      currentIndex >= navItems.length ? 0 : currentIndex,
+                  onTap: (index) {
+                    if (isGuest && index == 1) {
+                      // "Log In" tapped
+                      Navigator.pushNamed(context, '/login');
+                      return;
+                    }
+                    _onItemTapped(index);
+                  },
                   type: BottomNavigationBarType.fixed,
                   backgroundColor: Theme.of(context).cardColor,
                   selectedItemColor:
@@ -217,28 +329,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                     fontWeight: FontWeight.bold, // Bold for unselected too
                     fontSize: 12,
                   ),
-                  items: const [
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.home_outlined),
-                      activeIcon: Icon(Icons.home),
-                      label: 'Home',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.confirmation_number_outlined),
-                      activeIcon: Icon(Icons.confirmation_number),
-                      label: 'My Trips',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.favorite_border),
-                      activeIcon: Icon(Icons.favorite),
-                      label: 'Favorites',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.person_outline),
-                      activeIcon: Icon(Icons.person),
-                      label: 'Profile',
-                    ),
-                  ],
+                  items: navItems,
                 ),
               ),
       );

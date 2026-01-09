@@ -24,30 +24,29 @@
 
     <title>BusLink - Book Your Journey</title>
     <!-- Custom Flutter Bootstrap to Disable Service Worker (Fix Vercel 404s) -->
-    <script>
-      window.flutterConfiguration = {
-        serviceWorker: null, // Disable Service Worker
-      };
-    </script>
-    <script src="flutter_bootstrap.js" async></script>
+    <!-- Custom Flutter Bootstrap to Disable Service Worker (Removed deprecated config) -->
+    <!-- Service worker control should now happen via flutter_bootstrap.js or service_worker.js directly if needed -->
     <!-- <link rel="manifest" href="manifest.json" /> -->
+    <div
+      id="loading-indicator"
+      style="
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: white;
+        background-color: #ffffff; /* Light Mode Default */
         display: flex;
         justify-content: center;
         align-items: center;
         z-index: 9999;
+        transition: background-color 0.3s ease;
       "
     >
       <style>
         @media (prefers-color-scheme: dark) {
           #loading-indicator {
-            background-color: #121212 !important;
-            color: white !important;
+            background-color: #0A0B10 !important; /* AppTheme Dark Background */
           }
         }
       </style>
@@ -55,8 +54,8 @@
         .spinner {
           width: 50px;
           height: 50px;
-          border: 5px solid #f3f3f3;
-          border-top: 5px solid #ba181b; /* Brand Red */
+          border: 4px solid rgba(186, 24, 27, 0.2); /* Brand Red Faint */
+          border-top: 4px solid #ba181b; /* Brand Red */
           border-radius: 50%;
           animation: spin 1s linear infinite;
         }
@@ -70,57 +69,32 @@
         }
       </style>
       <div class="spinner"></div>
-      <div
-        id="debug-log"
-        style="
-          position: absolute;
-          bottom: 20px;
-          color: black;
-          font-family: monospace;
-          font-weight: bold;
-        "
-      >
-        Waiting for Flutter...
-      </div>
     </div>
 
     <!-- Error Catcher -->
     <script>
-      window.onerror = function (message, source, lineno, colno, error) {
-        var log = document.getElementById("debug-log");
-        log.style.color = "red";
-        log.innerHTML =
-          "CRITICAL ERROR:<br>" + message + "<br>" + source + ":" + lineno;
-      };
-
+      // Removed Error Catcher Visuals for Production Use
       console.log("Index.html loaded");
-      document.getElementById("debug-log").innerText =
-        "Loading Flutter Engine...";
 
       window.addEventListener("load", function (ev) {
         console.log("Window Loaded");
-        document.getElementById("debug-log").innerText += " | Window Loaded";
 
-        // Failsafe: Remove spinner after 6 seconds if app doesn't load
+        // Failsafe: Remove spinner after 8 seconds if app doesn't load
+        // Extended time because WASM can be slow initially
         setTimeout(function () {
           var loader = document.getElementById("loading-indicator");
           if (loader) {
             console.warn("Force removing spinner via Failsafe");
-
-            // Log BEFORE removing the element, because debug-log is a child of loader
-            var debugLog = document.getElementById("debug-log");
-            if (debugLog) {
-              debugLog.innerText += " | Timeout (Auto-Removed)";
-              debugLog.style.color = "orange";
+            try {
+                loader.remove();
+            } catch(e) {
+                console.warn("Failed to remove loader:", e);
             }
-
-            loader.remove();
           }
-        }, 6000);
+        }, 8000);
       });
     </script>
-
     <script src="https://js.stripe.com/v3/"></script>
-    <script src="flutter_bootstrap.js" async></script>
+    <script src="flutter_bootstrap.js" async onerror="console.error('Failed to load flutter_bootstrap.js');"></script>
   </body>
 </html>

@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/refund_model.dart';
-import '../models/trip_model.dart';
 
 class RefundService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;

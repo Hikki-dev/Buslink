@@ -4,6 +4,9 @@ import '../home/home_screen.dart';
 import '../booking/my_trips_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../profile/profile_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../../utils/language_provider.dart';
 
 class MobileBottomNav extends StatelessWidget {
   final int selectedIndex;
@@ -12,6 +15,8 @@ class MobileBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Container(
       decoration: BoxDecoration(
         boxShadow: [
@@ -24,7 +29,7 @@ class MobileBottomNav extends StatelessWidget {
       ),
       child: BottomNavigationBar(
         currentIndex: selectedIndex == -1 ? 0 : selectedIndex,
-        onTap: (index) => _onItemTapped(context, index),
+        onTap: (index) => _onItemTapped(context, index, user),
         type: BottomNavigationBarType.fixed,
         backgroundColor:
             Theme.of(context).cardColor, // Use cardColor for contrast
@@ -40,35 +45,67 @@ class MobileBottomNav extends StatelessWidget {
           fontFamily: 'Inter',
           fontSize: 12,
         ),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.confirmation_number_outlined),
-            activeIcon: Icon(Icons.confirmation_number),
-            label: 'My Trips',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
-            activeIcon: Icon(Icons.favorite),
-            label: 'Favorites',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+        items: user == null
+            ? [
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.home_outlined),
+                  activeIcon: const Icon(Icons.home),
+                  label: Provider.of<LanguageProvider>(context)
+                      .translate('nav_home'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.login),
+                  activeIcon: const Icon(Icons.login),
+                  label: Provider.of<LanguageProvider>(context)
+                      .translate('nav_login'),
+                ),
+              ]
+            : [
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.home_outlined),
+                  activeIcon: const Icon(Icons.home),
+                  label: Provider.of<LanguageProvider>(context)
+                      .translate('nav_home'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.confirmation_number_outlined),
+                  activeIcon: const Icon(Icons.confirmation_number),
+                  label: Provider.of<LanguageProvider>(context)
+                      .translate('nav_my_trips'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.favorite_border),
+                  activeIcon: const Icon(Icons.favorite),
+                  label: Provider.of<LanguageProvider>(context)
+                      .translate('nav_favorites'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.person_outline),
+                  activeIcon: const Icon(Icons.person),
+                  label: Provider.of<LanguageProvider>(context)
+                      .translate('nav_profile'),
+                ),
+              ],
       ),
     );
   }
 
-  void _onItemTapped(BuildContext context, int index) {
+  void _onItemTapped(BuildContext context, int index, User? user) {
     if (index == selectedIndex) return;
 
+    // GUEST LOGIC
+    if (user == null) {
+      if (index == 1) {
+        // Login Page
+        Navigator.pushNamed(context, '/login');
+      } else {
+        // Home (Refresh/Reset)
+        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+      }
+      return;
+    }
+
+    // USER LOGIC
     Widget page;
     switch (index) {
       case 0:
@@ -88,8 +125,6 @@ class MobileBottomNav extends StatelessWidget {
     }
 
     // Use replacement to avoid building up a huge stack
-    // But for "Back" to work naturally, maybe just Push is better?
-    // Given the issues, removing until first route or similar is cleaner for a "Tab" feel
     Navigator.pushAndRemoveUntil(
       context,
       PageRouteBuilder(

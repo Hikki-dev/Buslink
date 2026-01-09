@@ -578,7 +578,7 @@ class _BoardingPassCard extends StatelessWidget {
                             builder: (_) => RefundRequestScreen(
                                 ticket: ticket, trip: trip)));
                   } catch (e) {
-                    print("Error nav to refund: $e");
+                    debugPrint("Error nav to refund: $e");
                   }
                 },
                 icon: const Icon(Icons.undo, size: 16, color: Colors.grey),

@@ -4,10 +4,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 enum TripStatus {
   scheduled,
   boarding,
-  departed,
+  started, // Conductor started trip
+  inProgress, // Moving
   delayed,
-  cancelled,
+  nearDestination,
+  awaitingConfirmation, // At destination, waiting for End Trip
   completed,
+  cancelled,
+  // Legacy/UI Specific
+  departed, // roughly same as started
   onTime,
   arrived,
   onWay

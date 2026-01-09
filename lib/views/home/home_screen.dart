@@ -22,82 +22,13 @@ import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
 import '../layout/notifications_screen.dart';
 
+import '../../data/destinations_data.dart';
+
 // Mock Data for Popular Destinatinos
 // Updated Popular Destinations with High Quality Images
 // Mock Data for Popular Destinatinos
 // Updated Popular Destinations with functional Unsplash URLs
-final List<Map<String, dynamic>> _allDestinations = [
-  {
-    'city': 'Colombo',
-    'image':
-        'https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&q=80&w=800',
-    'desc': 'Commercial capital & vibrant city life.',
-    'buses': 120
-  },
-  {
-    'city': 'Kandy',
-    'image':
-        'https://images.unsplash.com/photo-1587595431973-160d0d94add1?auto=format&fit=crop&q=80&w=800',
-    'desc': 'Temple of the Tooth Relic & hills.',
-    'buses': 45,
-  },
-  {
-    'city': 'Galle',
-    'image':
-        'https://images.unsplash.com/photo-1550953039-165f9746e495?auto=format&fit=crop&q=80&w=800',
-    'desc': 'Historic Dutch Fort & southern coast.',
-    'buses': 32,
-  },
-  {
-    'city': 'Ella',
-    'image':
-        'https://images.unsplash.com/photo-1534313314376-a72289b6181e?auto=format&fit=crop&q=80&w=800',
-    'desc': 'Scenic train rides & tea plantations.',
-    'buses': 18,
-  },
-  {
-    'city': 'Nuwara Eliya',
-    'image':
-        'https://images.unsplash.com/photo-1546708682-4fdf8a02d41a?auto=format&fit=crop&q=80&w=800',
-    'desc': 'Cool climate & colonial architecture.',
-    'buses': 24,
-  },
-  {
-    'city': 'Sigiriya',
-    'image':
-        'https://images.unsplash.com/photo-1620619767323-b95185694386?auto=format&fit=crop&q=80&w=800',
-    'desc': 'Ancient rock fortress & frescoes.',
-    'buses': 15,
-  },
-  {
-    'city': 'Jaffna',
-    'image':
-        'https://images.unsplash.com/photo-1596555184756-3c58b4566b59?auto=format&fit=crop&q=80&w=800',
-    'desc': 'Northern culture & historic temples.',
-    'buses': 28,
-  },
-  {
-    'city': 'Trincomalee',
-    'image':
-        'https://images.unsplash.com/photo-1629864276707-1b033620023e?auto=format&fit=crop&q=80&w=800',
-    'desc': 'Pristine beaches & natural harbor.',
-    'buses': 22,
-  },
-  {
-    'city': 'Anuradhapura',
-    'image':
-        'https://images.unsplash.com/photo-1625736300986-1d156b73887e?auto=format&fit=crop&q=80&w=800',
-    'desc': 'Ancient capital & sacred stupas.',
-    'buses': 30,
-  },
-  {
-    'city': 'Mirissa',
-    'image':
-        'https://images.unsplash.com/photo-1580910540417-69502b4f620f?auto=format&fit=crop&q=80&w=800',
-    'desc': 'Whale watching & sandy beaches.',
-    'buses': 40,
-  }
-];
+// Data moved to lib/data/destinations_data.dart for dynamic handling
 
 // Fallback images for new dynamic locations (Simulating diverse "Google Images" results)
 final List<String> _genericImages = [
@@ -142,6 +73,10 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadDynamicDestinations();
 
+    // Listen to changes to update UI state (button enable/disable)
+    _originController.addListener(_onInputChanged);
+    _destinationController.addListener(_onInputChanged);
+
     // Check for pre-filled data (e.g. from Book Again)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final tripController =
@@ -156,6 +91,10 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _onInputChanged() {
+    setState(() {});
+  }
+
   Future<void> _loadDynamicDestinations() async {
     // 1. Get available cities from DB
     final availableCities = await FirestoreService().getAvailableCities();
@@ -165,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Map for O(1) lookup of static data
     final staticMap = {
-      for (var d in _allDestinations) d['city'].toString().toLowerCase(): d
+      for (var d in allDestinationsData) d['city'].toString().toLowerCase(): d
     };
 
     if (availableCities.isNotEmpty) {
@@ -192,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } else {
       // If DB is empty, show a default set (Colombo, Kandy, Galle)
-      finalDestinations = _allDestinations.take(3).toList();
+      finalDestinations = allDestinationsData.take(3).toList();
     }
 
     // 3. Update State
@@ -206,9 +145,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     finalDestinations.shuffle();
 
+    final isDesktop = MediaQuery.of(context).size.width > 900;
+
     if (mounted) {
       setState(() {
-        _currentDestinations = finalDestinations.take(6).toList();
+        _currentDestinations =
+            finalDestinations.take(isDesktop ? 6 : 4).toList();
       });
     }
   }
@@ -408,15 +350,24 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       actions: [
-                        // Notification Icon
-                        IconButton(
-                          icon: const Icon(Icons.notifications_none_rounded),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const NotificationsScreen()),
+                        // Notification Icon (Only if logged in)
+                        StreamBuilder<User?>(
+                          stream: FirebaseAuth.instance.authStateChanges(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const SizedBox.shrink();
+                            }
+                            return IconButton(
+                              icon:
+                                  const Icon(Icons.notifications_none_rounded),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const NotificationsScreen()),
+                                );
+                              },
                             );
                           },
                         ),
@@ -435,16 +386,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                         ),
 
-                        // Profile Dropdown (New Animated One)
+                        // Profile Dropdown or Login Button
                         StreamBuilder<User?>(
                             stream: FirebaseAuth.instance.authStateChanges(),
                             builder: (context, snapshot) {
                               final user = snapshot.data;
                               if (user == null) {
-                                return IconButton(
-                                  icon: const Icon(Icons.login),
-                                  onPressed: () =>
-                                      Navigator.pushNamed(context, '/'),
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: TextButton.icon(
+                                    onPressed: () =>
+                                        Navigator.pushNamed(context, '/login'),
+                                    icon: const Icon(Icons.login, size: 18),
+                                    label: const Text("Log In",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppTheme.primaryColor,
+                                    ),
+                                  ),
                                 );
                               }
                               return FloatingProfileMenu(user: user);
@@ -516,6 +477,7 @@ class _HomeScreenState extends State<HomeScreen> {
       BuildContext context, User user, bool isDesktop) {
     return Column(
       children: [
+        const SizedBox(height: 48),
         StreamBuilder<List<Ticket>>(
           stream: Provider.of<FirestoreService>(context, listen: false)
               .getUserTickets(user.uid),
@@ -675,25 +637,66 @@ class _FloatingProfileMenuState extends State<FloatingProfileMenu>
                         color: AppTheme.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: AppTheme.primaryColor,
-                            child: Text(
-                                widget.user.displayName?[0].toUpperCase() ??
-                                    "U",
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 14)),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(widget.user.displayName ?? "User",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 13),
-                                overflow: TextOverflow.ellipsis),
-                          ),
-                        ],
+                      child: FutureBuilder<DocumentSnapshot>(
+                        future: FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(widget.user.uid)
+                            .get(),
+                        builder: (context, snapshot) {
+                          String displayName =
+                              widget.user.displayName ?? "User";
+                          String photoURL = widget.user.photoURL ?? "";
+
+                          if (snapshot.hasData && snapshot.data!.exists) {
+                            final data =
+                                snapshot.data!.data() as Map<String, dynamic>;
+                            if (data['displayName'] != null &&
+                                data['displayName'].toString().isNotEmpty) {
+                              displayName = data['displayName'];
+                            } else if (data['name'] != null) {
+                              displayName = data['name'];
+                            }
+                            if (data['photoURL'] != null) {
+                              photoURL = data['photoURL'];
+                            }
+                          }
+
+                          // Ensure we don't show "User" if email exists and name is truly missing
+                          if (displayName == "User" &&
+                              widget.user.email != null) {
+                            displayName = widget.user.email!.split('@')[0];
+                          }
+
+                          return Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: AppTheme.primaryColor,
+                                backgroundImage: (photoURL.isNotEmpty)
+                                    ? NetworkImage(photoURL)
+                                    : null,
+                                onBackgroundImageError:
+                                    (photoURL.isNotEmpty) ? (_, __) {} : null,
+                                child: (photoURL.isEmpty)
+                                    ? Text(
+                                        displayName.isNotEmpty
+                                            ? displayName[0].toUpperCase()
+                                            : "U",
+                                        style: const TextStyle(
+                                            color: Colors.white, fontSize: 14))
+                                    : null,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(displayName,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13),
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                     const Divider(),
@@ -751,6 +754,8 @@ class _FloatingProfileMenuState extends State<FloatingProfileMenu>
                 backgroundImage: widget.user.photoURL != null
                     ? NetworkImage(widget.user.photoURL!)
                     : null,
+                onBackgroundImageError:
+                    widget.user.photoURL != null ? (_, __) {} : null,
                 child: widget.user.photoURL == null
                     ? const Icon(Icons.person, size: 16, color: Colors.grey)
                     : null,
@@ -849,6 +854,7 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
             if (ongoingTrips.isEmpty) return const SizedBox.shrink();
 
             // Custom Sort: Active Match -> Scheduled
+            // Custom Sort: Active Match -> Scheduled
             ongoingTrips.sort((a, b) {
               int rankA = _getTripRank(a.status);
               int rankB = _getTripRank(b.status);
@@ -856,15 +862,14 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
               return a.departureTime.compareTo(b.departureTime);
             });
 
-            if (ongoingTrips.length == 1) {
-              return _buildSingleTrip(ongoingTrips.first);
-            }
+            // Removed single trip optimization to ensure consistent height constraint (520px) via PageView wrapper
+            // if (ongoingTrips.length == 1) ...
 
             return Stack(
               alignment: Alignment.center,
               children: [
                 SizedBox(
-                  height: 420,
+                  height: 520,
                   child: PageView.builder(
                     controller: _pageController,
                     itemCount: ongoingTrips.length,
@@ -929,16 +934,6 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
             ]),
         child: Icon(icon, size: 16, color: AppTheme.primaryColor),
       ),
-    );
-  }
-
-  Widget _buildSingleTrip(Trip trip) {
-    final ticket = widget.tickets.firstWhere((tk) => tk.tripId == trip.id,
-        orElse: () => widget.tickets[0]);
-    return OngoingTripCard(
-      trip: trip,
-      seatCount: ticket.seatNumbers.length,
-      paidAmount: ticket.totalAmount,
     );
   }
 
@@ -1025,30 +1020,20 @@ class _HeroSectionState extends State<_HeroSection> {
   final List<Map<String, String>> _heroData = [
     {
       "image":
-          "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1920",
+          "https://live.staticflickr.com/65535/55025510678_c31eb6da24_b.jpg", // User Flickr 1
       "subtitle":
           "Book your bus tickets instantly with BusLink. Reliable, fast, and secure."
     },
     {
       "image":
-          "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&q=80&w=1920",
+          "https://live.staticflickr.com/65535/55025567979_f812048ac2_h.jpg", // User Flickr 2
       "subtitle":
           "Discover the most beautiful routes across the island in comfort."
     },
     {
       "image":
-          "https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&q=80&w=1920",
+          "https://live.staticflickr.com/65535/55015711501_a4d336d2c0_b.jpg", // User Flickr 3
       "subtitle": "Seamless payments and real-time tracking for your journey."
-    },
-    {
-      "image":
-          "https://images.unsplash.com/photo-1494515855673-b8a20997e3f8?auto=format&fit=crop&q=80&w=1920",
-      "subtitle": "Experience premium travel with our top-rated bus operators."
-    },
-    {
-      "image":
-          "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=1920",
-      "subtitle": "Smart Transit for a Smarter Sri Lanka."
     },
   ];
 
@@ -1080,7 +1065,7 @@ class _HeroSectionState extends State<_HeroSection> {
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 8), (timer) {
       if (mounted) {
         setState(() {
           _currentImageIndex = (_currentImageIndex + 1) % _heroData.length;
@@ -1101,7 +1086,7 @@ class _HeroSectionState extends State<_HeroSection> {
           // Background Image
           Positioned.fill(
             child: AnimatedSwitcher(
-              duration: const Duration(seconds: 2),
+              duration: const Duration(milliseconds: 800), // Faster transition
               child: Container(
                 key: ValueKey(_heroData[_currentImageIndex]["image"]),
                 decoration: BoxDecoration(
@@ -1114,7 +1099,7 @@ class _HeroSectionState extends State<_HeroSection> {
               ),
             ),
           ),
-          // Heavy Red Gradient Overlay
+          // Subtle Dark Gradient Overlay (No Red)
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -1122,9 +1107,9 @@ class _HeroSectionState extends State<_HeroSection> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppTheme.primaryColor.withValues(alpha: 0.3),
-                    AppTheme.primaryColor.withValues(alpha: 0.6),
-                    Colors.black.withValues(alpha: 0.9),
+                    Colors.black.withValues(alpha: 0.1),
+                    Colors.black.withValues(alpha: 0.4),
+                    Colors.black.withValues(alpha: 0.8),
                   ],
                 ),
               ),
@@ -1402,11 +1387,35 @@ class _HeroSectionState extends State<_HeroSection> {
                       height: 54, // Slightly taller
                       width: 180, // Wider to prevent wrapping
                       child: ElevatedButton(
-                        onPressed: widget.onSearchTap,
+                        onPressed: (widget.originController.text.isNotEmpty &&
+                                widget.destinationController.text.isNotEmpty &&
+                                widget.originController.text
+                                        .toLowerCase()
+                                        .trim() !=
+                                    widget.destinationController.text
+                                        .toLowerCase()
+                                        .trim())
+                            ? widget.onSearchTap
+                            : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
-                          elevation: 8, // More pop
+                          disabledBackgroundColor: isDark
+                              ? Colors.grey.shade800
+                              : Colors.grey.shade300,
+                          disabledForegroundColor:
+                              isDark ? Colors.white38 : Colors.grey.shade600,
+                          elevation: (widget.originController.text.isNotEmpty &&
+                                  widget
+                                      .destinationController.text.isNotEmpty &&
+                                  widget.originController.text
+                                          .toLowerCase()
+                                          .trim() !=
+                                      widget.destinationController.text
+                                          .toLowerCase()
+                                          .trim())
+                              ? 8
+                              : 0,
                           shadowColor:
                               AppTheme.primaryColor.withValues(alpha: 0.5),
                           shape: RoundedRectangleBorder(
@@ -1628,19 +1637,38 @@ class _HeroSectionState extends State<_HeroSection> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: widget.onSearchTap,
+                  onPressed: (widget.originController.text.isNotEmpty &&
+                          widget.destinationController.text.isNotEmpty &&
+                          widget.originController.text.toLowerCase().trim() ==
+                              widget.destinationController.text
+                                  .toLowerCase()
+                                  .trim())
+                      ? null // Disable if same city
+                      : widget.onSearchTap,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade300,
+                    disabledForegroundColor: Colors.grey.shade500,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 4,
                     shadowColor: AppTheme.primaryColor.withValues(alpha: 0.4),
                   ),
-                  child: const Text("SEARCH BUSES",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: Text(
+                      (widget.originController.text.isNotEmpty &&
+                              widget.destinationController.text.isNotEmpty &&
+                              widget.originController.text
+                                      .toLowerCase()
+                                      .trim() ==
+                                  widget.destinationController.text
+                                      .toLowerCase()
+                                      .trim())
+                          ? "SELECT DIFFERENT CITIES"
+                          : "SEARCH BUSES",
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -1790,6 +1818,7 @@ class _FeaturesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lp = Provider.of<LanguageProvider>(context);
     return _AnimateFadeInUp(
       delay: const Duration(milliseconds: 400),
       child: Center(
@@ -1803,33 +1832,29 @@ class _FeaturesSection extends StatelessWidget {
                       Expanded(
                         child: _FeatureItem(
                           icon: Icons.bolt,
-                          title: 'Fast Booking',
-                          description:
-                              'Book your seats in less than 60 seconds with our streamlined flow.',
+                          title: lp.translate('fast_booking'),
+                          description: lp.translate('fast_booking_desc'),
                         ),
                       ),
                       Expanded(
                         child: _FeatureItem(
                           icon: Icons.shield_outlined,
-                          title: 'Secure Payments',
-                          description:
-                              'Your transactions are protected with industry-standard encryption.',
+                          title: lp.translate('secure_payments'),
+                          description: lp.translate('secure_payments_desc'),
                         ),
                       ),
                       Expanded(
                         child: _FeatureItem(
                           icon: Icons.location_on_outlined,
-                          title: 'Live Tracking',
-                          description:
-                              'Track your bus in real-time and never miss your ride again.',
+                          title: lp.translate('live_tracking'),
+                          description: lp.translate('live_tracking_desc'),
                         ),
                       ),
                       Expanded(
                         child: _FeatureItem(
                           icon: Icons.support_agent,
-                          title: '24/7 Support',
-                          description:
-                              'Our dedicated team is always here to help with your journey.',
+                          title: lp.translate('support_24_7'),
+                          description: lp.translate('support_desc'),
                         ),
                       ),
                     ],
@@ -1963,16 +1988,33 @@ class _PopularDestinationsGridState extends State<_PopularDestinationsGrid> {
       double nextScroll = currentScroll + 1.0;
 
       if (nextScroll >= maxScroll) {
-        // Reset to start smoothly or instantly?
-        // Instantly is less jarring for infinite loop illusion if we duplicated items,
-        // but here we just scroll back or stop.
-        // Let's scroll back to 0 slowly? No, that's annoying.
-        // Let's jump to 0.
         _scrollController.jumpTo(0);
       } else {
         _scrollController.jumpTo(nextScroll);
       }
     });
+  }
+
+  void _scrollLeft() {
+    if (!_scrollController.hasClients) return;
+    final double current = _scrollController.offset;
+    // Mobile Card Width (240) + Margin (20) = 260
+    final double target =
+        (current - 260).clamp(0.0, _scrollController.position.maxScrollExtent);
+    _scrollController.animateTo(target,
+        duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    setState(() => _autoScroll = false);
+  }
+
+  void _scrollRight() {
+    if (!_scrollController.hasClients) return;
+    final double current = _scrollController.offset;
+    // Mobile Card Width (240) + Margin (20) = 260
+    final double target =
+        (current + 260).clamp(0.0, _scrollController.position.maxScrollExtent);
+    _scrollController.animateTo(target,
+        duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    setState(() => _autoScroll = false);
   }
 
   @override
@@ -1994,13 +2036,48 @@ class _PopularDestinationsGridState extends State<_PopularDestinationsGrid> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  lp.translate('popular_destinations'),
-                  style: const TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        lp.translate('popular_destinations'),
+                        style: const TextStyle(
+                          fontFamily: 'Outfit',
+                          fontSize: 24, // Reduced font size
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (!widget.isDesktop)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: _scrollLeft,
+                              icon:
+                                  const Icon(Icons.arrow_back_ios_new_rounded),
+                              tooltip: "Scroll Left",
+                              iconSize: 20,
+                              padding: const EdgeInsets.all(8),
+                              constraints: const BoxConstraints(),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              onPressed: _scrollRight,
+                              icon: const Icon(Icons.arrow_forward_ios_rounded),
+                              tooltip: "Scroll Right",
+                              iconSize: 20,
+                              padding: const EdgeInsets.all(8),
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 32),
                 SizedBox(

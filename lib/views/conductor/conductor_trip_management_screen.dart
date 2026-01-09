@@ -1,37 +1,104 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart'; // Added
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
+import '../../services/location_service.dart'; // Added
 
 import '../booking/seat_selection_screen.dart';
 
-class ConductorTripManagementScreen extends StatelessWidget {
+class ConductorTripManagementScreen extends StatefulWidget {
   final Trip trip;
   const ConductorTripManagementScreen({super.key, required this.trip});
+
+  @override
+  State<ConductorTripManagementScreen> createState() =>
+      _ConductorTripManagementScreenState();
+}
+
+class _ConductorTripManagementScreenState
+    extends State<ConductorTripManagementScreen> {
+  Timer? _locationTimer;
+  bool _isTracking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initLocationTracking();
+  }
+
+  Future<void> _initLocationTracking() async {
+    // 1. Permission Check
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.deniedForever ||
+        permission == LocationPermission.denied) {
+      // Cannot track
+      return;
+    }
+
+    // 2. Start Timer
+    // We poll every 15s. The LocationService handles the "Moved enough?" logic.
+    setState(() => _isTracking = true);
+
+    _locationTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+      if (!mounted) return;
+      try {
+        // High accuracy is fine because we throttle writes
+        Position position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high);
+
+        await LocationService().updateBusLocation(
+            widget.trip.id,
+            position.latitude,
+            position.longitude,
+            position.speed,
+            position.heading);
+      } catch (e) {
+        debugPrint("GPS Error: $e");
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _locationTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
 
     // If trip status updates, we want to reflect it.
-    // Ideally we stream the specific trip, but for now we rely on the passed trip or controller state.
-    // If the controller holds state for 'conductorSelectedTrip', use that.
-    final currentTrip = controller.conductorSelectedTrip?.id == trip.id
-        ? (controller.conductorSelectedTrip ?? trip)
-        : trip;
+    final currentTrip = controller.conductorSelectedTrip?.id == widget.trip.id
+        ? (controller.conductorSelectedTrip ?? widget.trip)
+        : widget.trip;
 
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text("Update Status",
-            style: TextStyle(
-                fontFamily: 'Outfit',
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Update Status",
+                style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black)),
+            if (_isTracking)
+              const Text("• Live Tracking Active",
+                  style: TextStyle(fontSize: 12, color: Colors.green))
+          ],
+        ),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor ??
             Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
@@ -53,11 +120,22 @@ class ConductorTripManagementScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Trip T${currentTrip.id.substring(0, 4).toUpperCase()}",
-                      style: TextStyle(
-                          fontFamily: 'Inter',
-                          color: isDark ? Colors.white70 : Colors.grey.shade500,
-                          fontWeight: FontWeight.bold)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                          "Trip T${currentTrip.id.substring(0, 4).toUpperCase()}",
+                          style: TextStyle(
+                              fontFamily: 'Inter',
+                              color: isDark
+                                  ? Colors.white70
+                                  : Colors.grey.shade500,
+                              fontWeight: FontWeight.bold)),
+                      if (_isTracking)
+                        const Icon(Icons.gps_fixed,
+                            color: Colors.green, size: 16)
+                    ],
+                  ),
                   const SizedBox(height: 8),
                   Text("${currentTrip.fromCity} ➔ ${currentTrip.toCity}",
                       style: TextStyle(

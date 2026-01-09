@@ -8,6 +8,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'cache_service.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -15,12 +16,15 @@ class FirestoreService {
   final String ticketCollection = 'tickets';
   final String userCollection = 'users';
   final String routeCollection = 'routes';
-  
+
   // #region agent log
-  Future<void> _debugLog(String location, String message, Map<String, dynamic> data, {String? hypothesisId, String runId = 'initial'}) async {
+  Future<void> _debugLog(
+      String location, String message, Map<String, dynamic> data,
+      {String? hypothesisId, String runId = 'initial'}) async {
     try {
       final logEntry = {
-        'id': 'log_${DateTime.now().millisecondsSinceEpoch}_${message.hashCode}',
+        'id':
+            'log_${DateTime.now().millisecondsSinceEpoch}_${message.hashCode}',
         'timestamp': DateTime.now().millisecondsSinceEpoch,
         'location': location,
         'message': message,
@@ -29,11 +33,15 @@ class FirestoreService {
         'runId': runId,
         if (hypothesisId != null) 'hypothesisId': hypothesisId,
       };
-      await http.post(
-        Uri.parse('http://127.0.0.1:7242/ingest/83c725d0-037f-4fb1-92e2-a0f363f9b49a'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(logEntry),
-      ).timeout(const Duration(seconds: 1), onTimeout: () => http.Response('', 408));
+      await http
+          .post(
+            Uri.parse(
+                'http://127.0.0.1:7242/ingest/83c725d0-037f-4fb1-92e2-a0f363f9b49a'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(logEntry),
+          )
+          .timeout(const Duration(seconds: 1),
+              onTimeout: () => http.Response('', 408));
     } catch (e) {
       // Silently fail - don't break app
     }
@@ -58,9 +66,11 @@ class FirestoreService {
     DateTime date,
   ) async {
     // #region agent log
-    await _debugLog('firestore_service.dart:searchTrips', 'Trip search started', {'fromCity': fromCity, 'toCity': toCity, 'date': date.toString()}, hypothesisId: 'H4');
+    await _debugLog('firestore_service.dart:searchTrips', 'Trip search started',
+        {'fromCity': fromCity, 'toCity': toCity, 'date': date.toString()},
+        hypothesisId: 'H4');
     // #endregion
-    
+
     final DateTime dayStart = DateTime(date.year, date.month, date.day);
     final DateTime dayEnd = DateTime(
       date.year,
@@ -81,11 +91,24 @@ class FirestoreService {
         : toCity[0].toUpperCase() + toCity.substring(1).toLowerCase();
 
     // #region agent log
-    await _debugLog('firestore_service.dart:searchTrips', 'City names normalized', {'originalFrom': fromCity, 'normalizedFrom': safeFrom, 'originalTo': toCity, 'normalizedTo': safeTo}, hypothesisId: 'H4');
+    await _debugLog(
+        'firestore_service.dart:searchTrips',
+        'City names normalized',
+        {
+          'originalFrom': fromCity,
+          'normalizedFrom': safeFrom,
+          'originalTo': toCity,
+          'normalizedTo': safeTo
+        },
+        hypothesisId: 'H4');
     // #endregion
 
     // #region agent log
-    await _debugLog('firestore_service.dart:searchTrips', 'Executing Firestore query', {'dayStart': dayStart.toString(), 'dayEnd': dayEnd.toString()}, hypothesisId: 'H4');
+    await _debugLog(
+        'firestore_service.dart:searchTrips',
+        'Executing Firestore query',
+        {'dayStart': dayStart.toString(), 'dayEnd': dayEnd.toString()},
+        hypothesisId: 'H4');
     // #endregion
     final snapshot = await _db
         .collection(tripCollection)
@@ -96,18 +119,24 @@ class FirestoreService {
         .get();
 
     // #region agent log
-    await _debugLog('firestore_service.dart:searchTrips', 'Firestore query completed', {'resultCount': snapshot.docs.length}, hypothesisId: 'H4');
+    await _debugLog('firestore_service.dart:searchTrips',
+        'Firestore query completed', {'resultCount': snapshot.docs.length},
+        hypothesisId: 'H4');
     // #endregion
 
     if (snapshot.docs.isEmpty) {
       // #region agent log
-      await _debugLog('firestore_service.dart:searchTrips', 'No trips found', {}, hypothesisId: 'H4');
+      await _debugLog(
+          'firestore_service.dart:searchTrips', 'No trips found', {},
+          hypothesisId: 'H4');
       // #endregion
       return [];
     }
     final trips = snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
     // #region agent log
-    await _debugLog('firestore_service.dart:searchTrips', 'Trips parsed successfully', {'tripCount': trips.length}, hypothesisId: 'H4');
+    await _debugLog('firestore_service.dart:searchTrips',
+        'Trips parsed successfully', {'tripCount': trips.length},
+        hypothesisId: 'H4');
     // #endregion
     return trips;
   }
@@ -251,9 +280,26 @@ class FirestoreService {
 
   // --- ADDED: Route Handling ---
 
+  // Cache for cities to avoid repeated reads
+  List<String>? _cachedCities;
+
   // --- ADDED: Dynamic City List ---
-  Future<List<String>> getAvailableCities() async {
-    // 1. Try fetching from 'routes' collection first (cleaner source)
+  Future<List<String>> getAvailableCities({bool forceRefresh = false}) async {
+    // 0. In-Memory Check (Session) (Fastest)
+    if (_cachedCities != null && !forceRefresh) {
+      return _cachedCities!;
+    }
+
+    // 1. Persistent Cache Check (Across Restarts) (Fast)
+    if (!forceRefresh) {
+      final persistentCache = CacheService().getCachedCities();
+      if (persistentCache != null && persistentCache.isNotEmpty) {
+        _cachedCities = persistentCache;
+        return persistentCache;
+      }
+    }
+
+    // 2. Network Fetch (Slow)
     final routeSnap = await _db.collection(routeCollection).get();
     final Set<String> cities = {};
 
@@ -264,7 +310,7 @@ class FirestoreService {
         if (data['toCity'] != null) cities.add(data['toCity'].toString());
       }
     } else {
-      // 2. Fallback to 'trips' if no routes defined
+      // Fallback to 'trips'
       final tripSnap = await _db.collection(tripCollection).limit(50).get();
       for (var doc in tripSnap.docs) {
         final data = doc.data();
@@ -273,12 +319,17 @@ class FirestoreService {
       }
     }
 
-    // If absolutely nothing, return empty list
     if (cities.isEmpty) {
       return [];
     }
 
-    return cities.toList()..sort();
+    final result = cities.toList()..sort();
+
+    // 3. Update Caches
+    _cachedCities = result;
+    CacheService().saveCities(result); // Fire & Forget
+
+    return result;
   }
 
   Future<List<Trip>> getAllTrips() async {
@@ -711,5 +762,48 @@ class FirestoreService {
 
   Future<void> deleteRoute(String routeId) async {
     await _db.collection(routeCollection).doc(routeId).delete();
+  }
+
+  // --- REAL-TIME TRIP UPDATES & LOGS ---
+  final String tripUpdatesCollection = 'trip_updates';
+  final String tripLogsCollection = 'trip_logs';
+
+  // 1. Update Real-time Status (High Frequency)
+  Future<void> updateTripRealtimeStatus(
+      String tripId, Map<String, dynamic> data) {
+    // Merge with server timestamp for staleness checks
+    final updateData = {
+      ...data,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    };
+    return _db
+        .collection(tripUpdatesCollection)
+        .doc(tripId)
+        .set(updateData, SetOptions(merge: true));
+  }
+
+  // 2. Log State Change (Audit Trail)
+  Future<void> logTripStateChange({
+    required String tripId,
+    required String oldState,
+    required String newState,
+    required String changedBy,
+    required Map<String, dynamic> location,
+    String reason = '',
+  }) {
+    return _db.collection(tripLogsCollection).add({
+      'tripId': tripId,
+      'timestamp': FieldValue.serverTimestamp(),
+      'oldState': oldState,
+      'newState': newState,
+      'changedBy': changedBy,
+      'location': location,
+      'reason': reason,
+    });
+  }
+
+  // 3. Get Real-time Stream
+  Stream<DocumentSnapshot> getTripRealtimeStream(String tripId) {
+    return _db.collection(tripUpdatesCollection).doc(tripId).snapshots();
   }
 }

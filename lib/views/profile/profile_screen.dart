@@ -15,6 +15,12 @@ import '../settings/language_selection_screen.dart';
 
 // import '../layout/mobile_navbar.dart';
 import '../layout/custom_app_bar.dart';
+// IMPORTS FOR PROFILE UPLOAD & SETTINGS
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart'; // for kIsWeb
+import '../settings/account_settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   final bool showBackButton;
@@ -55,13 +61,21 @@ class ProfileScreen extends StatelessWidget {
         String phone = user.phoneNumber ?? "No Phone Linked";
         String role = "Customer";
         String initial = name.isNotEmpty ? name[0].toUpperCase() : "T";
+        String? photoUrl = user.photoURL;
 
         if (snapshot.hasData && snapshot.data!.exists) {
           final data = snapshot.data!.data() as Map<String, dynamic>;
-          name = data['name'] ?? name;
+          // Use 'displayName' or 'name' (legacy)
+          name = data['displayName'] ?? data['name'] ?? name;
           email = data['email'] ?? email;
-          phone = data['phone'] ?? phone;
+          // Use 'phoneNumber' or 'phone' (legacy)
+          phone = data['phoneNumber'] ?? data['phone'] ?? phone;
           role = (data['role'] ?? "Customer").toString().toUpperCase();
+          // Use Firestore photoURL if available, else user.photoURL
+          if (data['photoURL'] != null &&
+              data['photoURL'].toString().isNotEmpty) {
+            photoUrl = data['photoURL'];
+          }
         }
 
         return Scaffold(
@@ -116,34 +130,58 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             child: Column(
                               children: [
-                                Stack(
-                                  alignment: Alignment.bottomRight,
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 60,
-                                      backgroundColor: AppTheme.primaryColor
-                                          .withValues(alpha: 0.1),
-                                      child: Text(
-                                        initial,
-                                        style: const TextStyle(
-                                          fontFamily: 'Outfit',
-                                          fontSize: 48,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.primaryColor,
+                                // PROFILE PICTURE
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () async {
+                                      debugPrint("Profile Avatar Clicked");
+                                      await _pickAndUploadImage(context, user);
+                                    },
+                                    child: Stack(
+                                      alignment: Alignment.bottomRight,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 60,
+                                          backgroundColor: AppTheme.primaryColor
+                                              .withValues(alpha: 0.1),
+                                          backgroundImage: (photoUrl != null)
+                                              ? NetworkImage(photoUrl)
+                                              : null,
+                                          child: (photoUrl == null)
+                                              ? Text(
+                                                  initial,
+                                                  style: const TextStyle(
+                                                    fontFamily: 'Outfit',
+                                                    fontSize: 48,
+                                                    fontWeight: FontWeight.bold,
+                                                    color:
+                                                        AppTheme.primaryColor,
+                                                  ),
+                                                )
+                                              : null,
                                         ),
-                                      ),
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: const BoxDecoration(
+                                            color: AppTheme.primaryColor,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black26,
+                                                blurRadius: 4,
+                                                offset: Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(Icons.edit,
+                                              size: 20, color: Colors.white),
+                                        ),
+                                      ],
                                     ),
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: const BoxDecoration(
-                                        color: AppTheme.primaryColor,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.edit,
-                                          size: 16, color: Colors.white),
-                                    ),
-                                  ],
+                                  ),
                                 ),
+
                                 const SizedBox(height: 24),
                                 Text(
                                   name,
@@ -291,6 +329,36 @@ class ProfileScreen extends StatelessWidget {
                               type: MaterialType.transparency,
                               child: Column(
                                 children: [
+                                  ListTile(
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Colors.blue.withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.person,
+                                          color: Colors.blue),
+                                    ),
+                                    title: const Text(
+                                      "Account Settings",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                    subtitle: const Text(
+                                        "Name, Phone, Linked Accounts",
+                                        style: TextStyle(
+                                            fontSize: 12, color: Colors.grey)),
+                                    trailing: const Icon(Icons.chevron_right,
+                                        size: 18, color: Colors.grey),
+                                    onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const AccountSettingsScreen())),
+                                  ),
+                                  const Divider(height: 1),
                                   ListTile(
                                     leading: Container(
                                       padding: const EdgeInsets.all(8),
@@ -447,5 +515,65 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _pickAndUploadImage(BuildContext context, User user) async {
+    // 1. Pick Image
+    XFile? image;
+    try {
+      debugPrint("Starting image picker...");
+      final ImagePicker picker = ImagePicker();
+      image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512, // Optimization
+        maxHeight: 512,
+        imageQuality: 75,
+      );
+
+      if (image == null) {
+        debugPrint("No image picked");
+        return;
+      }
+      debugPrint("Image picked: ${image.path}");
+    } catch (e) {
+      debugPrint("Error picking image: $e");
+      return;
+    }
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Uploading image... please wait.")));
+
+    try {
+      // 2. Upload to Firebase Storage
+      final storageRef =
+          FirebaseStorage.instance.ref().child('user_profiles/${user.uid}.jpg');
+
+      if (kIsWeb) {
+        await storageRef.putData(await image.readAsBytes());
+      } else {
+        await storageRef.putFile(File(image.path));
+      }
+
+      final String downloadUrl = await storageRef.getDownloadURL();
+
+      // 3. Update Firestore & Auth
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({'photoURL': downloadUrl});
+
+      await user.updatePhotoURL(downloadUrl);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Profile picture updated!")));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Upload failed: $e")));
+      }
+    }
   }
 }

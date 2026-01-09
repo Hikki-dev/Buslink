@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 
 class StripeService {
   // Key now loaded from .env for security (Note: Exposed in client builds)
@@ -30,7 +30,7 @@ class StripeService {
           final error = jsonDecode(response.body);
           throw Exception(error['error'] ?? 'Refund failed via Proxy');
         }
-        print("Refund successful (Web Proxy): ${response.body}");
+        debugPrint("Refund successful (Web Proxy): ${response.body}");
       } else {
         // MOBILE/DESKTOP: Direct Call (No CORS issues)
         final url = Uri.parse('https://api.stripe.com/v1/refunds');
@@ -51,7 +51,7 @@ class StripeService {
           final error = jsonDecode(response.body);
           throw Exception(error['error']['message'] ?? 'Refund failed');
         }
-        print("Refund successful (Direct): ${response.body}");
+        debugPrint("Refund successful (Direct): ${response.body}");
       }
     } catch (e) {
       throw Exception('Stripe Refund Error: $e');

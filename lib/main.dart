@@ -2,6 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ import 'dart:async'; // Added for Completer/Timer if needed
 
 import 'firebase_options.dart';
 import 'utils/platform/platform_utils.dart'; // Cross-platform utils
+import 'services/cache_service.dart';
 
 import 'controllers/trip_controller.dart';
 import 'services/auth_service.dart';
@@ -24,10 +26,12 @@ import 'views/conductor/conductor_dashboard.dart';
 
 import 'views/booking/payment_success_screen.dart';
 import 'views/customer_main_screen.dart';
+import 'views/auth/login_screen.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
+  debugPrint("🚀 APP STARTUP: Version with Safer Spinner Removal 🚀");
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
   runApp(const AppBootstrapper());
@@ -42,104 +46,71 @@ class AppBootstrapper extends StatefulWidget {
 
 class _AppBootstrapperState extends State<AppBootstrapper> {
   bool _isInitialized = false;
-  String _statusKey = "booting"; // Debug status
   AuthService? _authService;
+
+  String? _cachedRole;
 
   @override
   void initState() {
     super.initState();
+    _startBootSequence();
+  }
+
+  Future<void> _startBootSequence() async {
+    // 0. Cache Fast Load
+    try {
+      // Smallest possible delay to let UI mount
+      await CacheService().init();
+      final cachedProfile = CacheService().getUserProfile();
+
+      if (cachedProfile != null && mounted) {
+        // OPTIMISTIC START: We found a user in cache!
+        // Show UI immediately while Firebase connects
+        setState(() {
+          _cachedRole = cachedProfile['role'];
+          _isInitialized = true; // Show UI!
+        });
+        removeWebSpinner();
+        debugPrint("🚀 OPTIMISTIC CROW: Booting as $_cachedRole");
+      }
+    } catch (e) {
+      debugPrint("Cache init error: $e");
+    }
+
+    // Continue with real initialization (Background if optimistic)
     _initialize();
   }
 
   Future<void> _initialize() async {
-    // Safety timeout to ensure app ALWAYS loads eventually
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted && !_isInitialized) {
-        debugPrint("Force-loading app due to initialization timeout");
-        setState(() {
-          _isInitialized = true;
-          _statusKey = "timeout_load";
-        });
-      }
-    });
-
     try {
-      // 1. Load Env
-      try {
-        setState(() => _statusKey = "loading_env");
-        await dotenv.load(fileName: ".env");
-        debugPrint("Env loaded");
-      } catch (e) {
-        debugPrint("Warning: Failed to load .env file: $e");
-      }
+      // 1. Load Env (Fast) - Critical for other steps
+      await dotenv.load(fileName: ".env");
 
-      // 2. Firebase
-      try {
-        setState(() => _statusKey = "connecting_firebase");
-        await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        );
-        debugPrint("Firebase initialized");
-        // Initialize Auth Service early so it's ready if timeout triggers
-        _authService = AuthService();
-      } catch (e) {
-        debugPrint("Critical: Firebase initialization failed: $e");
-      }
+      // 2. Firebase Init
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
 
-      // 3. Status Check & Notifications
-      setState(() => _statusKey = "init_services");
+      // 3. Enable Firestore Persistence (Offline Capabilities)
+      FirebaseFirestore.instance.settings = const Settings(
+          persistenceEnabled: true,
+          cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED);
 
-      try {
-        await NotificationService.initialize().timeout(
-          const Duration(seconds: 10),
-          onTimeout: () {
-            debugPrint("NotificationService init timed out - skipping");
-          },
-        );
-        debugPrint("Notifications initialized");
-      } catch (e) {
-        debugPrint("Notification init failed: $e");
-      }
+      _authService = AuthService();
 
-      String? stripeKey;
-      if (dotenv.isInitialized) {
-        stripeKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
-      }
-
-      if (stripeKey != null) {
-        try {
-          stripe.Stripe.publishableKey = stripeKey;
-          await stripe.Stripe.instance.applySettings().timeout(
-            const Duration(seconds: 2),
-            onTimeout: () {
-              debugPrint("Stripe init timed out - skipping");
-            },
-          );
-          debugPrint("Stripe initialized");
-        } catch (e) {
-          debugPrint("Warning: Failed to initialize Stripe: $e");
-        }
-      }
-
-      // 4. Auth (Actions that require async setup, service already instanced)
-      setState(() => _statusKey = "init_auth");
-      try {
-        if (_authService != null) {
-          await _authService!
-              .initializeGoogleSignIn()
-              .timeout(const Duration(seconds: 3), onTimeout: () {
-            debugPrint("Google Sign-In init timed out - skipping");
-          });
-          debugPrint("Google Sign-In initialized");
-        }
-      } catch (e) {
-        debugPrint("Warning: Google Sign-In init failed: $e");
-      }
+      // 4. Non-Critical Services (Fire & Forget)
+      // Running these without await to unblock UI immediately
+      Future.wait([
+        NotificationService.initialize()
+            .catchError((e) => debugPrint("Notification Init Error: $e")),
+        _initStripe().catchError((e) => debugPrint("Stripe Init Error: $e")),
+        _initAuth().catchError((e) => debugPrint("Auth Init Error: $e")),
+      ]);
     } catch (e, stackTrace) {
-      debugPrint("Unexpected initialization error: $e");
+      debugPrint("Init Error: $e");
       debugPrintStack(stackTrace: stackTrace);
     } finally {
-      if (mounted && !_isInitialized) {
+      if (mounted) {
         setState(() {
           _isInitialized = true;
         });
@@ -148,21 +119,48 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
     }
   }
 
-  // Global Navigator Key for context-less navigation
+  Future<void> _initStripe() async {
+    // ... stripe logic extracted ...
+    String? stripeKey;
+    if (dotenv.isInitialized) {
+      stripeKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
+    }
+    if (stripeKey != null) {
+      stripe.Stripe.publishableKey = stripeKey;
+      await stripe.Stripe.instance.applySettings();
+    }
+  }
+
+  Future<void> _initAuth() async {
+    if (_authService != null) {
+      await _authService!.initializeGoogleSignIn();
+    }
+  }
+
+  // Global Navigator Key
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
   @override
   Widget build(BuildContext context) {
-    // Aggressive removal on build for web spinner
     removeWebSpinner();
 
     return MultiProvider(
       providers: [
-        Provider<AuthService>(create: (_) => _authService!),
+        Provider<AuthService>(
+            create: (_) =>
+                _authService ??
+                AuthService()), // Fallback if _authService not set yet
         Provider<FirestoreService>(create: (_) => FirestoreService()),
         StreamProvider<User?>(
-          create: (context) => context.read<AuthService>().user,
+          create: (context) {
+            // If authService isn't ready, we might return null stream?
+            // But we initialized it in _initialize() at step 2.
+            // If Optimistic, _authService might be null for a few ms until _initialize hits step 2.
+            // We should be careful.
+            if (_authService == null) return const Stream.empty();
+            return context.read<AuthService>().user;
+          },
           initialData: null,
         ),
         ChangeNotifierProvider(create: (_) => TripController()),
@@ -174,29 +172,28 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
           return Consumer<LanguageProvider>(
             builder: (context, languageProvider, _) {
               return MaterialApp(
+                // ... props ...
                 locale: Locale(languageProvider.currentLanguage),
                 supportedLocales: const [
                   Locale('en'),
                   Locale('si'),
-                  Locale('ta'),
+                  Locale('ta')
                 ],
                 localizationsDelegates: const [
-                  // Add flutter localizations delegates if needed, for now manual
-                  // GlobalMaterialLocalizations.delegate,
-                  // GlobalWidgetsLocalizations.delegate,
-                  // GlobalCupertinoLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
                 ],
-                navigatorKey: _AppBootstrapperState.navigatorKey, // Assign Key
+                navigatorKey: _AppBootstrapperState.navigatorKey,
                 title: 'BusLink',
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
                 themeMode: themeController.themeMode,
-                // initialRoute: '/', // REMOVED: Let Flutter Web handle URL from browser
                 routes: {
                   '/': (context) => const AuthWrapper(),
+                  '/login': (context) => const LoginScreen(),
                 },
                 onGenerateRoute: (settings) {
-                  // Handle deep link for payment success
                   if (settings.name?.startsWith('/payment_success') ?? false) {
                     return MaterialPageRoute(
                         settings: settings,
@@ -206,100 +203,63 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
                 },
                 debugShowCheckedModeBanner: false,
                 builder: (context, child) {
-                  // 1. LOADING SCREEN OVERLAY
+                  // 1. LOADING SCREEN (Only if NOT Initialized)
                   if (!_isInitialized) {
                     return Scaffold(
-                      backgroundColor: Colors.white,
+                      backgroundColor: Theme.of(context)
+                          .scaffoldBackgroundColor, // Theme aware
                       body: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.directions_bus,
-                                size: 80, color: AppTheme.primaryColor),
-                            const SizedBox(height: 24),
-                            const CircularProgressIndicator(
-                                color: AppTheme.primaryColor, strokeWidth: 6),
+                            // 1. BRAND LOGO
+                            Icon(Icons.directions_bus,
+                                size: 80,
+                                color: Theme.of(context).primaryColor),
                             const SizedBox(height: 16),
+                            // 2. BRAND NAME
                             Text(
-                                Translations.translate(
-                                    _statusKey, getPlatformLanguage()),
-                                style: const TextStyle(
-                                    color: AppTheme.primaryColor,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold)),
+                              "BusLink",
+                              style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 32,
+                                fontWeight: FontWeight.w900,
+                                color: Theme.of(context).primaryColor,
+                                letterSpacing: -1.0,
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+                            // 3. MINIMALIST LOADER
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     );
                   }
 
-                  // 2. CHILD (NAVIGATOR)
-                  if (child == null) return const SizedBox();
+                  // 2. OPTIMISTIC / REAL CHILD
+                  // If we are optimized/booted, we show 'child'.
+                  // BUT 'child' is the Navigator, which routes to '/'.
+                  // '/' is AuthWrapper.
+                  // AuthWrapper relies on StreamProvider<User?>.
+                  // If Firebase is connecting, Stream<User?> is Empty or Null.
+                  // So AuthWrapper sees null user -> renders CustomerMainScreen.
+                  // If cachedRole was Admin, we want AdminScreen!
 
-                  // 3. GLOBAL ADMIN BANNER OVERLAY
-                  final tripController = Provider.of<TripController>(context);
+                  // WE NEED to inject the Cached Role into AuthWrapper or handle it here?
+                  // Easier: Pass cachedRole to AuthWrapper via Provider or a wrapping widget?
+                  // OR: Handle Optimistic Overlay here?
 
-                  if (!tripController.isPreviewMode) {
-                    return child;
-                  }
+                  // Let's modify AuthWrapper to use CacheService as fallback!
 
-                  return Column(
-                    children: [
-                      Material(
-                        elevation: 4,
-                        child: Container(
-                          width: double.infinity,
-                          color: Colors.amber,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 8, horizontal: 16),
-                          child: SafeArea(
-                            bottom: false,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text("Welcome Admin - Preview Mode",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                        decoration: TextDecoration.none,
-                                        fontSize: 14)),
-                                const SizedBox(width: 16),
-                                InkWell(
-                                  onTap: () async {
-                                    // Update State
-                                    await tripController.setPreviewMode(false);
-
-                                    // Navigate using Global Key
-                                    // We go to '/' which triggers AuthWrapper -> AdminDashboard
-                                    _AppBootstrapperState
-                                        .navigatorKey.currentState
-                                        ?.pushNamedAndRemoveUntil(
-                                            '/', (route) => false);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 4),
-                                    decoration: BoxDecoration(
-                                        color:
-                                            Colors.black.withValues(alpha: 0.1),
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
-                                    child: const Text("EXIT",
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black)),
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(child: child),
-                    ],
-                  );
+                  return child!;
                 },
               );
             },
@@ -316,13 +276,26 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Real Match
     final user = Provider.of<User?>(context);
-    if (user == null) {
-      // Lazy Login: Allow guests to see the main screen
-      return const CustomerMainScreen();
-    } else {
+    if (user != null) {
       return RoleDispatcher(user: user);
     }
+
+    // 2. Cache Fallback (Optimistic)
+    final cachedProfile = CacheService().getUserProfile();
+    if (cachedProfile != null) {
+      final role = cachedProfile['role'];
+      switch (role) {
+        case 'admin':
+          return const AdminDashboard();
+        case 'conductor':
+          return const ConductorDashboard();
+      }
+    }
+
+    // 3. Guest / Default
+    return const CustomerMainScreen();
   }
 }
 
@@ -453,6 +426,9 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
 
         // Last chance to remove spinner
         removeWebSpinner();
+
+        // Save FCM Token
+        NotificationService.saveTokenToUser(widget.user.uid);
 
         switch (role) {
           case 'admin':

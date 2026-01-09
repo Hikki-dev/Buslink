@@ -2,6 +2,18 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // If you're going to use other Firebase services in the background, such as Firestore,
+  // make sure you call `initializeApp` before using other Firebase services.
+  await Firebase.initializeApp();
+
+  if (kDebugMode) {
+    print("Handling a background message: ${message.messageId}");
+  }
+}
 
 class NotificationService {
   static final FirebaseMessaging _firebaseMessaging =
@@ -14,6 +26,9 @@ class NotificationService {
       badge: true,
       sound: true,
     );
+
+    // Register Background Handler
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       if (kDebugMode) {
@@ -31,7 +46,7 @@ class NotificationService {
     }
 
     // Robust Token Retrieval (iOS Fix)
-    if (Platform.isIOS) {
+    if (!kIsWeb && Platform.isIOS) {
       String? apnsToken;
       try {
         apnsToken = await _firebaseMessaging.getAPNSToken();
@@ -181,6 +196,34 @@ class NotificationService {
       if (kDebugMode) {
         print("Error in notifyTripStatusChange: $e");
       }
+    }
+  }
+
+  /// Saves the FCM token to the user's Firestore profile
+  static Future<void> saveTokenToUser(String userId) async {
+    try {
+      String? token = await _firebaseMessaging.getToken();
+      if (token == null) return;
+
+      // Robustly save token (Array or Single Field?)
+      // Single field is easier for 1-1 deviceness, Array is better for multi-device.
+      // Let's use specific field for now or Merge.
+      // We will do both: 'fcmToken' (last used) and add to 'fcmTokens' array.
+
+      final userRef =
+          FirebaseFirestore.instance.collection('users').doc(userId);
+
+      await userRef.set({
+        'fcmToken': token,
+        'fcmTokens': FieldValue.arrayUnion([token]),
+        'lastTokenUpdate': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (kDebugMode) {
+        print("FCM Token saved for user $userId");
+      }
+    } catch (e) {
+      debugPrint("Error saving FCM token: $e");
     }
   }
 }
