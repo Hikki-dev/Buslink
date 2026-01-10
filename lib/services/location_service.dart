@@ -73,7 +73,11 @@ class LocationService {
   /// Stream for passengers to listen to bus location from generic 'trip_updates'.
   /// Returns null if no location set yet.
   Stream<LatLng?> getBusLocationStream(String tripId) {
-    return _firestoreService.getTripRealtimeStream(tripId).map((doc) {
+    return FirebaseFirestore.instance
+        .collection('trips')
+        .doc(tripId)
+        .snapshots()
+        .map((doc) {
       if (doc.exists && doc.data() != null) {
         final data = doc.data() as Map<String, dynamic>;
 

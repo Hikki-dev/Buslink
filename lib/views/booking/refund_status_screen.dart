@@ -122,7 +122,6 @@ class RefundStatusScreen extends StatelessWidget {
         text = "FAILED";
         break;
       case RefundStatus.pending:
-      default:
         color = Colors.orange;
         icon = Icons.hourglass_top;
         text = "PENDING";

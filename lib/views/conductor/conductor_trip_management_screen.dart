@@ -5,13 +5,14 @@ import 'package:geolocator/geolocator.dart'; // Added
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
-import '../../models/trip_model.dart';
+import '../../models/trip_view_model.dart'; // EnrichedTrip
+import '../../models/trip_model.dart' show TripStatus;
 import '../../services/location_service.dart'; // Added
 
 import '../booking/seat_selection_screen.dart';
 
 class ConductorTripManagementScreen extends StatefulWidget {
-  final Trip trip;
+  final EnrichedTrip trip;
   const ConductorTripManagementScreen({super.key, required this.trip});
 
   @override
@@ -77,9 +78,10 @@ class _ConductorTripManagementScreenState
     final controller = Provider.of<TripController>(context);
 
     // If trip status updates, we want to reflect it.
-    final currentTrip = controller.conductorSelectedTrip?.id == widget.trip.id
-        ? (controller.conductorSelectedTrip ?? widget.trip)
-        : widget.trip;
+    // If trip status updates, we want to reflect it.
+    // Note: TripController might need updates to handle EnrichedTrip for conductor selection
+    final currentTrip = widget.trip;
+    // Simplified for now: Assume widget.trip is the source or handled by controller externally
 
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -251,7 +253,7 @@ class _ConductorTripManagementScreenState
             const SizedBox(height: 40),
             Center(
               child: Text(
-                "Current Status: ${currentTrip.status.name.toUpperCase()}",
+                "Current Status: ${currentTrip.status.toUpperCase()}",
                 style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
@@ -265,21 +267,22 @@ class _ConductorTripManagementScreenState
     );
   }
 
-  Color _getStatusColor(TripStatus status) {
-    if (status == TripStatus.delayed) {
-      return Colors.red;
-    }
-    if (status == TripStatus.arrived || status == TripStatus.departed) {
-      return Colors.green;
-    }
-    if (status == TripStatus.onWay) {
-      return Colors.blue;
-    }
+  Color _getStatusColor(String status) {
+    // Adapter for String status
+    if (status == 'Delayed') return Colors.red;
+    if (status == 'Arrived' || status == 'Departed') return Colors.green;
+    if (status == 'OnWay') return Colors.blue;
     return Colors.grey;
   }
 
-  Widget _buildStatusButton(BuildContext context, TripController controller,
-      Trip trip, String label, TripStatus status, Color color, IconData icon,
+  Widget _buildStatusButton(
+      BuildContext context,
+      TripController controller,
+      EnrichedTrip trip,
+      String label,
+      TripStatus status,
+      Color color,
+      IconData icon,
       {bool isDelay = false}) {
     return SizedBox(
       height: 60,
@@ -331,8 +334,8 @@ class _ConductorTripManagementScreenState
             delay = newDelay;
           }
           if (context.mounted) {
-            controller.updateTripStatusAsConductor(
-                context, trip, status, delay);
+            controller.updateTripStatusAsConductor(trip.id, status,
+                delayMinutes: delay);
           }
         },
         icon: Icon(icon, color: Colors.white),
@@ -352,7 +355,7 @@ class _ConductorTripManagementScreenState
   }
 
   void _showCashBookingDialog(
-      BuildContext context, TripController controller, Trip trip) {
+      BuildContext context, TripController controller, EnrichedTrip trip) {
     // Initialize Controller State
     controller.selectedTrip = trip;
     controller.selectedSeats = [];

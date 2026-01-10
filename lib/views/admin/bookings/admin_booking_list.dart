@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../../utils/app_theme.dart';
+import 'booking_details_screen.dart';
 
 class AdminBookingListScreen extends StatefulWidget {
   const AdminBookingListScreen({super.key});
@@ -319,10 +320,12 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
           ],
         ),
         onTap: () {
-          // Future: Open detail view to see payment intent ID etc.
-          // For now just show snackbar
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text("Booking ID: $id")));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BookingDetailsScreen(data: data, bookingId: id),
+            ),
+          );
         },
       ),
     );

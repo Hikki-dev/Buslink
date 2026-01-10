@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../utils/app_theme.dart'; // Added Import
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart'; // Corrected import for Ticket
+import '../../services/sms_service.dart'; // Added Import
 import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:flutter/rendering.dart'; // For capturing widget?
 import 'package:pdf/pdf.dart';
@@ -53,10 +54,12 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
 
   Future<void> _verifyBooking() async {
     String? bookingIdParam;
+    String? paymentIntentId; // Added
 
     // Strategy A: Check standard URL query parameters
     if (kIsWeb) {
       bookingIdParam = Uri.base.queryParameters['booking_id'];
+      paymentIntentId = Uri.base.queryParameters['payment_intent']; // Added
     }
 
     // Strategy B: Check Flutter Route Name
@@ -66,6 +69,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         // Use a placeholder domain to parse the path/query safely
         final uri = Uri.parse("https://buslink.app$routeName");
         bookingIdParam = uri.queryParameters['booking_id'];
+        paymentIntentId = uri.queryParameters['payment_intent']; // Added
       }
     }
 
@@ -75,6 +79,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       final safeFragment = fragment.startsWith('/') ? fragment : '/$fragment';
       final uri = Uri.parse("https://buslink.app$safeFragment");
       bookingIdParam = uri.queryParameters['booking_id'];
+      paymentIntentId = uri.queryParameters['payment_intent']; // Added
     }
 
     // Strategy D: Fallback Args
@@ -82,6 +87,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map) {
         bookingIdParam = args['booking_id'];
+        // Maybe passed in args if manual nav, but query param is standard for Stripe
+        paymentIntentId = args['payment_intent'];
       }
     }
 
@@ -104,7 +111,9 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     try {
       for (final id in bookingIds) {
         if (id.trim().isEmpty) continue;
-        final success = await controller.confirmBooking(id.trim());
+        // Pass paymentIntentId
+        final success = await controller.confirmBooking(id.trim(),
+            paymentIntentId: paymentIntentId);
         if (!success) {
           allSuccess = false;
           break;
@@ -128,6 +137,14 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         _verifiedTickets = tickets;
         _message = "Payment Confirmed!";
       });
+
+      // Send SMS Copies
+      for (final ticket in tickets) {
+        SmsService.sendTicketCopy(ticket);
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Receipt sent via SMS")),
+      );
     } else {
       if (mounted) {
         setState(() {
@@ -653,8 +670,8 @@ class _FavoriteRouteButtonState extends State<_FavoriteRouteButton> {
 
   Future<void> _checkFavorite() async {
     final controller = Provider.of<TripController>(context, listen: false);
-    final fav = await controller.isRouteFavorite(
-        widget.userId, widget.fromCity, widget.toCity);
+    final fav =
+        await controller.isRouteFavorite(widget.fromCity, widget.toCity);
     if (mounted) {
       setState(() {
         _isFavorite = fav;
@@ -666,8 +683,7 @@ class _FavoriteRouteButtonState extends State<_FavoriteRouteButton> {
   Future<void> _toggle() async {
     setState(() => _isLoading = true);
     final controller = Provider.of<TripController>(context, listen: false);
-    await controller.toggleRouteFavorite(
-        widget.userId, widget.fromCity, widget.toCity,
+    await controller.toggleRouteFavorite(widget.fromCity, widget.toCity,
         operatorName: widget.operatorName);
 
     // Toggle state locally

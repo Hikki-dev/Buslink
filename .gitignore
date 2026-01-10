@@ -72,3 +72,4 @@ android/key.properties
 .vercel
 node_modules/
 push.json
+scripts/service-account.json

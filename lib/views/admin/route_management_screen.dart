@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-// import 'package:intl/intl.dart';
-
 import '../../models/route_model.dart';
+import '../../models/schedule_model.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_constants.dart';
 
 class RouteManagementScreen extends StatefulWidget {
   const RouteManagementScreen({super.key});
@@ -12,453 +12,659 @@ class RouteManagementScreen extends StatefulWidget {
   State<RouteManagementScreen> createState() => _RouteManagementScreenState();
 }
 
-class _RouteManagementScreenState extends State<RouteManagementScreen> {
+class _RouteManagementScreenState extends State<RouteManagementScreen>
+    with SingleTickerProviderStateMixin {
   final FirestoreService _service = FirestoreService();
+  late TabController _tabController;
 
-  // Helper for Time Picking
-  Future<TimeOfDay?> _pickTime(BuildContext context, TimeOfDay initial) async {
-    return showTimePicker(context: context, initialTime: initial);
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
   }
 
-  void _showRouteDialog({RouteModel? route}) {
-    final isEditing = route != null;
-    final formKey = GlobalKey<FormState>();
-
-    // Controllers
-    final fromController = TextEditingController(text: route?.fromCity ?? '');
-    final toController = TextEditingController(text: route?.toCity ?? '');
-    final viaController = TextEditingController(text: route?.via ?? '');
-    // final priceController = TextEditingController(text: route?.price.toStringAsFixed(0) ?? '0'); // Price Removed
-    final platformController =
-        TextEditingController(text: route?.platformNumber ?? '1');
-
-    // State Variables for Dialog
-    TimeOfDay departureTime = isEditing
-        ? TimeOfDay(hour: route.departureHour, minute: route.departureMinute)
-        : const TimeOfDay(hour: 8, minute: 0);
-    TimeOfDay arrivalTime = isEditing
-        ? TimeOfDay(hour: route.arrivalHour, minute: route.arrivalMinute)
-        : const TimeOfDay(hour: 12, minute: 0);
-
-    List<int> selectedDays =
-        isEditing ? List.from(route.recurrenceDays) : [1, 2, 3, 4, 5, 6, 7];
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setState) {
-          // final isDark = Theme.of(context).brightness == Brightness.dark; - Unused
-
-          return AlertDialog(
-            title: Text(isEditing ? "Edit Route" : "Add New Route",
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            content: SizedBox(
-              width: 500, // Wider dialog
-              child: SingleChildScrollView(
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // --- A. Basic Route Info ---
-                      Text("A) Route Details",
-                          style: TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: fromController,
-                              decoration: const InputDecoration(
-                                  labelText: "From (City)",
-                                  isDense: true,
-                                  border: OutlineInputBorder()),
-                              validator: (v) => v!.isEmpty ? "Required" : null,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: toController,
-                              decoration: const InputDecoration(
-                                  labelText: "To (City)",
-                                  isDense: true,
-                                  border: OutlineInputBorder()),
-                              validator: (v) => v!.isEmpty ? "Required" : null,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: viaController,
-                        decoration: const InputDecoration(
-                            labelText: "Via / Route Variant",
-                            hintText: "e.g. Expressway, Galle Road",
-                            isDense: true,
-                            border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // --- B. Schedule & Days ---
-                      Text("B) Schedule",
-                          style: TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () async {
-                                final t =
-                                    await _pickTime(context, departureTime);
-                                if (t != null) {
-                                  setState(() => departureTime = t);
-                                }
-                              },
-                              child: InputDecorator(
-                                decoration: const InputDecoration(
-                                    labelText: "Departure",
-                                    border: OutlineInputBorder()),
-                                child: Text(departureTime.format(context)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () async {
-                                final t = await _pickTime(context, arrivalTime);
-                                if (t != null) setState(() => arrivalTime = t);
-                              },
-                              child: InputDecorator(
-                                decoration: const InputDecoration(
-                                    labelText: "Arrival",
-                                    border: OutlineInputBorder()),
-                                child: Text(arrivalTime.format(context)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Text("Operating Days:",
-                          style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      Wrap(
-                        spacing: 4,
-                        children: [1, 2, 3, 4, 5, 6, 7].map((day) {
-                          final isSelected = selectedDays.contains(day);
-                          final dayName =
-                              ['M', 'T', 'W', 'T', 'F', 'S', 'S'][day - 1];
-                          return FilterChip(
-                            label: Text(dayName),
-                            selected: isSelected,
-                            onSelected: (val) {
-                              setState(() {
-                                if (val) {
-                                  selectedDays.add(day);
-                                } else {
-                                  selectedDays.remove(day);
-                                }
-                                selectedDays.sort();
-                              });
-                            },
-                            checkmarkColor: Colors.white,
-                            selectedColor: AppTheme.primaryColor,
-                            labelStyle: TextStyle(
-                                color: isSelected ? Colors.white : null),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // --- C. Bus & Details ---
-                      Text("C) Details",
-                          style: TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          /* 
-                          Expanded(
-                            child: TextFormField(
-                              controller: priceController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                  labelText: "Price (LKR)",
-                                  isDense: true,
-                                  border: OutlineInputBorder()),
-                              validator: (v) => v!.isEmpty ? "Required" : null,
-                            ),
-                          ),
-                          const SizedBox(width: 12), 
-                          */
-                          Expanded(
-                            child: TextFormField(
-                              controller: platformController,
-                              decoration: const InputDecoration(
-                                  labelText: "Platform",
-                                  isDense: true,
-                                  border: OutlineInputBorder()),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text("Cancel")),
-              ElevatedButton(
-                onPressed: () async {
-                  if (formKey.currentState!.validate()) {
-                    final newRoute = RouteModel(
-                      id: isEditing ? route.id : '',
-                      fromCity: fromController.text.trim(),
-                      toCity: toController.text.trim(),
-                      departureHour: departureTime.hour,
-                      departureMinute: departureTime.minute,
-                      arrivalHour: arrivalTime.hour,
-                      arrivalMinute: arrivalTime.minute,
-                      price: 0, // Default to 0 as field is removed
-                      operatorName: 'BusLink Official', // Default
-                      busNumber: 'Standard', // Default
-                      busType: route?.busType ?? 'Normal',
-                      platformNumber: platformController.text.trim(),
-                      stops: route?.stops ?? [],
-                      features: route?.features ?? [],
-                      via: viaController.text.trim(),
-                      recurrenceDays: selectedDays,
-                    );
-
-                    if (isEditing) {
-                      await _service.updateRoute(newRoute);
-                    } else {
-                      await _service.addRoute(newRoute);
-                    }
-                    if (context.mounted) Navigator.pop(ctx);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white),
-                child: Text(isEditing ? "Update" : "Create"),
-              )
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  void _confirmDelete(RouteModel route) {
-    showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-              title: const Text("Delete Route?"),
-              content: Text(
-                  "Are you sure you want to delete ${route.fromCity} - ${route.toCity}?"),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text("Cancel")),
-                ElevatedButton(
-                    onPressed: () async {
-                      await _service.deleteRoute(route.id);
-                      if (context.mounted) Navigator.pop(ctx);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white),
-                    child: const Text("Delete"))
-              ],
-            ));
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Route Management"),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
+        title: const Text("Route & Schedule Management",
+            style:
+                TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: AppTheme.primaryColor,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: AppTheme.primaryColor,
+          tabs: const [
+            Tab(text: "Routes (Paths)", icon: Icon(Icons.map)),
+            Tab(text: "Schedules (Operations)", icon: Icon(Icons.schedule)),
+          ],
+        ),
       ),
-      body: StreamBuilder<List<RouteModel>>(
-        stream: _service.getRoutesStream(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No routes defined."));
-          }
-
-          final routes = snapshot.data!;
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: routes.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final route = routes[index];
-              return _RouteCard(
-                route: route,
-                onEdit: () => _showRouteDialog(route: route),
-                onDelete: () => _confirmDelete(route),
-              );
-            },
-          );
-        },
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildRouteTab(),
+          _buildScheduleTab(),
+        ],
       ),
     );
   }
-}
 
-class _RouteCard extends StatelessWidget {
-  final RouteModel route;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  // --- TAB 1: ROUTES ---
 
-  const _RouteCard(
-      {required this.route, required this.onEdit, required this.onDelete});
+  Widget _buildRouteTab() {
+    return StreamBuilder<List<RouteModel>>(
+      stream: _service.getRoutesStream(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-  @override
-  Widget build(BuildContext context) {
-    // Format Time
-    final dep =
-        TimeOfDay(hour: route.departureHour, minute: route.departureMinute)
-            .format(context);
-    final arr = TimeOfDay(hour: route.arrivalHour, minute: route.arrivalMinute)
-        .format(context);
-
-    // Format Days
-    String daysStr = "Daily";
-    if (route.recurrenceDays.length < 7) {
-      daysStr = route.recurrenceDays
-          .map((d) => ['M', 'T', 'W', 'T', 'F', 'S', 'S'][d - 1])
-          .join(",");
-    }
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        child: Column(
-          children: [
-            Row(
+        final routes = snapshot.data!;
+        if (routes.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                  child:
-                      const Icon(Icons.alt_route, color: AppTheme.primaryColor),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                const Text("No routes defined."),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => _showRouteDialog(),
+                  child: const Text("Add First Route"),
+                )
+              ],
+            ),
+          );
+        }
+
+        return Scaffold(
+          floatingActionButton: FloatingActionButton(
+            heroTag: 'addRouteBtn',
+            onPressed: () => _showRouteDialog(),
+            backgroundColor: AppTheme.primaryColor,
+            child: const Icon(Icons.add),
+          ),
+          body: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: routes.length,
+            itemBuilder: (context, index) {
+              final route = routes[index];
+              return Card(
+                elevation: 2,
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: AppTheme.primaryColor,
+                    child: Icon(Icons.directions, color: Colors.white),
+                  ),
+                  title: Text("${route.originCity} ➝ ${route.destinationCity}",
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(
+                      "Via: ${route.via.isEmpty ? 'Direct' : route.via}\nDuration: ${_formatDuration(route.estimatedDurationMins)} • Stops: ${route.stops.length}"),
+                  isThreeLine: true,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text("${route.fromCity} ➔ ${route.toCity}",
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
-                      if (route.via.isNotEmpty)
-                        Text("Via: ${route.via}",
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade600,
-                                fontStyle: FontStyle.italic)),
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => _showRouteDialog(route: route),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _confirmDelete(routeId: route.id!),
+                      ),
                     ],
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDuration(int totalMinutes) {
+    if (totalMinutes <= 0) return "0m";
+    final h = totalMinutes ~/ 60;
+    final m = totalMinutes % 60;
+    if (h > 0) {
+      if (m > 0) return "${h}h ${m}m";
+      return "${h}h";
+    }
+    return "${m}m";
+  }
+
+  void _showRouteDialog({RouteModel? route}) {
+    final formKey = GlobalKey<FormState>();
+    final fromCtrl = TextEditingController(text: route?.originCity ?? '');
+    final toCtrl = TextEditingController(text: route?.destinationCity ?? '');
+    final viaCtrl = TextEditingController(text: route?.via ?? '');
+
+    // Duration Logic
+    final initialMins = route?.estimatedDurationMins ?? 0;
+    final initialH = initialMins ~/ 60;
+    final initialM = initialMins % 60;
+
+    final durationHoursCtrl =
+        TextEditingController(text: initialH == 0 ? '' : initialH.toString());
+    final durationMinsCtrl =
+        TextEditingController(text: initialM == 0 ? '' : initialM.toString());
+
+    // Stops could be a list, simplifying for now
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(route == null ? "Add Route" : "Edit Route"),
+        content: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildAutocomplete("From City", fromCtrl),
+                const SizedBox(height: 12),
+                _buildAutocomplete("To City", toCtrl),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: viaCtrl,
+                  decoration:
+                      const InputDecoration(labelText: "Via (Optional)"),
+                ),
+                const SizedBox(height: 12),
+                // Duration Row
+                Row(
                   children: [
-                    //   Text("LKR ${route.price.toStringAsFixed(0)}",
-                    //       style: const TextStyle(
-                    //           fontWeight: FontWeight.bold,
-                    //           color: Colors.green,
-                    //           fontSize: 16)),
+                    Expanded(
+                      child: TextFormField(
+                        controller: durationHoursCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                            labelText: "Hours",
+                            hintText: "4",
+                            suffixText: "h",
+                            border: OutlineInputBorder()),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: durationMinsCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                            labelText: "Minutes",
+                            hintText: "30",
+                            suffixText: "m",
+                            border: OutlineInputBorder()),
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
-            const Divider(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.access_time,
-                              size: 14, color: Colors.grey.shade600),
-                          const SizedBox(width: 4),
-                          Text("$dep - $arr",
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.calendar_today,
-                              size: 14, color: Colors.grey.shade600),
-                          const SizedBox(width: 4),
-                          Text(daysStr,
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade700)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SizedBox(
-                  height: 32,
-                  child: OutlinedButton.icon(
-                    onPressed: onEdit,
-                    icon: const Icon(Icons.edit, size: 14),
-                    label: const Text("Edit"),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  height: 32,
-                  child: OutlinedButton.icon(
-                    onPressed: onDelete,
-                    icon: const Icon(Icons.delete, size: 14, color: Colors.red),
-                    label: const Text("Delete",
-                        style: TextStyle(color: Colors.red)),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.red),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          ],
+          ),
         ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                final h = int.tryParse(durationHoursCtrl.text) ?? 0;
+                final m = int.tryParse(durationMinsCtrl.text) ?? 0;
+                final totalMins = (h * 60) + m;
+
+                final newRoute = RouteModel(
+                  id: route?.id ?? '', // Ensure ID is handled (empty for new)
+                  originCity: fromCtrl.text,
+                  destinationCity: toCtrl.text,
+                  stops: [], // Todo: Add stops UI
+                  distanceKm: 0, // Todo: Add distance UI
+                  estimatedDurationMins: totalMins,
+                  isActive: true,
+                  via: viaCtrl.text,
+                );
+
+                try {
+                  if (route == null) {
+                    await _service.addRoute(newRoute);
+                  } else {
+                    await _service.updateRoute(newRoute);
+                  }
+                  if (context.mounted) Navigator.pop(context);
+                } catch (e) {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text('Error: $e')));
+                }
+              }
+            },
+            child: const Text("Save"),
+          )
+        ],
       ),
     );
+  }
+
+  // --- TAB 2: SCHEDULES ---
+
+  Widget _buildScheduleTab() {
+    return StreamBuilder<List<ScheduleModel>>(
+      stream: _service.getSchedulesStream(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final schedules = snapshot.data!;
+        // Need to fetch routes to display from/to
+        // Ideally we would join this data. For now, we will just show schedule ID or fetch async.
+        // Actually, fetching all routes to map ID -> Name is better.
+
+        return StreamBuilder<List<RouteModel>>(
+          stream: _service.getRoutesStream(),
+          builder: (context, routeSnap) {
+            if (!routeSnap.hasData) return const SizedBox();
+            final routeMap = {for (var r in routeSnap.data!) r.id!: r};
+
+            if (schedules.isEmpty) {
+              return Center(
+                child: ElevatedButton(
+                  onPressed: () =>
+                      _showScheduleDialog(routeMap.values.toList()),
+                  child: const Text("Create First Schedule"),
+                ),
+              );
+            }
+
+            return Scaffold(
+              floatingActionButton: FloatingActionButton(
+                heroTag: 'addScheduleBtn',
+                onPressed: () => _showScheduleDialog(routeMap.values.toList()),
+                backgroundColor: AppTheme.primaryColor,
+                child: const Icon(Icons.add),
+              ),
+              body: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: schedules.length,
+                itemBuilder: (context, index) {
+                  final schedule = schedules[index];
+                  final route = routeMap[schedule.routeId];
+                  final routeName = route != null
+                      ? "${route.originCity} ➝ ${route.destinationCity}"
+                      : "Unknown Route (${schedule.routeId})";
+
+                  return Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(routeName,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16)),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(schedule.departureTime,
+                                    style: const TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold)),
+                              )
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                              "Operator: ${schedule.operatorName} • Bus: ${schedule.busNumber}"),
+                          Text("Price: LKR ${schedule.basePrice}"),
+                          Text(
+                              "Days: ${_getDaysString(schedule.recurrenceDays)}"),
+                          const Divider(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton.icon(
+                                icon: const Icon(Icons.autorenew, size: 18),
+                                label: const Text("Generate Trips"),
+                                onPressed: () =>
+                                    _showGenerateDialog(schedule, route),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () => _showScheduleDialog(
+                                    routeMap.values.toList(),
+                                    schedule: schedule),
+                              ),
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () =>
+                                    _confirmDelete(scheduleId: schedule.id),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showScheduleDialog(List<RouteModel> routes, {ScheduleModel? schedule}) {
+    if (routes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please create a Route first.")));
+      return;
+    }
+
+    final formKey = GlobalKey<FormState>();
+    String? selectedRouteId = schedule?.routeId ?? routes.first.id;
+    final operatorCtrl =
+        TextEditingController(text: schedule?.operatorName ?? '');
+    final busNumCtrl = TextEditingController(text: schedule?.busNumber ?? '');
+    final priceCtrl = TextEditingController(
+        text: schedule?.basePrice.toStringAsFixed(0) ?? '');
+    final conductorIdCtrl =
+        TextEditingController(text: schedule?.conductorId ?? '');
+    TimeOfDay selectedTime = schedule != null
+        ? TimeOfDay(
+            hour: int.parse(schedule.departureTime.split(':')[0]),
+            minute: int.parse(schedule.departureTime.split(':')[1]))
+        : const TimeOfDay(hour: 8, minute: 0);
+
+    List<int> selectedDays = schedule != null
+        ? List.from(schedule.recurrenceDays)
+        : [1, 2, 3, 4, 5, 6, 7];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(builder: (context, setState) {
+        return AlertDialog(
+          title: Text(schedule == null ? "Add Schedule" : "Edit Schedule"),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    value: selectedRouteId,
+                    items: routes.map((r) {
+                      return DropdownMenuItem(
+                          value: r.id,
+                          child:
+                              Text("${r.originCity} - ${r.destinationCity}"));
+                    }).toList(),
+                    onChanged: (v) => setState(() => selectedRouteId = v),
+                    decoration: const InputDecoration(labelText: "Route"),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                          child: TextFormField(
+                        controller: operatorCtrl,
+                        decoration:
+                            const InputDecoration(labelText: "Operator"),
+                        validator: (v) =>
+                            v?.isEmpty ?? true ? "Required" : null,
+                      )),
+                      const SizedBox(width: 12),
+                      Expanded(
+                          child: TextFormField(
+                        controller: busNumCtrl,
+                        decoration: const InputDecoration(labelText: "Bus No"),
+                        validator: (v) =>
+                            v?.isEmpty ?? true ? "Required" : null,
+                      )),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: priceCtrl,
+                    decoration: const InputDecoration(labelText: "Price (LKR)"),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => v?.isEmpty ?? true ? "Required" : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: conductorIdCtrl,
+                    decoration: const InputDecoration(
+                        labelText: "Conductor ID (Optional)"),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    title: const Text("Departure Time"),
+                    trailing: Text(selectedTime.format(context)),
+                    onTap: () async {
+                      final t = await showTimePicker(
+                          context: context, initialTime: selectedTime);
+                      if (t != null) setState(() => selectedTime = t);
+                    },
+                    tileColor: Colors.grey.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text("Operating Days",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  Wrap(
+                    spacing: 8,
+                    children: List.generate(7, (index) {
+                      final day = index + 1;
+                      final isSelected = selectedDays.contains(day);
+                      final dayName =
+                          ['M', 'T', 'W', 'T', 'F', 'S', 'S'][index];
+                      return FilterChip(
+                        label: Text(dayName),
+                        selected: isSelected,
+                        onSelected: (val) {
+                          setState(() {
+                            if (val) {
+                              selectedDays.add(day);
+                            } else {
+                              selectedDays.remove(day);
+                            }
+                          });
+                        },
+                      );
+                    }),
+                  )
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel")),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  final timeStr =
+                      "${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}";
+                  final newSchedule = ScheduleModel(
+                    id: schedule?.id ?? '',
+                    routeId: selectedRouteId!,
+                    busNumber: busNumCtrl.text,
+                    operatorName: operatorCtrl.text,
+                    departureTime: timeStr,
+                    basePrice: double.parse(priceCtrl.text),
+                    recurrenceDays: selectedDays,
+                    amenities: [],
+                    busType: 'Standard',
+                    totalSeats: 40,
+                    conductorId: conductorIdCtrl.text.isNotEmpty
+                        ? conductorIdCtrl.text
+                        : null,
+                  );
+
+                  try {
+                    if (schedule == null) {
+                      await _service.addSchedule(newSchedule);
+                    } else {
+                      await _service.updateSchedule(newSchedule);
+                    }
+                    if (context.mounted) Navigator.pop(context);
+                  } catch (e) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text('Error: $e')));
+                  }
+                }
+              },
+              child: const Text("Save"),
+            )
+          ],
+        );
+      }),
+    );
+  }
+
+  void _showGenerateDialog(ScheduleModel schedule, RouteModel? route) {
+    if (route == null) return;
+    final daysCtrl = TextEditingController(text: "30");
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text("Generate Trips"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                      "Generate trips for ${schedule.busNumber} on route ${route.originCity}-${route.destinationCity}."),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: daysCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: "Days Ahead"),
+                  )
+                ],
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Cancel")),
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      final days = int.parse(daysCtrl.text);
+                      final count = await _service.generateTripsForSchedule(
+                          schedule, route, days);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Generated $count trips.")));
+                      }
+                    } catch (e) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text("Error: $e")));
+                    }
+                  },
+                  child: const Text("Generate"),
+                )
+              ],
+            ));
+  }
+
+  void _confirmDelete({String? routeId, String? scheduleId}) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Delete"),
+        content: const Text("Are you sure? This action cannot be undone."),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          TextButton(
+            onPressed: () async {
+              try {
+                if (routeId != null) await _service.deleteRoute(routeId);
+                if (scheduleId != null) {
+                  await _service.deleteSchedule(scheduleId);
+                }
+                if (context.mounted) Navigator.pop(context);
+              } catch (e) {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text("Error: $e")));
+              }
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAutocomplete(String label, TextEditingController controller) {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text == '') return const Iterable<String>.empty();
+        return AppConstants.cities.where((String option) {
+          return option
+              .toLowerCase()
+              .contains(textEditingValue.text.toLowerCase());
+        });
+      },
+      onSelected: (String selection) => controller.text = selection,
+      fieldViewBuilder:
+          (context, textEditingController, focusNode, onFieldSubmitted) {
+        if (controller.text.isNotEmpty && textEditingController.text.isEmpty) {
+          textEditingController.text = controller.text;
+        }
+        // Use onChanged to keep controller in sync if user types manually
+        // Simplified for brevity
+        return TextFormField(
+          controller: textEditingController,
+          focusNode: focusNode,
+          onChanged: (v) => controller.text = v,
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+          ),
+          validator: (v) => v!.isEmpty ? "Required" : null,
+        );
+      },
+    );
+  }
+
+  String _getDaysString(List<int> days) {
+    if (days.length == 7) return "Daily";
+    const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days.map((d) => names[d - 1]).join(', ');
   }
 }

@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import '../profile/profile_screen.dart';
 import '../favorites/favorites_screen.dart';
+import '../settings/account_settings_screen.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isAdminView;
@@ -111,6 +112,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                               MaterialPageRoute(
                                   builder: (_) => const FavoritesScreen()));
                           break;
+                        case 'settings': // NEW
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      const AccountSettingsScreen()));
+                          break;
                         case 'logout':
                           await Provider.of<AuthService>(context, listen: false)
                               .signOut();
@@ -142,6 +150,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                             Icon(Icons.favorite, size: 20),
                             SizedBox(width: 8),
                             Text("Favorites"),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        // NEW
+                        value: 'settings',
+                        child: Row(
+                          children: const [
+                            Icon(Icons.settings, size: 20),
+                            SizedBox(width: 8),
+                            Text("Settings"),
                           ],
                         ),
                       ),

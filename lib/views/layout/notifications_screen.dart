@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/app_theme.dart';
-import '../../utils/notification_service.dart';
+import '../../services/notification_service.dart';
+import '../../models/notification_model.dart'; // Added Import
 import 'package:intl/intl.dart';
 
 class NotificationsScreen extends StatelessWidget {
@@ -16,14 +16,7 @@ class NotificationsScreen extends StatelessWidget {
     if (user == null) {
       return Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new,
-                size: 20,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white
-                    : Colors.black),
-            onPressed: () => Navigator.pop(context),
-          ),
+          leading: const BackButton(),
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
@@ -38,22 +31,24 @@ class NotificationsScreen extends StatelessWidget {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new,
-              size: 20,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white
-                  : Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const BackButton(),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.done_all, color: AppTheme.primaryColor),
+            tooltip: "Mark all as read",
+            onPressed: () {
+              NotificationService.markAllAsRead(user.uid);
+            },
+          )
+        ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
+      body: StreamBuilder<List<AppNotification>>(
         stream: NotificationService.getUserNotifications(user.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -69,62 +64,15 @@ class NotificationsScreen extends StatelessWidget {
             );
           }
 
-          final notifications = snapshot.data!.docs;
+          final notifications = snapshot.data!;
 
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: notifications.length,
             separatorBuilder: (context, index) => const Divider(height: 1),
             itemBuilder: (context, index) {
-              final notif = notifications[index].data() as Map<String, dynamic>;
-              final bool isRead = notif['isRead'] ?? false;
-              final Timestamp? ts = notif['timestamp'];
-
-              return Container(
-                color: isRead
-                    ? Colors.transparent
-                    : AppTheme.primaryColor.withValues(alpha: 0.05),
-                child: ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  title: Text(
-                    notif['title'] ?? 'Notification',
-                    style: TextStyle(
-                      fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      Text(notif['body'] ?? ''),
-                      const SizedBox(height: 6),
-                      if (ts != null)
-                        Text(
-                          DateFormat('MMM d, h:mm a').format(ts.toDate()),
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                    ],
-                  ),
-                  leading: CircleAvatar(
-                    backgroundColor:
-                        AppTheme.primaryColor.withValues(alpha: 0.1),
-                    child: Icon(_getIconForType(notif['type']),
-                        color: AppTheme.primaryColor, size: 20),
-                  ),
-                  onTap: () async {
-                    // Mark as read
-                    if (!isRead) {
-                      await FirebaseFirestore.instance
-                          .collection('notifications')
-                          .doc(notifications[index].id)
-                          .update({'isRead': true});
-                    }
-                  },
-                ),
-              );
+              final notif = notifications[index];
+              return _buildNotificationItem(context, notif);
             },
           );
         },
@@ -132,14 +80,59 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
-  IconData _getIconForType(String? type) {
+  Widget _buildNotificationItem(BuildContext context, AppNotification notif) {
+    return Container(
+      decoration: BoxDecoration(
+        color: notif.isRead
+            ? Colors.transparent
+            : AppTheme.primaryColor.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        title: Text(
+          notif.title,
+          style: TextStyle(
+            fontWeight: notif.isRead ? FontWeight.normal : FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(notif.body),
+            const SizedBox(height: 6),
+            Text(
+              DateFormat('MMM d, h:mm a').format(notif.timestamp),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        leading: CircleAvatar(
+          backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+          child: Icon(_getIconForType(notif.type),
+              color: AppTheme.primaryColor, size: 20),
+        ),
+        onTap: () async {
+          if (!notif.isRead) {
+            await NotificationService.markAsRead(notif.id);
+          }
+        },
+      ),
+    );
+  }
+
+  IconData _getIconForType(NotificationType type) {
     switch (type) {
-      case 'trip_update':
+      case NotificationType.tripStatus:
         return Icons.directions_bus;
-      case 'refund_update':
+      case NotificationType.refundStatus:
         return Icons.monetization_on;
-      case 'cancellation':
+      case NotificationType.cancellation:
         return Icons.cancel;
+      case NotificationType.delay:
+        return Icons.timer_off; // Or specific icon for delay
       default:
         return Icons.notifications;
     }

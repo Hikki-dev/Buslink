@@ -9,9 +9,9 @@ class AppNotification {
   final String? bookingId;
   final NotificationType type;
   final String title;
-  final String message;
+  final String body;
   final bool isRead;
-  final DateTime sentAt;
+  final DateTime timestamp;
   final Map<String, dynamic>? metadata;
 
   AppNotification({
@@ -21,9 +21,9 @@ class AppNotification {
     this.bookingId,
     required this.type,
     required this.title,
-    required this.message,
+    required this.body,
     this.isRead = false,
-    required this.sentAt,
+    required this.timestamp,
     this.metadata,
   });
 
@@ -34,9 +34,9 @@ class AppNotification {
       'bookingId': bookingId,
       'type': type.name,
       'title': title,
-      'message': message,
+      'body': body,
       'isRead': isRead,
-      'sentAt': Timestamp.fromDate(sentAt),
+      'timestamp': Timestamp.fromDate(timestamp),
       'metadata': metadata,
     };
   }
@@ -52,10 +52,14 @@ class AppNotification {
         orElse: () => NotificationType.general,
       ),
       title: map['title'] ?? '',
-      message: map['message'] ?? '',
+      body: map['body'] ?? map['message'] ?? '', // Fallback for safety
       isRead: map['isRead'] ?? false,
-      sentAt: (map['sentAt'] as Timestamp).toDate(),
+      timestamp: (map['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       metadata: map['metadata'],
     );
+  }
+
+  factory AppNotification.fromFirestore(DocumentSnapshot doc) {
+    return AppNotification.fromMap(doc.id, doc.data() as Map<String, dynamic>);
   }
 }

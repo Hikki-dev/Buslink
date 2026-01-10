@@ -3,13 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
+import '../models/notification_model.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
+  // ... (keep existing)
   await Firebase.initializeApp();
-
   if (kDebugMode) {
     print("Handling a background message: ${message.messageId}");
   }
@@ -19,6 +18,7 @@ class NotificationService {
   static final FirebaseMessaging _firebaseMessaging =
       FirebaseMessaging.instance;
 
+  // ... (keep initialize method same)
   static Future<void> initialize() async {
     // requesting permission
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
@@ -27,81 +27,81 @@ class NotificationService {
       sound: true,
     );
 
-    // Register Background Handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      if (kDebugMode) {
-        print('User granted permission');
-      }
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
-      if (kDebugMode) {
-        print('User granted provisional permission');
-      }
-    } else {
-      if (kDebugMode) {
-        print('User declined or has not accepted permission');
-      }
+      if (kDebugMode) print('User granted permission');
     }
 
-    // Robust Token Retrieval (iOS Fix)
+    // ... (keep token logic same)
     if (!kIsWeb && Platform.isIOS) {
+      // ... existing logic ...
       String? apnsToken;
       try {
         apnsToken = await _firebaseMessaging.getAPNSToken();
-      } catch (e) {
-        if (kDebugMode) print("APNS Token error: $e");
-      }
-
+      } catch (e) {}
       if (apnsToken == null) {
-        if (kDebugMode) {
-          print("Waiting for APNS token...");
-        }
         await Future.delayed(const Duration(seconds: 3));
         try {
           apnsToken = await _firebaseMessaging.getAPNSToken();
-        } catch (e) {
-          if (kDebugMode) print("APNS Token retry error: $e");
-        }
+        } catch (e) {}
       }
-      if (apnsToken == null) {
-        if (kDebugMode) {
-          print("APNS Token not available on Simulator. Skipping FCM.");
-        }
-        return;
-      }
+      if (apnsToken == null) return;
     }
 
     // Get the token
     final fcmToken = await _firebaseMessaging.getToken();
-    if (kDebugMode) {
-      print("FCM Token: $fcmToken");
-    }
+    if (kDebugMode) print("FCM Token: $fcmToken");
 
-    // Handle background messages (Must be a top-level function if you want to use it, but for web/simple use, onMessage is key)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (kDebugMode) {
         print('Got a message whilst in the foreground!');
         print('Message data: ${message.data}');
       }
-
-      if (message.notification != null) {
-        if (kDebugMode) {
-          print(
-              'Message also contained a notification: ${message.notification}');
-        }
-      }
     });
   }
 
   /// Streams notifications for a specific user
-  static Stream<QuerySnapshot> getUserNotifications(String userId) {
+  static Stream<List<AppNotification>> getUserNotifications(String userId) {
     return FirebaseFirestore.instance
         .collection('notifications')
         .where('userId', isEqualTo: userId)
         .orderBy('timestamp', descending: true)
-        .snapshots();
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => AppNotification.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Mark a notification as read
+  static Future<void> markAsRead(String notificationId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('notifications')
+          .doc(notificationId)
+          .update({'isRead': true});
+    } catch (e) {
+      debugPrint("Error marking notification as read: $e");
+    }
+  }
+
+  /// Mark all notifications as read for a user
+  static Future<void> markAllAsRead(String userId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('userId', isEqualTo: userId)
+          .where('isRead', isEqualTo: false)
+          .get();
+
+      final batch = FirebaseFirestore.instance.batch();
+      for (var doc in snapshot.docs) {
+        batch.update(doc.reference, {'isRead': true});
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint("Error marking all as read: $e");
+    }
   }
 
   // --- NEW: Sprint 3 Notification Logic ---

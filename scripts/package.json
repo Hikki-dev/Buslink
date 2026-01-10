@@ -1,0 +1,9 @@
+{
+  "name": "buslink-migration",
+  "version": "1.0.0",
+  "description": "Migration script for Buslink",
+  "main": "migrate.js",
+  "dependencies": {
+    "firebase-admin": "^13.6.0"
+  }
+}

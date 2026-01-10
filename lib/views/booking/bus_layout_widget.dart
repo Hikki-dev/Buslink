@@ -5,6 +5,7 @@ import '../../services/firestore_service.dart';
 
 class BusLayoutWidget extends StatefulWidget {
   final Trip trip;
+  final int totalSeats;
   final List<int> selectedSeats;
   final List<int> highlightedSeats;
   final Function(int)? onSeatToggle;
@@ -14,6 +15,7 @@ class BusLayoutWidget extends StatefulWidget {
   const BusLayoutWidget({
     super.key,
     required this.trip,
+    this.totalSeats = 40,
     this.selectedSeats = const [],
     this.highlightedSeats = const [],
     this.onSeatToggle,
@@ -117,8 +119,12 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
     return StreamBuilder<Trip>(
         stream: FirestoreService().getTripStream(widget.trip.id),
         builder: (context, snapshot) {
-          final currentTrip = snapshot.data ?? widget.trip;
-          final int totalSeats = currentTrip.totalSeats;
+          final currentTrip = snapshot.data;
+          // Use Schedule/Enriched data for setup
+          final int totalSeats = widget.totalSeats;
+          // Use Trip data for availability (real-time)
+          final List<String> booked =
+              currentTrip?.bookedSeatNumbers ?? widget.trip.bookedSeatNumbers;
 
           if (totalSeats < 1) return const SizedBox();
 
@@ -139,20 +145,19 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                 if (isLastRow) {
                   return Column(
                     children: [
-                      _buildRearExit(), // REAR EXIT MOVED HERE
+                      _buildRearExit(),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center, // Center them
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            for (int i = 0;
-                                i < 5;
-                                i++) // Try to fit 5? No, stick to existing logic but tight
+                            for (int i = 0; i < 5; i++)
                               if (seatExists(i)) ...[
                                 _SeatItem(
                                   seatNum: startSeat + i,
-                                  trip: currentTrip,
+                                  isBooked: booked
+                                      .contains((startSeat + i).toString()),
+                                  isBlocked: false,
                                   isSelected: widget.selectedSeats
                                       .contains(startSeat + i),
                                   isHighlighted: widget.highlightedSeats
@@ -164,10 +169,7 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                                           ?.call(startSeat + i),
                                   isReadOnly: widget.isReadOnly,
                                 ),
-                                if (i < 4)
-                                  const SizedBox(
-                                      width:
-                                          8), // Small gap between linked seats
+                                if (i < 4) const SizedBox(width: 8),
                               ]
                           ],
                         ),
@@ -182,12 +184,13 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Left Side (Seat 1 & 2)
+                      // Left Side
                       Row(children: [
                         if (seatExists(0))
                           _SeatItem(
                             seatNum: startSeat,
-                            trip: currentTrip,
+                            isBooked: booked.contains(startSeat.toString()),
+                            isBlocked: false,
                             isSelected:
                                 widget.selectedSeats.contains(startSeat),
                             isHighlighted:
@@ -204,7 +207,9 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                         if (seatExists(1))
                           _SeatItem(
                             seatNum: startSeat + 1,
-                            trip: currentTrip,
+                            isBooked:
+                                booked.contains((startSeat + 1).toString()),
+                            isBlocked: false,
                             isSelected:
                                 widget.selectedSeats.contains(startSeat + 1),
                             isHighlighted:
@@ -220,12 +225,14 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                           const SizedBox(width: 44, height: 44),
                       ]),
 
-                      // Right Side (Seat 3 & 4)
+                      // Right Side
                       Row(children: [
                         if (seatExists(2))
                           _SeatItem(
                             seatNum: startSeat + 2,
-                            trip: currentTrip,
+                            isBooked:
+                                booked.contains((startSeat + 2).toString()),
+                            isBlocked: false,
                             isSelected:
                                 widget.selectedSeats.contains(startSeat + 2),
                             isHighlighted:
@@ -243,7 +250,9 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                         if (seatExists(3))
                           _SeatItem(
                             seatNum: startSeat + 3,
-                            trip: currentTrip,
+                            isBooked:
+                                booked.contains((startSeat + 3).toString()),
+                            isBlocked: false,
                             isSelected:
                                 widget.selectedSeats.contains(startSeat + 3),
                             isHighlighted:
@@ -311,7 +320,8 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
 
 class _SeatItem extends StatefulWidget {
   final int seatNum;
-  final Trip trip;
+  final bool isBooked;
+  final bool isBlocked;
   final bool isSelected;
   final bool isHighlighted; // For Conductor Verification
   final VoidCallback? onTap;
@@ -319,7 +329,8 @@ class _SeatItem extends StatefulWidget {
 
   const _SeatItem({
     required this.seatNum,
-    required this.trip,
+    required this.isBooked,
+    required this.isBlocked,
     required this.isSelected,
     this.isHighlighted = false,
     this.onTap,
@@ -335,12 +346,10 @@ class _SeatItemState extends State<_SeatItem> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.seatNum > widget.trip.totalSeats) {
-      return const SizedBox(width: 44, height: 44);
-    }
+    // Caller handles existence check
 
-    final isBooked = widget.trip.bookedSeats.contains(widget.seatNum);
-    final isBlocked = widget.trip.blockedSeats.contains(widget.seatNum);
+    final isBooked = widget.isBooked;
+    final isBlocked = widget.isBlocked;
     final isUnavailable = isBooked || isBlocked;
 
     // If we are validating, we want to show the seat as highlighted (Green)

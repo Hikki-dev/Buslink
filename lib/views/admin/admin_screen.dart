@@ -6,13 +6,14 @@ import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
 import '../../data/cities.dart';
 import '../../models/trip_model.dart';
+import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../models/route_model.dart';
 import '../../utils/app_theme.dart';
 import 'layout/admin_navbar.dart';
 import 'layout/admin_footer.dart';
 
 class AdminScreen extends StatefulWidget {
-  final Trip? trip;
+  final EnrichedTrip? trip;
   const AdminScreen({super.key, required this.trip});
 
   @override
@@ -23,8 +24,9 @@ class _AdminScreenState extends State<AdminScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // A) Route Details
-  String? _fromCity;
-  String? _toCity;
+  RouteModel? _selectedRoute;
+  String? _originCity;
+  String? _destinationCity;
   String? _viaRoute;
   final TextEditingController _durationController = TextEditingController();
 
@@ -45,6 +47,7 @@ class _AdminScreenState extends State<AdminScreen> {
   final TextEditingController _seatsController =
       TextEditingController(text: "40");
   final TextEditingController _platformController = TextEditingController();
+  final List<String> _blockedSeats = [];
 
   bool get isEditing => widget.trip != null;
 
@@ -73,20 +76,32 @@ class _AdminScreenState extends State<AdminScreen> {
     super.initState();
     if (isEditing) {
       final t = widget.trip!;
-      _fromCity = t.fromCity;
-      _toCity = t.toCity;
+      _originCity = t.originCity;
+      _destinationCity = t.destinationCity;
       _viaRoute = t.via.isNotEmpty ? t.via : null;
-      _durationController.text = t.duration;
+
+      // Duration formatting for UI (HH:mm)
+      String twoDigits(int n) => n.toString().padLeft(2, "0");
+      // Duration getter might need helper on EnrichedTrip or calculate
+      // EnrichedTrip has duration (from Route)? OR we rely on departure/arrival diff?
+      // TripModel (Step 887) does NOT have duration.
+      // EnrichedTrip (Step 788) has duration getter?
+      // Let's assume we use diff.
+      final d = t.arrivalTime.difference(t.departureTime);
+      _durationController.text =
+          "${twoDigits(d.inHours)}:${twoDigits(d.inMinutes.remainder(60))}";
+
       _departureTime = t.departureTime;
       _arrivalTime = t.arrivalTime;
-      // OperatingDays is List<int> in Model, but List<String> in UI state
-      // Model stores: [1, 2, ...] corresponding to Mon, Tue...
+
+      // OperatingDays is List<int>
       _operatingDays.addAll(t.operatingDays.map((d) {
         if (d >= 1 && d <= _daysOfWeek.length) {
           return _daysOfWeek[d - 1];
         }
         return "Monday"; // Fallback
       }));
+
       _fareController.text = t.price.toStringAsFixed(0);
       _busNumberController.text = t.busNumber;
       _operatorController.text = t.operatorName;
@@ -94,8 +109,13 @@ class _AdminScreenState extends State<AdminScreen> {
       _platformController.text = t.platformNumber;
       _isRecurring = false;
       _tripDate = t.departureTime;
-      _blockedSeats.addAll(t.blockedSeats);
-      _tripStatus = t.status;
+
+      // Map bookedSeats to _blockedSeats
+      _blockedSeats.addAll(t.bookedSeats);
+
+      // Status mapping string -> enum
+      _tripStatus = TripStatus.values.firstWhere((e) => e.name == t.status,
+          orElse: () => TripStatus.scheduled);
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -105,8 +125,6 @@ class _AdminScreenState extends State<AdminScreen> {
           .fetchAvailableRoutes();
     });
   }
-
-  RouteModel? _selectedRoute;
 
   void _calculateArrival() {
     // If duration matches HH:MM, update arrival
@@ -152,8 +170,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
     // Prepare Base Data
     final tripData = {
-      'fromCity': _fromCity,
-      'toCity': _toCity,
+      'fromCity': _originCity,
+      'toCity': _destinationCity,
       'via': _viaRoute,
       'duration': durationStr,
       'operatingDays': _isRecurring ? _operatingDays : [],
@@ -204,7 +222,7 @@ class _AdminScreenState extends State<AdminScreen> {
           tripData['arrivalTime'] = newArr;
         }
 
-        await controller.updateTrip(context, widget.trip!.id, tripData);
+        await controller.updateTrip(widget.trip!.id, tripData);
       } else {
         // ADD NEW
         if (_isRecurring) {
@@ -217,8 +235,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
           List<int> recurrenceDays =
               _operatingDays.map((d) => _daysOfWeek.indexOf(d) + 1).toList();
-          await controller.createRecurringRoute(
-              context, tripData, recurrenceDays);
+          await controller
+              .createRecurringRoute({'data': tripData, 'days': recurrenceDays});
         } else {
           // SINGLE TRIP
           final d = _tripDate!;
@@ -238,7 +256,7 @@ class _AdminScreenState extends State<AdminScreen> {
           tripData['arrivalTime'] = newArr;
           tripData['isGenerated'] = false;
 
-          await controller.addTrip(context, tripData);
+          await controller.addTrip(tripData);
         }
       }
     } catch (e) {
@@ -355,14 +373,14 @@ class _AdminScreenState extends State<AdminScreen> {
                                           Expanded(
                                               child: _buildCityAutocomplete(
                                                   "From (Origin)",
-                                                  _fromCity,
-                                                  (v) => _fromCity = v)),
+                                                  _originCity,
+                                                  (v) => _originCity = v)),
                                           const SizedBox(width: 16),
                                           Expanded(
                                               child: _buildCityAutocomplete(
                                                   "To (Destination)",
-                                                  _toCity,
-                                                  (v) => _toCity = v)),
+                                                  _destinationCity,
+                                                  (v) => _destinationCity = v)),
                                         ],
                                       ),
                                       const SizedBox(height: 16),
@@ -939,7 +957,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 return DropdownMenuItem(
                   value: r,
                   child: Text(
-                    "${r.fromCity} ➔ ${r.toCity} (Via: ${r.via.isNotEmpty ? r.via : 'Direct'}) - ${r.operatorName}",
+                    "${r.originCity} ➔ ${r.destinationCity} (Via: ${r.via.isNotEmpty ? r.via : 'Direct'})",
                     style: TextStyle(color: textColor),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -949,53 +967,16 @@ class _AdminScreenState extends State<AdminScreen> {
                 if (route != null) {
                   setState(() {
                     _selectedRoute = route;
-                    _fromCity = route.fromCity;
-                    _toCity = route.toCity;
+                    _originCity = route.originCity;
+                    _destinationCity = route.destinationCity;
                     _viaRoute = route.via;
 
-                    // Populate Price
-                    _fareController.text = route.price.toStringAsFixed(0);
-
-                    // Populate Bus Details
-                    _operatorController.text = route.operatorName;
-                    _busNumberController.text = route.busNumber;
-                    _platformController.text = route.platformNumber;
-
-                    // Populate Schedule (Time)
-                    // We combine current date (or default) with route times
-                    final now = DateTime.now();
-                    _departureTime = DateTime(now.year, now.month, now.day,
-                        route.departureHour, route.departureMinute);
-                    _arrivalTime = DateTime(now.year, now.month, now.day,
-                        route.arrivalHour, route.arrivalMinute);
-
                     // Calculate Duration String for the controller
-                    final difference = _arrivalTime.difference(_departureTime);
-                    final dH = difference.inHours;
-                    final dM = difference.inMinutes.remainder(60);
+                    final dH = route.estimatedDurationMins ~/ 60;
+                    final dM = route.estimatedDurationMins % 60;
                     _durationController.text =
                         "${dH.toString().padLeft(2, '0')}:${dM.toString().padLeft(2, '0')}";
-
-                    // Populate Operating Days
-                    _operatingDays.clear();
-                    const daysMap = {
-                      1: "Monday",
-                      2: "Tuesday",
-                      3: "Wednesday",
-                      4: "Thursday",
-                      5: "Friday",
-                      6: "Saturday",
-                      7: "Sunday"
-                    };
-                    for (int d in route.recurrenceDays) {
-                      if (daysMap.containsKey(d)) {
-                        _operatingDays.add(daysMap[d]!);
-                      }
-                    }
                   });
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text("Route details populated!"),
-                      duration: Duration(milliseconds: 800)));
                 }
               },
             ),
@@ -1070,7 +1051,6 @@ class _AdminScreenState extends State<AdminScreen> {
 
   // --- ADDED: Seat Layout Editor ---
   // List of blocked seat IDs
-  final List<int> _blockedSeats = [];
 
   Widget _buildSeatLayoutEditor() {
     // 40 seats: 4 Columns x 10 Rows (plus aisle) => 5 columns visually
@@ -1290,13 +1270,14 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Widget _seatItem(int seatNum) {
+    final seatStr = seatNum.toString();
     bool isBooked = false;
     if (isEditing && widget.trip != null) {
-      isBooked = widget.trip!.bookedSeats.contains(seatNum);
+      isBooked = widget.trip!.bookedSeats.contains(seatStr);
     }
 
     // Check local blocked state first, then initial trip blocked state (if editing)
-    bool isBlocked = _blockedSeats.contains(seatNum);
+    bool isBlocked = _blockedSeats.contains(seatStr);
     // If we initialized _blockedSeats in initState, we don't need to check widget.trip.blockedSeats here explicitly
     // because initState logic handles it (see below addition to initState).
 
@@ -1325,10 +1306,10 @@ class _AdminScreenState extends State<AdminScreen> {
           return;
         }
         setState(() {
-          if (_blockedSeats.contains(seatNum)) {
-            _blockedSeats.remove(seatNum);
+          if (_blockedSeats.contains(seatStr)) {
+            _blockedSeats.remove(seatStr);
           } else {
-            _blockedSeats.add(seatNum);
+            _blockedSeats.add(seatStr);
           }
         });
       },

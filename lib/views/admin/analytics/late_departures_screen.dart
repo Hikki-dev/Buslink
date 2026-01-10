@@ -42,11 +42,8 @@ class LateDeparturesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('trips')
-          // .where('status', isEqualTo: 'completed') // Ideally filter by completed
-          .limit(100)
-          .snapshots(),
+      stream:
+          FirebaseFirestore.instance.collection('trips').limit(100).snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -86,27 +83,21 @@ class LateDeparturesView extends StatelessWidget {
 
     for (var doc in docs) {
       final data = doc.data() as Map<String, dynamic>;
-      if (data['status'] != 'completed') {
-        // Optionally skip incomplete trips or count them separately
-        // For now, let's include all to see data
-      }
 
-      final scheduled = (data['departureTime'] as Timestamp?)?.toDate();
-      final actual = (data['actualDepartureTime'] as Timestamp?)?.toDate();
+      final int delay = (data['delayMinutes'] ?? 0).toInt();
+      // Safe timestamp conversion
+      final DateTime date =
+          (data['departureDateTime'] as Timestamp?)?.toDate() ?? DateTime.now();
 
-      if (scheduled != null && actual != null) {
-        final diff = actual.difference(scheduled).inMinutes;
-        if (diff > 15) {
-          late++;
-          lateTrips.add({
-            'route': data['routeId'] ?? 'Unknown',
-            'delay': diff,
-            'date': actual,
-            'bus': data['busId'] ?? 'Unknown Bus'
-          });
-        } else {
-          onTime++;
-        }
+      if (delay > 15) {
+        late++;
+        lateTrips.add({
+          'route':
+              "${data['originCity'] ?? '?'} - ${data['destinationCity'] ?? '?'}",
+          'delay': delay,
+          'date': date,
+          'bus': data['busNumber'] ?? 'Bus'
+        });
       } else {
         onTime++;
       }
@@ -156,7 +147,11 @@ class LateDeparturesView extends StatelessWidget {
           Text(value,
               style:
                   const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          Text(label,
+              style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -164,8 +159,13 @@ class LateDeparturesView extends StatelessWidget {
 
   Widget _buildPieChartPlaceholder(Map<String, dynamic> stats) {
     final total = stats['total'] == 0 ? 1 : stats['total'];
-    final onTimePct = (stats['onTime'] / total);
-    final latePct = (stats['late'] / total);
+    final onTimeVal = (stats['onTime'] as num).toDouble();
+    final lateVal = (stats['late'] as num).toDouble();
+    final totalVal = total.toDouble();
+
+    final onTimePct = (onTimeVal / totalVal);
+    final latePct = (lateVal / totalVal);
+
     return Container(
       height: 40,
       decoration: BoxDecoration(
@@ -173,7 +173,9 @@ class LateDeparturesView extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            flex: (onTimePct * 100).toInt(),
+            flex: ((onTimePct * 100).toInt() <= 0)
+                ? 1
+                : (onTimePct * 100).toInt(),
             child: Container(
               decoration: const BoxDecoration(
                   color: Colors.green,
@@ -189,18 +191,20 @@ class LateDeparturesView extends StatelessWidget {
             ),
           ),
           Expanded(
-            flex: (latePct * 100).toInt(),
+            flex: ((latePct * 100).toInt() <= 0) ? 0 : (latePct * 100).toInt(),
             child: Container(
               decoration: BoxDecoration(
                   color: Colors.red,
                   borderRadius: BorderRadius.horizontal(
                       right: Radius.circular(latePct > 0 ? 20 : 0))),
-              child: Center(
-                  child: Text("${(latePct * 100).toStringAsFixed(1)}% Late",
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold))),
+              child: ((latePct * 100).toInt() <= 0)
+                  ? const SizedBox()
+                  : Center(
+                      child: Text("${(latePct * 100).toStringAsFixed(1)}% Late",
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold))),
             ),
           ),
         ],
@@ -209,7 +213,9 @@ class LateDeparturesView extends StatelessWidget {
   }
 
   Widget _buildLateTripsList(List<Map<String, dynamic>> trips) {
-    if (trips.isEmpty) return const Text("No recent late departures.");
+    if (trips.isEmpty)
+      return const Text("No recent late departures.",
+          style: TextStyle(color: Colors.black87));
     return Column(
       children: trips.take(5).map((t) {
         return Card(
@@ -235,9 +241,8 @@ class RevenueView extends StatelessWidget {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('tickets')
-          .where('status',
-              isEqualTo: 'completed') // Only counted completed/paid tickets
-          .limit(500) // Increase limit for analytics
+          .where('status', isEqualTo: 'confirmed')
+          .limit(500)
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -277,29 +282,29 @@ class RevenueView extends StatelessWidget {
 
     for (var doc in docs) {
       final data = doc.data() as Map<String, dynamic>;
-      final price = (data['price'] ?? 0).toDouble();
-      total += price;
+      final price = (data['totalAmount'] ?? data['price'] ?? 0);
+      final double amount = (price is num) ? price.toDouble() : 0.0;
+      total += amount;
 
-      // Monthly
-      Timestamp? ts = data['createdAt'] as Timestamp?;
+      Timestamp? ts = data['bookingTime'] as Timestamp?;
       if (ts != null) {
         final date = ts.toDate();
         final key = "${date.year}-${date.month.toString().padLeft(2, '0')}";
-        monthly[key] = (monthly[key] ?? 0) + price;
+        monthly[key] = (monthly[key] ?? 0) + amount;
       }
 
-      // Route
-      // If routeId is available use it, else construct from origin-dest
-      String routeKey = data['routeId'] ??
-          "${data['origin'] ?? '?'} - ${data['destination'] ?? '?'}";
-      routes[routeKey] = (routes[routeKey] ?? 0) + price;
+      final tripData = data['tripData'] as Map<String, dynamic>?;
+      String routeKey = "Unknown Route";
+      if (tripData != null) {
+        routeKey =
+            "${tripData['originCity'] ?? '?'} - ${tripData['destinationCity'] ?? '?'}";
+      }
+      routes[routeKey] = (routes[routeKey] ?? 0) + amount;
     }
 
-    // Sort Routes
     var sortedRoutes = routes.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    // Take top 5
     Map<String, double> topRoutes = {};
     for (var entry in sortedRoutes.take(5)) {
       topRoutes[entry.key] = entry.value;

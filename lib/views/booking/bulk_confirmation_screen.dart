@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../controllers/trip_controller.dart';
-import '../../models/trip_model.dart';
+import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
 import 'payment_screen.dart';
 
 class BulkConfirmationScreen extends StatefulWidget {
-  final Trip trip;
+  final EnrichedTrip trip;
   const BulkConfirmationScreen({super.key, required this.trip});
 
   @override
@@ -35,9 +35,9 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
     try {
       // 1. Create Pending Bookings for ALL dates
       // Logic inside TripController handling loop
-      final bookingIds = await tripCtrl.createPendingBooking(user);
+      final bookingIds = await tripCtrl.createPendingBookingFromState(user);
 
-      if (bookingIds != null && mounted) {
+      if (bookingIds.isNotEmpty && mounted) {
         // 2. Navigate to Payment
         Navigator.push(
           context,

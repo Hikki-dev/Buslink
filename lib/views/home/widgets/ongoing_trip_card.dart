@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../models/trip_model.dart';
+import '../../../models/trip_view_model.dart';
 import '../../../utils/app_theme.dart';
 
 class OngoingTripCard extends StatelessWidget {
-  final Trip trip;
+  final EnrichedTrip trip;
   final int seatCount;
   final double paidAmount;
   final EdgeInsetsGeometry? margin;
@@ -212,30 +212,30 @@ class OngoingTripCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge(TripStatus status) {
+  Widget _buildStatusBadge(String status) {
     Color bg;
     Color text;
     String label;
 
     switch (status) {
-      case TripStatus.departed:
-      case TripStatus.onWay:
+      case 'departed':
+      case 'onWay':
         bg = Colors.green.withValues(alpha: 0.1);
         text = Colors.green;
         label = "Active";
         break;
-      case TripStatus.delayed:
+      case 'delayed':
         bg = Colors.orange.withValues(alpha: 0.1);
         text = Colors.orange;
         label = "Delayed";
         break;
-      case TripStatus.cancelled:
+      case 'cancelled':
         bg = Colors.red.withValues(alpha: 0.1);
         text = Colors.red;
         label = "Cancelled";
         break;
-      case TripStatus.arrived:
-      case TripStatus.completed:
+      case 'arrived':
+      case 'completed':
         bg = Colors.blue.withValues(alpha: 0.1);
         text = Colors.blue;
         label = "Completed";
@@ -260,15 +260,14 @@ class OngoingTripCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTrackingBar(TripStatus status, bool isDark) {
+  Widget _buildTrackingBar(String status, bool isDark) {
     // Logic: Only the CURRENT active status should be colored.
     // Past statuses should be greyed out (inactive).
     // Future statuses should be greyed out.
 
-    bool isDeparted = status == TripStatus.departed;
-    bool isOnWay = status == TripStatus.onWay;
-    bool isArrived =
-        status == TripStatus.arrived || status == TripStatus.completed;
+    bool isDeparted = status == 'departed';
+    bool isOnWay = status == 'onWay';
+    bool isArrived = status == 'arrived' || status == 'completed';
 
     return Row(
       children: [

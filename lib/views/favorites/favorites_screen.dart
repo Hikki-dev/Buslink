@@ -75,7 +75,7 @@ class FavoritesScreen extends StatelessWidget {
                             color: Theme.of(context).colorScheme.onSurface)),
                   )
                 : StreamBuilder<List<Map<String, dynamic>>>(
-                    stream: controller.getUserFavorites(user.uid),
+                    stream: controller.getUserFavoriteRoutes(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
@@ -122,8 +122,7 @@ class FavoritesScreen extends StatelessWidget {
                                 ? "LKR ${fav['price']}"
                                 : "Price Varies",
                             onRemove: () async {
-                              await controller.removeFavorite(
-                                  user.uid, fav['id']);
+                              await controller.removeFavorite(fav['id']);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(

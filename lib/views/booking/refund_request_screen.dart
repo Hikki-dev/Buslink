@@ -136,23 +136,25 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
       // FIX INLINE: Generate ID here.
       final newDocRef = FirebaseFirestore.instance.collection('refunds').doc();
       final fixedRequest = RefundRequest(
-          id: newDocRef.id,
-          ticketId: refundReq.ticketId,
-          bookingId: refundReq.bookingId,
-          userId: refundReq.userId,
-          passengerName: refundReq.passengerName,
-          tripId: refundReq.tripId,
-          reason: refundReq.reason,
-          otherReasonText: refundReq.otherReasonText,
-          status: refundReq.status,
-          tripPrice: refundReq.tripPrice,
-          refundPercentage: refundReq.refundPercentage,
-          refundAmount: refundReq.refundAmount,
-          cancellationFee: refundReq.cancellationFee,
-          createdAt: refundReq.createdAt,
-          updatedAt: refundReq.updatedAt,
-          requestedAt: refundReq.requestedAt,
-          amountRequested: refundReq.amountRequested);
+        id: newDocRef.id,
+        ticketId: refundReq.ticketId,
+        bookingId: refundReq.bookingId,
+        userId: refundReq.userId,
+        passengerName: refundReq.passengerName,
+        tripId: refundReq.tripId,
+        reason: refundReq.reason,
+        otherReasonText: refundReq.otherReasonText,
+        status: refundReq.status,
+        tripPrice: refundReq.tripPrice,
+        refundPercentage: refundReq.refundPercentage,
+        refundAmount: refundReq.refundAmount,
+        cancellationFee: refundReq.cancellationFee,
+        createdAt: refundReq.createdAt,
+        updatedAt: refundReq.updatedAt,
+        requestedAt: refundReq.requestedAt,
+        amountRequested: refundReq.amountRequested,
+        paymentIntentId: widget.ticket.paymentIntentId, // Added
+      );
 
       await _refundService.createRefundRequest(fixedRequest);
 
@@ -307,7 +309,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
                 children: [
                   Text("From",
                       style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  Text(widget.trip.fromCity,
+                  Text(widget.trip.originCity,
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16)),
                 ],
@@ -318,7 +320,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
                 children: [
                   Text("To",
                       style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  Text(widget.trip.toCity,
+                  Text(widget.trip.destinationCity,
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16)),
                 ],
@@ -331,7 +333,8 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
             children: [
               Text(DateFormat('MMM d, yyyy - h:mm a')
                   .format(widget.trip.departureTime)),
-              Text(widget.trip.duration),
+              Text(
+                  "${widget.trip.arrivalTime.difference(widget.trip.departureTime).inHours}h ${widget.trip.arrivalTime.difference(widget.trip.departureTime).inMinutes % 60}m"),
             ],
           )
         ],

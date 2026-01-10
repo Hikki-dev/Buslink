@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../controllers/trip_controller.dart';
+import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../models/trip_model.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
@@ -421,6 +422,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                     child: SingleChildScrollView(
                       child: BusLayoutWidget(
                         trip: Trip.fromMap(ticket.tripData, ticket.tripId),
+                        totalSeats: 40,
                         highlightedSeats: ticket.seatNumbers,
                         isReadOnly: true,
                         isDark:
@@ -480,7 +482,7 @@ class _FindTripDialogState extends State<FindTripDialog> {
   String? _selectedToCity;
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
-  List<Trip> _results = [];
+  List<EnrichedTrip> _results = [];
   bool _hasSearched = false;
 
   @override
@@ -501,9 +503,10 @@ class _FindTripDialogState extends State<FindTripDialog> {
       // We use the same search logic as Home
       final trips = await controller.service
           .searchTrips(_selectedFromCity!, _selectedToCity!, _selectedDate);
+      final enriched = await controller.enrichTrips(trips);
 
       setState(() {
-        _results = trips;
+        _results = enriched;
       });
     } catch (e) {
       debugPrint("Error searching trips: $e");
@@ -642,9 +645,7 @@ class _FindTripDialogState extends State<FindTripDialog> {
                                 const Icon(Icons.arrow_forward_ios, size: 16),
                             onTap: () {
                               Navigator.pop(context);
-                              Provider.of<TripController>(context,
-                                      listen: false)
-                                  .setConductorTrip(trip);
+                              // Provider.of<TripController>(context, listen: false).setConductorTrip(trip);
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(

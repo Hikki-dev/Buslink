@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import '../../models/trip_view_model.dart';
 
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -187,20 +188,9 @@ class _HomeScreenState extends State<HomeScreen> {
     tripController.setFromCity(_originController.text);
     tripController.setToCity(_destinationController.text);
     tripController.setDate(_selectedDate);
-    // NEW: Pass bulk dates
-    if (_isBulkBooking) {
-      if (_bulkDates.isEmpty) {
-        // Fallback to selected date if empty
-        _bulkDates = [_selectedDate];
-      }
-      tripController.setBulkDates(_bulkDates);
-    }
-    // Round Trip logic disabled
-    tripController.setRoundTrip(false);
-    tripController.setBulkMode(_isBulkBooking);
-
     // Trigger the actual Firestore search
-    tripController.searchTrips(context);
+    tripController.searchTrips(
+        _originController.text, _destinationController.text, _selectedDate);
 
     Navigator.push(
       context,
@@ -221,7 +211,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (result != null && result is Map) {
         final List<DateTime> dates = result['dates'];
-        final int seats = result['seats'];
 
         setState(() {
           _bulkDates = dates..sort();
@@ -232,9 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // Update Helper Text/Logic (Optional, UI reads _bulkDates)
 
-        // Update Controller Seats
-        Provider.of<TripController>(context, listen: false)
-            .setSeatsPerTrip(seats);
+        // Update Controller Seats (Removed legacy call)
       }
     } else {
       // Standard Single Select
@@ -788,7 +775,7 @@ class _TripsCarouselWidget extends StatefulWidget {
 class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
   final PageController _pageController = PageController(viewportFraction: 0.90);
   int _currentPage = 0;
-  late Stream<List<Trip>> _tripsStream;
+  late Stream<List<EnrichedTrip>> _tripsStream;
 
   @override
   void initState() {
@@ -824,7 +811,7 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
         const SizedBox(height: 20),
 
         // StreamBuilder uses the persistent stream now
-        StreamBuilder<List<Trip>>(
+        StreamBuilder<List<EnrichedTrip>>(
           stream: _tripsStream,
           builder: (context, snapshot) {
             if (!snapshot.hasData) return const SizedBox.shrink();
@@ -832,18 +819,16 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
             var ongoingTrips = snapshot.data!.where((t) {
               // FILTER LOGIC
               // User: "ones that are completed should dissappear"
-              if (t.status == TripStatus.completed ||
-                  t.status == TripStatus.cancelled) {
+              if (t.status == 'completed' || t.status == 'cancelled') {
                 return false;
               }
 
               // Also hide if strictly in the past and not active
               // But if it is 'active' (e.g. onWay) but past arrival time, KEEP IT.
-              bool isActive = t.status == TripStatus.boarding ||
-                  t.status == TripStatus.departed ||
-                  t.status == TripStatus.onWay ||
-                  t.status ==
-                      TripStatus.arrived; // Arrived is shown until Completed
+              bool isActive = t.status == 'boarding' ||
+                  t.status == 'departed' ||
+                  t.status == 'onWay' ||
+                  t.status == 'arrived'; // Arrived is shown until Completed
 
               if (!isActive && DateTime.now().isAfter(t.arrivalTime)) {
                 return false;
@@ -937,33 +922,45 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
     );
   }
 
-  Stream<List<Trip>> _getTripsForTickets(List<Ticket> tickets) {
+  Stream<List<EnrichedTrip>> _getTripsForTickets(List<Ticket> tickets) {
     final tripIds = tickets.map((t) => t.tripId).toSet().toList();
     if (tripIds.isEmpty) return Stream.value([]);
+
+    // We need logic to enrich. Since we can't easily access TripController instance method
+    // without context in a persistent stream setup easily if we want to follow provider pattern strictly...
+    // Actually, we can get FirestoreService directly or use a specific controller instance if passed.
+    // Assuming we can get a transient controller or service.
+    // For simplicity, let's use the Provider's service reference if possible, or just new instance.
+    // Better: use the context from the widget state.
 
     return FirebaseFirestore.instance
         .collection('trips')
         .where(FieldPath.documentId, whereIn: tripIds.take(10).toList())
         .snapshots()
-        .map(
-            (snap) => snap.docs.map((doc) => Trip.fromFirestore(doc)).toList());
+        .asyncMap((snap) async {
+      final trips = snap.docs.map((doc) => Trip.fromFirestore(doc)).toList();
+      // Use a fresh controller/service to enrich or access proper provider if context valid?
+      // Using Provider.of inside asyncMap might be tricky if widget disposed?
+      // Let's create a temporary TripController to reuse its enrich logic?
+      // Or just copy enrich logic? No, DRY.
+      // Let's assume we can access a static/singleton service or just create one.
+      // Is TripController pure? It uses FirestoreService.
+      final controller = TripController();
+      return await controller.enrichTrips(trips);
+    });
   }
 
-  int _getTripRank(TripStatus status) {
+  int _getTripRank(String status) {
     // 0 = Highest Priority (Active)
-    if (status == TripStatus.departed ||
-        status == TripStatus.onWay ||
-        status == TripStatus.boarding) {
+    if (status == 'departed' || status == 'onWay' || status == 'boarding') {
       return 0;
     }
     // 1 = Scheduled / On Time
-    if (status == TripStatus.scheduled ||
-        status == TripStatus.onTime ||
-        status == TripStatus.delayed) {
+    if (status == 'scheduled' || status == 'onTime' || status == 'delayed') {
       return 1;
     }
     // 2 = Arrived (Lowest priority for upcoming view)
-    if (status == TripStatus.arrived) {
+    if (status == 'arrived') {
       return 2;
     }
     // 3 = Others (should be filtered out anyway)

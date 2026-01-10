@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
-import '../../models/trip_model.dart';
+import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../utils/app_theme.dart';
+import '../../services/firestore_service.dart';
 
 import 'payment_screen.dart';
 // import 'package:google_fonts/google_fonts.dart';
@@ -11,12 +12,11 @@ import '../layout/app_footer.dart';
 import '../../services/auth_service.dart';
 import 'payment_success_screen.dart';
 import 'bus_layout_widget.dart';
-import '../../services/firestore_service.dart';
 import '../auth/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
-  final Trip trip;
+  final EnrichedTrip trip;
   final bool showBackButton;
   final bool isConductorMode;
 
@@ -43,7 +43,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
     final isDesktop = MediaQuery.of(context).size.width > 900;
-    List<int> selectedSeats = controller.selectedSeats;
+    List<int> selectedSeats =
+        controller.selectedSeats.map((e) => int.tryParse(e) ?? 0).toList();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -96,11 +97,12 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
                               // The Bus Visual (Refactored)
                               BusLayoutWidget(
-                                trip: widget.trip,
+                                trip: widget.trip.trip,
+                                totalSeats: widget.trip.totalSeats,
                                 selectedSeats: selectedSeats,
                                 isDark: isDark,
                                 onSeatToggle: (seatNum) {
-                                  controller.toggleSeat(seatNum);
+                                  controller.toggleSeat(seatNum.toString());
                                 },
                               ),
 
@@ -124,7 +126,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                 color: Theme.of(context).cardColor,
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
+                      color: Colors.black.withOpacity(0.08),
                       blurRadius: 30,
                       offset: const Offset(0, -5))
                 ],
@@ -146,9 +148,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                               style: TextStyle(
                                 fontFamily: 'Inter',
                                 color: isDark
-                                    ? Colors.white.withValues(alpha: 0.7)
-                                    : Colors.black
-                                        .withValues(alpha: 0.7), // No Grey
+                                    ? Colors.white.withOpacity(0.7)
+                                    : Colors.black.withOpacity(0.7), // No Grey
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -270,7 +271,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, Trip trip, bool isDark) {
+  Widget _buildHeader(BuildContext context, EnrichedTrip trip, bool isDark) {
     final controller = Provider.of<TripController>(context);
     final isBulk = controller.isBulkBooking && controller.bulkDates.length > 1;
 
@@ -447,8 +448,13 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                       try {
                         // Direct Service Call for Offline Ticket
                         final ticket = await FirestoreService()
-                            .createOfflineBooking(widget.trip,
-                                controller.selectedSeats, pName, user);
+                            .createOfflineBooking(
+                                widget.trip.trip,
+                                controller.selectedSeats
+                                    .map((e) => int.tryParse(e) ?? 0)
+                                    .toList(),
+                                pName,
+                                user);
 
                         // Refresh trip to show taken seats
                         if (context.mounted) {

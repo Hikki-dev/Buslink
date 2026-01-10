@@ -16,7 +16,8 @@ import 'services/cache_service.dart';
 import 'controllers/trip_controller.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
-import 'utils/notification_service.dart';
+import 'services/notification_service.dart';
+import 'services/trip_reminder_service.dart'; // Added Import
 import 'utils/language_provider.dart';
 import 'utils/translations.dart';
 import 'utils/app_theme.dart';
@@ -310,11 +311,27 @@ class RoleDispatcher extends StatefulWidget {
 
 class _RoleDispatcherState extends State<RoleDispatcher> {
   late Future<DocumentSnapshot> _userFuture;
+  TripReminderService? _reminderService;
 
   @override
   void initState() {
     super.initState();
     _userFuture = _fetchUserData();
+    _startReminderService();
+  }
+
+  void _startReminderService() {
+    _reminderService?.stop();
+    if (!widget.user.isAnonymous) {
+      _reminderService = TripReminderService(widget.user.uid);
+      _reminderService!.start();
+    }
+  }
+
+  @override
+  void dispose() {
+    _reminderService?.stop();
+    super.dispose();
   }
 
   Future<DocumentSnapshot> _fetchUserData() async {
@@ -345,6 +362,7 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.user.uid != widget.user.uid) {
       _userFuture = _fetchUserData();
+      _startReminderService();
     }
   }
 

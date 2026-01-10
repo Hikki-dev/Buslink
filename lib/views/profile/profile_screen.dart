@@ -22,7 +22,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart'; // for kIsWeb
 import '../settings/account_settings_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final bool showBackButton;
   final VoidCallback? onBack;
   final bool isAdminView;
@@ -31,6 +31,14 @@ class ProfileScreen extends StatelessWidget {
       this.showBackButton = false,
       this.onBack,
       this.isAdminView = false});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  // To force refresh after upload
+  int _refreshKey = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +62,8 @@ class ProfileScreen extends StatelessWidget {
     final bool isDesktop = MediaQuery.of(context).size.width > 900;
 
     return FutureBuilder<DocumentSnapshot>(
+      // Key changes to force rebuild
+      key: ValueKey(_refreshKey),
       future: firestoreService.getUserData(user.uid),
       builder: (context, snapshot) {
         String name = user.displayName ?? "Traveller";
@@ -83,12 +93,12 @@ class ProfileScreen extends StatelessWidget {
           appBar: isDesktop
               ? null
               : CustomAppBar(
-                  automaticallyImplyLeading: showBackButton,
-                  leading: showBackButton
+                  automaticallyImplyLeading: widget.showBackButton,
+                  leading: widget.showBackButton
                       ? BackButton(
                           onPressed: () {
-                            if (onBack != null) {
-                              onBack!();
+                            if (widget.onBack != null) {
+                              widget.onBack!();
                             } else {
                               Navigator.pop(context);
                             }
@@ -103,8 +113,8 @@ class ProfileScreen extends StatelessWidget {
               if (isDesktop)
                 Material(
                   elevation: 4,
-                  child:
-                      DesktopNavBar(selectedIndex: 3, isAdminView: isAdminView),
+                  child: DesktopNavBar(
+                      selectedIndex: 3, isAdminView: widget.isAdminView),
                 ), // Profile is index 3
               Expanded(
                 child: SingleChildScrollView(
@@ -540,37 +550,58 @@ class ProfileScreen extends StatelessWidget {
       return;
     }
 
-    if (!context.mounted) return;
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Uploading image... please wait.")));
 
     try {
       // 2. Upload to Firebase Storage
+      debugPrint("Creating storage ref...");
       final storageRef =
           FirebaseStorage.instance.ref().child('user_profiles/${user.uid}.jpg');
 
+      debugPrint("Reading bytes...");
+      final bytes = await image.readAsBytes();
+      debugPrint("Read ${bytes.length} bytes.");
+
+      debugPrint("Starting upload...");
       if (kIsWeb) {
-        await storageRef.putData(await image.readAsBytes());
+        await storageRef.putData(
+            bytes,
+            SettableMetadata(
+              contentType: 'image/jpeg',
+              customMetadata: {'picked-file-path': image.path},
+            ));
       } else {
         await storageRef.putFile(File(image.path));
       }
+      debugPrint("Upload complete. Getting URL...");
 
       final String downloadUrl = await storageRef.getDownloadURL();
+      debugPrint("Download URL: $downloadUrl");
 
       // 3. Update Firestore & Auth
+      debugPrint("Updating Firestore...");
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .update({'photoURL': downloadUrl});
 
+      debugPrint("Updating Auth...");
       await user.updatePhotoURL(downloadUrl);
 
-      if (context.mounted) {
+      // FORCE REFRESH
+      debugPrint("Upload sequence finished successfully.");
+      if (mounted) {
+        setState(() {
+          _refreshKey++;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Profile picture updated!")));
       }
     } catch (e) {
-      if (context.mounted) {
+      debugPrint("Upload Error detected: $e");
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text("Upload failed: $e")));
       }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
+import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../utils/app_constants.dart';
 import '../../utils/app_theme.dart';
 
@@ -135,14 +136,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Text("Route Management",
-                                              style: TextStyle(
-                                                  fontFamily: 'Outfit',
-                                                  fontSize: 34,
-                                                  height: 1.1,
-                                                  fontWeight: FontWeight.w800,
-                                                  color:
-                                                      AppTheme.primaryColor)),
+                                          Flexible(
+                                            child: Text("Route Management",
+                                                style: TextStyle(
+                                                    fontFamily: 'Outfit',
+                                                    fontSize: 34,
+                                                    height: 1.1,
+                                                    fontWeight: FontWeight.w800,
+                                                    color:
+                                                        AppTheme.primaryColor)),
+                                          ),
                                           Consumer<ThemeController>(
                                             builder:
                                                 (context, themeController, _) {
@@ -484,7 +487,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     SizedBox(
                       height: 56, // Increased from 50
                       child: ElevatedButton(
-                        onPressed: () => controller.searchTrips(context),
+                        onPressed: () => controller.searchTrips(
+                            controller.fromCity ?? '',
+                            controller.toCity ?? '',
+                            controller.tripDate ?? DateTime.now()),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black87,
                           foregroundColor: Colors.white,
@@ -511,7 +517,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       width: double.infinity,
                       height: 56, // Increased from 50
                       child: ElevatedButton(
-                        onPressed: () => controller.searchTrips(context),
+                        onPressed: () => controller.searchTrips(
+                            controller.fromCity ?? '',
+                            controller.toCity ?? '',
+                            controller.tripDate ?? DateTime.now()),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black87,
                           foregroundColor: Colors.white,
@@ -653,7 +662,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             alignment: Alignment.topLeft,
             child: Material(
               elevation: 4.0,
-              borderRadius: BorderRadius.circular(8),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
               child: SizedBox(
                 width: constraints.maxWidth,
                 child: ListView.builder(
@@ -682,7 +692,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildResultRow(
-      BuildContext context, Trip trip, TripController controller) {
+      BuildContext context, EnrichedTrip trip, TripController controller) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -753,7 +763,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 child: const Text("Edit")),
             const SizedBox(width: 12),
             OutlinedButton(
-                onPressed: () => _showSeatLayout(context, trip),
+                onPressed: () => _showSeatLayout(context, trip.trip),
                 child: const Text("View Seats")),
             const SizedBox(width: 12),
             IconButton(
@@ -776,7 +786,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       MaterialPageRoute(
                           builder: (_) => AdminScreen(trip: trip)));
                 } else if (val == 'seats') {
-                  _showSeatLayout(context, trip);
+                  _showSeatLayout(context, trip.trip);
                 } else {
                   _confirmDelete(context, controller, trip.id);
                 }
@@ -844,7 +854,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   backgroundColor: Colors.red, foregroundColor: Colors.white),
               onPressed: () {
                 Navigator.pop(ctx);
-                controller.deleteTrip(context, tripId);
+                controller.deleteTrip(tripId);
               },
               child: const Text("Delete")),
         ],
@@ -912,7 +922,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return Expanded(
       child: Material(
         color: isPrimary ? AppTheme.primaryColor : Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: null, // Explicitly null to fix assertion
         elevation: 0,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -934,11 +944,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 Text(label,
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: isPrimary
-                            ? Colors.white
-                            : Theme.of(context).textTheme.bodyLarge?.color,
-                        fontSize: 14),
-                    textAlign: TextAlign.center)
+                        fontSize: 14,
+                        color: isPrimary ? Colors.white : Colors.black87),
+                    textAlign: TextAlign.center),
               ],
             ),
           ),

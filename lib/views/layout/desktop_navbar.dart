@@ -10,6 +10,7 @@ import '../support/support_screen.dart';
 import '../auth/login_screen.dart';
 import '../customer_main_screen.dart';
 import 'notifications_screen.dart'; // Added Import
+import '../settings/account_settings_screen.dart'; // Added Import for Settings
 
 class DesktopNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -419,7 +420,11 @@ class DesktopNavBar extends StatelessWidget {
                               }
                               break;
                             case 'settings':
-                              // Settings logic
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          const AccountSettingsScreen()));
                               break;
                             case 'theme':
                               themeController.setTheme(

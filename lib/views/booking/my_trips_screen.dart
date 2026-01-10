@@ -148,7 +148,7 @@ class _TripsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Ticket>>(
-      stream: controller.getUserTickets(userId),
+      stream: controller.getUserTickets(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -233,7 +233,7 @@ class _TripsList extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 20),
               itemBuilder: (context, index) {
                 return _BoardingPassCard(
-                    ticket: tickets[index], shouldListen: true);
+                    ticket: tickets[index], shouldListen: !isHistory);
               },
             ),
           ),
@@ -528,7 +528,8 @@ class _BoardingPassCard extends StatelessWidget {
                         controller
                             .setToCity(ticket.tripData['toCity'] ?? 'Kandy');
                         controller.setDepartureDate(DateTime.now());
-                        controller.searchTrips(context);
+                        controller.searchTrips(controller.fromCity ?? '',
+                            controller.toCity ?? '', DateTime.now());
 
                         Navigator.push(
                           context,

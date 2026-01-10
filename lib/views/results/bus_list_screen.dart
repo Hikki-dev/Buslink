@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart'; // Added for Google Maps link
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
+import '../../models/trip_view_model.dart'; // Import EnrichedTrip
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latlng;
 import '../booking/seat_selection_screen.dart';
@@ -115,7 +116,7 @@ class _BusListScreenState extends State<BusListScreen> {
     final controller = Provider.of<TripController>(context);
     final isDesktop = MediaQuery.of(context).size.width > 1000;
 
-    List<Trip> trips = List.from(controller.searchResults);
+    List<EnrichedTrip> trips = List.from(controller.searchResults);
 
     // Filter Logic
     if (_selectedFilters.isNotEmpty) {
@@ -170,7 +171,7 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _buildDesktopLayout(BuildContext context, bool isDesktop,
-      List<Trip> trips, TripController controller) {
+      List<EnrichedTrip> trips, TripController controller) {
     return CustomScrollView(
       slivers: [
         const SliverToBoxAdapter(child: DesktopNavBar()),
@@ -247,8 +248,8 @@ class _BusListScreenState extends State<BusListScreen> {
     );
   }
 
-  Widget _buildMobileLayout(
-      BuildContext context, List<Trip> trips, TripController controller) {
+  Widget _buildMobileLayout(BuildContext context, List<EnrichedTrip> trips,
+      TripController controller) {
     return Scaffold(
       appBar: AppBar(
         title: Text('${controller.fromCity} ➔ ${controller.toCity}',
@@ -850,7 +851,7 @@ class _BusListScreenState extends State<BusListScreen> {
 }
 
 class _BusTicketCard extends StatefulWidget {
-  final Trip trip;
+  final EnrichedTrip trip;
   const _BusTicketCard({required this.trip});
 
   @override
@@ -868,9 +869,15 @@ class _BusTicketCardState extends State<_BusTicketCard> {
     return StreamBuilder<Trip>(
         stream: Provider.of<FirestoreService>(context, listen: false)
             .getTripStream(widget.trip.id),
-        initialData: widget.trip,
         builder: (context, snapshot) {
-          final trip = snapshot.data ?? widget.trip;
+          // If stream has data (Trip), merge it. Else use widget.trip.
+          EnrichedTrip trip = widget.trip;
+          if (snapshot.hasData) {
+            trip = EnrichedTrip(
+                trip: snapshot.data!,
+                schedule: widget.trip.schedule,
+                route: widget.trip.route);
+          }
           final duration = trip.arrivalTime.difference(trip.departureTime);
           final isMobile = MediaQuery.of(context).size.width < 700;
 
@@ -931,7 +938,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         });
   }
 
-  Widget _buildDesktopContent(Trip trip, Duration duration) {
+  Widget _buildDesktopContent(EnrichedTrip trip, Duration duration) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -947,7 +954,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
     );
   }
 
-  Widget _buildMobileContent(Trip trip, Duration duration) {
+  Widget _buildMobileContent(EnrichedTrip trip, Duration duration) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -963,7 +970,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
     );
   }
 
-  Widget _buildCardHeader(Trip trip) {
+  Widget _buildCardHeader(EnrichedTrip trip) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1033,7 +1040,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
     );
   }
 
-  Widget _buildTimeline(Trip trip, Duration duration) {
+  Widget _buildTimeline(EnrichedTrip trip, Duration duration) {
     return Row(
       children: [
         Column(
@@ -1084,11 +1091,11 @@ class _BusTicketCardState extends State<_BusTicketCard> {
     );
   }
 
-  Widget _buildAmenities(Trip trip) {
+  Widget _buildAmenities(EnrichedTrip trip) {
     return const SizedBox.shrink(); // Amenities hidden as per request
   }
 
-  Widget _buildBookButton(Trip trip, BuildContext context,
+  Widget _buildBookButton(EnrichedTrip trip, BuildContext context,
       TripController controller, bool isMobile, String priceLabel) {
     return Container(
       width: isMobile ? double.infinity : 180,
@@ -1147,7 +1154,8 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                   int qty = controller.seatsPerTrip;
 
                   // Auto-assign dummy seats for payment calculation
-                  controller.selectedSeats = List.generate(qty, (index) => -1);
+                  controller.selectedSeats =
+                      List.generate(qty, (index) => "-1");
                   // Assuming selectTrip exists as used below (if not, use selectedTrip = trip)
                   // controller.selectTrip(trip);
                   // EDIT: The existing code used controller.selectTrip(trip).
@@ -1227,7 +1235,7 @@ class _RouteFavoriteButtonState extends State<RouteFavoriteButton> {
         controller.fromCity != null &&
         controller.toCity != null) {
       final isFav = await controller.isRouteFavorite(
-          user.uid, controller.fromCity!, controller.toCity!);
+          controller.fromCity!, controller.toCity!);
       if (mounted) setState(() => _isFavorite = isFav);
     }
   }
@@ -1264,7 +1272,7 @@ class _RouteFavoriteButtonState extends State<RouteFavoriteButton> {
     }
 
     await controller.toggleRouteFavorite(
-        user.uid, controller.fromCity!, controller.toCity!,
+        controller.fromCity!, controller.toCity!,
         operatorName: "Various Operators", price: minPrice);
 
     // Toggle state immediately for UI (optimistic) or wait?

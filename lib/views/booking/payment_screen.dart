@@ -7,7 +7,7 @@ import 'package:url_launcher/url_launcher.dart'; // For Redirect
 import 'package:intl/intl.dart';
 
 import '../../controllers/trip_controller.dart';
-import '../../models/trip_model.dart';
+import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../services/payment_service.dart';
 import '../../utils/app_theme.dart';
 import '../layout/desktop_navbar.dart';
@@ -17,7 +17,7 @@ import 'payment_success_screen.dart';
 class PaymentScreen extends StatefulWidget {
   final String? bookingId;
   final double? amount;
-  final Trip? trip;
+  final EnrichedTrip? trip;
   final bool? isBulk;
 
   const PaymentScreen({
@@ -54,10 +54,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       if (widget.bookingId != null) {
         bookingId = widget.bookingId!;
       } else {
-        final id = await controller.createPendingBooking(user);
-        if (id == null) {
-          throw Exception("Failed to initialize booking.");
-        }
+        final id = await controller.createPendingBookingFromState(user);
         bookingId = id;
       }
 
@@ -248,8 +245,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 children: [
                                   Expanded(
                                       flex: 7,
-                                      child: _buildOrderSummary(trip, seats,
-                                          totalAmount, controller, isDark)),
+                                      child: _buildOrderSummary(
+                                          trip,
+                                          seats
+                                              .map((e) => int.tryParse(e) ?? 0)
+                                              .toList(),
+                                          totalAmount,
+                                          controller,
+                                          isDark)),
                                   const SizedBox(width: 48),
                                   Expanded(
                                       flex: 5,
@@ -259,7 +262,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               ),
                             ] else ...[
                               _buildOrderSummary(
-                                  trip, seats, totalAmount, controller, isDark),
+                                  trip,
+                                  seats
+                                      .map((e) => int.tryParse(e) ?? 0)
+                                      .toList(),
+                                  totalAmount,
+                                  controller,
+                                  isDark),
                               const SizedBox(height: 32),
                               _buildRedirectAction(
                                   context, totalAmount, isDark),
@@ -281,6 +290,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   Widget _buildOrderSummary(dynamic trip, List<int> seats, double totalAmount,
       TripController controller, bool isDark) {
+    // Note: trip is EnrichedTrip now, but dynamic works if getters exist
     final bool isBulk =
         controller.isBulkBooking && controller.bulkDates.length > 1;
 

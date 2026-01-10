@@ -29,7 +29,7 @@ class _TicketScreenState extends State<TicketScreen> {
     final controller = Provider.of<TripController>(context);
     final authService = Provider.of<AuthService>(context, listen: false);
     final user = authService.currentUser;
-    final trip = widget.tripArg ?? controller.selectedTrip;
+    final Trip? trip = widget.tripArg ?? controller.selectedTrip?.trip;
     final ticket = widget.ticketArg ?? controller.currentTicket;
 
     if (trip == null || ticket == null) {
@@ -59,8 +59,7 @@ class _TicketScreenState extends State<TicketScreen> {
           // --- FAVORITE HEART ---
           if (user != null)
             FutureBuilder<bool>(
-              future: controller.isRouteFavorite(
-                  user.uid, trip.fromCity, trip.toCity),
+              future: controller.isRouteFavorite(trip.fromCity, trip.toCity),
               builder: (context, snapshot) {
                 final isFav = snapshot.data ?? false;
                 return IconButton(
@@ -72,7 +71,7 @@ class _TicketScreenState extends State<TicketScreen> {
                   ),
                   onPressed: () async {
                     await controller.toggleRouteFavorite(
-                        user.uid, trip.fromCity, trip.toCity);
+                        trip.fromCity, trip.toCity);
                     setState(() {}); // Refresh state to update icon
                   },
                 );
