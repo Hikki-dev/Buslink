@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../models/refund_model.dart';
+import '../../../models/refund_transaction_model.dart';
 import '../../../services/stripe_service.dart';
 
 import '../../../../services/notification_service.dart';
@@ -173,12 +174,13 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
 
   void _handleApprove(RefundRequest refund) async {
     setState(() => _isLoading = true);
+    String? stripeRefundId;
 
     try {
       // 1. Call Stripe API Directly
       if (refund.paymentIntentId != null &&
           refund.paymentIntentId!.isNotEmpty) {
-        await StripeService.processRefund(
+        stripeRefundId = await StripeService.processRefund(
             refund.paymentIntentId!, refund.refundAmount);
       } else {
         debugPrint("Refund skipped: No payment ID");
@@ -196,7 +198,23 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
         'reviewNote': 'Refund processed via Admin Console (Direct API)',
       });
 
-      // 2. Update Ticket Status (Cancel it)
+      // 2. Create RefundTransaction Record
+      final transactionRef =
+          FirebaseFirestore.instance.collection('refund_transactions').doc();
+      final transaction = RefundTransaction(
+          id: transactionRef.id,
+          refundRequestId: refund.id,
+          ticketId: refund.ticketId,
+          userId: refund.userId,
+          amount: refund.refundAmount,
+          currency: 'lkr',
+          stripePaymentIntentId: refund.paymentIntentId,
+          stripeRefundId: stripeRefundId,
+          status: RefundTransactionStatus.success,
+          processedAt: DateTime.now());
+      batch.set(transactionRef, transaction.toMap());
+
+      // 3. Update Ticket Status (Cancel it)
       final ticketRef =
           FirebaseFirestore.instance.collection('tickets').doc(refund.ticketId);
       batch.update(ticketRef, {
@@ -204,10 +222,10 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
         'cancellationReason': 'refunded',
       });
 
-      // 3. Commit Batch
+      // 4. Commit Batch
       await batch.commit();
 
-      // 4. Notify User
+      // 5. Notify User
       await NotificationService.createNotification(
           userId: refund.userId,
           title: "Refund Approved",

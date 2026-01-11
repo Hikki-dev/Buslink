@@ -808,7 +808,7 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
           Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: widget.favoritesWidget),
-        const SizedBox(height: 20),
+        const SizedBox(height: 48),
 
         // StreamBuilder uses the persistent stream now
         StreamBuilder<List<EnrichedTrip>>(

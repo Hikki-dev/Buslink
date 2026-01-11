@@ -252,11 +252,28 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
                   children: [
                     _row("Trip Price",
                         "LKR ${widget.ticket.totalAmount.toStringAsFixed(2)}"),
-                    _row("Refund Percentage", "${(refundPct * 100).toInt()}%"),
-                    const Divider(),
-                    _row("Refund Amount",
-                        "LKR ${(widget.ticket.totalAmount * refundPct).toStringAsFixed(2)}",
-                        isBold: true),
+                    _row("Cancellation Fee",
+                        "LKR ${(widget.ticket.totalAmount * (1 - refundPct)).toStringAsFixed(2)}",
+                        color: Colors.red.shade300),
+                    const Divider(height: 32),
+                    Column(
+                      children: [
+                        const Text("YOU RECEIVE",
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                letterSpacing: 1.5)),
+                        const SizedBox(height: 4),
+                        Text(
+                          "LKR ${(widget.ticket.totalAmount * refundPct).toStringAsFixed(2)}",
+                          style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.primaryColor),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -375,16 +392,31 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Text(refund,
-                style: TextStyle(
-                    color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  color == Colors.green
+                      ? Icons.check_circle
+                      : (color == Colors.orange ? Icons.warning : Icons.cancel),
+                  size: 14,
+                  color: color,
+                ),
+                const SizedBox(width: 4),
+                Text(refund,
+                    style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12)),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _row(String label, String value, {bool isBold = false}) {
+  Widget _row(String label, String value, {bool isBold = false, Color? color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -396,7 +428,8 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
           Text(value,
               style: TextStyle(
                   fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-                  fontSize: isBold ? 18 : 14)),
+                  fontSize: isBold ? 18 : 14,
+                  color: color)),
         ],
       ),
     );

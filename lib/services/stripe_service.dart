@@ -7,7 +7,7 @@ class StripeService {
   // Key now loaded from .env for security (Note: Exposed in client builds)
   static String get _secretKey => dotenv.env['STRIPE_SECRET_KEY'] ?? '';
 
-  static Future<void> processRefund(
+  static Future<String?> processRefund(
       String paymentIntentId, double amount) async {
     try {
       final amountInCents = (amount * 100).toInt();
@@ -31,6 +31,8 @@ class StripeService {
           throw Exception(error['error'] ?? 'Refund failed via Proxy');
         }
         debugPrint("Refund successful (Web Proxy): ${response.body}");
+        final data = jsonDecode(response.body);
+        return data['id']; // Return Refund ID
       } else {
         // MOBILE/DESKTOP: Direct Call (No CORS issues)
         final url = Uri.parse('https://api.stripe.com/v1/refunds');
@@ -52,6 +54,8 @@ class StripeService {
           throw Exception(error['error']['message'] ?? 'Refund failed');
         }
         debugPrint("Refund successful (Direct): ${response.body}");
+        final data = jsonDecode(response.body);
+        return data['id']; // Return Refund ID
       }
     } catch (e) {
       throw Exception('Stripe Refund Error: $e');

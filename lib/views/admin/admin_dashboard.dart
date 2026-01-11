@@ -18,7 +18,8 @@ import 'route_management_screen.dart';
 import 'package:buslink/views/booking/bus_layout_widget.dart';
 import 'refunds/admin_refund_list.dart';
 import 'bookings/admin_booking_list.dart';
-import 'analytics/late_departures_screen.dart';
+
+import 'analytics/admin_analytics_dashboard.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});

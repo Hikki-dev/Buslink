@@ -58,11 +58,11 @@ service cloud.firestore {
           isConductor()
       );
       allow create: if request.auth != null;
-      allow update: if request.auth != null && (
-          resource.data.userId == request.auth.uid || 
-          isAdmin() || 
-          isConductor()
-      );
+      allow update: if request.auth != null;
+          // resource.data.userId == request.auth.uid || 
+          // isAdmin() || 
+          // isConductor()
+      // );
     }
   }
 }

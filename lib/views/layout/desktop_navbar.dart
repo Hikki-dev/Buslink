@@ -225,7 +225,21 @@ class DesktopNavBar extends StatelessWidget {
                           return [
                             // Header
                             PopupMenuItem(
-                              enabled: false,
+                              enabled: true, // Make clickable
+                              onTap: () {
+                                // Navigate to Profile
+                                if (onTap != null) {
+                                  onTap!(3);
+                                } else {
+                                  Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const CustomerMainScreen(
+                                                  initialIndex: 3)),
+                                      (route) => false);
+                                }
+                              },
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

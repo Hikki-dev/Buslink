@@ -53,12 +53,10 @@ class RefundService {
 
     double refundPercentage = 0.0;
 
-    if (hours >= 48) {
-      refundPercentage = 1.0; // 100%
-    } else if (hours >= 24) {
+    if (hours >= 24) {
       refundPercentage = 0.90;
     } else if (hours >= 6) {
-      refundPercentage = 0.75;
+      refundPercentage = 0.50;
     } else {
       refundPercentage = 0.0;
     }
