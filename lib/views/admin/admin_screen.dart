@@ -754,7 +754,7 @@ class _AdminScreenState extends State<AdminScreen> {
             },
             decoration: InputDecoration(
               labelText: label,
-              labelStyle: TextStyle(color: Colors.grey.shade500),
+              labelStyle: const TextStyle(),
               enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: borderColor)),
               focusedBorder: const OutlineInputBorder(
@@ -852,7 +852,7 @@ class _AdminScreenState extends State<AdminScreen> {
             },
             decoration: InputDecoration(
               labelText: label,
-              labelStyle: TextStyle(color: Colors.grey.shade500),
+              labelStyle: const TextStyle(),
               enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: borderColor)),
               focusedBorder: const OutlineInputBorder(
@@ -951,7 +951,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 fillColor:
                     isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.white,
                 hintText: "Select a Route...",
-                hintStyle: TextStyle(color: Colors.grey.shade500),
+                hintStyle: const TextStyle(),
               ),
               items: routes.map((r) {
                 return DropdownMenuItem(
@@ -1006,7 +1006,7 @@ class _AdminScreenState extends State<AdminScreen> {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.grey.shade500),
+          labelStyle: const TextStyle(),
           enabledBorder:
               OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
           border: const OutlineInputBorder(),
@@ -1034,7 +1034,7 @@ class _AdminScreenState extends State<AdminScreen> {
       style: TextStyle(color: textColor),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.grey.shade500),
+        labelStyle: const TextStyle(),
         enabledBorder:
             OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
         focusedBorder: const OutlineInputBorder(

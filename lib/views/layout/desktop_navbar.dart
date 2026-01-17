@@ -9,7 +9,8 @@ import '../support/support_screen.dart';
 
 import '../auth/login_screen.dart';
 import '../customer_main_screen.dart';
-import 'notifications_screen.dart'; // Added Import
+// import 'notifications_screen.dart'; // Old relative import
+import 'notifications_screen.dart'; // Consolidated Import
 import '../settings/account_settings_screen.dart'; // Added Import for Settings
 
 class DesktopNavBar extends StatelessWidget {

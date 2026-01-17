@@ -43,20 +43,14 @@ class FavoritesSection extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Icon(Icons.favorite_border,
-                      size: 40, color: Colors.grey.shade400),
+                  Icon(Icons.favorite_border, size: 40),
                   const SizedBox(height: 12),
                   Text("No favorites yet",
                       style: TextStyle(
-                          fontFamily: 'Inter',
-                          color: Colors.grey.shade500,
-                          fontWeight: FontWeight.bold)),
+                          fontFamily: 'Inter', fontWeight: FontWeight.bold)),
                   Text("Mark routes as favorites for quick access",
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12,
-                          color: Colors.grey.shade400)),
+                      style: TextStyle(fontFamily: 'Inter', fontSize: 12)),
                 ],
               ),
             )
@@ -173,8 +167,7 @@ class FavoritesSection extends StatelessWidget {
                       color: isDark ? Colors.white70 : Colors.black87,
                     ),
                   ),
-                  Icon(Icons.arrow_forward,
-                      size: 16, color: Colors.grey.shade400),
+                  Icon(Icons.arrow_forward, size: 16),
                   Text(
                     fav['toCity'] ?? '',
                     style: TextStyle(

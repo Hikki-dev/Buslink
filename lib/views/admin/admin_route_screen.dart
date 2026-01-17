@@ -196,8 +196,8 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
       style: TextStyle(color: textColor),
       decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.grey.shade500),
-          prefixIcon: icon != null ? Icon(icon, color: Colors.grey) : null,
+          labelStyle: const TextStyle(),
+          prefixIcon: icon != null ? Icon(icon) : null,
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide:
@@ -256,9 +256,8 @@ class _AdminRouteScreenState extends State<AdminRouteScreen> {
             onChanged: (val) => controller.text = val,
             decoration: InputDecoration(
                 labelText: label,
-                labelStyle: TextStyle(color: Colors.grey.shade500),
-                prefixIcon:
-                    const Icon(Icons.location_on_outlined, color: Colors.grey),
+                labelStyle: const TextStyle(),
+                prefixIcon: const Icon(Icons.location_on_outlined),
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: borderColor)),

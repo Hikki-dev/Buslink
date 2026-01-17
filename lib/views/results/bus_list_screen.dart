@@ -20,6 +20,8 @@ import '../layout/app_footer.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../booking/bulk_confirmation_screen.dart';
+import '../booking/bulk_quantity_dialog.dart';
+import '../../utils/language_provider.dart';
 
 part 'parts/clock_widget.dart';
 
@@ -122,10 +124,10 @@ class _BusListScreenState extends State<BusListScreen> {
     if (_selectedFilters.isNotEmpty) {
       trips = trips.where((trip) {
         final timeOptions = [
-          "Before 6 am",
-          "6 am to 12 pm",
-          "12 pm to 6 pm",
-          "After 6 pm"
+          "before_6_am",
+          "6_am_to_12_pm",
+          "12_pm_to_6_pm",
+          "after_6_pm"
         ];
 
         final selectedTimes =
@@ -135,16 +137,16 @@ class _BusListScreenState extends State<BusListScreen> {
           bool timeMatch = false;
           final hour = trip.departureTime.hour;
           for (final filter in selectedTimes) {
-            if (filter == "Before 6 am" && hour < 6) {
+            if (filter == "before_6_am" && hour < 6) {
               timeMatch = true;
             }
-            if (filter == "6 am to 12 pm" && hour >= 6 && hour < 12) {
+            if (filter == "6_am_to_12_pm" && hour >= 6 && hour < 12) {
               timeMatch = true;
             }
-            if (filter == "12 pm to 6 pm" && hour >= 12 && hour < 18) {
+            if (filter == "12_pm_to_6_pm" && hour >= 12 && hour < 18) {
               timeMatch = true;
             }
-            if (filter == "After 6 pm" && hour >= 18) {
+            if (filter == "after_6_pm" && hour >= 18) {
               timeMatch = true;
             }
           }
@@ -161,6 +163,11 @@ class _BusListScreenState extends State<BusListScreen> {
     } else if (_sortBy == 'time_asc') {
       trips.sort((a, b) => a.departureTime.compareTo(b.departureTime));
     }
+
+    // Get translations
+    // final lp = Provider.of<LanguageProvider>(context); // Already provided? No, context is sufficient later.
+    // Actually we need to pass lp down or use Consumer.
+    // Since this is build method, we can access provider.
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -250,6 +257,7 @@ class _BusListScreenState extends State<BusListScreen> {
 
   Widget _buildMobileLayout(BuildContext context, List<EnrichedTrip> trips,
       TripController controller) {
+    final lp = Provider.of<LanguageProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('${controller.fromCity} ➔ ${controller.toCity}',
@@ -262,7 +270,7 @@ class _BusListScreenState extends State<BusListScreen> {
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.black),
         elevation: 0,
-        actions: const [RouteFavoriteButton()],
+        actions: const [],
         // Using info header in mobile too, maybe simplified?
       ),
       bottomSheet: controller.isPreviewMode
@@ -277,7 +285,7 @@ class _BusListScreenState extends State<BusListScreen> {
           : null,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showMobileFilterModal(context),
-        label: const Text("Filters"),
+        label: Text(lp.translate('filters')),
         icon: const Icon(Icons.tune),
         backgroundColor: AppTheme.primaryColor,
       ),
@@ -300,6 +308,10 @@ class _BusListScreenState extends State<BusListScreen> {
       {bool isMobile = false}) {
     // Determine which city's weather is being shown
     final weatherCity = controller.toCity ?? controller.fromCity ?? "Colombo";
+    final lp = Provider.of<LanguageProvider>(context);
+
+    // ... (Weather UI same but translation for headers?)
+    // No specific headers yet mostly dynamic data.
 
     return Container(
       width: double.infinity,
@@ -390,8 +402,8 @@ class _BusListScreenState extends State<BusListScreen> {
                           mainAxisSize: MainAxisSize.min,
                           // Time
                           children: [
-                            const RouteFavoriteButton(),
-                            const SizedBox(width: 8),
+                            // const RouteFavoriteButton(), // Removed
+                            // const SizedBox(width: 8),
                             const _ClockWidget(fontSize: 24),
                           ],
                         ),
@@ -422,7 +434,7 @@ class _BusListScreenState extends State<BusListScreen> {
                     borderRadius: BorderRadius.circular(16),
                     child: Stack(
                       children: [
-                        // Map Layer (Optimized with RepaintBoundary)
+                        // Map Layer
                         RepaintBoundary(
                           child: FlutterMap(
                             mapController: _mapController,
@@ -467,14 +479,14 @@ class _BusListScreenState extends State<BusListScreen> {
                                       BoxShadow(
                                           color: Colors.black12, blurRadius: 4)
                                     ]),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.map,
+                                    const Icon(Icons.map,
                                         size: 16, color: AppTheme.primaryColor),
-                                    SizedBox(width: 8),
-                                    Text("Live Route Preview",
-                                        style: TextStyle(
+                                    const SizedBox(width: 8),
+                                    Text(lp.translate('live_route_preview'),
+                                        style: const TextStyle(
                                             fontFamily: 'Outfit',
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
@@ -495,7 +507,7 @@ class _BusListScreenState extends State<BusListScreen> {
                               }
                             },
                             icon: const Icon(Icons.map, size: 16),
-                            label: const Text("Open Google Maps"),
+                            label: Text(lp.translate('open_google_maps')),
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
                                 foregroundColor: Colors.black,
@@ -537,11 +549,12 @@ class _BusListScreenState extends State<BusListScreen> {
     "Ella": const latlng.LatLng(6.8667, 81.0466),
     "Trincomalee": const latlng.LatLng(8.5874, 81.2152),
     "Anuradhapura": const latlng.LatLng(8.3114, 80.4037),
-    "Gampaha": const latlng.LatLng(7.0873, 79.9925),
-    "Kurunegala": const latlng.LatLng(7.4818, 80.3609),
-    "Kalutara": const latlng.LatLng(6.5854, 79.9607),
-    "Avissawella": const latlng.LatLng(6.9543, 80.2046),
     "Negombo": const latlng.LatLng(7.2008, 79.8737),
+    "Hambantota": const latlng.LatLng(6.1429, 81.1212),
+    "Badulla": const latlng.LatLng(6.9897, 81.0558),
+    "Ratnapura": const latlng.LatLng(6.6939, 80.3982),
+    "Sigiriya": const latlng.LatLng(7.9570, 80.7603),
+    "Mirissa": const latlng.LatLng(5.9482, 80.4716),
   };
 
   List<Marker> _createMarkers(TripController controller) {
@@ -618,7 +631,6 @@ class _BusListScreenState extends State<BusListScreen> {
           points.add(_cityCoordinates[city]!);
         }
       }
-      // If no known via city found, but it says "Via", we sadly skip intermediate point unless we have coordinates
 
       // End
       if (_cityCoordinates.containsKey(trip.toCity)) {
@@ -626,21 +638,12 @@ class _BusListScreenState extends State<BusListScreen> {
       }
 
       if (points.length >= 2) {
-        // Sort points? No, relying on Start -> Via -> End order.
-        // But Via check order is random map key order.
-        // Ideally we check trip.via string indexing.
-        if (points.length > 2) {
-          // Re-order intermediates based on appearance in 'via' string if possible
-          // For now assume just 1 intermediate for simplicity of "Via Gampaha"
-        }
-
         lines.add(Polyline(
           points: points,
           color: index == 0
               ? AppTheme.primaryColor
               : Colors.indigoAccent, // Highlight first result primarily?
           strokeWidth: 4.0,
-          // Offset slighty if multiple? Hard to do with Polyline.
         ));
       }
       index++;
@@ -649,6 +652,7 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _buildResultsHeader(int count) {
+    final lp = Provider.of<LanguageProvider>(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
@@ -664,14 +668,14 @@ class _BusListScreenState extends State<BusListScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("$count Buses found",
+              Text("$count ${lp.translate('buses_found_suffix')}",
                   style: TextStyle(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.onSurface)),
               if (Provider.of<TripController>(context).isBulkBooking)
                 Text(
-                  "Showing valid options for ${Provider.of<TripController>(context).bulkDates.length} Consecutive Days",
+                  "${lp.translate('showing_valid_options')} ${Provider.of<TripController>(context).bulkDates.length} ${lp.translate('consecutive_days')}",
                   style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
@@ -688,11 +692,13 @@ class _BusListScreenState extends State<BusListScreen> {
               style: const TextStyle(
                   fontFamily: 'Inter', fontSize: 14, color: Colors.black),
               icon: const Icon(Icons.sort_rounded, size: 20),
-              items: const [
+              items: [
                 DropdownMenuItem(
-                    value: 'price_asc', child: Text("Cheapest First")),
+                    value: 'price_asc',
+                    child: Text(lp.translate('cheapest_first'))),
                 DropdownMenuItem(
-                    value: 'time_asc', child: Text("Earliest First")),
+                    value: 'time_asc',
+                    child: Text(lp.translate('earliest_first'))),
               ],
               onChanged: (v) => setState(() => _sortBy = v!),
             ),
@@ -703,6 +709,7 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _buildFilters(BuildContext context) {
+    final lp = Provider.of<LanguageProvider>(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -715,21 +722,22 @@ class _BusListScreenState extends State<BusListScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("FILTERS",
-              style: TextStyle(
+          Text(lp.translate('filters'),
+              style: const TextStyle(
                   fontFamily: 'Outfit',
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                   letterSpacing: 1.2)),
           const Divider(height: 32),
-          _filterSection("Departure Time",
-              ["Before 6 am", "6 am to 12 pm", "12 pm to 6 pm", "After 6 pm"]),
+          _filterSection(lp.translate('departure_time_filter'),
+              ["before_6_am", "6_am_to_12_pm", "12_pm_to_6_pm", "after_6_pm"]),
         ],
       ),
     );
   }
 
   Widget _filterSection(String title, List<String> options) {
+    final lp = Provider.of<LanguageProvider>(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -766,7 +774,7 @@ class _BusListScreenState extends State<BusListScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(opt,
+                  Text(lp.translate(opt),
                       style: TextStyle(
                           fontFamily: 'Inter',
                           color: Theme.of(context).colorScheme.onSurface,
@@ -794,6 +802,7 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _buildEmptyState() {
+    final lp = Provider.of<LanguageProvider>(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 60),
@@ -802,7 +811,7 @@ class _BusListScreenState extends State<BusListScreen> {
             Icon(Icons.directions_bus_outlined,
                 size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
-            Text("No buses found",
+            Text(lp.translate('no_buses_found'),
                 style: TextStyle(
                     fontFamily: 'Outfit',
                     fontSize: 20,
@@ -971,6 +980,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
   }
 
   Widget _buildCardHeader(EnrichedTrip trip) {
+    final lp = Provider.of<LanguageProvider>(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -984,8 +994,8 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                 color: Colors.blue.shade50,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text("High Rated",
-                  style: TextStyle(
+              child: Text(lp.translate('high_rated'),
+                  style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -1004,7 +1014,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
             const SizedBox(height: 4),
             // Only Show Via
             if (trip.via.isNotEmpty)
-              _detailChip(Icons.route, "Via ${trip.via}"),
+              _detailChip(Icons.route, "${lp.translate('via')} ${trip.via}"),
           ],
         ),
       ],
@@ -1041,6 +1051,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
   }
 
   Widget _buildTimeline(EnrichedTrip trip, Duration duration) {
+    final lp = Provider.of<LanguageProvider>(context);
     return Row(
       children: [
         Column(
@@ -1050,7 +1061,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                     fontFamily: 'Outfit',
                     fontWeight: FontWeight.bold,
                     fontSize: 20)),
-            Text(trip.fromCity,
+            Text(lp.translate(trip.fromCity.toLowerCase().replaceAll(' ', '_')),
                 style: const TextStyle(
                     fontFamily: 'Inter', fontSize: 12, color: Colors.grey)),
           ],
@@ -1061,7 +1072,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
             child: Column(
               children: [
                 Text(
-                    "${duration.inHours}h ${duration.inMinutes.remainder(60)}m",
+                    "${duration.inHours}${lp.translate('hrs')} ${duration.inMinutes.remainder(60)}${lp.translate('mins')}",
                     style:
                         TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                 Row(
@@ -1082,7 +1093,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                     fontFamily: 'Outfit',
                     fontWeight: FontWeight.bold,
                     fontSize: 20)),
-            Text(trip.toCity,
+            Text(lp.translate(trip.toCity.toLowerCase().replaceAll(' ', '_')),
                 style: const TextStyle(
                     fontFamily: 'Inter', fontSize: 12, color: Colors.grey)),
           ],
@@ -1097,6 +1108,16 @@ class _BusTicketCardState extends State<_BusTicketCard> {
 
   Widget _buildBookButton(EnrichedTrip trip, BuildContext context,
       TripController controller, bool isMobile, String priceLabel) {
+    final lp = Provider.of<LanguageProvider>(context);
+
+    // Filter Logic to translate "Days" if bulk
+    String displayPrice = priceLabel;
+    if (controller.isBulkBooking) {
+      // "LKR 5000 (x5 Days)" -> Need to translate "Days"? Maybe.
+      // For now keep it simple or use replace.
+      // displayPrice = priceLabel.replaceAll('Days', lp.translate('days'));
+    }
+
     return Container(
       width: isMobile ? double.infinity : 180,
       decoration: BoxDecoration(
@@ -1123,14 +1144,14 @@ class _BusTicketCardState extends State<_BusTicketCard> {
             isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.end,
         children: [
           // Text("Standard", style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
-          Text(priceLabel,
+          Text(displayPrice,
               style: const TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryColor)),
           const SizedBox(height: 4),
-          Text("per person",
+          Text(lp.translate('per_person'),
               style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
           const SizedBox(height: 16),
           SizedBox(
@@ -1142,44 +1163,33 @@ class _BusTicketCardState extends State<_BusTicketCard> {
 
                 if (diff <= 10) {
                   // Block booking
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text(
-                        "Online booking closes 10 minutes before departure. Please contact the conductor."),
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(lp.translate('booking_closes_error')),
                     backgroundColor: Colors.red,
-                    duration: Duration(seconds: 4),
+                    duration: const Duration(seconds: 4),
                   ));
                 } else if (controller.isBulkBooking) {
-                  // Bulk Booking - Auto-Assign & Confirm
-                  // Seats count already set from Home Screen
-                  int qty = controller.seatsPerTrip;
+                  // Show Quantity Selection Dialog
+                  showDialog(
+                    context: context,
+                    builder: (context) => BulkQuantityDialog(
+                      trip: trip.trip,
+                      days: controller.bulkDates.length,
+                      onConfirm: (qty) {
+                        Navigator.pop(context); // Close dialog
 
-                  // Auto-assign dummy seats for payment calculation
-                  controller.selectedSeats =
-                      List.generate(qty, (index) => "-1");
-                  // Assuming selectTrip exists as used below (if not, use selectedTrip = trip)
-                  // controller.selectTrip(trip);
-                  // EDIT: The existing code used controller.selectTrip(trip).
-                  // If it's a setter, we might need controller.selectedTrip = trip?
-                  // Let's trust existing code for method name, but if it fails I'll fix it.
-                  // Actually, looking at controller file, I didn't see selectTrip method.
-                  // But lines 1180 used it.
-                  // Let's assume it exists.
-                  controller.selectedTrip =
-                      trip; // Using setter directly just in case?
-                  // Wait, controller source I read earlier had logic for 'selectedTrip' variable.
-                  // It didn't have 'selectTrip' method in lines 1-800.
-                  // Line 1180 in BusListScreen calls `controller.selectTrip(trip)`.
-                  // If I change it to `controller.selectedTrip = trip` it creates a mismatch with existing code style?
-                  // I'll check if I can just use the property setter if it's public.
-                  // Line 63: Trip? selectedTrip;
-                  // So setter is implicit.
+                        // Proceed to Confirmation
+                        controller.selectedSeats =
+                            List.generate(qty, (index) => "-1");
+                        controller.selectedTrip = trip;
 
-                  controller.selectedTrip = trip;
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BulkConfirmationScreen(trip: trip),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BulkConfirmationScreen(trip: trip),
+                          ),
+                        );
+                      },
                     ),
                   );
                 } else {
@@ -1196,13 +1206,13 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6))),
-              child: const Text("Select"),
+              child: Text(lp.translate('select')),
             ),
           ),
           const SizedBox(height: 8),
           Center(
             child: Text(
-                "${trip.totalSeats - trip.bookedSeats.length} seats left",
+                "${trip.totalSeats - trip.bookedSeats.length} ${lp.translate('seats_left_suffix')}",
                 style: TextStyle(fontSize: 11, color: Colors.green.shade700)),
           )
         ],

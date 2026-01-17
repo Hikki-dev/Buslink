@@ -97,6 +97,26 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
 
     setState(() => _isLoading = true);
 
+    // 1. Strict Duplicate Check
+    final existingQuery = await FirebaseFirestore.instance
+        .collection('refunds')
+        .where('ticketId', isEqualTo: widget.ticket.ticketId)
+        .limit(1)
+        .get();
+
+    if (existingQuery.docs.isNotEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("A refund request already exists.")));
+      Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (_) =>
+                  RefundStatusScreen(refundId: existingQuery.docs.first.id)));
+      // Note: setState not needed as we navigate away, but safe to do if staying
+      return;
+    }
+
     try {
       final calc = _refundService.calculateRefundAmount(
           widget.ticket.totalAmount, widget.trip.departureTime);
@@ -104,8 +124,11 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
       final refundAmt = calc['refundAmount']!;
       final fee = calc['cancellationFee']!;
 
+      // Generate ID first
+      final newDocRef = FirebaseFirestore.instance.collection('refunds').doc();
+
       final refundReq = RefundRequest(
-        id: '', // Auto-generated
+        id: newDocRef.id,
         ticketId: widget.ticket.ticketId,
         bookingId: widget.ticket.ticketId,
         tripId: widget.trip.id,
@@ -122,52 +145,34 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
         updatedAt: DateTime.now(),
         requestedAt: DateTime.now(),
         amountRequested: refundAmt,
+        paymentIntentId: widget.ticket.paymentIntentId, // Ensure this is passed
       );
 
-      // Save to Firestore via Service
       await _refundService.createRefundRequest(refundReq);
-
-      // Need ID for navigation, but createsRefundRequest creates it with auto-ID?
-      // The service code used .doc(request.id).set(...) but passed '' as ID.
-      // I should update Service to generate ID if empty or let Firestore do it.
-      // Re-reading service: await _db.collection('refunds').doc(request.id).set(request.toMap());
-      // If request.id is empty, it writes to document "" which overwrites. BAD.
-
-      // FIX INLINE: Generate ID here.
-      final newDocRef = FirebaseFirestore.instance.collection('refunds').doc();
-      final fixedRequest = RefundRequest(
-        id: newDocRef.id,
-        ticketId: refundReq.ticketId,
-        bookingId: refundReq.bookingId,
-        userId: refundReq.userId,
-        passengerName: refundReq.passengerName,
-        tripId: refundReq.tripId,
-        reason: refundReq.reason,
-        otherReasonText: refundReq.otherReasonText,
-        status: refundReq.status,
-        tripPrice: refundReq.tripPrice,
-        refundPercentage: refundReq.refundPercentage,
-        refundAmount: refundReq.refundAmount,
-        cancellationFee: refundReq.cancellationFee,
-        createdAt: refundReq.createdAt,
-        updatedAt: refundReq.updatedAt,
-        requestedAt: refundReq.requestedAt,
-        amountRequested: refundReq.amountRequested,
-        paymentIntentId: widget.ticket.paymentIntentId, // Added
-      );
-
-      await _refundService.createRefundRequest(fixedRequest);
 
       if (!mounted) return;
 
+      // Show Success Message as requested
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              "Refund completed. Your bank may take 4 days to reflect it."),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 4),
+        ),
+      );
+
+      // Navigate to Status Screen
       Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (_) => RefundStatusScreen(refundId: fixedRequest.id)));
+              builder: (_) => RefundStatusScreen(refundId: refundReq.id)));
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error: $e")));
-      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Error: $e")));
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -187,118 +192,127 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         leading: const BackButton(),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Trip Summary
-            _buildTripSummary(),
-            const SizedBox(height: 24),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Trip Summary
+                _buildTripSummary(),
+                const SizedBox(height: 24),
 
-            // Rules
-            const Text("Refund Policy",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 8),
-            _buildPolicyTable(),
-            const SizedBox(height: 24),
+                // Rules
+                const Text("Refund Policy",
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 8),
+                _buildPolicyTable(),
+                const SizedBox(height: 24),
 
-            if (!isEligible)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8)),
-                child: Row(children: [
-                  const Icon(Icons.error_outline, color: Colors.red),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(reasonText)) // Dynamic Reason
-                ]),
-              ),
-
-            if (isEligible) ...[
-              const Text("Select Reason",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 8),
-              ...RefundReason.values.map((r) => RadioListTile<RefundReason>(
-                    title: Text(_formatReason(r)),
-                    value: r,
-                    groupValue: _selectedReason,
-                    onChanged: (val) => setState(() => _selectedReason = val),
-                    contentPadding: EdgeInsets.zero,
-                  )),
-
-              if (_selectedReason == RefundReason.other)
-                TextField(
-                  controller: _otherReasonController,
-                  decoration: const InputDecoration(
-                    labelText: "Please specify",
-                    border: OutlineInputBorder(),
+                if (!isEligible)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8)),
+                    child: Row(children: [
+                      const Icon(Icons.error_outline, color: Colors.red),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(reasonText)) // Dynamic Reason
+                    ]),
                   ),
-                  maxLines: 2,
-                ),
 
-              const SizedBox(height: 24),
+                if (isEligible) ...[
+                  const Text("Select Reason",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  ...RefundReason.values.map((r) => RadioListTile<RefundReason>(
+                        title: Text(_formatReason(r)),
+                        value: r,
+                        groupValue: _selectedReason,
+                        onChanged: (val) =>
+                            setState(() => _selectedReason = val),
+                        contentPadding: EdgeInsets.zero,
+                      )),
 
-              // Calculation Preview
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.2))),
-                child: Column(
-                  children: [
-                    _row("Trip Price",
-                        "LKR ${widget.ticket.totalAmount.toStringAsFixed(2)}"),
-                    _row("Cancellation Fee",
-                        "LKR ${(widget.ticket.totalAmount * (1 - refundPct)).toStringAsFixed(2)}",
-                        color: Colors.red.shade300),
-                    const Divider(height: 32),
-                    Column(
+                  if (_selectedReason == RefundReason.other)
+                    TextField(
+                      controller: _otherReasonController,
+                      decoration: const InputDecoration(
+                        labelText: "Please specify",
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
+                    ),
+
+                  const SizedBox(height: 24),
+
+                  // Calculation Preview
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color:
+                                AppTheme.primaryColor.withValues(alpha: 0.2))),
+                    child: Column(
                       children: [
-                        const Text("YOU RECEIVE",
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                letterSpacing: 1.5)),
-                        const SizedBox(height: 4),
-                        Text(
-                          "LKR ${(widget.ticket.totalAmount * refundPct).toStringAsFixed(2)}",
-                          style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.primaryColor),
+                        _row("Trip Price",
+                            "LKR ${widget.ticket.totalAmount.toStringAsFixed(2)}"),
+                        _row("Cancellation Fee",
+                            "LKR ${(widget.ticket.totalAmount * (1 - refundPct)).toStringAsFixed(2)}",
+                            color: Colors.red.shade300),
+                        const Divider(height: 32),
+                        Column(
+                          children: [
+                            const Text("YOU RECEIVE",
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                    letterSpacing: 1.5)),
+                            const SizedBox(height: 4),
+                            Text(
+                              "LKR ${(widget.ticket.totalAmount * refundPct).toStringAsFixed(2)}",
+                              style: const TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppTheme.primaryColor),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
 
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submitRefund,
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12))),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Submit Request",
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white)),
-                ),
-              )
-            ]
-          ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _submitRefund,
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text("Submit Request",
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                    ),
+                  )
+                ]
+              ],
+            ),
+          ),
         ),
       ),
     );

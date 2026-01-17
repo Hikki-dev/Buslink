@@ -8,6 +8,7 @@ import '../../controllers/trip_controller.dart';
 import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../models/trip_model.dart' show TripStatus;
 import '../../services/location_service.dart'; // Added
+import '../../services/sms_service.dart'; // Added
 
 import '../booking/seat_selection_screen.dart';
 
@@ -53,7 +54,8 @@ class _ConductorTripManagementScreenState
       try {
         // High accuracy is fine because we throttle writes
         Position position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high);
+            locationSettings:
+                const LocationSettings(accuracy: LocationAccuracy.high));
 
         await LocationService().updateBusLocation(
             widget.trip.id,
@@ -334,8 +336,53 @@ class _ConductorTripManagementScreenState
             delay = newDelay;
           }
           if (context.mounted) {
-            controller.updateTripStatusAsConductor(trip.id, status,
-                delayMinutes: delay);
+            try {
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Updating status...")));
+              await controller.updateTripStatusAsConductor(trip.id, status,
+                  delayMinutes: delay);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text("Trip marked as $label"),
+                    backgroundColor: Colors.green));
+
+                // Ask to notify passengers
+                bool? notify = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                          title: const Text("Notify Passengers?"),
+                          content: const Text(
+                              "Do you want to send an SMS update to all passengers regarding this status change?"),
+                          actions: [
+                            TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text("No")),
+                            ElevatedButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text("Yes, Notify")),
+                          ],
+                        ));
+
+                if (notify == true && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("Fetching passenger contacts...")));
+                  List<String> phones =
+                      await controller.getPassengerPhones(trip.id);
+                  String msg =
+                      isDelay ? "We are delayed by $delay minutes." : "";
+                  await SmsService.sendTripStatusUpdate(
+                      phones, label.toUpperCase(), msg);
+                }
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text("Failed to update status: $e"),
+                    backgroundColor: Colors.red));
+              }
+            }
           }
         },
         icon: Icon(icon, color: Colors.white),

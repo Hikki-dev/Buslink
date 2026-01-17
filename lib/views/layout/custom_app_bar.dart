@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'notifications_screen.dart';
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
@@ -184,7 +185,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               // Notifications (Last)
               IconButton(
                 icon: const Icon(Icons.notifications_outlined),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const NotificationsScreen()));
+                },
               ),
 
               // Admin Badge

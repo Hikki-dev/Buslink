@@ -75,9 +75,11 @@ class RefundService {
   Future<void> createRefundRequest(RefundRequest request) async {
     await _db.collection('refunds').doc(request.id).set(request.toMap());
 
-    // Update Ticket Status to indicate refund requested?
-    // Maybe 'refund_pending'? For now keep 'confirmed' but add flag?
-    // Or simpler: just rely on Refund collection.
+    // Update Ticket Status
+    await _db
+        .collection('tickets')
+        .doc(request.ticketId)
+        .update({'status': 'refund_requested'});
 
     // Create Notification for Admin? (Via Cloud Function usually, or here)
     // Create Notification for User
@@ -86,7 +88,7 @@ class RefundService {
       'title': 'Refund Request Received',
       'body':
           'Your refund request for trip to ${request.tripId} has been received.', // Better text needed
-      'type': 'refund_update',
+      'type': 'refundStatus',
       'relatedId': request.id,
       'timestamp': FieldValue.serverTimestamp(),
       'isRead': false,

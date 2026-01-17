@@ -550,7 +550,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    if (!mounted) return;
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Uploading image... please wait.")));
 
@@ -573,11 +573,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
               customMetadata: {'picked-file-path': image.path},
             ));
       } else {
-        await storageRef.putFile(File(image.path));
+        // Add metadata to file upload too
+        await storageRef.putFile(
+            File(image.path),
+            SettableMetadata(
+              contentType: 'image/jpeg',
+            ));
       }
       debugPrint("Upload complete. Getting URL...");
 
-      final String downloadUrl = await storageRef.getDownloadURL();
+      // Retry logic for getDownloadURL to avoid race conditions
+      String? downloadUrl;
+      for (int i = 0; i < 3; i++) {
+        try {
+          downloadUrl = await storageRef.getDownloadURL();
+          break;
+        } catch (e) {
+          debugPrint("Attempt ${i + 1} to get URL failed: $e");
+          await Future.delayed(const Duration(seconds: 1));
+        }
+      }
+
+      if (downloadUrl == null) {
+        throw Exception("Could not retrieve download URL after upload.");
+      }
+
       debugPrint("Download URL: $downloadUrl");
 
       // 3. Update Firestore & Auth
@@ -592,7 +612,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // FORCE REFRESH
       debugPrint("Upload sequence finished successfully.");
-      if (mounted) {
+      if (context.mounted) {
         setState(() {
           _refreshKey++;
         });
@@ -601,7 +621,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       debugPrint("Upload Error detected: $e");
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text("Upload failed: $e")));
       }

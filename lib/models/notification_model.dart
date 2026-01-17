@@ -1,6 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum NotificationType { tripStatus, delay, cancellation, refundStatus, general }
+enum NotificationType {
+  tripStatus,
+  delay,
+  cancellation,
+  refundStatus,
+  booking,
+  general
+}
 
 class AppNotification {
   final String id;

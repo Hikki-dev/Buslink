@@ -20,6 +20,7 @@ import 'refunds/admin_refund_list.dart';
 import 'bookings/admin_booking_list.dart';
 
 import 'analytics/admin_analytics_dashboard.dart';
+import 'admin_feedback_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -99,6 +100,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                             _buildRefundButton(context),
                                             _buildBookingsButton(context),
                                             _buildAnalyticsButton(context),
+                                            _buildFeedbackButton(context),
                                             Consumer<ThemeController>(
                                               builder: (context,
                                                   themeController, _) {
@@ -266,6 +268,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                                           const AdminAnalyticsDashboard()))),
                                         ],
                                       ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          _buildMobileActionCard(
+                                              context,
+                                              Icons.feedback_outlined,
+                                              "Feedback",
+                                              () => Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const AdminFeedbackScreen()))),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -430,6 +446,78 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
+  Widget _buildRefundButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AdminRefundListScreen()));
+      },
+      icon: const Icon(Icons.monetization_on_outlined),
+      label: const Text("Refunds"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        textStyle:
+            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildFeedbackButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AdminFeedbackScreen()));
+      },
+      icon: const Icon(Icons.feedback_outlined),
+      label: const Text("App Feedback"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        textStyle:
+            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildBookingsButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AdminBookingListScreen()));
+      },
+      icon: const Icon(Icons.confirmation_number_outlined),
+      label: const Text("Bookings"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        textStyle:
+            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AdminAnalyticsDashboard()));
+      },
+      icon: const Icon(Icons.analytics_outlined),
+      label: const Text("Analytics"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        textStyle:
+            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
   Widget _buildAddRouteSimpleButton(BuildContext context) {
     return ElevatedButton.icon(
       onPressed: () {
@@ -573,7 +661,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+            const Icon(Icons.calendar_today, size: 18),
             const SizedBox(width: 12),
             Text(
               controller.travelDate != null
@@ -652,8 +740,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   borderSide: BorderSide(color: Colors.grey.shade300)),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              suffixIcon:
-                  const Icon(Icons.search, size: 20, color: Colors.grey),
+              suffixIcon: const Icon(Icons.search, size: 20),
             ),
             validator: (v) => v == null || v.isEmpty ? "Required" : null,
           );
@@ -859,60 +946,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
               },
               child: const Text("Delete")),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRefundButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AdminRefundListScreen()));
-      },
-      icon: const Icon(Icons.monetization_on),
-      label: const Text("Refunds"),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle:
-            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _buildBookingsButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AdminBookingListScreen()));
-      },
-      icon: const Icon(Icons.confirmation_number),
-      label: const Text("Bookings"),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle:
-            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _buildAnalyticsButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AdminAnalyticsDashboard()));
-      },
-      icon: const Icon(Icons.analytics),
-      label: const Text("Analytics"),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle:
-            const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
       ),
     );
   }

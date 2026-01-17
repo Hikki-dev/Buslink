@@ -56,8 +56,7 @@ class AuthService {
         }
 
         // This is also correct (no 'await')
-        final GoogleSignInAuthentication googleAuth =
-            googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
         final OAuthCredential credential = GoogleAuthProvider.credential(
           accessToken: authorization.accessToken,
@@ -185,8 +184,8 @@ class AuthService {
       } else {
         // Mobile Flow (Android/iOS) - standard Google Sign In
         // Use authenticate() as per v7
-        final GoogleSignInAccount googleUser =
-            await _googleSignIn.authenticate(scopeHint: ['email', 'profile']); // Cancelled
+        final GoogleSignInAccount googleUser = await _googleSignIn
+            .authenticate(scopeHint: ['email', 'profile']); // Cancelled
 
         // Get Authorization for Access Token
         final GoogleSignInClientAuthorization? authorization =
@@ -200,8 +199,7 @@ class AuthService {
         }
 
         // Get Authentication for ID Token
-        final GoogleSignInAuthentication googleAuth =
-            googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
         credential = GoogleAuthProvider.credential(
           accessToken: authorization.accessToken,
@@ -320,29 +318,34 @@ class AuthService {
   }
 
   Future<void> _ensureUserDocument(User user) async {
-    final docStats = await _db.collection('users').doc(user.uid).get();
-    if (!docStats.exists) {
-      await _db.collection('users').doc(user.uid).set({
-        'uid': user.uid,
-        'email': user.email,
-        'phoneNumber': user.phoneNumber, // Build phoneNumber
-        'displayName': user.displayName ?? user.email?.split('@')[0] ?? 'User',
-        'role': 'customer',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    } else {
-      // If the user logs in via a different method (link phone to existing account??)
-      // OR simply just update the phone number if it was missing.
-      // For now, let's just update phoneNumber if it's null in DB but present in Auth
-      final data = docStats.data();
-      if (data != null &&
-          (data['phoneNumber'] == null || data['phoneNumber'] == "") &&
-          user.phoneNumber != null) {
-        await _db
-            .collection('users')
-            .doc(user.uid)
-            .update({'phoneNumber': user.phoneNumber});
+    try {
+      final userDoc = await _db.collection('users').doc(user.uid).get();
+      if (!userDoc.exists) {
+        await _db.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'email': user.email,
+          'phoneNumber': user.phoneNumber,
+          'displayName':
+              user.displayName ?? user.email?.split('@')[0] ?? 'User',
+          'role': 'customer',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        // Check if we need to update missing phone number
+        final data = userDoc.data();
+        if (data != null &&
+            (data['phoneNumber'] == null || data['phoneNumber'] == "") &&
+            user.phoneNumber != null) {
+          await _db
+              .collection('users')
+              .doc(user.uid)
+              .update({'phoneNumber': user.phoneNumber});
+        }
       }
+    } catch (e) {
+      debugPrint("Warning: _ensureUserDocument failed: $e");
+      // Allow the flow to continue even if this fails (e.g. strict rules)
+      // The app will likely handle the missing profile in RoleDispatcher or HomeScreen
     }
   }
 

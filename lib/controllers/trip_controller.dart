@@ -6,6 +6,8 @@ import '../models/schedule_model.dart';
 import '../models/route_model.dart'; // Added
 import '../models/trip_view_model.dart'; // EnrichedTrip
 import '../services/firestore_service.dart';
+import '../services/notification_service.dart' as import_notification_service;
+import '../services/sms_service.dart'; // Added Import
 
 class TripController extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
@@ -144,7 +146,60 @@ class TripController extends ChangeNotifier {
   Future<void> updateStatus(
       String tripId, TripStatus status, int delayMinutes) async {
     await _firestoreService.updateStatus(tripId, status, delayMinutes);
-    // Refresh if needed
+
+    // Notify Passengers (App Notification + SMS)
+    try {
+      final trip = await _firestoreService.getTrip(tripId);
+      if (trip != null) {
+        final routeName = "${trip.originCity} to ${trip.destinationCity}";
+
+        // Map enum to string expected by Service
+        String statusStr = 'UNKNOWN';
+        if (status == TripStatus.delayed) statusStr = 'DELAYED';
+        if (status == TripStatus.departed) statusStr = 'DEPARTED';
+        if (status == TripStatus.arrived) statusStr = 'ARRIVED';
+        if (status == TripStatus.cancelled) statusStr = 'CANCELLED';
+        if (status == TripStatus.onWay) statusStr = 'ON WAY';
+
+        // 1. In-App Notification
+        await import_notification_service.NotificationService
+            .notifyTripStatusChange(tripId, routeName, statusStr,
+                delayMinutes: delayMinutes);
+
+        // 2. Client-Side SMS
+        // Fetch tickets to get phone numbers
+        final ticketsSnap = await FirebaseFirestore.instance
+            .collection('tickets')
+            .where('tripId', isEqualTo: tripId)
+            .where('status', isEqualTo: 'confirmed')
+            .get();
+
+        final List<String> phones = [];
+        for (var doc in ticketsSnap.docs) {
+          final data = doc.data();
+          if (data['passengerPhone'] != null &&
+              data['passengerPhone'].toString().isNotEmpty) {
+            phones.add(data['passengerPhone'].toString());
+          }
+        }
+
+        if (phones.isNotEmpty) {
+          // Construct SMS Body
+          String smsBody = "BusLink: Trip $routeName is now $statusStr.";
+          if (delayMinutes > 0) smsBody += " Delayed by ${delayMinutes}m.";
+
+          // Trigger Batch SMS (Opens SMS App)
+          // Create instance to avoid static if needed, or import static
+          // We need to import sms_service.dart. I will assume it is available or add import.
+          // Actually, let's use the full import path to be safe or add it to file.
+          // Since I can't see the top of the file right now to add import, I'll rely on existing or add it now.
+          // Wait, I saw imports earlier. I need to add `import '../services/sms_service.dart';`
+          await SmsService.sendBatchSMS(phones, smsBody);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error sending notification/SMS: $e");
+    }
   }
 
   // --- BOOKING ---
@@ -174,7 +229,12 @@ class TripController extends ChangeNotifier {
     if (currentUser == null) throw Exception("User not logged in");
 
     return await _firestoreService.createPendingBooking(
-        enrichedTrip.trip, seatIds, currentUser);
+        enrichedTrip.trip, seatIds, currentUser,
+        extraDetails: {
+          'busNumber': enrichedTrip.busNumber,
+          'operatorName': enrichedTrip.operatorName,
+          'scheduleId': enrichedTrip.schedule.id,
+        });
   }
 
   // --- FAVORITES ---
@@ -290,7 +350,7 @@ class TripController extends ChangeNotifier {
   Future<void> sendTicketSms(String ticketId) async {
     // Call Cloud Function or backend
     // Placeholder
-    print("Sending SMS for ticket $ticketId");
+    debugPrint("Sending SMS for ticket $ticketId");
   }
 
   Stream<List<Ticket>> getUserTickets() {
@@ -344,9 +404,82 @@ class TripController extends ChangeNotifier {
   Future<void> updateTrip(String tripId, Map<String, dynamic> data) =>
       updateTripDetails(tripId, data);
 
-  // Placeholder - Recurring route logic is moved to Schedules, but keeping stub for clean compilation of old screens
-  Future<void> createRecurringRoute(dynamic routeData) async {
-    debugPrint("Deprecated: separate route/schedule creation needed.");
+  Future<void> createRecurringRoute(dynamic input) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final tripData = input['data'] as Map<String, dynamic>;
+      final days = input['days'] as List<int>;
+
+      // 1. Ensure Route Exists
+      String routeId = tripData['routeId'] ?? '';
+      RouteModel? route;
+
+      if (routeId.isNotEmpty) {
+        route = await _firestoreService.getRoute(routeId);
+      }
+
+      if (route == null) {
+        // Create new Route
+        final newRoute = RouteModel(
+          id: '',
+          originCity: tripData['fromCity'],
+          destinationCity: tripData['toCity'],
+          stops: [],
+          distanceKm: 0,
+          estimatedDurationMins: _parseDuration(tripData['duration']),
+          isActive: true,
+          via: tripData['via'] ?? '',
+        );
+        final ref = await _firestoreService.addRoute(newRoute);
+        routeId = ref.id;
+        route = newRoute.copyWith(id: routeId);
+      }
+
+      // 2. Create Schedule
+      final depDate = tripData['departureTime'] as DateTime;
+      final depTimeStr =
+          "${depDate.hour.toString().padLeft(2, '0')}:${depDate.minute.toString().padLeft(2, '0')}";
+
+      final schedule = ScheduleModel(
+        id: '', // Generated by Firestore
+        routeId: routeId,
+        busNumber: tripData['busNumber'] ?? 'Standard',
+        operatorName: tripData['operatorName'] ?? 'BusLink',
+        busType: 'Standard', // Default
+        amenities: [],
+        recurrenceDays: days,
+        departureTime: depTimeStr,
+        basePrice: (tripData['price'] as num).toDouble(),
+        totalSeats: (tripData['totalSeats'] as num).toInt(),
+      );
+
+      final docRef = await _firestoreService.addSchedule(schedule);
+      final savedSchedule = schedule.copyWith(id: docRef.id);
+
+      // 3. Generate Trips
+      await _firestoreService.generateTripsForSchedule(
+          savedSchedule, route, 30); // Generate for 30 days
+    } catch (e) {
+      debugPrint("Error creating recurring route: $e");
+      rethrow; // expose specific error to UI
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  int _parseDuration(String durationStr) {
+    if (!durationStr.contains(':')) return 60;
+    try {
+      final parts = durationStr.split(':');
+      final h = int.parse(parts[0]);
+      final m = int.parse(parts[1]);
+      return (h * 60) + m;
+    } catch (_) {
+      return 60;
+    }
   }
 
   // Helper for admin screen dropdowns
@@ -384,9 +517,49 @@ class TripController extends ChangeNotifier {
 
   // Method to handle user-only arg from BulkConfirmation (if needed)
   Future<String> createPendingBookingFromState(User user) async {
-    // uses internal selectedSeats and selectedTrip
     if (selectedTrip == null) throw Exception("No trip selected");
-    return createPendingBooking(selectedTrip!, selectedSeats);
+
+    if (isBulkBooking && bulkDates.isNotEmpty) {
+      List<String> bookingIds = [];
+      final scheduleId = selectedTrip!.schedule.id;
+      final seatIds = selectedSeats;
+
+      // Extra details (Operator/Bus) are constant for the schedule
+      final extraDetails = {
+        'busNumber': selectedTrip!.busNumber,
+        'operatorName': selectedTrip!.operatorName,
+        'scheduleId': scheduleId,
+      };
+
+      for (var date in bulkDates) {
+        try {
+          // Find Trip for Date
+          final tripInstance = await _firestoreService.getTripByScheduleAndDate(
+              scheduleId, date);
+
+          if (tripInstance != null) {
+            final id = await _firestoreService.createPendingBooking(
+                tripInstance, seatIds, user,
+                extraDetails: extraDetails);
+            bookingIds.add(id);
+          } else {
+            // Optional: Auto-generate trip if missing?
+            // For now, skip and log.
+            debugPrint(
+                "Bulk Booking: Trip not found for schedule $scheduleId on $date");
+          }
+        } catch (e) {
+          debugPrint("Bulk Booking Error date $date: $e");
+        }
+      }
+
+      if (bookingIds.isEmpty) {
+        throw Exception("No valid trips found for selected dates.");
+      }
+      return bookingIds.join(',');
+    } else {
+      return createPendingBooking(selectedTrip!, selectedSeats);
+    }
   }
 
   // --- AdminDashboard Compatibility ---
@@ -429,11 +602,59 @@ class TripController extends ChangeNotifier {
   }
 
   // Used by PaymentSuccessScreen
+  // Used by PaymentSuccessScreen
   Future<bool> confirmBooking(String bookingId,
       {String? paymentIntentId}) async {
+    // Handle Bulk (Comma Separated)
+    if (bookingId.contains(',')) {
+      final ids =
+          bookingId.split(',').where((s) => s.trim().isNotEmpty).toList();
+      try {
+        final tickets = await _firestoreService.confirmBulkBookings(ids,
+            paymentIntentId: paymentIntentId);
+
+        // Notify for each ticket
+        for (var ticket in tickets) {
+          if (ticket.userId.isNotEmpty) {
+            final tripTitle =
+                "${ticket.tripData['originCity']} to ${ticket.tripData['destinationCity']}";
+            // Fire and forget notification
+            import_notification_service.NotificationService.createNotification(
+              userId: ticket.userId,
+              title: "Booking Confirmed",
+              body:
+                  "Your trip ($tripTitle) is confirmed. Seat(s): ${ticket.seatNumbers.join(', ')}",
+              type: "booking",
+              relatedId: ticket.ticketId,
+            );
+          }
+        }
+        return true;
+      } catch (e) {
+        debugPrint("Bulk booking confirmation failed: $e");
+        return false;
+      }
+    }
+
+    // Single Booking
     try {
-      await _firestoreService.confirmBooking(bookingId,
+      final ticket = await _firestoreService.confirmBooking(bookingId,
           paymentIntentId: paymentIntentId);
+
+      // Notify User (Notification Center)
+      if (ticket.userId.isNotEmpty) {
+        final tripTitle =
+            "${ticket.tripData['originCity']} to ${ticket.tripData['destinationCity']}";
+        await import_notification_service.NotificationService
+            .createNotification(
+          userId: ticket.userId,
+          title: "Booking Confirmed",
+          body:
+              "Your trip ($tripTitle) is confirmed. Seat(s): ${ticket.seatNumbers.join(', ')}",
+          type: "booking",
+          relatedId: ticket.ticketId,
+        );
+      }
       return true;
     } catch (e) {
       debugPrint("Booking confirmation failed: $e");
@@ -446,7 +667,8 @@ class TripController extends ChangeNotifier {
 
   Future<void> updateTripStatusAsConductor(String tripId, TripStatus status,
       {int delayMinutes = 0}) async {
-    await _firestoreService.updateStatus(tripId, status, delayMinutes);
+    // Redirect to main updateStatus to trigger Notifications & SMS
+    await updateStatus(tripId, status, delayMinutes);
   }
 
   Future<void> initializePersistence() async {
@@ -509,5 +731,9 @@ class TripController extends ChangeNotifier {
   DateTime? get travelDate => tripDate;
   void setPreviewMode(bool value) {
     // Stub
+  }
+  // --- NOTIFICATIONS ---
+  Future<List<String>> getPassengerPhones(String tripId) async {
+    return _firestoreService.getPassengerPhonesForTrip(tripId);
   }
 }

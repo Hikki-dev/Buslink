@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import '../../utils/app_theme.dart';
 
+import 'package:provider/provider.dart';
+import '../../utils/language_provider.dart';
+
 class AppFooter extends StatelessWidget {
   const AppFooter({super.key});
 
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 900;
+    final lp = Provider.of<LanguageProvider>(context);
 
     return Container(
       color: const Color(0xFF0B090A),
@@ -21,39 +25,47 @@ class AppFooter extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 2, child: _brandColumn()),
+                    Expanded(flex: 2, child: _brandColumn(lp)),
                     Expanded(
-                        child: _linksColumn("Company",
-                            ["About Us", "Careers", "Blog", "Partners"])),
-                    Expanded(
-                        child: _linksColumn("Support", [
-                      "Help Center",
-                      "Terms of Service",
-                      "Privacy Policy",
-                      "FAQs"
+                        child: _linksColumn(lp.translate('company'), [
+                      lp.translate('about_us'),
+                      lp.translate('careers'),
+                      lp.translate('blog'),
+                      lp.translate('partners')
                     ])),
-                    Expanded(flex: 1, child: _contactColumn()),
+                    Expanded(
+                        child: _linksColumn(lp.translate('support'), [
+                      lp.translate('help_center'),
+                      lp.translate('terms_of_service'),
+                      lp.translate('privacy_policy'),
+                      lp.translate('faqs')
+                    ])),
+                    Expanded(flex: 1, child: _contactColumn(lp)),
                   ],
                 )
               else
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _brandColumn(),
+                    _brandColumn(lp),
                     const SizedBox(height: 40),
                     Wrap(
                       spacing: 40,
                       runSpacing: 40,
                       children: [
-                        _linksColumn("Company",
-                            ["About Us", "Careers", "Blog", "Partners"]),
-                        _linksColumn("Support", [
-                          "Help Center",
-                          "Terms of Service",
-                          "Privacy Policy",
-                          "FAQs"
+                        _linksColumn(lp.translate('company'), [
+                          lp.translate('about_us'),
+                          lp.translate('careers'),
+                          lp.translate('blog'),
+                          lp.translate('partners')
                         ]),
-                        _contactColumn(),
+                        _linksColumn(lp.translate('support'), [
+                          lp.translate('help_center'),
+                          lp.translate('terms_of_service'),
+                          lp.translate('privacy_policy'),
+                          lp.translate('faqs')
+                        ]),
+                        _contactColumn(lp),
                       ],
                     )
                   ],
@@ -65,14 +77,14 @@ class AppFooter extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("© 2024 BusLink. All rights reserved.",
+                    Text("© 2024 BusLink. ${lp.translate('rights_reserved')}",
                         style: TextStyle(
                             fontFamily: 'Inter',
                             color: Colors.grey.shade500,
                             fontSize: 14)),
                     Row(
                       children: [
-                        Text("Made with ❤️ in Sri Lanka",
+                        Text(lp.translate('made_with_love'),
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 color: Colors.grey.shade500,
@@ -84,14 +96,14 @@ class AppFooter extends StatelessWidget {
               else
                 Column(
                   children: [
-                    Text("© 2024 BusLink. All rights reserved.",
+                    Text("© 2024 BusLink. ${lp.translate('rights_reserved')}",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontFamily: 'Inter',
                             color: Colors.grey.shade500,
                             fontSize: 14)),
                     const SizedBox(height: 12),
-                    Text("Made with ❤️ in Sri Lanka",
+                    Text(lp.translate('made_with_love'),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontFamily: 'Inter',
@@ -106,7 +118,7 @@ class AppFooter extends StatelessWidget {
     );
   }
 
-  Widget _brandColumn() {
+  Widget _brandColumn(LanguageProvider lp) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -124,7 +136,7 @@ class AppFooter extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          "Sri Lanka's #1 Bus Booking Platform.\nTravel with comfort and style.",
+          lp.translate('brand_tagline'),
           style: TextStyle(
               fontFamily: 'Inter', color: Colors.grey.shade400, height: 1.6),
         ),
@@ -156,12 +168,12 @@ class AppFooter extends StatelessWidget {
     );
   }
 
-  Widget _contactColumn() {
+  Widget _contactColumn(LanguageProvider lp) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Contact",
-            style: TextStyle(
+        Text(lp.translate('contact'),
+            style: const TextStyle(
                 fontFamily: 'Outfit',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

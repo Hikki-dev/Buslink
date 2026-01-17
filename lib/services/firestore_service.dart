@@ -1,6 +1,7 @@
 // lib/services/firestore_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../models/trip_model.dart';
 import '../models/route_model.dart';
 import '../models/schedule_model.dart'; // Added ScheduleModel
@@ -91,9 +92,16 @@ class FirestoreService {
     final batch = _db.batch();
 
     // Parse departure time HH:mm
-    final parts = schedule.departureTime.split(':');
-    final depHour = int.parse(parts[0]);
-    final depMinute = int.parse(parts[1]);
+    int depHour = 0;
+    int depMinute = 0;
+    try {
+      final parts = schedule.departureTime.trim().split(':');
+      depHour = int.parse(parts[0]);
+      depMinute = int.parse(parts[1]);
+    } catch (e) {
+      debugPrint("Error parsing schedule time '${schedule.departureTime}': $e");
+      return 0; // Abort if time is invalid
+    }
 
     for (int i = 0; i < daysAhead; i++) {
       final targetDate = today.add(Duration(days: i));
@@ -214,6 +222,24 @@ class FirestoreService {
     return _db.collection(tripCollection).doc(tripId).snapshots().map((doc) {
       return Trip.fromFirestore(doc);
     });
+  }
+
+  Future<Trip?> getTripByScheduleAndDate(
+      String scheduleId, DateTime date) async {
+    final DateTime dayStart = DateTime(date.year, date.month, date.day);
+    final DateTime dayEnd =
+        DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+    final snapshot = await _db
+        .collection(tripCollection)
+        .where('scheduleId', isEqualTo: scheduleId)
+        .where('departureDateTime', isGreaterThanOrEqualTo: dayStart)
+        .where('departureDateTime', isLessThanOrEqualTo: dayEnd)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) return null;
+    return Trip.fromFirestore(snapshot.docs.first);
   }
 
   // Method to join Schedule data (Optimization: Client side join or Cloud Function preferable)
@@ -383,8 +409,15 @@ class FirestoreService {
   // --- BOOKING ADVANCED ---
 
   Future<String> createPendingBooking(
-      Trip trip, List<String> seatIds, User user) async {
+      Trip trip, List<String> seatIds, User user,
+      {Map<String, dynamic>? extraDetails}) async {
     final ticketRef = _db.collection(ticketCollection).doc();
+
+    final Map<String, dynamic> tripData = trip.toJson();
+    if (extraDetails != null) {
+      tripData.addAll(extraDetails);
+    }
+
     final ticket = Ticket(
         ticketId: ticketRef.id,
         tripId: trip.id,
@@ -394,7 +427,7 @@ class FirestoreService {
         passengerPhone: 'N/A',
         bookingTime: DateTime.now(),
         totalAmount: trip.price * seatIds.length,
-        tripData: trip.toJson(),
+        tripData: tripData,
         status: 'pending',
         shortId: _generateShortId());
 
@@ -431,6 +464,34 @@ class FirestoreService {
 
     final snap = await ticketRef.get();
     return Ticket.fromFirestore(snap);
+  }
+
+  Future<List<Ticket>> confirmBulkBookings(List<String> bookingIds,
+      {String? paymentIntentId}) async {
+    final batch = _db.batch();
+    final updateData = {'status': 'confirmed'};
+    if (paymentIntentId != null) {
+      updateData['paymentIntentId'] = paymentIntentId;
+    }
+
+    for (var id in bookingIds) {
+      final ref = _db.collection(ticketCollection).doc(id);
+      batch.update(ref, updateData);
+    }
+
+    await batch.commit();
+
+    // Fetch updated tickets to return
+    // Note: Can't easily batch get, so loop get or whereIn (limit 10)
+    // For now, loop get is fine for reasonable bulk size (e.g. 5-30)
+    List<Ticket> confirmedTickets = [];
+    for (var id in bookingIds) {
+      final snap = await _db.collection(ticketCollection).doc(id).get();
+      if (snap.exists) {
+        confirmedTickets.add(Ticket.fromFirestore(snap));
+      }
+    }
+    return confirmedTickets;
   }
 
   Future<Ticket> createOfflineBooking(Trip trip, List<int> seatNumbers,
@@ -515,7 +576,7 @@ class FirestoreService {
 
   Future<void> toggleRouteFavorite(String userId, String from, String to,
       {String? operatorName, double? price}) async {
-    final id = "${from}_${to}".replaceAll(' ', '_');
+    final id = "${from}_$to".replaceAll(' ', '_');
     final ref = _db
         .collection('users')
         .doc(userId)
@@ -536,7 +597,7 @@ class FirestoreService {
   }
 
   Future<bool> isRouteFavorite(String userId, String from, String to) async {
-    final id = "${from}_${to}".replaceAll(' ', '_');
+    final id = "${from}_$to".replaceAll(' ', '_');
     final snap = await _db
         .collection('users')
         .doc(userId)
@@ -560,4 +621,23 @@ class FirestoreService {
   }
 
   // --- MIGRATION TOOL (Temporary) ---
+
+  Future<List<String>> getPassengerPhonesForTrip(String tripId) async {
+    final snapshot = await _db
+        .collection(ticketCollection)
+        .where('tripId', isEqualTo: tripId)
+        .where('status', isEqualTo: 'confirmed')
+        .get();
+
+    if (snapshot.docs.isEmpty) return [];
+
+    final phones = snapshot.docs
+        .map((d) => d.data()['passengerPhone'] as String?)
+        .where((p) => p != null && p.isNotEmpty && p != 'N/A')
+        .map((p) => p!)
+        .toSet() // Deduplicate
+        .toList();
+
+    return phones;
+  }
 }

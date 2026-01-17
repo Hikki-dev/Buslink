@@ -16,6 +16,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
   RefundStatus _selectedStatus = RefundStatus.pending;
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -24,60 +25,131 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
         foregroundColor: Colors.black,
         elevation: 1,
       ),
-      body: Row(
-        children: [
-          // Sidebar
-          Container(
-            width: 250,
-            color: Colors.grey.shade50,
-            child: Column(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 800;
+
+          if (isMobile) {
+            // Mobile: Horizontal Filter + Vertical List
+            return Column(
               children: [
-                const SizedBox(height: 20),
-                _buildFilterItem(
-                    RefundStatus.pending, Icons.hourglass_top, "Pending"),
-                _buildFilterItem(RefundStatus.approved,
-                    Icons.check_circle_outline, "Approved"),
-                _buildFilterItem(
-                    RefundStatus.rejected, Icons.cancel_outlined, "Rejected"),
+                Container(
+                  color: Theme.of(context).cardColor,
+                  height: 60,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: [
+                      _buildFilterItemMobile(
+                          RefundStatus.pending, Icons.hourglass_top, "Pending"),
+                      const SizedBox(width: 8),
+                      _buildFilterItemMobile(RefundStatus.approved,
+                          Icons.check_circle_outline, "Approved"),
+                      const SizedBox(width: 8),
+                      _buildFilterItemMobile(RefundStatus.rejected,
+                          Icons.cancel_outlined, "Rejected"),
+                    ],
+                  ),
+                ),
+                Expanded(child: _buildRefundList()),
               ],
-            ),
+            );
+          } else {
+            // Desktop: Sidebar + List
+            return Row(
+              children: [
+                Container(
+                  width: 250,
+                  color: Theme.of(context).cardColor,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      _buildFilterItem(
+                          RefundStatus.pending, Icons.hourglass_top, "Pending"),
+                      _buildFilterItem(RefundStatus.approved,
+                          Icons.check_circle_outline, "Approved"),
+                      _buildFilterItem(RefundStatus.rejected,
+                          Icons.cancel_outlined, "Rejected"),
+                    ],
+                  ),
+                ),
+                Expanded(child: _buildRefundList()),
+              ],
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildRefundList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('refunds')
+          .where('status', isEqualTo: _selectedStatus.name)
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+              child: SelectableText("Error: ${snapshot.error}",
+                  style: const TextStyle(color: Colors.red)));
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+              child: Text("No ${_selectedStatus.name} refunds found"));
+        }
+
+        final docs = snapshot.data!.docs;
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(24),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final refund = RefundRequest.fromFirestore(docs[index]);
+            return _buildRefundCard(refund);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFilterItemMobile(
+      RefundStatus status, IconData icon, String label) {
+    final bool isSelected = _selectedStatus == status;
+    return InkWell(
+      onTap: () => setState(() => _selectedStatus = status),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppTheme.primaryColor.withValues(alpha: 0.1)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            border: isSelected
+                ? Border.all(color: AppTheme.primaryColor)
+                : Border.all(color: Theme.of(context).dividerColor),
           ),
-
-          // List
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('refunds')
-                  .where('status', isEqualTo: _selectedStatus.name)
-                  .orderBy('createdAt', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(
-                      child: Text("No ${_selectedStatus.name} refunds found"));
-                }
-
-                final docs = snapshot.data!.docs;
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(24),
-                  itemCount: docs.length,
-                  itemBuilder: (context, index) {
-                    // Manually attach ID if needed or use model factory properly
-                    // The factory takes DocumentSnapshot, so we pass docs[index]
-                    final refund = RefundRequest.fromFirestore(docs[index]);
-
-                    return _buildRefundCard(refund);
-                  },
-                );
-              },
-            ),
-          )
-        ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon,
+                  size: 16, color: isSelected ? AppTheme.primaryColor : null),
+              const SizedBox(width: 8),
+              Text(label,
+                  style: TextStyle(
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? AppTheme.primaryColor : null)),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -93,13 +165,13 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
             : Colors.transparent,
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? AppTheme.primaryColor : Colors.grey),
+            Icon(icon, color: isSelected ? AppTheme.primaryColor : null),
             const SizedBox(width: 12),
             Text(label,
                 style: TextStyle(
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? AppTheme.primaryColor : Colors.black87))
+                    color: isSelected ? AppTheme.primaryColor : null))
           ],
         ),
       ),
@@ -107,7 +179,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
   }
 
   Widget _buildRefundCard(RefundRequest refund) {
-    Color stripColor = Colors.grey;
+    Color stripColor = Theme.of(context).disabledColor;
     if (refund.status == RefundStatus.pending) stripColor = Colors.orange;
     if (refund.status == RefundStatus.approved) stripColor = Colors.green;
     if (refund.status == RefundStatus.rejected) stripColor = Colors.red;
@@ -129,13 +201,11 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text("Ref: ${refund.ticketId.substring(0, 8)}...",
-                            style: TextStyle(
-                                color: Colors.grey.shade600, fontSize: 12)),
+                            style: const TextStyle(fontSize: 12)),
                         Text(
                             DateFormat('MMM d, h:mm a')
                                 .format(refund.createdAt),
-                            style: TextStyle(
-                                color: Colors.grey.shade600, fontSize: 12)),
+                            style: const TextStyle(fontSize: 12)),
                       ],
                     ),
                     const SizedBox(height: 8),

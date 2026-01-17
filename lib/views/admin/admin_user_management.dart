@@ -181,7 +181,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                                   separatorBuilder: (context, index) => Divider(
                                       color: isDark
                                           ? Colors.white10
-                                          : Colors.grey.shade100),
+                                          : Theme.of(context).dividerColor),
                                   itemBuilder: (context, index) {
                                     final user = users[index];
                                     return _buildUserRow(context, user, isDark);
@@ -237,7 +237,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
             "Manage roles and permissions for all users",
             style: TextStyle(
               fontFamily: 'Inter',
-              color: isDark ? Colors.white70 : Colors.grey.shade500,
+              color: isDark ? Colors.white70 : Theme.of(context).disabledColor,
               fontSize: 16,
             ),
           ),
@@ -257,10 +257,11 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         style: TextStyle(color: isDark ? Colors.white : Colors.black),
         decoration: InputDecoration(
           hintText: "Search by email or name...",
-          hintStyle:
-              TextStyle(color: isDark ? Colors.white54 : Colors.grey.shade400),
-          prefixIcon:
-              Icon(Icons.search, color: isDark ? Colors.white70 : Colors.grey),
+          hintStyle: TextStyle(
+              color: isDark ? Colors.white54 : Theme.of(context).disabledColor),
+          prefixIcon: Icon(Icons.search,
+              color:
+                  isDark ? Colors.white70 : Theme.of(context).iconTheme.color),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
@@ -302,85 +303,95 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     }
     final String uid = user['uid'] ?? '';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-          vertical: 24.0, horizontal: 8), // Increased vertical padding
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 24, // Slightly larger avatar
-            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : 'U',
-              style: const TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18),
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 600;
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+            vertical: 16.0, horizontal: 8), // Adjusted padding
+        child: Row(
+          crossAxisAlignment:
+              isMobile ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                style: const TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18),
+              ),
             ),
-          ),
-          const SizedBox(width: 16), // Reduced gap
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min, // prevent expansion
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: isDark ? Colors.white : Colors.black87),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  Text(
+                    email,
+                    style: TextStyle(
+                        color: Theme.of(context).disabledColor, fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  if (isMobile) ...[
+                    const SizedBox(height: 8),
+                    _buildRoleBadge(context, role),
+                  ]
+                ],
+              ),
+            ),
+            if (!isMobile)
+              Flexible(
+                flex: 2,
+                fit:
+                    FlexFit.loose, // Loose allows it to shrink instead of force
+                child: _buildRoleBadge(context, role),
+              ),
+            // Actions
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14, // Slightly smaller
-                      color: isDark ? Colors.white : Colors.black87),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: Icon(Icons.edit_outlined,
+                      size: 20, color: Theme.of(context).disabledColor),
+                  tooltip: "Edit User",
+                  onPressed: () =>
+                      _showEditUserDialog(context, uid, name, role),
                 ),
-                Text(
-                  email,
-                  style: TextStyle(
-                      color: isDark ? Colors.white54 : Colors.grey.shade500,
-                      fontSize: 12),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1, // Single line for email
+                const SizedBox(width: 16), // More space between icons
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.delete_outline,
+                      size: 20, color: Colors.red),
+                  tooltip: "Delete User Profile",
+                  onPressed: () => _confirmDeleteUser(context, uid, name),
                 ),
               ],
             ),
-          ),
-          // Role Badge: Flexible to avoid taking too much space
-          Flexible(
-            flex: 2,
-            fit: FlexFit.tight, // Force it to take space but allow shrink
-            child: _buildRoleBadge(role),
-          ),
-          // Actions: Wrap in Row with minimal size
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(), // tight
-                icon: Icon(Icons.edit_outlined,
-                    size: 20,
-                    color: isDark ? Colors.white70 : Colors.grey.shade600),
-                tooltip: "Edit User",
-                onPressed: () => _showEditUserDialog(context, uid, name, role),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(), // tight
-                icon: const Icon(Icons.delete_outline,
-                    size: 20, color: Colors.red),
-                tooltip: "Delete User Profile",
-                onPressed: () => _confirmDeleteUser(context, uid, name),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
-  Widget _buildRoleBadge(String role) {
+  Widget _buildRoleBadge(BuildContext context, String role) {
     Color bg;
     Color text;
     String label = role.toUpperCase();
@@ -395,8 +406,8 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         text = Colors.blue.shade800;
         break;
       default:
-        bg = Colors.grey.shade100;
-        text = Colors.grey.shade600;
+        bg = Theme.of(context).disabledColor.withValues(alpha: 0.1);
+        text = Theme.of(context).disabledColor;
         label = "CUSTOMER";
     }
 

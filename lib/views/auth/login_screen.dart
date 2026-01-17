@@ -7,7 +7,7 @@ import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/language_provider.dart';
 
-import 'phone_login_screen.dart';
+// import 'phone_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,7 +19,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController(); // NEW
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLogin = true;
   bool _isLoading = false;
@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _bgTimer?.cancel();
     _emailController.dispose();
-    _phoneController.dispose(); // NEW
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -382,25 +382,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              // Expanded(
-              //   child: _SocialButton(
-              //     onPressed: _appleSignIn,
-              //     icon: Icons.apple,
-              //     label: lp.translate('apple_login'),
-              //   ),
-              // ),
-              Expanded(
-                child: _SocialButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const PhoneLoginScreen()));
-                  },
-                  icon: Icons.phone_android_rounded,
-                  label: "Phone",
-                ),
-              ),
+              // Phone Button Removed
             ],
           ),
           const SizedBox(height: 32),
@@ -428,20 +410,8 @@ class _LoginScreenState extends State<LoginScreen> {
             validator: (v) =>
                 v == null || !v.contains('@') ? 'Enter a valid email' : null,
           ),
-          // NEW PHONE FIELD FOR SIGNUP
-          if (!_isLogin) ...[
-            const SizedBox(height: 24),
-            _buildPremiumTextField(
-              controller: _phoneController,
-              label: lp.translate(
-                  'phone_number'), // Ensure key exists or add fallback
-              hint: '+94 7X XXX XXXX',
-              icon: Icons.phone_rounded,
-              theme: theme,
-              validator: (v) =>
-                  v == null || v.isEmpty ? 'Phone number is required' : null,
-            ),
-          ],
+          // Phone Field Removed
+
           const SizedBox(height: 24),
           _buildPremiumTextField(
             controller: _passwordController,
@@ -609,11 +579,10 @@ class _LoginScreenState extends State<LoginScreen> {
 class _SocialButton extends StatelessWidget {
   final VoidCallback onPressed;
   final String? iconUrl;
-  final IconData? icon;
   final String label;
 
   const _SocialButton(
-      {required this.onPressed, this.iconUrl, this.icon, required this.label});
+      {required this.onPressed, this.iconUrl, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -632,10 +601,8 @@ class _SocialButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (iconUrl != null)
-              Image.network(iconUrl!, height: 18)
-            else if (icon != null)
-              Icon(icon, size: 18, color: Colors.white),
+            if (iconUrl != null) Image.network(iconUrl!, height: 18),
+            // if (icon != null) Icon(icon, size: 18, color: Colors.white), // Removed unused logic
             const SizedBox(width: 8),
             Flexible(
                 child: Text(label,

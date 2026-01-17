@@ -1,3 +1,5 @@
+import 'dart:async'; // For StreamSubscription
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +8,8 @@ import 'booking/my_trips_screen.dart';
 import 'favorites/favorites_screen.dart';
 import 'profile/profile_screen.dart';
 import '../controllers/trip_controller.dart';
+import 'layout/notifications_screen.dart'; // Added Import
+import '../services/notification_service.dart'; // Added for Permission Dialog
 
 class CustomerMainScreen extends StatefulWidget {
   final bool isAdminView;
@@ -22,6 +26,9 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   // History stack, starting with Home (0)
   final List<int> _history = [0];
 
+  StreamSubscription? _notifSubscription;
+  DateTime _lastCheckTime = DateTime.now();
+
   @override
   void initState() {
     super.initState();
@@ -32,7 +39,75 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     // Attempt to load preview state if not already set (failsafe)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<TripController>().initializePersistence();
+      _setupNotificationListener();
+      // Ask for Notification Permissions with Friendly Dialog
+      NotificationService.requestPermissionWithDialog(context);
     });
+  }
+
+  void _setupNotificationListener() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    _notifSubscription = FirebaseFirestore.instance
+        .collection('notifications')
+        .where('userId', isEqualTo: user.uid)
+        .orderBy('createdAt', descending: true)
+        .limit(1)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data();
+        final Timestamp? ts = data['createdAt'];
+        if (ts != null) {
+          final date = ts.toDate();
+          // Verify it's NEW (after screen load) to avoid alert on startup
+          if (date.isAfter(_lastCheckTime)) {
+            _lastCheckTime = date; // Update watermark
+
+            // Show Local "Push"
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: Colors.black87,
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(data['title'] ?? 'New Notification',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white)),
+                      Text(data['body'] ?? '',
+                          style: const TextStyle(color: Colors.white70)),
+                    ],
+                  ),
+                  action: SnackBarAction(
+                    label: "VIEW",
+                    textColor: Colors.amber,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            }
+          }
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _notifSubscription?.cancel();
+    super.dispose();
   }
 
   void _onItemTapped(int index) {

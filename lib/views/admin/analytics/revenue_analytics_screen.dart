@@ -11,90 +11,180 @@ class RevenueAnalyticsScreen extends StatefulWidget {
 }
 
 class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
-  // Filters could be added here (e.g., date range)
-  final int _daysLookback = 30;
+  DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
+  DateTime _endDate = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('tickets')
-          .where('status', isEqualTo: 'confirmed')
-          // .where('bookingTime') // Ideally filter by date range for perf
-          .limit(500)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final docs = snapshot.data!.docs;
-        final stats = _calculateRevenue(docs);
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      children: [
+        // DATE FILTER HEADER
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: Theme.of(context).cardColor,
+          child: Row(
             children: [
-              _buildKPIs(stats),
-              const SizedBox(height: 32),
-              const Text("Revenue Over Time (Last 30 Days)",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              _buildLineChartPlaceholder(stats['daily'] as Map<String, double>),
-              const SizedBox(height: 32),
-              const Text("Top Routes by Revenue",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              _buildRouteTable(stats['routes'] as Map<String, double>),
+              const Icon(Icons.date_range),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "${DateFormat('MMM d').format(_startDate)} - ${DateFormat('MMM d').format(_endDate)}",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              TextButton(
+                  onPressed: _pickDateRange, child: const Text("Refine Date"))
             ],
           ),
-        );
-      },
+        ),
+        const Divider(height: 1),
+
+        // ANALYTICS BODY
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('tickets')
+                .where('status', isEqualTo: 'confirmed')
+                .snapshots(),
+            builder: (context, ticketSnap) {
+              if (!ticketSnap.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              // NESTED STREAM FOR REFUNDS
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('refunds')
+                    .where('status', isEqualTo: 'approved')
+                    .snapshots(),
+                builder: (context, refundSnap) {
+                  if (!refundSnap.hasData) {
+                    return const SizedBox(); // Wait for both
+                  }
+
+                  final tickets = ticketSnap.data!.docs;
+                  final refunds = refundSnap.data!.docs;
+                  final stats = _calculateNetRevenue(tickets, refunds);
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildKPIs(stats),
+                        const SizedBox(height: 32),
+                        const Text("Net Revenue Over Time",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 16),
+                        _buildLineChartPlaceholder(
+                            stats['daily'] as Map<String, double>),
+                        const SizedBox(height: 32),
+                        const Text("Top Routes by Net Revenue",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 16),
+                        _buildRouteTable(
+                            stats['routes'] as Map<String, double>),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
-  Map<String, dynamic> _calculateRevenue(List<QueryDocumentSnapshot> docs) {
+  Future<void> _pickDateRange() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2024),
+      lastDate: DateTime.now().add(const Duration(days: 1)),
+      initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
+    );
+    if (picked != null) {
+      setState(() {
+        _startDate = picked.start;
+        _endDate = picked.end;
+      });
+    }
+  }
+
+  Map<String, dynamic> _calculateNetRevenue(List<QueryDocumentSnapshot> tickets,
+      List<QueryDocumentSnapshot> refunds) {
     double totalRevenue = 0;
     double todayRevenue = 0;
     Map<String, double> dailyRevenue = {};
     Map<String, double> routeRevenue = {};
 
-    final now = DateTime.now();
-    final todayStr = DateFormat('yyyy-MM-dd').format(now);
-    final cutoff = now.subtract(Duration(days: _daysLookback));
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-    for (var doc in docs) {
+    // 1. Process Tickets (Gross Revenue)
+    for (var doc in tickets) {
       final data = doc.data() as Map<String, dynamic>;
       final price = (data['totalAmount'] ?? data['price'] ?? 0);
       final double amount = (price is num) ? price.toDouble() : 0.0;
 
       DateTime? date;
-      if (data['bookingTime'] is Timestamp) {
+      if (data['departureTime'] is Timestamp) {
+        date = (data['departureTime'] as Timestamp).toDate();
+      } else if (data['bookingTime'] is Timestamp) {
         date = (data['bookingTime'] as Timestamp).toDate();
       }
 
-      if (date != null) {
-        // Filter by cutoff manually since firestore compound queries are limited
-        if (date.isAfter(cutoff)) {
-          final dayKey = DateFormat('MM-dd').format(date);
-          dailyRevenue[dayKey] = (dailyRevenue[dayKey] ?? 0) + amount;
-          totalRevenue += amount;
+      if (date != null &&
+          date.isAfter(_startDate) &&
+          date.isBefore(_endDate.add(const Duration(days: 1)))) {
+        final dayKey = DateFormat('MM-dd').format(date);
+        dailyRevenue[dayKey] = (dailyRevenue[dayKey] ?? 0) + amount;
+        totalRevenue += amount;
 
-          final docDateStr = DateFormat('yyyy-MM-dd').format(date);
-          if (docDateStr == todayStr) {
-            todayRevenue += amount;
-          }
-
-          // Routes
-          final tripData = data['tripData'] as Map<String, dynamic>?;
-          String routeKey = "Unknown";
-          if (tripData != null) {
-            routeKey =
-                "${tripData['fromCity'] ?? '?'} - ${tripData['toCity'] ?? '?'}";
-          }
-          routeRevenue[routeKey] = (routeRevenue[routeKey] ?? 0) + amount;
+        final docDateStr = DateFormat('yyyy-MM-dd').format(date);
+        if (docDateStr == todayStr) {
+          todayRevenue += amount;
         }
+
+        // Routes
+        final tripData = data['tripData'] as Map<String, dynamic>?;
+        String routeKey = "Unknown";
+        if (tripData != null) {
+          routeKey =
+              "${tripData['fromCity'] ?? '?'} - ${tripData['toCity'] ?? '?'}";
+        }
+        routeRevenue[routeKey] = (routeRevenue[routeKey] ?? 0) + amount;
+      }
+    }
+
+    // 2. Process Refunds (Deductions)
+    for (var doc in refunds) {
+      final data = doc.data() as Map<String, dynamic>;
+      final refundAmount = (data['refundAmount'] ?? 0).toDouble();
+
+      // Use requestedAt or updatedAt for the refund date deduction
+      DateTime? date;
+      if (data['updatedAt'] is Timestamp) {
+        date = (data['updatedAt'] as Timestamp).toDate();
+      }
+
+      if (date != null &&
+          date.isAfter(_startDate) &&
+          date.isBefore(_endDate.add(const Duration(days: 1)))) {
+        final dayKey = DateFormat('MM-dd').format(date);
+        // Subtract from daily revenue
+        dailyRevenue[dayKey] = (dailyRevenue[dayKey] ?? 0) - refundAmount;
+        totalRevenue -= refundAmount;
+
+        final docDateStr = DateFormat('yyyy-MM-dd').format(date);
+        if (docDateStr == todayStr) {
+          todayRevenue -= refundAmount;
+        }
+
+        // Note: Connecting refund to route requires tripId lookup or storing route in refund.
+        // We will skip route deduction for simplicity unless refund has route info,
+        // to avoid "Unknown" negative spikes.
       }
     }
 
@@ -107,7 +197,7 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
     }
 
     return {
-      'total': totalRevenue, // In selected period
+      'total': totalRevenue,
       'today': todayRevenue,
       'daily': dailyRevenue,
       'routes': topRoutes
@@ -149,11 +239,11 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(color: Colors.grey)),
+          Text(title, style: const TextStyle(fontSize: 14)),
           const SizedBox(height: 8),
           Text(value,
-              style:
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              style: const TextStyle(
+                  fontSize: 26, fontWeight: FontWeight.bold)), // Increased
         ],
       ),
     );
@@ -184,7 +274,7 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 height: h < 5 ? 5 : h,
-                color: AppTheme.primaryColor.withOpacity(0.6),
+                color: AppTheme.primaryColor.withValues(alpha: 0.6),
               ),
             ),
           );
@@ -194,16 +284,46 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
   }
 
   Widget _buildRouteTable(Map<String, double> routes) {
+    if (routes.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Center(child: Text("No route data available")),
+      );
+    }
     return Card(
-      child: Column(
-        children: routes.entries.map((e) {
-          return ListTile(
-            leading: const Icon(Icons.alt_route),
-            title: Text(e.key),
-            trailing: Text("LKR ${e.value.toStringAsFixed(0)}",
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-          );
-        }).toList(),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: routes.entries.map((e) {
+            final parts = e.key.split(" - ");
+            final from =
+                parts.isNotEmpty && parts[0] != "?" ? parts[0] : "Unknown";
+            final to =
+                parts.length > 1 && parts[1] != "?" ? parts[1] : "Location";
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.fork_right),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text("$from - $to",
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w500)),
+                  ),
+                  Text("LKR ${e.value.toStringAsFixed(0)}",
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87)),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

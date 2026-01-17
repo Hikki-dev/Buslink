@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 
 import '../../../models/refund_model.dart';
 import '../../../models/refund_transaction_model.dart';
@@ -89,8 +90,35 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
             Text(refund.passengerName,
                 style:
                     const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            Text("Booking Ref: ${refund.ticketId}",
-                style: const TextStyle(color: Colors.grey)),
+            Row(
+              children: [
+                Flexible(
+                  child: SelectableText(
+                    "Booking Ref: ${refund.ticketId}",
+                    style: const TextStyle(
+                        fontFamily: 'Inter', color: Colors.grey),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: refund.ticketId));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("Booking Ref copied!"),
+                      duration: Duration(seconds: 1),
+                    ));
+                  },
+                  child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4)),
+                      child:
+                          const Icon(Icons.copy, size: 14, color: Colors.blue)),
+                )
+              ],
+            ),
           ],
         )
       ],
@@ -128,7 +156,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(label, style: const TextStyle()),
           const SizedBox(width: 16),
           Flexible(
             child: Text(value,
@@ -218,7 +246,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
       final ticketRef =
           FirebaseFirestore.instance.collection('tickets').doc(refund.ticketId);
       batch.update(ticketRef, {
-        'status': 'cancelled',
+        'status': 'refunded',
         'cancellationReason': 'refunded',
       });
 

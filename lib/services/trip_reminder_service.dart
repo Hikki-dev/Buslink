@@ -64,8 +64,7 @@ class TripReminderService {
               userId: userId,
               title: "Trip Reminder",
               body: "Your trip to $routeName is in 24 hours.",
-              type:
-                  "trip_update", // Using string mapping for now to match service
+              type: "tripStatus",
               relatedId: tripId,
             );
             await prefs.setBool(key, true);
@@ -82,7 +81,7 @@ class TripReminderService {
               title: "Trip Departing Soon!",
               body:
                   "Your trip to $routeName departs in about an hour. Don't be late!",
-              type: "trip_update",
+              type: "tripStatus",
               relatedId: tripId,
             );
             await prefs.setBool(key, true);

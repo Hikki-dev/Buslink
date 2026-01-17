@@ -126,7 +126,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                 color: Theme.of(context).cardColor,
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 30,
                       offset: const Offset(0, -5))
                 ],
@@ -148,8 +148,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                               style: TextStyle(
                                 fontFamily: 'Inter',
                                 color: isDark
-                                    ? Colors.white.withOpacity(0.7)
-                                    : Colors.black.withOpacity(0.7), // No Grey
+                                    ? Colors.white.withValues(alpha: 0.7)
+                                    : Colors.black
+                                        .withValues(alpha: 0.7), // No Grey
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                               ),

@@ -121,7 +121,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _confirmDelete(routeId: route.id!),
+                        onPressed: () => _confirmDelete(routeId: route.id),
                       ),
                     ],
                   ),
@@ -245,8 +245,10 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                   }
                   if (context.mounted) Navigator.pop(context);
                 } catch (e) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text('Error: $e')));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text('Error: $e')));
+                  }
                 }
               }
             },
@@ -279,7 +281,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
           stream: _service.getRoutesStream(),
           builder: (context, routeSnap) {
             if (!routeSnap.hasData) return const SizedBox();
-            final routeMap = {for (var r in routeSnap.data!) r.id!: r};
+            final routeMap = {for (var r in routeSnap.data!) r.id: r};
 
             if (schedules.isEmpty) {
               return Center(
@@ -422,7 +424,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: selectedRouteId,
+                    initialValue: selectedRouteId,
                     items: routes.map((r) {
                       return DropdownMenuItem(
                           value: r.id,
@@ -541,8 +543,10 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                     }
                     if (context.mounted) Navigator.pop(context);
                   } catch (e) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text('Error: $e')));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text('Error: $e')));
+                    }
                   }
                 }
               },
@@ -590,8 +594,10 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                             SnackBar(content: Text("Generated $count trips.")));
                       }
                     } catch (e) {
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text("Error: $e")));
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text("Error: $e")));
+                      }
                     }
                   },
                   child: const Text("Generate"),
@@ -619,8 +625,10 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                 }
                 if (context.mounted) Navigator.pop(context);
               } catch (e) {
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text("Error: $e")));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text("Error: $e")));
+                }
               }
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),

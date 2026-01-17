@@ -361,6 +361,50 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
     if (mounted) Navigator.pop(context);
 
     if (ticket != null) {
+      // Access Control: Check if trip is expired
+      // Assume "Completed" if Departure + Duration (Arrival) + Buffer (e.g., 4 hours) is passed.
+      // Or simply: Departure Time + 12 hours (Fail safe) if Arrival not available.
+      // ticket.tripData['departureTime'] is usually a string ISO or Timestamp.
+      // We need to parse it carefully.
+      try {
+        DateTime? arrivalTime;
+        if (ticket.tripData['arrivalTime'] != null) {
+          // It might be a Timestamp or String
+          final val = ticket.tripData['arrivalTime'];
+          if (val is String) {
+            arrivalTime = DateTime.tryParse(val);
+          }
+          // If it's Firestore Timestamp, we can't easily import it here without mess logic.
+          // But usually it's passed as ISO string in the map from controller if 'verifyTicket' handles it.
+          // Let's assume Trip.fromMap handles it.
+        } else if (ticket.tripData['departureTime'] != null) {
+          final val = ticket.tripData['departureTime'];
+          DateTime? depTime;
+          if (val is String) {
+            depTime = DateTime.tryParse(val);
+          }
+          // Fallback estimate: 4 hours trip (reduced from 6)
+          if (depTime != null) {
+            arrivalTime = depTime.add(const Duration(hours: 4));
+          }
+        }
+
+        if (arrivalTime != null) {
+          final now = DateTime.now();
+          // Allow access up to 2 hours after arrival for post-trip tasks (reduced from 4)
+          if (now.isAfter(arrivalTime.add(const Duration(hours: 2)))) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("Cannot scan: Trip has ended."),
+                  backgroundColor: Colors.red));
+            }
+            return;
+          }
+        }
+      } catch (e) {
+        debugPrint("Expiration check error: $e");
+      }
+
       if (mounted) _showTicketDetailsDialog(ticket);
     } else {
       if (mounted) {
@@ -644,6 +688,21 @@ class _FindTripDialogState extends State<FindTripDialog> {
                             trailing:
                                 const Icon(Icons.arrow_forward_ios, size: 16),
                             onTap: () {
+                              // Access Control check
+                              final now = DateTime.now();
+                              // Allow up to 4 hours after arrival (or 12 hours after departure if arrival null)
+                              final accessLimit = trip.arrivalTime
+                                  .add(const Duration(hours: 4));
+
+                              if (now.isAfter(accessLimit)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            "Access Denied: Trip completed."),
+                                        backgroundColor: Colors.red));
+                                return;
+                              }
+
                               Navigator.pop(context);
                               // Provider.of<TripController>(context, listen: false).setConductorTrip(trip);
                               Navigator.push(

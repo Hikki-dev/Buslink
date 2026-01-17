@@ -6,6 +6,7 @@ import '../../utils/app_theme.dart'; // Added Import
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart'; // Corrected import for Ticket
 import '../../services/sms_service.dart'; // Added Import
+import '../../services/notification_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:flutter/rendering.dart'; // For capturing widget?
 import 'package:pdf/pdf.dart';
@@ -140,13 +141,57 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
 
       // Send SMS Copies
       for (final ticket in tickets) {
-        SmsService.sendTicketCopy(ticket);
+        // --- DATA REPAIR START ---
+        // If Ticket doesn't have partial Trip Data (common if created via Quick Buy without populating details)
+        // We fetch the trip doc and Patch it for UI
+        if (ticket.tripData['fromCity'] == null ||
+            ticket.tripData['toCity'] == null) {
+          try {
+            debugPrint("Repairing Ticket Data for ${ticket.ticketId}...");
+            final tripDoc = await FirebaseFirestore.instance
+                .collection('trips')
+                .doc(ticket.tripId)
+                .get();
+
+            if (tripDoc.exists) {
+              final tMap = tripDoc.data()!;
+              // We manually update the local ticket object's tripData
+              ticket.tripData['fromCity'] = tMap['fromCity'];
+              ticket.tripData['toCity'] = tMap['toCity'];
+              ticket.tripData['busNumber'] = tMap['busNumber'];
+              ticket.tripData['platformNumber'] = tMap['platformNumber'];
+              ticket.tripData['departureTime'] = tMap['departureTime'];
+              ticket.tripData['operatorName'] = tMap['operatorName'];
+            }
+          } catch (e) {
+            debugPrint("Failed to repair ticket data: $e");
+          }
+        }
+        // --- DATA REPAIR END ---
+
+        // Create In-App Notification
+        if (ticket.userId.isNotEmpty) {
+          NotificationService.createNotification(
+            userId: ticket.userId,
+            title: "Booking Confirmed",
+            body:
+                "Your trip to ${ticket.tripData['toCity'] ?? 'Destination'} is confirmed!",
+            type:
+                "booking", // Ensure this type is handled in NotificationScreen icons
+            relatedId: ticket.ticketId,
+          );
+        }
+
+        // SmsService.sendTicketCopy(ticket); // Removed auto-trigger for client-side SMS UX
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Receipt sent via SMS")),
-      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Receipt sent via SMS")),
+        );
+      }
     } else {
-      if (mounted) {
+      if (context.mounted) {
         setState(() {
           _isLoading = false;
           _isSuccess = false;
@@ -171,8 +216,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
           ? (tData['departureTime'] as Timestamp).toDate()
           : DateTime.parse(tData['departureTime'].toString());
 
-      final fromCity = tData['fromCity'] ?? '';
-      final toCity = tData['toCity'] ?? '';
+      final fromCity = tData['fromCity'] ?? tData['originCity'] ?? '';
+      final toCity = tData['toCity'] ?? tData['destinationCity'] ?? '';
       final busNum = tData['busNumber'] ?? '';
       final platform = tData['platformNumber'] ?? 'TBD';
 
@@ -347,7 +392,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      "Thank You for booking with BusLink,\n${_verifiedTickets.first.passengerName.split(' ')[0]}!",
+                      "Thank You for booking with BusLink,\n${(_verifiedTickets.first.passengerName.isNotEmpty ? _verifiedTickets.first.passengerName.split(' ')[0] : 'Traveler')}!",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           fontFamily: 'Outfit',
@@ -596,7 +641,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     color: isDark ? Colors.white : Colors.black)),
-            Text("${tData['fromCity']} ➔ ${tData['toCity']}",
+            Text(
+                "${tData['fromCity'] ?? tData['originCity'] ?? '?'} ➔ ${tData['toCity'] ?? tData['destinationCity'] ?? '?'}",
                 style: const TextStyle(
                     fontFamily: 'Inter', fontSize: 14, color: Colors.black54)),
             const SizedBox(height: 12),
@@ -625,7 +671,21 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
             Text("Full ID: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
                 style: const TextStyle(
                     fontFamily: 'Inter', fontSize: 12, color: Colors.black54)),
-            const SizedBox(height: 16),
+            SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton.icon(
+                  onPressed: () => SmsService.sendTicketCopy(ticket),
+                  icon: const Icon(Icons.sms_outlined),
+                  label: const Text("Share via SMS"),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: isDark ? Colors.white : Colors.black,
+                    side: BorderSide(color: Colors.grey.shade400),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                )),
+            const SizedBox(height: 12),
             SizedBox(
                 width: double.infinity,
                 height: 56,

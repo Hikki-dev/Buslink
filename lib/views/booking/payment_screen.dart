@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'package:flutter/services.dart'; // For TextInputFormatter
 import 'package:provider/provider.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart'; // For Redirect
 import 'package:intl/intl.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../services/payment_service.dart';
@@ -46,6 +48,33 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Please log in to continue")));
       return;
+    }
+
+    // CHECK: Phone Number
+    if (user.phoneNumber == null || user.phoneNumber!.isEmpty) {
+      // Check Firestore profile if needed, or just prompt
+      // For simplicity/speed, if auth phone is empty, prompt.
+      // But user object here is FirebaseAuth User.
+      // We should check if we have it in our DB wrapper or just prompt.
+
+      // Let's assume we need to prompt if we don't have it "handy".
+      // Best practice: Prompt if we don't have it.
+
+      final phone = await _promptForPhone(context);
+      if (phone == null || phone.isEmpty) {
+        setState(() => _isProcessing = false);
+        return; // User cancelled
+      }
+
+      // Save phone to Firestore User Profile
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .set({'phoneNumber': phone}, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint("Error saving phone: $e");
+      }
     }
 
     try {
@@ -410,16 +439,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start, // Align top
         children: [
+          // Label
           Text(label,
               style: TextStyle(
                   fontFamily: 'Inter',
                   color: isDark ? Colors.white54 : Colors.grey.shade500)),
-          Text(value,
-              style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : Colors.black87)),
+          const SizedBox(width: 16),
+          // Value (Expanded to prevent overflow)
+          Expanded(
+            child: Text(value,
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87)),
+          ),
         ],
       ),
     );
@@ -531,5 +567,81 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 fontFamily: 'Inter',
                 fontSize: 10,
                 color: Colors.grey.shade500)));
+  }
+
+  Future<String?> _promptForPhone(BuildContext context) async {
+    final TextEditingController phoneController = TextEditingController();
+    // Use StatefulBuilder to handle validation state inside Dialog
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        String? errorText;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Phone Number Required"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                      "We need your phone number to send ticket details via SMS."),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: phoneController,
+                    keyboardType: TextInputType.phone,
+                    // length limiting to 10 for standard 07....
+                    maxLength: 10,
+                    // Allow only digits
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: "Mobile Number",
+                      hintText: "e.g., 0771234567",
+                      errorText: errorText,
+                      border: const OutlineInputBorder(),
+                      counterText: "", // Hide counter
+                    ),
+                    onChanged: (val) {
+                      if (errorText != null) {
+                        setState(() => errorText = null);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, null),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final text = phoneController.text.trim();
+                    // Validation Logic
+                    // Must be 10 digits and start with 07
+                    final apiRegex = RegExp(r'^07[0-9]{8}$');
+
+                    if (text.isEmpty) {
+                      setState(() => errorText = "Phone number is required");
+                    } else if (text.length != 10) {
+                      setState(() => errorText = "Must be exactly 10 digits");
+                    } else if (!text.startsWith('07')) {
+                      setState(
+                          () => errorText = "Must start with 07 (Sri Lanka)");
+                    } else if (!apiRegex.hasMatch(text)) {
+                      setState(() => errorText = "Invalid format");
+                    } else {
+                      // Valid
+                      Navigator.pop(ctx, text);
+                    }
+                  },
+                  child: const Text("Save & Continue"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

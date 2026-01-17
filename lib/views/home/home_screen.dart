@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import '../../models/trip_view_model.dart';
+import '../profile/profile_screen.dart';
 
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -17,8 +18,9 @@ import '../../utils/app_theme.dart';
 import '../../utils/language_provider.dart';
 import 'bulk_calendar_dialog.dart';
 import '../results/bus_list_screen.dart';
+import '../auth/login_screen.dart';
 import 'widgets/ongoing_trip_card.dart';
-import 'widgets/favorites_section.dart';
+// import 'widgets/favorites_section.dart'; // Removed
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
 import '../layout/notifications_screen.dart';
@@ -97,62 +99,58 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadDynamicDestinations() async {
-    // 1. Get available cities from DB
-    final availableCities = await FirestoreService().getAvailableCities();
+    try {
+      // 1. Get available cities from DB
+      final availableCities = await FirestoreService().getAvailableCities();
 
-    // 2. Prepare Final List
-    List<Map<String, dynamic>> finalDestinations = [];
+      // 2. Prepare Final List
+      List<Map<String, dynamic>> finalDestinations = [];
 
-    // Map for O(1) lookup of static data
-    final staticMap = {
-      for (var d in allDestinationsData) d['city'].toString().toLowerCase(): d
-    };
+      // Map for O(1) lookup of static data
+      final staticMap = {
+        for (var d in allDestinationsData) d['city'].toString().toLowerCase(): d
+      };
 
-    if (availableCities.isNotEmpty) {
-      for (var city in availableCities) {
-        final lowerCity = city.toLowerCase();
+      if (availableCities.isNotEmpty) {
+        for (var city in availableCities) {
+          final lowerCity = city.toLowerCase();
 
-        if (staticMap.containsKey(lowerCity)) {
-          // Use high-quality curated data
-          finalDestinations.add(staticMap[lowerCity]!);
-        } else {
-          // DYNAMIC FALLBACK:
-          // Assign a deterministic image from the generic pool based on city name hash
-          // This ensures the same city always gets the same image, even between reloads.
-          final imageIndex =
-              city.runes.fold(0, (p, c) => p + c) % _genericImages.length;
+          if (staticMap.containsKey(lowerCity)) {
+            // Use high-quality curated data
+            finalDestinations.add(staticMap[lowerCity]!);
+          } else {
+            // DYNAMIC FALLBACK:
+            // Assign a deterministic image from the generic pool based on city name hash
+            // This ensures the same city always gets the same image, even between reloads.
+            final imageIndex =
+                city.runes.fold(0, (p, c) => p + c) % _genericImages.length;
 
-          finalDestinations.add({
-            'city': city,
-            'image': _genericImages[imageIndex],
-            'desc': 'Daily services to $city.', // Generic description
-            'buses': 10 + Random().nextInt(20), // Generic bus count
-          });
+            finalDestinations.add({
+              'city': city,
+              'image': _genericImages[imageIndex],
+              'desc': 'Daily services to $city.', // Generic description
+              'buses': 10 + Random().nextInt(20), // Generic bus count
+            });
+          }
         }
+      } else {
+        // If DB is empty, show a default set (Colombo, Kandy, Galle)
+        finalDestinations = allDestinationsData.take(3).toList();
       }
-    } else {
-      // If DB is empty, show a default set (Colombo, Kandy, Galle)
-      finalDestinations = allDestinationsData.take(3).toList();
-    }
 
-    // 3. Update State
-    // We shuffle to keep it fresh, or we could sort alphabetically.
-    // User asked "get it and display it", implying all of them.
-    // But displaying 50 cities might be too much for the grid?
-    // The grid supports scrolling/expansion usually.
-    // Let's shuffle and show up to 8? Or all?
-    // The GridView in build is likely shrinkwrapped or fixed.
-    // Let's show up to 6.
+      // 3. Update State
+      finalDestinations.shuffle();
+      if (!context.mounted) return;
+      final isDesktop = MediaQuery.of(context).size.width > 900;
 
-    finalDestinations.shuffle();
-
-    final isDesktop = MediaQuery.of(context).size.width > 900;
-
-    if (mounted) {
-      setState(() {
-        _currentDestinations =
-            finalDestinations.take(isDesktop ? 6 : 4).toList();
-      });
+      if (mounted) {
+        setState(() {
+          _currentDestinations =
+              finalDestinations.take(isDesktop ? 6 : 4).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading destinations: $e");
     }
   }
 
@@ -188,6 +186,11 @@ class _HomeScreenState extends State<HomeScreen> {
     tripController.setFromCity(_originController.text);
     tripController.setToCity(_destinationController.text);
     tripController.setDate(_selectedDate);
+
+    // Pass Bulk Booking State
+    tripController.isBulkBooking = _isBulkBooking;
+    tripController.bulkDates = _bulkDates;
+
     // Trigger the actual Firestore search
     tripController.searchTrips(
         _originController.text, _destinationController.text, _selectedDate);
@@ -337,23 +340,55 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       actions: [
-                        // Notification Icon (Only if logged in)
                         StreamBuilder<User?>(
                           stream: FirebaseAuth.instance.authStateChanges(),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData) {
+                          builder: (context, authSnap) {
+                            if (!authSnap.hasData) {
                               return const SizedBox.shrink();
                             }
-                            return IconButton(
-                              icon:
-                                  const Icon(Icons.notifications_none_rounded),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const NotificationsScreen()),
+                            final uid = authSnap.data!.uid;
+
+                            return StreamBuilder<QuerySnapshot>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('notifications')
+                                  .where('userId', isEqualTo: uid)
+                                  .where('isRead', isEqualTo: false)
+                                  .snapshots(),
+                              builder: (context, notifSnap) {
+                                int unreadCount = 0;
+                                if (notifSnap.hasData) {
+                                  unreadCount = notifSnap.data!.docs.length;
+                                }
+
+                                return IconButton(
+                                  icon: Badge(
+                                    isLabelVisible: unreadCount > 0,
+                                    label: Text("$unreadCount"),
+                                    child: const Icon(
+                                        Icons.notifications_none_rounded),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const NotificationsScreen()),
+                                    );
+                                  },
                                 );
+                              },
+                            );
+                          },
+                        ),
+
+                        // Language Switcher (Globe Icon)
+                        Consumer<LanguageProvider>(
+                          builder: (context, languageProvider, child) {
+                            return IconButton(
+                              icon: const Icon(Icons.language),
+                              tooltip: 'Switch Language',
+                              onPressed: () {
+                                languageProvider.toggleLanguage();
                               },
                             );
                           },
@@ -497,21 +532,10 @@ class _HomeScreenState extends State<HomeScreen> {
               stream: Provider.of<FirestoreService>(context, listen: false)
                   .getUserFavoriteRoutes(user.uid),
               builder: (context, favSnap) {
-                final favorites = favSnap.data ?? [];
-                final favoritesWidget = FavoritesSection(
-                  favorites: favorites,
-                  onTap: (fav) {
-                    setState(() {
-                      _originController.text = fav['fromCity'];
-                      _destinationController.text = fav['toCity'];
-                      _searchBuses();
-                    });
-                  },
-                );
-
+                // Favorites removed as per request
                 return _TripsCarouselWidget(
                     tickets: tickets,
-                    favoritesWidget: favoritesWidget,
+                    favoritesWidget: const SizedBox.shrink(),
                     isDesktop: isDesktop);
               },
             );
@@ -522,22 +546,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFavoritesOnly(BuildContext context, String uid) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
-        stream: Provider.of<FirestoreService>(context, listen: false)
-            .getUserFavoriteRoutes(uid),
-        builder: (context, favSnap) {
-          final favorites = favSnap.data ?? [];
-          return FavoritesSection(
-            favorites: favorites,
-            onTap: (fav) {
-              setState(() {
-                _originController.text = fav['fromCity'];
-                _destinationController.text = fav['toCity'];
-                _searchBuses();
-              });
-            },
-          );
-        });
+    // Favorites removed as per request
+    return const SizedBox.shrink();
   }
 }
 
@@ -694,7 +704,13 @@ class _FloatingProfileMenuState extends State<FloatingProfileMenu>
                       onTap: () {
                         // Close menu
                         _toggleMenu();
-                        // In a real app we would navigate
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const ProfileScreen(
+                                    showBackButton: true,
+                                  )),
+                        );
                       },
                     ),
                     ListTile(
@@ -703,10 +719,17 @@ class _FloatingProfileMenuState extends State<FloatingProfileMenu>
                           const Icon(Icons.logout, size: 20, color: Colors.red),
                       title: const Text("Logout",
                           style: TextStyle(color: Colors.red)),
-                      onTap: () {
+                      onTap: () async {
                         _toggleMenu();
-                        Provider.of<AuthService>(context, listen: false)
+                        await Provider.of<AuthService>(context, listen: false)
                             .signOut();
+                        if (context.mounted) {
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const LoginScreen()),
+                              (route) => false);
+                        }
                       },
                     ),
                   ],
@@ -854,7 +877,7 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
               alignment: Alignment.center,
               children: [
                 SizedBox(
-                  height: 520,
+                  height: 370,
                   child: PageView.builder(
                     controller: _pageController,
                     itemCount: ongoingTrips.length,
@@ -938,15 +961,24 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
         .where(FieldPath.documentId, whereIn: tripIds.take(10).toList())
         .snapshots()
         .asyncMap((snap) async {
-      final trips = snap.docs.map((doc) => Trip.fromFirestore(doc)).toList();
-      // Use a fresh controller/service to enrich or access proper provider if context valid?
-      // Using Provider.of inside asyncMap might be tricky if widget disposed?
-      // Let's create a temporary TripController to reuse its enrich logic?
-      // Or just copy enrich logic? No, DRY.
-      // Let's assume we can access a static/singleton service or just create one.
-      // Is TripController pure? It uses FirestoreService.
-      final controller = TripController();
-      return await controller.enrichTrips(trips);
+      try {
+        final trips = <Trip>[];
+        for (var doc in snap.docs) {
+          try {
+            trips.add(Trip.fromFirestore(doc));
+          } catch (e) {
+            debugPrint("Error parsing trip ${doc.id}: $e");
+          }
+        }
+
+        if (trips.isEmpty) return <EnrichedTrip>[];
+
+        final controller = TripController();
+        return await controller.enrichTrips(trips);
+      } catch (e) {
+        debugPrint("Error enriching trips: $e");
+        return <EnrichedTrip>[];
+      }
     });
   }
 
@@ -1042,8 +1074,10 @@ class _HeroSectionState extends State<_HeroSection> {
 
     // Fetch dynamic cities
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<TripController>(context, listen: false)
-          .fetchAvailableCities();
+      if (mounted) {
+        Provider.of<TripController>(context, listen: false)
+            .fetchAvailableCities();
+      }
     });
   }
 
@@ -1073,175 +1107,189 @@ class _HeroSectionState extends State<_HeroSection> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = FirebaseAuth.instance.currentUser;
-    // ... rest of build method untouched mostly, just Autocomplete below ...
+    try {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final user = FirebaseAuth.instance.currentUser;
+      final lp = Provider.of<LanguageProvider>(context);
 
-    return SizedBox(
-      child: Stack(
-        children: [
-          // Background Image
-          Positioned.fill(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 800), // Faster transition
-              child: Container(
-                key: ValueKey(_heroData[_currentImageIndex]["image"]),
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: NetworkImage(
-                        _heroData[_currentImageIndex]["image"] ?? ""),
-                    fit: BoxFit.cover,
+      return SizedBox(
+        child: Stack(
+          children: [
+            // Background Image
+            Positioned.fill(
+              child: AnimatedSwitcher(
+                duration:
+                    const Duration(milliseconds: 800), // Faster transition
+                child: Container(
+                  key: ValueKey(_heroData[_currentImageIndex]["image"]),
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage(
+                          _heroData[_currentImageIndex]["image"] ?? ""),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          // Subtle Dark Gradient Overlay (No Red)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.1),
-                    Colors.black.withValues(alpha: 0.4),
-                    Colors.black.withValues(alpha: 0.8),
+            // Subtle Dark Gradient Overlay (No Red)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.1),
+                      Colors.black.withValues(alpha: 0.4),
+                      Colors.black.withValues(alpha: 0.8),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Content
+            Center(
+              child: Container(
+                constraints: BoxConstraints(
+                  minHeight: widget.isDesktop ? 600 : 550,
+                ),
+                padding: EdgeInsets.only(
+                    top: widget.isAdminView
+                        ? (widget.isDesktop
+                            ? 40
+                            : 20) // drastically reduced for admin preview
+                        : (widget.isDesktop ? 100 : 120),
+                    bottom: 40,
+                    left: 20,
+                    right: 20),
+                width: double.infinity,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // DB-Driven Greeting
+                    if (user != null)
+                      FutureBuilder<DocumentSnapshot>(
+                        future: FirestoreService().getUserData(user.uid),
+                        builder: (context, snapshot) {
+                          String name = "";
+
+                          // 1. Try Display Name
+                          if (user.displayName != null &&
+                              user.displayName!.isNotEmpty) {
+                            name = user.displayName!.split(' ').first;
+                          }
+
+                          // 2. Try Firestore Data (Best Source)
+                          if (snapshot.hasData && snapshot.data!.exists) {
+                            final data =
+                                snapshot.data!.data() as Map<String, dynamic>;
+                            if (data.containsKey('name') &&
+                                data['name'].toString().isNotEmpty) {
+                              name = data['name'].toString().split(' ').first;
+                            }
+                          }
+
+                          // 3. Last Resort: Extract from Email (e.g. admin@buslink -> Admin)
+                          if (name.isEmpty && user.email != null) {
+                            final emailName = user.email!.split('@').first;
+                            // Capitalize first letter
+                            name = emailName[0].toUpperCase() +
+                                emailName.substring(1);
+                          }
+
+                          // 4. Fallback if somehow still empty (Should catch all)
+                          if (name.isEmpty) name = lp.translate('friend');
+
+                          String greeting = "Hi";
+                          final hour = DateTime.now().hour;
+                          if (hour < 12) {
+                            greeting = lp.translate('good_morning');
+                          } else if (hour < 17) {
+                            greeting = lp.translate('good_afternoon');
+                          } else {
+                            greeting = lp.translate('good_evening');
+                          }
+
+                          return Text(
+                            "$greeting, $name",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize:
+                                  48, // Slightly smaller to fit longer text
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -1.0,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withValues(alpha: 0.5),
+                                  offset: const Offset(2, 4),
+                                  blurRadius: 12,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      )
+                    else
+                      // Fallback if NOT logged in (User requested no "Traveler")
+                      Text(
+                        lp.translate('welcome'),
+                        style: TextStyle(
+                          fontFamily: 'Outfit',
+                          fontSize: 56,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1.0,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              offset: const Offset(2, 4),
+                              blurRadius: 12,
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    Text(
+                      lp.translate('brand_tagline'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily:
+                            'Outfit', // Changed to Outfit for cleaner look
+                        fontSize: 18,
+                        color: Colors.white, // Slightly transparent
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    widget.isDesktop
+                        ? _buildDesktopSearchCard(isDark)
+                        : _buildMobileSearch(isDark),
                   ],
                 ),
               ),
             ),
-          ),
-
-          // Content
-          Center(
-            child: Container(
-              constraints: BoxConstraints(
-                minHeight: widget.isDesktop ? 600 : 550,
-              ),
-              padding: EdgeInsets.only(
-                  top: widget.isAdminView
-                      ? (widget.isDesktop
-                          ? 40
-                          : 20) // drastically reduced for admin preview
-                      : (widget.isDesktop ? 100 : 120),
-                  bottom: 40,
-                  left: 20,
-                  right: 20),
-              width: double.infinity,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // DB-Driven Greeting
-                  if (user != null)
-                    FutureBuilder<DocumentSnapshot>(
-                      future: FirestoreService().getUserData(user.uid),
-                      builder: (context, snapshot) {
-                        String name = "";
-
-                        // 1. Try Display Name
-                        if (user.displayName != null &&
-                            user.displayName!.isNotEmpty) {
-                          name = user.displayName!.split(' ').first;
-                        }
-
-                        // 2. Try Firestore Data (Best Source)
-                        if (snapshot.hasData && snapshot.data!.exists) {
-                          final data =
-                              snapshot.data!.data() as Map<String, dynamic>;
-                          if (data.containsKey('name') &&
-                              data['name'].toString().isNotEmpty) {
-                            name = data['name'].toString().split(' ').first;
-                          }
-                        }
-
-                        // 3. Last Resort: Extract from Email (e.g. admin@buslink -> Admin)
-                        if (name.isEmpty && user.email != null) {
-                          final emailName = user.email!.split('@').first;
-                          // Capitalize first letter
-                          name = emailName[0].toUpperCase() +
-                              emailName.substring(1);
-                        }
-
-                        // 4. Fallback if somehow still empty (Should catch all)
-                        if (name.isEmpty) name = "Friend";
-
-                        String greeting = "Hi";
-                        final hour = DateTime.now().hour;
-                        if (hour < 12) {
-                          greeting = "Good Morning";
-                        } else if (hour < 17) {
-                          greeting = "Good Afternoon";
-                        } else {
-                          greeting = "Good Evening";
-                        }
-
-                        return Text(
-                          "$greeting, $name",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Outfit',
-                            fontSize: 48, // Slightly smaller to fit longer text
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -1.0,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withValues(alpha: 0.5),
-                                offset: const Offset(2, 4),
-                                blurRadius: 12,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    )
-                  else
-                    // Fallback if NOT logged in (User requested no "Traveler")
-                    Text(
-                      "Welcome",
-                      style: TextStyle(
-                        fontFamily: 'Outfit',
-                        fontSize: 56,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1.0,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.5),
-                            offset: const Offset(2, 4),
-                            blurRadius: 12,
-                          ),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 12),
-                  Text(
-                    "Book your bus tickets instantly with BusLink. Reliable, fast, and secure.",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily:
-                          'Outfit', // Changed to Outfit for cleaner look
-                      fontSize: 18,
-                      color: Colors.white, // Slightly transparent
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  widget.isDesktop
-                      ? _buildDesktopSearchCard(isDark)
-                      : _buildMobileSearch(isDark),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    } catch (e) {
+      debugPrint("HeroSection Build Error: $e");
+      return SizedBox(
+        height: 600,
+        child: Center(
+            child: Text("Visual Error (Hero): $e",
+                style: const TextStyle(color: Colors.red))),
+      );
+    }
   }
 
   // New "Card Style" Desktop Search
+  // New "Card Style" Desktop Search
   Widget _buildDesktopSearchCard(bool isDark) {
+    final lp = Provider.of<LanguageProvider>(context);
     return _AnimateFadeInUp(
       delay: const Duration(milliseconds: 200),
       child: Material(
@@ -1287,7 +1335,7 @@ class _HeroSectionState extends State<_HeroSection> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      "Bulk / Multi-day Booking",
+                      lp.translate('bulk_booking'),
                       style: TextStyle(
                         color: isDark
                             ? Colors.white
@@ -1312,7 +1360,7 @@ class _HeroSectionState extends State<_HeroSection> {
                         controller: widget.originController,
                         focusNode: widget.originFocusNode,
                         icon: Icons.my_location, // Target Icon
-                        hint: 'Where from?',
+                        hint: lp.translate('where_from'),
                         isDark: isDark,
                       ),
                     ),
@@ -1328,7 +1376,7 @@ class _HeroSectionState extends State<_HeroSection> {
                         controller: widget.destinationController,
                         focusNode: widget.destinationFocusNode,
                         icon: Icons.location_on, // Pin Icon
-                        hint: 'Where to?',
+                        hint: lp.translate('where_to'),
                         isDark: isDark,
                       ),
                     ),
@@ -1353,7 +1401,7 @@ class _HeroSectionState extends State<_HeroSection> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Departure",
+                                  lp.translate('departure_date'),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: isDark
@@ -1425,8 +1473,8 @@ class _HeroSectionState extends State<_HeroSection> {
                           children: [
                             const Icon(Icons.search, size: 20),
                             const SizedBox(width: 8),
-                            const Text(
-                              'SEARCH', // concise
+                            Text(
+                              lp.translate('search'), // concise
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w900,
@@ -1498,8 +1546,16 @@ class _HeroSectionState extends State<_HeroSection> {
                             itemCount: options.length,
                             itemBuilder: (context, index) {
                               final String option = options.elementAt(index);
+                              // Translate city name
+                              final cityKey =
+                                  option.toLowerCase().replaceAll(' ', '_');
+                              final translatedOption =
+                                  Provider.of<LanguageProvider>(context,
+                                          listen: false)
+                                      .translate(cityKey);
+
                               return ListTile(
-                                title: Text(option,
+                                title: Text(translatedOption,
                                     style: TextStyle(
                                         fontFamily: 'Inter',
                                         fontWeight: FontWeight.bold,
@@ -1553,6 +1609,7 @@ class _HeroSectionState extends State<_HeroSection> {
   }
 
   Widget _buildMobileSearch(bool isDark) {
+    final lp = Provider.of<LanguageProvider>(context);
     return _AnimateFadeInUp(
       delay: const Duration(milliseconds: 200),
       child: Material(
@@ -1575,8 +1632,8 @@ class _HeroSectionState extends State<_HeroSection> {
               _buildSearchInput(
                 controller: widget.originController,
                 icon: Icons.my_location,
-                label: 'From',
-                hint: 'Origin City',
+                label: lp.translate('origin'),
+                hint: lp.translate('where_from'),
                 focusNode: widget.originFocusNode,
                 isLast: false,
                 isDark: isDark,
@@ -1585,8 +1642,8 @@ class _HeroSectionState extends State<_HeroSection> {
               _buildSearchInput(
                 controller: widget.destinationController,
                 icon: Icons.navigation,
-                label: 'To',
-                hint: 'Destination City',
+                label: lp.translate('destination'),
+                hint: lp.translate('where_to'),
                 focusNode: widget.destinationFocusNode,
                 isLast: false,
                 isDark: isDark,
@@ -1608,7 +1665,7 @@ class _HeroSectionState extends State<_HeroSection> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Departure Date",
+                          Text(lp.translate('departure_date'),
                               style: TextStyle(
                                   fontSize: 12,
                                   color: isDark
@@ -1624,6 +1681,47 @@ class _HeroSectionState extends State<_HeroSection> {
                                       ? const Color.fromARGB(255, 255, 255, 255)
                                       : const Color.fromARGB(255, 0, 0, 0))),
                         ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // NEW: Bulk Booking Toggle for Mobile
+              InkWell(
+                onTap: () => widget.onBulkBookingChanged(!widget.isBulkBooking),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: widget.isBulkBooking
+                        ? AppTheme.primaryColor.withValues(alpha: 0.1)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: widget.isBulkBooking
+                          ? AppTheme.primaryColor
+                          : Theme.of(context).dividerColor,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.isBulkBooking
+                            ? Icons.check_box
+                            : Icons.check_box_outline_blank,
+                        color: widget.isBulkBooking
+                            ? AppTheme.primaryColor
+                            : (isDark ? Colors.white70 : Colors.grey),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        lp.translate('bulk_booking'),
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
                       ),
                     ],
                   ),
@@ -1662,8 +1760,8 @@ class _HeroSectionState extends State<_HeroSection> {
                                   widget.destinationController.text
                                       .toLowerCase()
                                       .trim())
-                          ? "SELECT DIFFERENT CITIES"
-                          : "SEARCH BUSES",
+                          ? lp.translate('select_different_cities')
+                          : lp.translate('search_mobile'),
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
@@ -1776,6 +1874,13 @@ class _HeroSectionState extends State<_HeroSection> {
                             itemCount: options.length,
                             itemBuilder: (BuildContext context, int index) {
                               final String option = options.elementAt(index);
+                              final cityKey =
+                                  option.toLowerCase().replaceAll(' ', '_');
+                              final translatedOption =
+                                  Provider.of<LanguageProvider>(context,
+                                          listen: false)
+                                      .translate(cityKey);
+
                               return InkWell(
                                 onTap: () {
                                   onSelected(option);
@@ -1783,7 +1888,7 @@ class _HeroSectionState extends State<_HeroSection> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(12.0),
                                   child: Text(
-                                    option,
+                                    translatedOption,
                                     style: TextStyle(
                                         fontFamily: 'Inter',
                                         fontWeight: FontWeight.bold,
@@ -2134,6 +2239,18 @@ class _DestinationCardState extends State<_DestinationCard> {
 
   @override
   Widget build(BuildContext context) {
+    final lp = Provider.of<LanguageProvider>(context);
+    // Derive keys from city name (e.g. "Colombo" -> "colombo", "colombo_desc")
+    final cityKey = widget.city.toLowerCase().replaceAll(' ', '_');
+    final descKey = "${cityKey}_desc";
+
+    // Check if translation exists, else fall back to original text to be safe
+    // Actually lp.translate falls back to key if not found.
+    // But original text ("The vibrant...") is NOT the key.
+    // If translations are comprehensive, this is fine.
+    // If not, we might show "colombo_desc" instead of English text if key missing.
+    // But I just added all keys.
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),
       onExit: (_) => setState(() => _isHovering = false),
@@ -2206,7 +2323,9 @@ class _DestinationCardState extends State<_DestinationCard> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      widget.city,
+                      lp.translate(cityKey) == cityKey
+                          ? widget.city
+                          : lp.translate(cityKey),
                       style: const TextStyle(
                         fontFamily: 'Outfit',
                         fontSize: 24,
@@ -2238,7 +2357,9 @@ class _DestinationCardState extends State<_DestinationCard> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            widget.description,
+                            lp.translate(descKey) == descKey
+                                ? widget.description
+                                : lp.translate(descKey),
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,

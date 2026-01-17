@@ -27,6 +27,16 @@ class LanguageProvider with ChangeNotifier {
     }
   }
 
+  void toggleLanguage() {
+    if (_currentLanguage == 'en') {
+      setLanguage('si');
+    } else if (_currentLanguage == 'si') {
+      setLanguage('ta');
+    } else {
+      setLanguage('en');
+    }
+  }
+
   String translate(String key) {
     return Translations.translate(key, _currentLanguage);
   }

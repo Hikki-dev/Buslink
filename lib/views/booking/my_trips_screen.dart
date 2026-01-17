@@ -9,7 +9,7 @@ import '../../models/trip_model.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
 import '../ticket/ticket_screen.dart';
-import '../results/bus_list_screen.dart';
+// import '../results/bus_list_screen.dart'; (Removed)
 import '../layout/desktop_navbar.dart';
 // import '../layout/mobile_navbar.dart';
 import '../layout/custom_app_bar.dart';
@@ -179,11 +179,24 @@ class _TripsList extends StatelessWidget {
           }
           tripDate ??= ticket.bookingTime;
 
+          final statusLower = ticket.status.toLowerCase();
+
+          // User Request: "after its been accepted (refunded), make sure its not seen anymore"
+          if (statusLower == 'refunded') return false;
+
+          if (statusLower == 'cancelled') {
+            // Cancelled tickets go to history or are hidden.
+            // We will include them in History so the user has a record, but definitely NOT in Upcoming.
+            if (!isHistory) return false;
+            // For history, we can show them.
+          }
+
           if (isHistory) {
-            // History = Completed more than 12 hours ago
+            // History = Completed more than 12 hours ago OR Cancelled
+            if (statusLower == 'cancelled') return true;
             return tripDate.isBefore(cutoff);
           } else {
-            // Upcoming = Future OR departed within last 12 hours
+            // Upcoming = Future OR departed within last 12 hours AND NOT Cancelled
             return tripDate.isAfter(cutoff);
           }
         }).toList();
@@ -300,9 +313,16 @@ class _BoardingPassCard extends StatelessWidget {
     }
 
     // Common UI Logic
-    final fromCity =
-        tripData['fromCity'] ?? ticket.tripData['fromCity'] ?? 'Unknown';
-    final toCity = tripData['toCity'] ?? ticket.tripData['toCity'] ?? 'Unknown';
+    final fromCity = tripData['fromCity'] ??
+        tripData['originCity'] ??
+        ticket.tripData['fromCity'] ??
+        ticket.tripData['originCity'] ??
+        'Unknown';
+    final toCity = tripData['toCity'] ??
+        tripData['destinationCity'] ??
+        ticket.tripData['toCity'] ??
+        ticket.tripData['destinationCity'] ??
+        'Unknown';
     final seatsCount = ticket.seatNumbers.length;
 
     DateTime depTime = ticket.bookingTime;
@@ -339,19 +359,19 @@ class _BoardingPassCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(statusStr,
-                          style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: statusColor)),
+                    Row(
+                      children: [
+                        _buildStatusBadge(statusStr, statusColor),
+                        // Show DELAYED badge explicitly next to Arrived if applicable
+                        if ((statusStr == "ARRIVED" ||
+                                statusStr == "COMPLETED") &&
+                            (tripData['delayMinutes'] ?? 0) > 0) ...[
+                          const SizedBox(width: 8),
+                          _buildStatusBadge(
+                              "DELAYED (+${tripData['delayMinutes']}m)",
+                              Colors.red),
+                        ]
+                      ],
                     ),
                     Text(
                         "Ref: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
@@ -518,77 +538,78 @@ class _BoardingPassCard extends StatelessWidget {
                 Expanded(
                   child: SizedBox(
                     height: 48,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Book Again Logic
-                        final controller =
-                            Provider.of<TripController>(context, listen: false);
-                        controller.setFromCity(
-                            ticket.tripData['fromCity'] ?? 'Colombo');
-                        controller
-                            .setToCity(ticket.tripData['toCity'] ?? 'Kandy');
-                        controller.setDepartureDate(DateTime.now());
-                        controller.searchTrips(controller.fromCity ?? '',
-                            controller.toCity ?? '', DateTime.now());
+                    child: Builder(builder: (context) {
+                      // DYNAMIC BUTTON LOGIC
+                      // If Active/Upcoming (scheduled, delayed, boarding, onWay) -> Show REFUND (if eligible)
+                      // If Completed/Cancelled/Arrived -> Show NOTHING (No Book Again)
 
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const BusListScreen()),
+                      bool allowRefund = false;
+                      // Logic: If active AND not completed/cancelled
+                      if (shouldListen &&
+                          statusStr != 'CANCELLED' &&
+                          statusStr != 'ARRIVED' &&
+                          statusStr != 'COMPLETED' &&
+                          statusStr != 'REFUNDED' &&
+                          statusStr != 'HISTORY') {
+                        allowRefund = true;
+                      }
+
+                      if (allowRefund) {
+                        return ElevatedButton.icon(
+                          onPressed: () {
+                            try {
+                              final trip =
+                                  Trip.fromMap(tripData, ticket.tripId);
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => RefundRequestScreen(
+                                          ticket: ticket, trip: trip)));
+                            } catch (e) {
+                              debugPrint("Error nav to refund: $e");
+                            }
+                          },
+                          icon: const Icon(Icons.undo,
+                              size: 18, color: Colors.white),
+                          label: const Text("Refund",
+                              style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red.shade400,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12))),
                         );
-                      },
-                      style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8), // Fix clipping
-                          backgroundColor: AppTheme.primaryColor,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                      child: const Text("Book Again",
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: Colors.white)),
-                    ),
+                      } else {
+                        // User requested NO "Book Again" button.
+                        return const SizedBox.shrink();
+                      }
+                    }),
                   ),
                 ),
               ],
             ),
           ),
-
-          // NEW: Refund Link for Upcoming Trips
-          if (!shouldListen) // implies isHistory == false (wait check calling logic) -- Actually shouldListen is true for upcoming usually
-            const SizedBox.shrink(),
-
-          if (tripData['status'] != 'completed' &&
-              tripData['status'] != 'cancelled' &&
-              tripData['status'] != 'arrived')
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: TextButton.icon(
-                onPressed: () {
-                  try {
-                    final trip = Trip.fromMap(tripData, ticket.tripId);
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => RefundRequestScreen(
-                                ticket: ticket, trip: trip)));
-                  } catch (e) {
-                    debugPrint("Error nav to refund: $e");
-                  }
-                },
-                icon: const Icon(Icons.undo, size: 16, color: Colors.grey),
-                label: const Text("Request Refund / Cancel",
-                    style: TextStyle(color: Colors.grey, fontSize: 12)),
-              ),
-            ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStatusBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(text,
+          style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color)),
     );
   }
 

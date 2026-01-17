@@ -178,9 +178,10 @@ class LateDeparturesView extends StatelessWidget {
   }
 
   Widget _buildLateTripsList(List<Map<String, dynamic>> trips) {
-    if (trips.isEmpty)
+    if (trips.isEmpty) {
       return const Text("No recent late departures.",
           style: TextStyle(color: Colors.black87));
+    }
     return Column(
       children: trips.take(5).map((t) {
         return Card(

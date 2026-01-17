@@ -107,8 +107,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.broken_image,
-                        color: Colors.grey, size: 48),
+                    const Icon(Icons.broken_image, size: 48),
                     const SizedBox(height: 16),
                     Text(
                       "Camera not available.\n(${error.errorCode})",
@@ -236,10 +235,10 @@ class _QRScanScreenState extends State<QRScanScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
+                      Text(
                         "Scanning failed?",
                         style: TextStyle(
-                            color: Colors.grey,
+                            color: Theme.of(context).disabledColor,
                             fontSize: 12,
                             fontWeight: FontWeight.bold),
                       ),

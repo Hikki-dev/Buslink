@@ -8,9 +8,18 @@
       "dest": "/api/$0"
     },
     {
+      "src": "/(index.html|main.dart.js|flutter_bootstrap.js|manifest.json)",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+        "Cross-Origin-Embedder-Policy": "credentialless"
+      }
+    },
+    {
       "src": "/(?!api/|.*\\.(?:js|json|css|png|jpg|jpeg|gif|ico|svg|ttf|woff|woff2|otf|eot)).*",
       "dest": "/index.html",
       "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate",
         "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
         "Cross-Origin-Embedder-Policy": "credentialless"
       }

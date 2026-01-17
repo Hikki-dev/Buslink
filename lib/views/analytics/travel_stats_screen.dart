@@ -71,13 +71,11 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.query_stats, size: 80, color: Colors.grey.shade300),
+          const Icon(Icons.query_stats, size: 80),
           const SizedBox(height: 16),
-          const Text("No travel history yet!",
-              style: TextStyle(fontSize: 18, color: Colors.grey)),
+          const Text("No travel history yet!", style: TextStyle(fontSize: 18)),
           const SizedBox(height: 8),
-          const Text("Complete a trip to see your stats.",
-              style: TextStyle(color: Colors.grey)),
+          const Text("Complete a trip to see your stats.", style: TextStyle()),
         ],
       ),
     );
@@ -213,7 +211,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
                   const SizedBox(height: 16),
                   SizedBox(
                     height: 150,
-                    child: _SimpleBarChart(
+                    child: _SimpleScatterChart(
                         data: stats['monthlyTrips'] as Map<int, int>),
                   ),
                 ],
@@ -254,7 +252,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
         decoration: BoxDecoration(
             color: Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8)),
-        child: Icon(icon, color: Colors.grey.shade700, size: 20),
+        child: Icon(icon, size: 20),
       ),
       title: Text(label, style: const TextStyle(fontSize: 14)),
       trailing: Text(value,
@@ -263,9 +261,9 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
   }
 }
 
-class _SimpleBarChart extends StatelessWidget {
+class _SimpleScatterChart extends StatelessWidget {
   final Map<int, int> data;
-  const _SimpleBarChart({required this.data});
+  const _SimpleScatterChart({required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -275,45 +273,79 @@ class _SimpleBarChart extends StatelessWidget {
     }
     if (maxVal == 0) maxVal = 1;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: List.generate(12, (index) {
-        final month = index + 1;
-        final count = data[month] ?? 0;
-        final h = (count / maxVal) * 100; // scale to 100 max height
+    // Use LayoutBuilder to get width
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double w = constraints.maxWidth;
+        final double h = constraints.maxHeight;
 
-        return GestureDetector(
-          onTap: () {
-            if (count > 0) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(
-                      "${DateFormat('MMMM').format(DateTime(2024, month))}: $count trips"),
-                  duration: const Duration(seconds: 1)));
-            }
-          },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Container(
-                width: 12,
-                height: h == 0 ? 2 : h,
-                decoration: BoxDecoration(
-                  color: h == 0
-                      ? Colors.grey.shade300
-                      : AppTheme.primaryColor.withValues(alpha: 0.8),
-                  borderRadius: BorderRadius.circular(4),
+        return Stack(
+          children: [
+            // Grid Lines (Horizontal)
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(5, (index) {
+                return Container(
+                  height: 1,
+                  color: Colors.grey.withOpacity(0.1),
+                );
+              }),
+            ),
+            // Scatter Points
+            ...List.generate(12, (index) {
+              final month = index + 1;
+              final count = data[month] ?? 0;
+              if (count == 0) return const SizedBox.shrink();
+
+              // X position: distributed evenly
+              final double x = (index / 11) * (w - 20) + 10;
+              // Y position: count / maxVal * height (inverted for Stack bottom alignment, but using bottom prop)
+              final double bottom = (count / maxVal) * (h - 20);
+
+              return Positioned(
+                left: x - 6, // center the dot
+                bottom: bottom,
+                child: GestureDetector(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(
+                            "${DateFormat('MMMM').format(DateTime(2024, month))}: $count trips"),
+                        duration: const Duration(seconds: 1)));
+                  },
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                            color: AppTheme.primaryColor.withOpacity(0.4),
+                            blurRadius: 4,
+                            spreadRadius: 2)
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                DateFormat('MMM').format(DateTime(2024, month))[0],
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
-              )
-            ],
-          ),
+              );
+            }),
+            // X-Axis Labels
+            Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(6, (index) {
+                    // Show every 2 months
+                    final m = index * 2 + 1;
+                    return Text(DateFormat('MMM').format(DateTime(2024, m)),
+                        style: TextStyle(fontSize: 10, color: Colors.grey));
+                  }),
+                ))
+          ],
         );
-      }),
+      },
     );
   }
 }
