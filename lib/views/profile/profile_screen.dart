@@ -18,7 +18,6 @@ import '../layout/custom_app_bar.dart';
 // IMPORTS FOR PROFILE UPLOAD & SETTINGS
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:io';
 import 'package:flutter/foundation.dart'; // for kIsWeb
 import '../settings/account_settings_screen.dart';
 import '../settings/notification_settings_screen.dart';
@@ -604,22 +603,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final bytes = await image.readAsBytes();
       debugPrint("Read ${bytes.length} bytes.");
 
-      debugPrint("Starting upload...");
-      TaskSnapshot snapshot; // Capture snapshot
-      if (kIsWeb) {
-        snapshot = await storageRef.putData(
-            bytes,
-            SettableMetadata(
-              contentType: 'image/jpeg',
-              customMetadata: {'picked-file-path': image.path},
-            ));
-      } else {
-        snapshot = await storageRef.putFile(
-            File(image.path),
-            SettableMetadata(
-              contentType: 'image/jpeg',
-            ));
-      }
+      debugPrint("Starting upload (Universal method)...");
+      TaskSnapshot snapshot;
+
+      // Use putData for BOTH Web and Mobile to avoid File path issues on Android
+      // (content:// URIs vs file:// paths)
+      snapshot = await storageRef.putData(
+          bytes,
+          SettableMetadata(
+            contentType: 'image/jpeg',
+            customMetadata: {'picked-file-path': image.path},
+          ));
       debugPrint("Upload process complete. Getting URL...");
 
       // Use snapshot.ref to get URL -> safest way

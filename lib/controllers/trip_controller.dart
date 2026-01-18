@@ -685,8 +685,9 @@ class TripController extends ChangeNotifier {
               "${first.tripData['originCity']} to ${first.tripData['destinationCity']}";
           final seats = bundle.expand((t) => t.seatNumbers).join(', ');
 
-          // Fire and forget notification (Single Summary)
-          import_notification_service.NotificationService.createNotification(
+          // Fire and forget notification (Single Summary + Push)
+          import_notification_service.NotificationService
+              .sendNotificationToUser(
             userId: userId,
             title: "Booking Confirmed",
             body:
@@ -707,12 +708,12 @@ class TripController extends ChangeNotifier {
       final ticket = await _firestoreService.confirmBooking(bookingId,
           paymentIntentId: paymentIntentId);
 
-      // Notify User (Notification Center)
+      // Notify User (Notification Center + Push)
       if (ticket.userId.isNotEmpty) {
         final tripTitle =
             "${ticket.tripData['originCity']} to ${ticket.tripData['destinationCity']}";
         await import_notification_service.NotificationService
-            .createNotification(
+            .sendNotificationToUser(
           userId: ticket.userId,
           title: "Booking Confirmed",
           body:

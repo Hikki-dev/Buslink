@@ -5,12 +5,16 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
+import 'package:open_filex/open_filex.dart'; // Added
+import 'dart:io'; // Added
+import 'package:flutter/foundation.dart'; // Added for kIsWeb
 // import 'package:google_fonts/google_fonts.dart';
 
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
+import '../../services/notification_service.dart'; // Added
 // import '../home/home_screen.dart'; // Unused
 
 class TicketScreen extends StatefulWidget {
@@ -387,7 +391,6 @@ class _TicketScreenState extends State<TicketScreen> {
       BuildContext context, Trip trip, List<Ticket> tickets) async {
     final doc = pw.Document();
     final isBulk = tickets.length > 1;
-
     // Use the first ticket for common details
     final mainTicket = tickets.first;
 
@@ -556,8 +559,72 @@ class _TicketScreenState extends State<TicketScreen> {
       ),
     );
 
-    await Printing.sharePdf(
-        bytes: await doc.save(), filename: 'buslink_tickets.pdf');
+    try {
+      final bytes = await doc.save();
+      final fileName = 'buslink_ticket_${mainTicket.shortId}.pdf';
+
+      if (kIsWeb) {
+        // Web: Use printing's built-in share/download (browser handles it)
+        await Printing.sharePdf(bytes: bytes, filename: fileName);
+      } else if (Platform.isAndroid) {
+        // Android: Save to Downloads folder directly
+        // 1. Check Permissions (Android < 11 needs explicit permission, Android 11+ is scoped but Downloads public)
+        /*
+        var status = await Permission.storage.status;
+        if (!status.isGranted) {
+           status = await Permission.storage.request();
+        }
+        */
+        // Simple approach: Try clear Save first
+        try {
+          // Direct path to Downloads (Works on most Androids)
+          final directory = Directory('/storage/emulated/0/Download');
+          if (!await directory.exists()) {
+            // Fallback
+            await Printing.sharePdf(bytes: bytes, filename: fileName);
+            return;
+          }
+
+          final file = File('${directory.path}/$fileName');
+          await file.writeAsBytes(bytes);
+
+          // Success Feedback
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text("Saved to Downloads: $fileName"),
+              backgroundColor: Colors.green,
+              action: SnackBarAction(
+                label: "OPEN",
+                textColor: Colors.white,
+                onPressed: () {
+                  OpenFilex.open(file.path);
+                },
+              ),
+            ));
+
+            // Notification
+            NotificationService.showLocalNotification(
+                id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                title: "Ticket Downloaded",
+                body: "Your ticket ($fileName) has been saved to Downloads.");
+          }
+          // Auto Open if possible?
+          // OpenFilex.open(file.path);
+        } catch (e) {
+          debugPrint("Download Error: $e. Fallback to Share.");
+          await Printing.sharePdf(bytes: bytes, filename: fileName);
+        }
+      } else {
+        // iOS: Share is the standard way (Save to Files)
+        await Printing.sharePdf(bytes: bytes, filename: fileName);
+      }
+    } catch (e) {
+      debugPrint("PDF Error: $e");
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("Error saving PDF")));
+      }
+    }
   }
 }
 

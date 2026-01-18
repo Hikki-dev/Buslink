@@ -600,4 +600,31 @@ class NotificationService {
       debugPrint("Error scheduling reminder: $e");
     }
   }
+
+  static Future<void> showLocalNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    const fln.AndroidNotificationDetails androidDetails =
+        fln.AndroidNotificationDetails(
+      'downloads_channel',
+      'Downloads',
+      channelDescription: 'Notifications for file downloads',
+      importance: fln.Importance.defaultImportance,
+      priority: fln.Priority.defaultPriority,
+      ticker: 'ticker',
+    );
+    const fln.NotificationDetails platformChannelSpecifics =
+        fln.NotificationDetails(android: androidDetails);
+
+    await _localNotifications.show(
+      id,
+      title,
+      body,
+      platformChannelSpecifics,
+      payload: payload,
+    );
+  }
 }
