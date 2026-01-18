@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/translations.dart';
+import '../../utils/language_provider.dart';
 
 class TravelStatsScreen extends StatefulWidget {
   const TravelStatsScreen({super.key});
@@ -19,13 +21,16 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
+    final languageCode = Provider.of<LanguageProvider>(context).currentLanguage;
+
     if (user == null) {
       return const Scaffold(body: Center(child: Text("Please login")));
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Travel Stats"),
+        title: Text(Translations.translate('travel_trends',
+            languageCode)), // "Travel Stats" -> "Travel Trends" (closest match or add new key? used 'travel_trends' in file)
         elevation: 1,
         backgroundColor: Theme.of(context).cardColor,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -34,15 +39,14 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
         stream: FirebaseFirestore.instance
             .collection('tickets')
             .where('userId', isEqualTo: user.uid)
-            .where('status',
-                isEqualTo: 'completed') // Only completed trips count
+            // Removed status filter to get ALL trips for stats
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return _buildEmptyState();
+            return _buildEmptyState(languageCode);
           }
 
           final docs = snapshot.data!.docs;
@@ -53,11 +57,42 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(stats),
+                // NEW: Status Boxes
+                Row(
+                  children: [
+                    _statusBox(
+                        context,
+                        Translations.translate('upcoming', languageCode),
+                        "${stats['upcoming']}",
+                        Colors.blue,
+                        Icons.schedule),
+                    _statusBox(
+                        context,
+                        Translations.translate('delayed', languageCode),
+                        "${stats['delayed']}",
+                        Colors.orange,
+                        Icons.timer_off),
+                    _statusBox(
+                        context,
+                        Translations.translate('arrived', languageCode),
+                        "${stats['arrived']}",
+                        Colors.green,
+                        Icons.check_circle),
+                    _statusBox(
+                        context,
+                        Translations.translate('cancelled', languageCode),
+                        "${stats['cancelled']}",
+                        Colors.red,
+                        Icons.cancel),
+                  ],
+                ),
                 const SizedBox(height: 24),
-                _buildTrendsAccordion(stats),
+
+                _buildHeader(stats, languageCode),
+                const SizedBox(height: 24),
+                _buildTrendsAccordion(stats, languageCode),
                 const SizedBox(height: 16),
-                _buildInsightsAccordion(stats),
+                _buildInsightsAccordion(stats, languageCode),
               ],
             ),
           );
@@ -66,14 +101,17 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(String lang) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.query_stats, size: 80),
           const SizedBox(height: 16),
-          const Text("No travel history yet!", style: TextStyle(fontSize: 18)),
+          Text(
+              Translations.translate('no_active_trips',
+                  lang), // Reusing 'no_active_trips' roughly fits or 'No travel history'
+              style: const TextStyle(fontSize: 18)),
           const SizedBox(height: 8),
           const Text("Complete a trip to see your stats.", style: TextStyle()),
         ],
@@ -87,8 +125,49 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
     Map<String, int> citiesVisited = {};
     Map<int, int> monthlyTrips = {};
 
+    int upcoming = 0;
+    int delayed = 0;
+    int arrived = 0;
+    int cancelled = 0;
+    final now = DateTime.now();
+
     for (var doc in docs) {
       final data = doc.data() as Map<String, dynamic>;
+
+      // --- Status Counting ---
+      final rawStatus =
+          (data['status'] ?? 'scheduled').toString().toLowerCase();
+      final delay = (data['delayMinutes'] ?? 0) as int;
+
+      DateTime? date;
+      if (data['departureTime'] is Timestamp) {
+        date = (data['departureTime'] as Timestamp).toDate();
+      } else if (data['bookingTime'] is Timestamp) {
+        date = (data['bookingTime'] as Timestamp).toDate();
+      }
+
+      if (date != null) {
+        final activeCutoff = now.subtract(const Duration(hours: 12));
+        final isActive = date.isAfter(activeCutoff);
+        final isFuture = date.isAfter(now);
+        final isRecent =
+            date.isAfter(now.subtract(const Duration(hours: 24))) &&
+                date.isBefore(now);
+
+        if (rawStatus == 'cancelled') {
+          if (isFuture || isRecent) {
+            cancelled++; // Only count relevant cancellations
+          }
+        } else if (rawStatus == 'completed' || rawStatus == 'arrived') {
+          arrived++; // All history
+        } else if (rawStatus == 'delayed' || delay > 0) {
+          if (isFuture) delayed++;
+        } else {
+          if (isActive) upcoming++;
+        }
+      }
+
+      // --- Existing logic ---
       // Amount
       final amt = (data['totalAmount'] ?? data['price'] ?? 0);
       totalSpent += (amt is num) ? amt.toDouble() : 0.0;
@@ -97,14 +176,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
       final dest = data['toCity'] ?? data['destination'] ?? 'Unknown';
       citiesVisited[dest] = (citiesVisited[dest] ?? 0) + 1;
 
-      // Date
-      DateTime? date;
-      if (data['departureTime'] is Timestamp) {
-        date = (data['departureTime'] as Timestamp).toDate();
-      } else if (data['bookingTime'] is Timestamp) {
-        date = (data['bookingTime'] as Timestamp).toDate();
-      }
-
+      // Date (Already parsed above)
       if (date != null && date.year == _focusedDate.year) {
         monthlyTrips[date.month] = (monthlyTrips[date.month] ?? 0) + 1;
       }
@@ -123,11 +195,44 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
       'totalSpent': totalSpent,
       'favoriteDest': favoriteDest,
       'monthlyTrips': monthlyTrips,
-      'year': _focusedDate.year
+      'year': _focusedDate.year,
+      'upcoming': upcoming,
+      'delayed': delayed,
+      'arrived': arrived,
+      'cancelled': cancelled
     };
   }
 
-  Widget _buildHeader(Map<String, dynamic> stats) {
+  Widget _statusBox(BuildContext context, String label, String count,
+      Color color, IconData icon) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 4),
+            Text(count,
+                style: TextStyle(
+                    color: color, fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(label,
+                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis)
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(Map<String, dynamic> stats, String lang) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -149,8 +254,8 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Total Spent",
-                  style: TextStyle(color: Colors.white70)),
+              Text(Translations.translate('total_spent', lang),
+                  style: const TextStyle(color: Colors.white70)),
               const SizedBox(height: 8),
               Text("LKR ${stats['totalSpent'].toStringAsFixed(0)}",
                   style: const TextStyle(
@@ -171,7 +276,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
     );
   }
 
-  Widget _buildTrendsAccordion(Map<String, dynamic> stats) {
+  Widget _buildTrendsAccordion(Map<String, dynamic> stats, String lang) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -179,8 +284,8 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           initiallyExpanded: true,
-          title: const Text("Travel Trends",
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(Translations.translate('travel_trends', lang),
+              style: const TextStyle(fontWeight: FontWeight.bold)),
           leading: const Icon(Icons.trending_up, color: AppTheme.primaryColor),
           children: [
             Padding(
@@ -212,7 +317,8 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
                   SizedBox(
                     height: 150,
                     child: _SimpleScatterChart(
-                        data: stats['monthlyTrips'] as Map<int, int>),
+                        data: stats['monthlyTrips'] as Map<int, int>,
+                        year: _focusedDate.year),
                   ),
                 ],
               ),
@@ -223,7 +329,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
     );
   }
 
-  Widget _buildInsightsAccordion(Map<String, dynamic> stats) {
+  Widget _buildInsightsAccordion(Map<String, dynamic> stats, String lang) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -231,13 +337,17 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           initiallyExpanded: true,
-          title: const Text("Insights",
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(Translations.translate('insights', lang),
+              style: const TextStyle(fontWeight: FontWeight.bold)),
           leading: const Icon(Icons.lightbulb, color: Colors.amber),
           children: [
             _insightRow(
-                Icons.place, "Favorite Destination", stats['favoriteDest']),
-            _insightRow(Icons.directions_bus, "Total Trips Completed",
+                Icons.place,
+                Translations.translate('favorite_destination', lang),
+                stats['favoriteDest']),
+            _insightRow(
+                Icons.directions_bus,
+                Translations.translate('total_trips_completed', lang),
                 "${stats['totalTrips']}"),
           ],
         ),
@@ -263,7 +373,8 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
 
 class _SimpleScatterChart extends StatelessWidget {
   final Map<int, int> data;
-  const _SimpleScatterChart({required this.data});
+  final int year; // NEW
+  const _SimpleScatterChart({required this.data, required this.year});
 
   @override
   Widget build(BuildContext context) {
@@ -287,7 +398,7 @@ class _SimpleScatterChart extends StatelessWidget {
               children: List.generate(5, (index) {
                 return Container(
                   height: 1,
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.grey.withValues(alpha: 0.1),
                 );
               }),
             ),
@@ -309,7 +420,7 @@ class _SimpleScatterChart extends StatelessWidget {
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                         content: Text(
-                            "${DateFormat('MMMM').format(DateTime(2024, month))}: $count trips"),
+                            "${DateFormat('MMMM').format(DateTime(year, month))}: $count trips"),
                         duration: const Duration(seconds: 1)));
                   },
                   child: Container(
@@ -320,7 +431,7 @@ class _SimpleScatterChart extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                            color: AppTheme.primaryColor.withOpacity(0.4),
+                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
                             blurRadius: 4,
                             spreadRadius: 2)
                       ],
@@ -339,7 +450,7 @@ class _SimpleScatterChart extends StatelessWidget {
                   children: List.generate(6, (index) {
                     // Show every 2 months
                     final m = index * 2 + 1;
-                    return Text(DateFormat('MMM').format(DateTime(2024, m)),
+                    return Text(DateFormat('MMM').format(DateTime(year, m)),
                         style: TextStyle(fontSize: 10, color: Colors.grey));
                   }),
                 ))

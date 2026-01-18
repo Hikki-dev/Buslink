@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/app_theme.dart';
 import '../../services/notification_service.dart';
-import '../../models/notification_model.dart'; // Added Import
+import '../../models/notification_model.dart';
+import '../../utils/language_provider.dart';
 import 'package:intl/intl.dart';
 
 class NotificationsScreen extends StatelessWidget {
@@ -26,8 +27,9 @@ class NotificationsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Notifications",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(
+            Provider.of<LanguageProvider>(context).translate('notifications'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
@@ -56,7 +58,9 @@ class NotificationsScreen extends StatelessWidget {
                   Icon(Icons.notifications_off_outlined,
                       size: 60, color: Colors.grey.withValues(alpha: 0.5)),
                   const SizedBox(height: 16),
-                  Text("No notifications yet",
+                  Text(
+                      Provider.of<LanguageProvider>(context)
+                          .translate('no_notifications'),
                       style:
                           TextStyle(color: Colors.grey.withValues(alpha: 0.8))),
                 ],
@@ -92,15 +96,15 @@ class NotificationsScreen extends StatelessWidget {
             notif.title.contains("On Way")) {
           icon = Icons.directions_bus;
           color = Colors.blue;
-          statusText = "On Way";
+          statusText = "on_way";
         } else if (notif.title.contains("Arrived")) {
           icon = Icons.check_circle;
           color = Colors.green;
-          statusText = "Arrived";
+          statusText = "arrived";
         } else {
           icon = Icons.schedule;
           color = Colors.orange;
-          statusText = "Scheduled";
+          statusText = "scheduled";
         }
         break;
       case NotificationType.refundStatus:
@@ -108,38 +112,43 @@ class NotificationsScreen extends StatelessWidget {
             notif.body.toLowerCase().contains("refunded")) {
           icon = Icons.monetization_on;
           color = Colors.green;
-          statusText = "Refunded";
+          statusText = "refunded";
         } else if (notif.title.toLowerCase().contains("rejected")) {
           icon = Icons.error_outline;
           color = Colors.red;
-          statusText = "Rejected";
+          statusText = "rejected";
         } else {
           icon = Icons.refresh;
           color = Colors.orange;
-          statusText = "Processing";
+          statusText = "processing";
         }
         break;
       case NotificationType.cancellation:
         icon = Icons.cancel;
         color = Colors.red;
-        statusText = "Cancelled";
+        statusText = "cancelled";
         break;
       case NotificationType.delay:
         icon = Icons.timer_off;
         color = Colors.redAccent;
-        statusText = "Delayed";
+        statusText = "delayed";
         break;
       case NotificationType.general:
         icon = Icons.notifications;
         color = AppTheme.primaryColor;
-        statusText = "New";
+        statusText = "new";
         break;
       case NotificationType.booking:
         icon = Icons.confirmation_number;
         color = Colors.green;
-        statusText = "Confirmed";
+        statusText = "confirmed";
         break;
     }
+
+    // Translate Status
+    final lp = Provider.of<LanguageProvider>(context);
+    final translatedStatus =
+        lp.translate(statusText.toLowerCase().replaceAll(' ', '_'));
 
     // Override info if read
     if (notif.isRead) {
@@ -246,7 +255,7 @@ class NotificationsScreen extends StatelessWidget {
                               decoration: BoxDecoration(
                                   color: color.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4)),
-                              child: Text(statusText.toUpperCase(),
+                              child: Text(translatedStatus.toUpperCase(),
                                   style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 10,

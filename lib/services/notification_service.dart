@@ -1,14 +1,21 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart'; // Added for Dialogs
+import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import '../models/notification_model.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'
+    as fln;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:googleapis_auth/auth_io.dart';
+import 'package:googleapis_auth/googleapis_auth.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // ... (keep existing)
   await Firebase.initializeApp();
   if (kDebugMode) {
     print("Handling a background message: ${message.messageId}");
@@ -19,8 +26,49 @@ class NotificationService {
   static final FirebaseMessaging _firebaseMessaging =
       FirebaseMessaging.instance;
 
-  // ... (keep initialize method same)
+  static final fln.FlutterLocalNotificationsPlugin _localNotifications =
+      fln.FlutterLocalNotificationsPlugin();
+
+  // Credentials provided by user (BusLink Service Account)
+  // TODO: IMPORTANT - Replace this with your actual service account JSON for local testing.
+  // DO NOT COMMIT REAL CREDENTIALS TO GIT.
+  // Ideally, move this logic to a backend server.
+  static const Map<String, dynamic> _serviceAccountJson = {
+    "type": "service_account",
+    "project_id": "buslink-416e1",
+    // ... Add your real credentials here locally ...
+  };
+
+  static Future<String?> _getAccessToken() async {
+    try {
+      final accountCredentials =
+          ServiceAccountCredentials.fromJson(_serviceAccountJson);
+      final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+      final client = await clientViaServiceAccount(accountCredentials, scopes);
+      final credentials = client.credentials; // Not a future
+      return credentials.accessToken.data;
+    } catch (e) {
+      debugPrint("Error getting access token: $e");
+      return null;
+    }
+  }
+
   static Future<void> initialize() async {
+    // 0. Initialize Local Notifications
+    const fln.AndroidInitializationSettings initializationSettingsAndroid =
+        fln.AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const fln.DarwinInitializationSettings initializationSettingsDarwin =
+        fln.DarwinInitializationSettings();
+
+    const fln.InitializationSettings initializationSettings =
+        fln.InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
+
+    await _localNotifications.initialize(initializationSettings);
+
     // 1. Setup Background Handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
@@ -31,12 +79,6 @@ class NotificationService {
         print('Message data: ${message.data}');
       }
     });
-
-    // 3. Check current status (don't request yet)
-    // NotificationSettings settings = await _firebaseMessaging.getNotificationSettings();
-    // if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-    //   await _setupToken();
-    // }
   }
 
   /// UX-Friendly Permission Request
@@ -44,18 +86,21 @@ class NotificationService {
     NotificationSettings settings =
         await _firebaseMessaging.getNotificationSettings();
 
+    // Android 13+ Local Notification Permission
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+            fln.AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      // Already authorized, ensure token is synced
       await _setupToken();
       return;
     }
 
     if (settings.authorizationStatus == AuthorizationStatus.denied) {
-      // Already denied, maybe show instructions to enable in settings?
       return;
     }
 
-    // Show "Why we need this" Dialog
     if (context.mounted) {
       await showDialog(
         context: context,
@@ -114,14 +159,12 @@ class NotificationService {
   }
 
   static Future<void> _setupToken() async {
-    // ... (keep token logic same)
     if (!kIsWeb && Platform.isIOS) {
-      // ... existing logic ...
       String? apnsToken;
       try {
         apnsToken = await _firebaseMessaging.getAPNSToken();
       } catch (e) {
-        // Ignore initial APNS error
+        // Ignore initial check
       }
       if (apnsToken == null) {
         await Future.delayed(const Duration(seconds: 3));
@@ -134,13 +177,68 @@ class NotificationService {
       if (apnsToken == null) return;
     }
 
-    // Get the token (Web VAPID Key if needed, but standard usually works if config is good)
-    // For specific VAPID: getToken(vapidKey: "YOUR_PUBLIC_KEY")
     final fcmToken = await _firebaseMessaging.getToken(
-        vapidKey:
-            kIsWeb ? "BOyF-..." : null // Optional: Add VAPID if default fails
-        );
+        vapidKey: kIsWeb
+            ? "BOyF-..." // User would need to fill this if web push is needed, but focusing on mobile
+            : null);
     if (kDebugMode) print("FCM Token: $fcmToken");
+
+    // Save token if user is logged in? Usually we do this explicitly when user logs in or profile loads.
+    // Ideally we pass current user ID here if available, but for now we rely on saveTokenToUser usage.
+  }
+
+  /// Sends a push notification via FCM HTTP v1 API
+  static Future<void> sendPushToToken(
+      String token, String title, String body) async {
+    try {
+      final projectId = _serviceAccountJson['project_id'];
+      if (projectId == 'YOUR_PROJECT_ID') {
+        debugPrint("FCM Error: Service Account not configured.");
+        return;
+      }
+
+      final accessToken = await _getAccessToken();
+      if (accessToken == null) return;
+
+      final response = await http.post(
+        Uri.parse(
+            'https://fcm.googleapis.com/v1/projects/$projectId/messages:send'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode(
+          <String, dynamic>{
+            'message': <String, dynamic>{
+              'token': token,
+              'notification': <String, dynamic>{
+                'body': body,
+                'title': title,
+              },
+              'data': <String, dynamic>{
+                'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+                'status': 'done'
+              },
+              'android': {
+                'priority': 'HIGH',
+              }
+            },
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        if (kDebugMode) print("Push notification sent to $token");
+      } else {
+        if (kDebugMode)
+          print(
+              "Failed to send push: ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error sending push: $e");
+      }
+    }
   }
 
   /// Streams notifications for a specific user
@@ -186,9 +284,6 @@ class NotificationService {
     }
   }
 
-  // --- NEW: Sprint 3 Notification Logic ---
-
-  /// Creates a notification in Firestore for a specific user
   static Future<void> createNotification({
     required String userId,
     required String title,
@@ -216,6 +311,43 @@ class NotificationService {
     }
   }
 
+  /// Sends a Push Notification AND creates a Firestore record
+  static Future<void> sendNotificationToUser({
+    required String userId,
+    required String title,
+    required String body,
+    String type = 'general',
+    String? relatedId,
+  }) async {
+    // 1. Create Firestore Record (In-App)
+    await createNotification(
+        userId: userId,
+        title: title,
+        body: body,
+        type: type,
+        relatedId: relatedId);
+
+    // 2. Fetch User Token
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      if (userDoc.exists) {
+        final data = userDoc.data();
+        final token = data?['fcmToken'];
+        if (token != null && token.toString().isNotEmpty) {
+          // 3. Send FCM Push
+          await sendPushToToken(token.toString(), title, body);
+        } else {
+          debugPrint("No FCM token found for user $userId");
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching user token for push: $e");
+    }
+  }
+
   /// Notifies all passengers of a trip about a status change
   static Future<void> notifyTripStatusChange(
       String tripId, String routeName, String newStatus,
@@ -238,7 +370,7 @@ class NotificationService {
 
       final batch = FirebaseFirestore.instance.batch();
 
-      // 2. batch create notifications
+      // 2. batch create notifications & Send Pushes
       for (var doc in ticketsSnapshot.docs) {
         final data = doc.data();
         final userId = data['userId'];
@@ -270,6 +402,7 @@ class NotificationService {
             type = 'cancellation';
           }
 
+          // A. Add to In-App Notifications
           batch.set(docRef, {
             'userId': userId,
             'title': title,
@@ -279,13 +412,30 @@ class NotificationService {
             'timestamp': FieldValue.serverTimestamp(),
             'isRead': false,
           });
+
+          // B. Send Push Notification (Fire & Forget)
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .get()
+              .then((userDoc) {
+            if (userDoc.exists) {
+              final userData = userDoc.data();
+              // Try 'fcmToken' first, if likely simple string
+              // In saveTokenToUser, we save both.
+              final token = userData?['fcmToken'];
+              if (token != null && token.toString().isNotEmpty) {
+                sendPushToToken(token.toString(), title, message);
+              }
+            }
+          });
         }
       }
 
       await batch.commit();
       if (kDebugMode) {
         print(
-            "Notifications sent to ${ticketsSnapshot.docs.length} passengers.");
+            "Notifications processed for ${ticketsSnapshot.docs.length} passengers.");
       }
     } catch (e) {
       if (kDebugMode) {
@@ -299,11 +449,6 @@ class NotificationService {
     try {
       String? token = await _firebaseMessaging.getToken();
       if (token == null) return;
-
-      // Robustly save token (Array or Single Field?)
-      // Single field is easier for 1-1 deviceness, Array is better for multi-device.
-      // Let's use specific field for now or Merge.
-      // We will do both: 'fcmToken' (last used) and add to 'fcmTokens' array.
 
       final userRef =
           FirebaseFirestore.instance.collection('users').doc(userId);
@@ -319,6 +464,39 @@ class NotificationService {
       }
     } catch (e) {
       debugPrint("Error saving FCM token: $e");
+    }
+  }
+
+  static Future<void> scheduleTripReminder(
+      int id, String title, String body, DateTime scheduledDate) async {
+    try {
+      tz.initializeTimeZones();
+
+      if (scheduledDate.isBefore(DateTime.now())) return;
+
+      await _localNotifications.zonedSchedule(
+        id,
+        title,
+        body,
+        tz.TZDateTime.from(scheduledDate, tz.local),
+        const fln.NotificationDetails(
+          android: fln.AndroidNotificationDetails(
+            'trip_reminders',
+            'Trip Reminders',
+            channelDescription: 'Notifications for upcoming trips',
+            importance: fln.Importance.max,
+            priority: fln.Priority.high,
+          ),
+          iOS: fln.DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: fln.AndroidScheduleMode.exactAllowWhileIdle,
+        // uiLocalNotificationDateInterpretation removed as it is reported undefined
+      );
+      if (kDebugMode) {
+        print("Scheduled reminder '$title' for $scheduledDate (ID: $id)");
+      }
+    } catch (e) {
+      debugPrint("Error scheduling reminder: $e");
     }
   }
 }

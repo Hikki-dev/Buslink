@@ -16,8 +16,10 @@ import '../../services/auth_service.dart';
 class TicketScreen extends StatefulWidget {
   final Trip? tripArg;
   final Ticket? ticketArg;
+  final List<Ticket>? ticketsArg; // Added for Bulk
 
-  const TicketScreen({super.key, this.tripArg, this.ticketArg});
+  const TicketScreen(
+      {super.key, this.tripArg, this.ticketArg, this.ticketsArg});
 
   @override
   State<TicketScreen> createState() => _TicketScreenState();
@@ -27,17 +29,29 @@ class _TicketScreenState extends State<TicketScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final user = authService.currentUser;
+    // final authService = Provider.of<AuthService>(context, listen: false); // Unused
+    // final user = authService.currentUser; // Unused
     final Trip? trip = widget.tripArg ?? controller.selectedTrip?.trip;
-    final ticket = widget.ticketArg ?? controller.currentTicket;
 
-    if (trip == null || ticket == null) {
+    // Determine if single or bulk
+    List<Ticket> tickets = [];
+    if (widget.ticketsArg != null && widget.ticketsArg!.isNotEmpty) {
+      tickets = widget.ticketsArg!;
+    } else if (widget.ticketArg != null) {
+      tickets = [widget.ticketArg!];
+    } else if (controller.currentTicket != null) {
+      tickets = [controller.currentTicket!];
+    }
+
+    if (trip == null || tickets.isEmpty) {
       return Scaffold(
         backgroundColor: Colors.grey.shade50,
         body: const Center(child: Text("Error loading ticket details.")),
       );
     }
+
+    final isBulk = tickets.length > 1;
+    final mainTicket = tickets.first;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -49,47 +63,23 @@ class _TicketScreenState extends State<TicketScreen> {
               Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text("Course", // "Course" or "Trip"
+        title: Text(isBulk ? "Bulk Tickets (${tickets.length})" : "Course",
             style: TextStyle(
                 fontFamily: 'Outfit',
                 color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
-          // --- FAVORITE HEART ---
-          if (user != null)
-            FutureBuilder<bool>(
-              future: controller.isRouteFavorite(trip.fromCity, trip.toCity),
-              builder: (context, snapshot) {
-                final isFav = snapshot.data ?? false;
-                return IconButton(
-                  icon: Icon(
-                    isFav ? Icons.favorite : Icons.favorite_border,
-                    color: isFav
-                        ? Colors.red
-                        : Theme.of(context).colorScheme.onSurface,
-                  ),
-                  onPressed: () async {
-                    await controller.toggleRouteFavorite(
-                        trip.fromCity, trip.toCity);
-                    setState(() {}); // Refresh state to update icon
-                  },
-                );
-              },
-            ),
-
-          // --- FEEDBACK ---
           IconButton(
             icon: Icon(Icons.chat_bubble_outline,
                 color: Theme.of(context).colorScheme.onSurface),
             onPressed: () => _showFeedbackDialog(context),
             tooltip: "Give Feedback",
           ),
-
           IconButton(
             icon: Icon(Icons.download_rounded,
                 color: Theme.of(context).colorScheme.onSurface),
-            onPressed: () => _downloadPdf(context, trip, ticket),
+            onPressed: () => _downloadPdf(context, trip, tickets),
             tooltip: "Download PDF",
           )
         ],
@@ -100,24 +90,42 @@ class _TicketScreenState extends State<TicketScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("E-TICKET",
+              Text(isBulk ? "BUNDLE (${tickets.length})" : "E-TICKET",
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       letterSpacing: 2,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey.shade400)),
               const SizedBox(height: 16),
-              _buildTicketCard(context, trip, ticket),
+              if (isBulk)
+                SizedBox(
+                  height: 600,
+                  child: PageView.builder(
+                    itemCount: tickets.length,
+                    controller: PageController(viewportFraction: 0.9),
+                    itemBuilder: (ctx, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: SingleChildScrollView(
+                          child:
+                              _buildTicketCard(context, trip, tickets[index]),
+                        ),
+                      );
+                    },
+                  ),
+                )
+              else
+                _buildTicketCard(context, trip, mainTicket),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => _downloadPdf(context, trip, ticket),
+                  onPressed: () => _downloadPdf(context, trip, tickets),
                   icon: const Icon(Icons.picture_as_pdf),
-                  label: const Text("Download PDF"),
+                  label: Text(
+                      isBulk ? "Download Consolidated PDF" : "Download PDF"),
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme
-                          .primaryColor, // Fixed: Red button for visibility
+                      backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 32, vertical: 20),
@@ -148,7 +156,7 @@ class _TicketScreenState extends State<TicketScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 40,
               offset: const Offset(0, 20))
         ],
@@ -176,7 +184,7 @@ class _TicketScreenState extends State<TicketScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(4)),
                   child: const Text("CONFIRMED",
                       style: TextStyle(
@@ -264,12 +272,6 @@ class _TicketScreenState extends State<TicketScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                SelectableText("REF: ${ticket.ticketId}",
-                    style: const TextStyle(
-                        fontFamily: 'Inter',
-                        letterSpacing: 1,
-                        fontSize: 10,
-                        color: Colors.grey)),
                 const SizedBox(height: 16),
                 const Text(
                   "SHOW 4-DIGIT CODE OR SCAN QR",
@@ -382,8 +384,12 @@ class _TicketScreenState extends State<TicketScreen> {
   }
 
   Future<void> _downloadPdf(
-      BuildContext context, Trip trip, Ticket ticket) async {
+      BuildContext context, Trip trip, List<Ticket> tickets) async {
     final doc = pw.Document();
+    final isBulk = tickets.length > 1;
+
+    // Use the first ticket for common details
+    final mainTicket = tickets.first;
 
     doc.addPage(
       pw.Page(
@@ -402,75 +408,147 @@ class _TicketScreenState extends State<TicketScreen> {
                                   fontSize: 24,
                                   fontWeight: pw.FontWeight.bold,
                                   color: PdfColors.red900)),
-                          pw.Text("E-TICKET",
+                          pw.Text(isBulk ? "BULK RECEIPT" : "E-TICKET",
                               style: pw.TextStyle(
                                   fontSize: 20,
                                   fontWeight: pw.FontWeight.bold,
                                   color: PdfColors.grey)),
                         ])),
                 pw.SizedBox(height: 20),
+
+                // Trip Details Box
                 pw.Container(
-                    padding: const pw.EdgeInsets.all(20),
+                    padding: const pw.EdgeInsets.all(15),
                     decoration: pw.BoxDecoration(
-                        border: pw.Border.all(color: PdfColors.grey300)),
-                    child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        border: pw.Border.all(color: PdfColors.grey300),
+                        color: PdfColors.grey100),
+                    child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
-                          pw.Row(
-                              mainAxisAlignment:
-                                  pw.MainAxisAlignment.spaceBetween,
+                          pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
                               children: [
-                                pw.Text(
-                                    "Ticket ID: ${ticket.ticketId.toUpperCase().substring(0, 8)}",
+                                pw.Text("TRIP DETAILS",
                                     style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold)),
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10)),
+                                pw.SizedBox(height: 5),
+                                pw.Text("${trip.fromCity}  ->  ${trip.toCity}",
+                                    style: pw.TextStyle(
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 14)),
                                 pw.Text(
                                     "Date: ${DateFormat('yyyy-MM-dd').format(trip.departureTime)}"),
+                                pw.Text(
+                                    "Time: ${DateFormat('hh:mm a').format(trip.departureTime)}"),
                               ]),
-                          pw.Divider(),
-                          pw.Text(
-                              "FROM: ${trip.fromCity}  ->  TO: ${trip.toCity}",
-                              style: pw.TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: pw.FontWeight.bold)),
-                          pw.SizedBox(height: 10),
-                          pw.Text(
-                              "Departure: ${DateFormat('hh:mm a').format(trip.departureTime)}"),
-                          pw.Text("Platform: ${trip.platformNumber}"),
-                          pw.SizedBox(height: 10),
-                          pw.Text("Passenger: ${ticket.passengerName}"),
-                          pw.Text("Seats: ${ticket.seatNumbers.join(', ')}"),
-                          pw.Divider(),
-                          pw.Align(
-                              alignment: pw.Alignment.centerRight,
-                              child: pw.Text(
-                                  "Total Paid: LKR ${ticket.totalAmount.toStringAsFixed(0)}",
-                                  style: pw.TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: pw.FontWeight.bold,
-                                      color: PdfColors.red900)))
+                          pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.end,
+                              children: [
+                                pw.Text("TICKETS: ${tickets.length}",
+                                    style: pw.TextStyle(
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 12)),
+                                pw.Text(
+                                    "Total Paid: LKR ${tickets.fold(0.0, (s, t) => s + t.totalAmount).toStringAsFixed(0)}",
+                                    style: pw.TextStyle(
+                                        fontWeight: pw.FontWeight.bold,
+                                        color: PdfColors.red900)),
+                              ])
                         ])),
+
+                pw.SizedBox(height: 20),
+
+                if (isBulk)
+                  pw.Table.fromTextArray(
+                      headers: [
+                        'Ticket ID',
+                        'Passenger',
+                        'Phone',
+                        'Seat(s)',
+                        'Code'
+                      ],
+                      data: tickets
+                          .map((t) => [
+                                t.ticketId.substring(0, 8).toUpperCase(),
+                                t.passengerName,
+                                t.passengerPhone,
+                                t.seatNumbers.join(','),
+                                t.shortId ?? '-'
+                              ])
+                          .toList(),
+                      headerStyle: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.white),
+                      headerDecoration:
+                          const pw.BoxDecoration(color: PdfColors.red900),
+                      cellStyle: const pw.TextStyle(fontSize: 10),
+                      cellAlignments: {
+                        0: pw.Alignment.centerLeft,
+                        1: pw.Alignment.centerLeft,
+                        2: pw.Alignment.centerLeft,
+                        3: pw.Alignment.center,
+                        4: pw.Alignment.center,
+                      })
+                else
+                  // Single Ticket Layout (Preserve Original Look)
+                  pw.Container(
+                      padding: const pw.EdgeInsets.all(20),
+                      decoration: pw.BoxDecoration(
+                          border: pw.Border.all(color: PdfColors.grey300)),
+                      child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Row(
+                                mainAxisAlignment:
+                                    pw.MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Ticket ID Removed
+                                  pw.Text(
+                                      "Ticket Code: ${mainTicket.shortId ?? 'N/A'}",
+                                      style: pw.TextStyle(
+                                          fontWeight: pw.FontWeight.bold)),
+                                  pw.Text(
+                                      "Date: ${DateFormat('yyyy-MM-dd').format(trip.departureTime)}"),
+                                ]),
+                            pw.Divider(),
+                            pw.Text("Passenger: ${mainTicket.passengerName}"),
+                            pw.Text(
+                                "Seats: ${mainTicket.seatNumbers.join(', ')}"),
+                            pw.Divider(),
+                            pw.Align(
+                                alignment: pw.Alignment.centerRight,
+                                child: pw.Text(
+                                    "Total: LKR ${mainTicket.totalAmount.toStringAsFixed(0)}",
+                                    style: pw.TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: pw.FontWeight.bold,
+                                        color: PdfColors.red900)))
+                          ])),
+
                 pw.SizedBox(height: 20),
                 pw.SizedBox(height: 20),
-                pw.Text("SHOW 4-DIGIT CODE TO CONDUCTOR",
+                pw.Text("SHOW CODE TO CONDUCTOR",
                     style: pw.TextStyle(
                         fontSize: 14,
                         fontWeight: pw.FontWeight.bold,
                         color: PdfColors.red900)),
                 pw.SizedBox(height: 5),
-                pw.Text("CODE: ${ticket.shortId}",
+                // For bulk, maybe show first code or just list them
+                pw.Text(
+                    isBulk ? "See table above" : "CODE: ${mainTicket.shortId}",
                     style: pw.TextStyle(
                         fontSize: 32, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 10),
-                pw.BarcodeWidget(
-                  barcode: pw.Barcode.qrCode(),
-                  data: ticket.ticketId,
-                  width: 120,
-                  height: 120,
-                ),
-                pw.SizedBox(height: 10),
-                pw.Text("OR SCAN QR",
-                    style: const pw.TextStyle(color: PdfColors.grey)),
+
+                if (!isBulk) ...[
+                  pw.SizedBox(height: 10),
+                  pw.BarcodeWidget(
+                    barcode: pw.Barcode.qrCode(),
+                    data: mainTicket.ticketId,
+                    width: 120,
+                    height: 120,
+                  ),
+                ]
               ],
             ),
           );
@@ -478,9 +556,8 @@ class _TicketScreenState extends State<TicketScreen> {
       ),
     );
 
-    // Share/Print the PDF
     await Printing.sharePdf(
-        bytes: await doc.save(), filename: 'ticket_${ticket.ticketId}.pdf');
+        bytes: await doc.save(), filename: 'buslink_tickets.pdf');
   }
 }
 

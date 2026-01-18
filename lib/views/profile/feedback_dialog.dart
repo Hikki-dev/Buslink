@@ -116,8 +116,23 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
     try {
       final user = Provider.of<AuthService>(context, listen: false).currentUser;
 
+      String userName = user?.displayName ?? 'Anonymous';
+      if (userName == 'Anonymous' && user != null) {
+        // Try fetching from DB
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        if (userDoc.exists) {
+          final data = userDoc.data();
+          userName = data?['displayName'] ?? data?['name'] ?? 'Anonymous';
+        }
+      }
+
       await FirebaseFirestore.instance.collection('feedback').add({
         'userId': user?.uid ?? 'anonymous',
+        'userName': userName,
+        'userEmail': user?.email ?? 'N/A',
         'rating': _rating,
         'comment': _commentController.text.trim(),
         'timestamp': FieldValue.serverTimestamp(),

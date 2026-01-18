@@ -16,20 +16,18 @@ enum RefundReason {
 
 class RefundRequest {
   final String id;
-  final String
-      bookingId; // This is actually the ticketId/ref in some contexts, but let's keep separate if needed.
-  // Based on errors: "Ref: ${refund.ticketId.substring(0, 8)}..." implies we need ticketId.
+  final String bookingId;
   final String ticketId;
   final String tripId;
   final String? paymentId;
-  final String? paymentIntentId; // For Stripe refunds
-  final String userId; // Was requestedBy, but errors say userId
+  final String? paymentIntentId;
+  final String userId;
   final String passengerName;
-  final DateTime requestedAt; // This maps to createdAt in UI errors?
+  final String? email; // Added email field
+  final DateTime requestedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final double
-      amountRequested; // This seems to be the total trip price or similar?
+  final double amountRequested;
   final double tripPrice;
   final double refundPercentage;
   final double refundAmount;
@@ -53,6 +51,7 @@ class RefundRequest {
     this.paymentIntentId,
     required this.userId,
     required this.passengerName,
+    this.email,
     required this.requestedAt,
     required this.createdAt,
     required this.updatedAt,
@@ -79,6 +78,7 @@ class RefundRequest {
       'paymentIntentId': paymentIntentId,
       'userId': userId,
       'passengerName': passengerName,
+      'email': email,
       'requestedAt': Timestamp.fromDate(requestedAt),
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
@@ -106,9 +106,9 @@ class RefundRequest {
       tripId: map['tripId'] ?? '',
       paymentId: map['paymentId'],
       paymentIntentId: map['paymentIntentId'],
-      userId:
-          map['userId'] ?? map['requestedBy'] ?? '', // Fallback for transition
+      userId: map['userId'] ?? map['requestedBy'] ?? '',
       passengerName: map['passengerName'] ?? 'Unknown',
+      email: map['email'],
       requestedAt:
           (map['requestedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),

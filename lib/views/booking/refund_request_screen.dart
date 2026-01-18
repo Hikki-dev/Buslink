@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../models/trip_model.dart';
 import '../../models/refund_model.dart';
@@ -97,27 +98,36 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
 
     setState(() => _isLoading = true);
 
-    // 1. Strict Duplicate Check
-    final existingQuery = await FirebaseFirestore.instance
-        .collection('refunds')
-        .where('ticketId', isEqualTo: widget.ticket.ticketId)
-        .limit(1)
-        .get();
-
-    if (existingQuery.docs.isNotEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("A refund request already exists.")));
-      Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (_) =>
-                  RefundStatusScreen(refundId: existingQuery.docs.first.id)));
-      // Note: setState not needed as we navigate away, but safe to do if staying
-      return;
-    }
-
     try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      debugPrint(
+          "DEBUG REFUND: Ticket User: ${widget.ticket.userId}, Auth User: ${currentUser?.uid}");
+
+      if (currentUser != null && widget.ticket.userId != currentUser.uid) {
+        debugPrint(
+            "WARNING: Mismatch in IDs may cause permission error if not Admin.");
+      }
+
+      // 1. Strict Duplicate Check (Moved inside try-catch with timeout)
+      final existingQuery = await FirebaseFirestore.instance
+          .collection('refunds')
+          .where('ticketId', isEqualTo: widget.ticket.ticketId)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 10));
+
+      if (existingQuery.docs.isNotEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("A refund request already exists.")));
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (_) =>
+                    RefundStatusScreen(refundId: existingQuery.docs.first.id)));
+        return;
+      }
+
       final calc = _refundService.calculateRefundAmount(
           widget.ticket.totalAmount, widget.trip.departureTime);
       final refundPct = calc['percentage']!;
@@ -148,15 +158,17 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
         paymentIntentId: widget.ticket.paymentIntentId, // Ensure this is passed
       );
 
-      await _refundService.createRefundRequest(refundReq);
+      // Add timeout to creation as well
+      await _refundService
+          .createRefundRequest(refundReq)
+          .timeout(const Duration(seconds: 15));
 
       if (!mounted) return;
 
       // Show Success Message as requested
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-              "Refund completed. Your bank may take 4 days to reflect it."),
+          content: Text("Refund details submitted. Check status for updates."),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 4),
         ),
@@ -169,8 +181,10 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
               builder: (_) => RefundStatusScreen(refundId: refundReq.id)));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Error: $e")));
+        debugPrint("Refund Error: $e");
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Submission failed: $e"),
+            backgroundColor: Colors.red));
         setState(() => _isLoading = false);
       }
     }

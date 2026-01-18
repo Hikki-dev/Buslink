@@ -1520,14 +1520,25 @@ class _HeroSectionState extends State<_HeroSection> {
                       controller, // Use the TextController passed to widget
                   focusNode: focusNode,
                   optionsBuilder: (TextEditingValue textEditingValue) {
+                    final tripCtrl =
+                        Provider.of<TripController>(context, listen: false);
+                    final lp =
+                        Provider.of<LanguageProvider>(context, listen: false);
                     final cities = tripCtrl.availableCities;
+
                     if (textEditingValue.text.isEmpty) {
                       return cities;
                     }
+
+                    final query = textEditingValue.text.toLowerCase();
                     return cities.where((String option) {
-                      return option
-                          .toLowerCase()
-                          .contains(textEditingValue.text.toLowerCase());
+                      // 1. Check English Match
+                      if (option.toLowerCase().contains(query)) return true;
+
+                      // 2. Check Translated Match
+                      final cityKey = option.toLowerCase().replaceAll(' ', '_');
+                      final translated = lp.translate(cityKey);
+                      return translated.toLowerCase().contains(query);
                     });
                   },
                   optionsViewBuilder: (context, onSelected, options) {
@@ -1809,25 +1820,25 @@ class _HeroSectionState extends State<_HeroSection> {
                   textEditingController: controller,
                   focusNode: focusNode, // Use provided FocusNode
                   optionsBuilder: (TextEditingValue textEditingValue) {
-                    // Access provider inside optionsBuilder if needed, or better, pass updated list from parent rebuild
-                    // But accessing Context here might be tricky if not in a builder.
-                    // Actually _HeroSection build has context. We can access Provider via context or widget if passed.
-                    // But _buildSearchInput is a method. We need direct access.
-                    // Let's use Provider.of<TripController>(context, listen: false).availableCities
-                    // Note: listen: false is okay because we want the current list?
-                    // Or better, let Consumer wrap this? In this specific method, there is no Consumer wrapper around this RawAutocomplete like in the desktop one.
-                    // I will verify if I can wrap it or just use Provider.
                     final tripCtrl =
                         Provider.of<TripController>(context, listen: false);
+                    final lp =
+                        Provider.of<LanguageProvider>(context, listen: false);
                     final cities = tripCtrl.availableCities;
 
                     if (textEditingValue.text.isEmpty) {
                       return cities;
                     }
+
+                    final query = textEditingValue.text.toLowerCase();
                     return cities.where((String option) {
-                      return option
-                          .toLowerCase()
-                          .contains(textEditingValue.text.toLowerCase());
+                      // 1. Check English Match
+                      if (option.toLowerCase().contains(query)) return true;
+
+                      // 2. Check Translated Match
+                      final cityKey = option.toLowerCase().replaceAll(' ', '_');
+                      final translated = lp.translate(cityKey);
+                      return translated.toLowerCase().contains(query);
                     });
                   },
                   fieldViewBuilder: (BuildContext context,

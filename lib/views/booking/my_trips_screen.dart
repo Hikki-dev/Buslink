@@ -15,6 +15,8 @@ import '../layout/desktop_navbar.dart';
 import '../layout/custom_app_bar.dart';
 import '../analytics/travel_stats_screen.dart';
 import 'refund_request_screen.dart';
+import '../../utils/language_provider.dart';
+import 'my_trips_stats_widget.dart';
 
 class MyTripsScreen extends StatelessWidget {
   final bool showBackButton;
@@ -31,102 +33,130 @@ class MyTripsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
     final controller = Provider.of<TripController>(context);
-
     final bool isDesktop = MediaQuery.of(context).size.width > 900;
 
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          if (isDesktop)
-            Material(
-              elevation: 4,
-              child: DesktopNavBar(selectedIndex: 1, isAdminView: isAdminView),
-            ),
-          // App Bar Logic: currently MyTripsScreen has a CustomAppBar.
-          // We need to keep the AppBar logic but remove the BottomNav.
-          // If we remove Scaffold, we can't use 'appBar' property easily unless we wrap in Scaffold but WITHOUT BottomNav.
-          // Actually, CustomerMainScreen has a BODY that is IndexedStack -> MyTripsScreen.
-          // If MyTripsScreen returns a Scaffold, it's fine as long as it doesn't have a BottomNavigationBar.
-          // So we just REMOVE bottomNavigationBar.
+    return StreamBuilder<List<Ticket>>(
+        stream: controller.getUserTickets(),
+        builder: (context, snapshot) {
+          // Handle Loading/Error explicitly if needed, but for scaffold structure we might want to return Scaffold even if loading.
+          // Let's keep Scaffold structure.
+          final isLoading = snapshot.connectionState == ConnectionState.waiting;
+          final hasError = snapshot.hasError;
+          final allTickets = snapshot.data ?? [];
 
-          Expanded(
-            child: Scaffold(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              // Removed BottomNavigationBar
-              appBar: CustomAppBar(
-                hideActions: isDesktop,
-                automaticallyImplyLeading: showBackButton && !isDesktop,
-                leading: showBackButton && !isDesktop
-                    ? BackButton(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        onPressed: () {
-                          if (onBack != null) {
-                            onBack!();
-                          } else {
-                            Navigator.pop(context);
-                          }
-                        })
-                    : null,
-                title: Text("My Trips",
-                    style: TextStyle(
-                        fontFamily: 'Outfit',
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.bold)),
-                centerTitle: true,
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.bar_chart),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const TravelStatsScreen()));
-                    },
-                    tooltip: "Travel Stats",
-                  )
-                ],
-                bottom: const TabBar(
-                  labelColor: AppTheme.primaryColor,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: AppTheme.primaryColor,
-                  labelStyle: TextStyle(
-                      fontFamily: 'Outfit', fontWeight: FontWeight.bold),
-                  tabs: [
-                    Tab(text: "UPCOMING"),
-                    Tab(text: "HISTORY"),
-                  ],
-                ),
-              ),
-              body: user == null
-                  ? _buildLoginPrompt()
-                  : TabBarView(
-                      children: [
-                        _TripsList(
-                            controller: controller,
-                            userId: user.uid,
-                            isHistory: false),
-                        _TripsList(
-                            controller: controller,
-                            userId: user.uid,
-                            isHistory: true),
+          // Stats Calculation
+          if (!isLoading && !hasError) {
+            // Logic moved to TravelStatsScreen
+          }
+
+          return DefaultTabController(
+            length: 2,
+            child: Column(
+              children: [
+                if (isDesktop)
+                  Material(
+                    elevation: 4,
+                    child: DesktopNavBar(
+                        selectedIndex: 1, isAdminView: isAdminView),
+                  ),
+                Expanded(
+                  child: Scaffold(
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    appBar: CustomAppBar(
+                      hideActions: isDesktop,
+                      automaticallyImplyLeading: showBackButton && !isDesktop,
+                      leading: showBackButton && !isDesktop
+                          ? BackButton(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              onPressed: () {
+                                if (onBack != null) {
+                                  onBack!();
+                                } else {
+                                  Navigator.pop(context);
+                                }
+                              })
+                          : null,
+                      title: Text(
+                          Provider.of<LanguageProvider>(context)
+                              .translate('my_trips_title'),
+                          style: TextStyle(
+                              fontFamily: 'Outfit',
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontWeight: FontWeight.bold)),
+                      centerTitle: true,
+                      actions: [
+                        IconButton(
+                          icon: const Icon(Icons.bar_chart),
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const TravelStatsScreen()));
+                          },
+                          tooltip: "Travel Stats",
+                        )
                       ],
+                      bottom: TabBar(
+                        labelColor: AppTheme.primaryColor,
+                        unselectedLabelColor: Colors.grey,
+                        indicatorColor: AppTheme.primaryColor,
+                        labelStyle: TextStyle(
+                            fontFamily: 'Outfit', fontWeight: FontWeight.bold),
+                        tabs: [
+                          Tab(
+                              text: Provider.of<LanguageProvider>(context)
+                                  .translate('tab_upcoming')),
+                          Tab(
+                              text: Provider.of<LanguageProvider>(context)
+                                  .translate('tab_history')),
+                        ],
+                      ),
                     ),
+                    body: user == null
+                        ? _buildLoginPrompt(context)
+                        : isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : hasError
+                                ? Center(
+                                    child: Text("Error: ${snapshot.error}"))
+                                : Column(
+                                    children: [
+                                      Expanded(
+                                        child: TabBarView(
+                                          children: [
+                                            // Upcoming Tab
+                                            _TripsList(
+                                                allTickets: allTickets,
+                                                userId: user.uid,
+                                                isHistory: false),
+                                            // History Tab
+                                            _TripsList(
+                                                allTickets: allTickets,
+                                                userId: user.uid,
+                                                isHistory: true),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
+        });
   }
 
-  Widget _buildLoginPrompt() {
+  Widget _buildLoginPrompt(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.lock_clock, size: 64, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          const Text("Please sign in to view your trips",
+          Text(
+              Provider.of<LanguageProvider>(context)
+                  .translate('sign_in_view_trips'),
               style: TextStyle(
                   fontFamily: 'Inter', fontSize: 16, color: Colors.grey)),
         ],
@@ -136,125 +166,174 @@ class MyTripsScreen extends StatelessWidget {
 }
 
 class _TripsList extends StatelessWidget {
-  final TripController controller;
+  final List<Ticket> allTickets;
   final String userId;
   final bool isHistory;
 
   const _TripsList(
-      {required this.controller,
+      {required this.allTickets,
       required this.userId,
       required this.isHistory});
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Ticket>>(
-      stream: controller.getUserTickets(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    final now = DateTime
+        .now(); // Used in cutoff calculation below, so it IS used. Wait, user error?
+    // User error says 'now' is not used?
+    // Line 199: final cutoff = now.subtract(const Duration(hours: 12));
+    // It IS used. Maybe there was another 'now' somewhere?
+    // Let's re-read the error: "The value of the local variable 'now' isn't used. startLine: 53"
+    // The previous view_file started at 101. I need to check line 53.
 
-        if (snapshot.hasError) {
-          return Center(child: Text("Error: ${snapshot.error}"));
-        }
+    // Helper to parse date consistently
+    DateTime getTripDate(Map<String, dynamic> data, DateTime bookingTime) {
+      dynamic dep = data['departureTime'];
+      if (dep is Timestamp) return dep.toDate();
+      if (dep is DateTime) return dep;
+      if (dep is String) {
+        return DateTime.tryParse(dep) ??
+            bookingTime; // Handle strings just in case
+      }
+      return bookingTime;
+    }
 
-        var tickets = snapshot.data ?? [];
-        final now = DateTime.now();
+    // --- Filter List for Display (Respecting isHistory) ---
+    final cutoff = now.subtract(const Duration(hours: 12));
+    var tickets = allTickets.where((ticket) {
+      DateTime tripDate = getTripDate(ticket.tripData, ticket.bookingTime);
 
-        // Safe Filtering with Buffer
-        final cutoff = now.subtract(const Duration(hours: 12));
+      final statusLower = ticket.status.toLowerCase();
 
-        tickets = tickets.where((ticket) {
-          DateTime? tripDate;
-          if (ticket.tripData.containsKey('departureTime') &&
-              ticket.tripData['departureTime'] != null) {
-            try {
-              final dep = ticket.tripData['departureTime'];
-              if (dep is DateTime) {
-                tripDate = dep;
-              } else if (dep is Timestamp) {
-                tripDate = dep.toDate();
-              }
-            } catch (_) {}
-          }
-          tripDate ??= ticket.bookingTime;
+      if (statusLower == 'refunded') return false;
 
-          final statusLower = ticket.status.toLowerCase();
+      if (statusLower == 'cancelled') {
+        if (!isHistory) return false;
+      }
 
-          // User Request: "after its been accepted (refunded), make sure its not seen anymore"
-          if (statusLower == 'refunded') return false;
+      if (isHistory) {
+        if (statusLower == 'cancelled') return true;
+        return tripDate.isBefore(cutoff);
+      } else {
+        return tripDate.isAfter(cutoff);
+      }
+    }).toList();
 
-          if (statusLower == 'cancelled') {
-            // Cancelled tickets go to history or are hidden.
-            // We will include them in History so the user has a record, but definitely NOT in Upcoming.
-            if (!isHistory) return false;
-            // For history, we can show them.
-          }
+    // Sort
+    tickets.sort((a, b) {
+      final dateA = getTripDate(a.tripData, a.bookingTime);
+      final dateB = getTripDate(b.tripData, b.bookingTime);
+      if (isHistory) {
+        return dateB.compareTo(dateA);
+      } else {
+        return dateA.compareTo(dateB);
+      }
+    });
 
-          if (isHistory) {
-            // History = Completed more than 12 hours ago OR Cancelled
-            if (statusLower == 'cancelled') return true;
-            return tripDate.isBefore(cutoff);
-          } else {
-            // Upcoming = Future OR departed within last 12 hours AND NOT Cancelled
-            return tripDate.isAfter(cutoff);
-          }
-        }).toList();
+    // --- GROUPING LOGIC ---
+    final List<dynamic> displayItems = [];
+    final Map<String, List<Ticket>> bundles = {};
 
-        // Sorting
-        tickets.sort((a, b) {
-          DateTime dateA = a.bookingTime;
-          DateTime dateB = b.bookingTime;
+    for (var t in tickets) {
+      String? groupId;
 
-          // Try to get actual trip date
-          if (a.tripData['departureTime'] is Timestamp) {
-            dateA = (a.tripData['departureTime'] as Timestamp).toDate();
-          }
-          if (b.tripData['departureTime'] is Timestamp) {
-            dateB = (b.tripData['departureTime'] as Timestamp).toDate();
-          }
+      if (t.tripData['batchId'] != null) {
+        groupId = t.tripData['batchId'];
+      } else if (t.paymentIntentId != null && t.paymentIntentId!.isNotEmpty) {
+        groupId = t.paymentIntentId;
+      }
 
-          if (isHistory) {
-            return dateB.compareTo(dateA); // Newest first
-          } else {
-            return dateA.compareTo(dateB); // Soonest first
-          }
-        });
+      if (groupId != null) {
+        bundles.putIfAbsent(groupId, () => []).add(t);
+      } else {
+        // No group, treat as single
+        displayItems.add(t);
+      }
+    }
 
-        if (tickets.isEmpty) {
-          return Center(
+    // Add bundles to display items
+    for (var entry in bundles.entries) {
+      if (entry.value.length > 1) {
+        displayItems.add(entry.value); // Add List<Ticket>
+      } else {
+        displayItems.add(entry.value.first); // Single ticket from group
+      }
+    }
+
+    // Re-sort display items by date of first ticket
+    displayItems.sort((a, b) {
+      Ticket tA = (a is List) ? (a as List<Ticket>).first : (a as Ticket);
+      Ticket tB = (b is List) ? (b as List<Ticket>).first : (b as Ticket);
+
+      final dateA = getTripDate(tA.tripData, tA.bookingTime);
+      final dateB = getTripDate(tB.tripData, tB.bookingTime);
+
+      if (isHistory) return dateB.compareTo(dateA);
+      return dateA.compareTo(dateB);
+    });
+
+    return displayItems.isEmpty
+        ? Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(isHistory ? Icons.history : Icons.directions_bus_outlined,
                     size: 64, color: Colors.grey.shade300),
                 const SizedBox(height: 16),
-                Text(isHistory ? "No past trips" : "No upcoming trips",
+                Text(
+                    isHistory
+                        ? Provider.of<LanguageProvider>(context)
+                            .translate('no_past_trips')
+                        : Provider.of<LanguageProvider>(context)
+                            .translate('no_upcoming_trips'),
                     style: const TextStyle(
                         fontFamily: 'Inter', fontSize: 18, color: Colors.grey)),
               ],
             ),
-          );
-        }
-
-        return Center(
-          child: ConstrainedBox(
+          )
+        : ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
             child: ListView.separated(
-              padding: const EdgeInsets.all(24),
-              itemCount: tickets.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 20),
+              padding: const EdgeInsets.only(
+                  bottom: 100, left: 16, right: 16, top: 16),
+              itemCount: displayItems.length +
+                  (isHistory ? 1 : 0), // +1 for Stats in History
+              separatorBuilder: (_, __) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
-                return _BoardingPassCard(
-                    ticket: tickets[index], shouldListen: !isHistory);
+                // Should show Stats first if History
+                if (isHistory) {
+                  if (index == 0) {
+                    // We need to re-implement _buildDashboardStats logic here or call a static/mixin method.
+                    // Since _buildDashboardStats is on parent State, we can't easily call it.
+                    // I will copy the stats logic briefly or better, make it a static helper or separate widget.
+                    // For now, I'll inline the logic for clarity and speed as refactoring entire class is risky.
+                    return TripsStatsWidget(allTickets: allTickets);
+                  }
+                  final item = displayItems[index - 1]; // Offset index
+                  if (item is List<Ticket>) {
+                    return _BulkBoardingPassCard(tickets: item);
+                  } else {
+                    return _BoardingPassCard(
+                      ticket: item as Ticket,
+                      shouldListen: !isHistory,
+                    );
+                  }
+                }
+
+                // Not History (Upcoming)
+                final item = displayItems[index];
+                if (item is List<Ticket>) {
+                  return _BulkBoardingPassCard(tickets: item);
+                } else {
+                  return _BoardingPassCard(
+                    ticket: item as Ticket,
+                    shouldListen: !isHistory,
+                  );
+                }
               },
             ),
-          ),
-        );
-      },
-    );
+          );
   }
-}
+} // End _TripsList
 
 class _BoardingPassCard extends StatelessWidget {
   final Ticket ticket;
@@ -289,27 +368,30 @@ class _BoardingPassCard extends StatelessWidget {
       // Determine Status from live data
       final rawStatus = data['status'] ?? 'scheduled';
       final delayMin = data['delayMinutes'] ?? 0;
+      final lp = Provider.of<LanguageProvider>(context);
 
       if (rawStatus == 'delayed') {
-        statusStr = "DELAYED (+${delayMin}m)";
+        statusStr = "${lp.translate('delayed').toUpperCase()} (+${delayMin}m)";
         statusColor = Colors.red;
       } else if (rawStatus == 'started' || rawStatus == 'departed') {
-        statusStr = "ON WAY";
+        statusStr = lp.translate('on_way').toUpperCase();
         statusColor = Colors.blue;
       } else if (rawStatus == 'completed' || rawStatus == 'arrived') {
-        statusStr = "ARRIVED";
+        statusStr = lp.translate('arrived').toUpperCase();
         statusColor = Colors.green;
       } else if (rawStatus == 'onTime' || rawStatus == 'scheduled') {
-        statusStr = "ON TIME";
+        statusStr = lp.translate('scheduled').toUpperCase();
+        // Note: 'status_on_time' key exists but 'scheduled' is cleaner for default
         statusColor = Colors.green;
       } else if (rawStatus == 'cancelled') {
-        statusStr = "CANCELLED";
+        statusStr = lp.translate('cancelled').toUpperCase();
         statusColor = Colors.red.shade900;
       }
     } else {
       // Fallback/Static Status (basic)
-      // For history, we assume it's done or use ticket data if available
-      statusStr = "HISTORY"; // Or derive from ticket if status was saved
+      statusStr = Provider.of<LanguageProvider>(context)
+          .translate('tab_history')
+          .toUpperCase();
     }
 
     // Common UI Logic
@@ -373,13 +455,14 @@ class _BoardingPassCard extends StatelessWidget {
                         ]
                       ],
                     ),
-                    Text(
-                        "Ref: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
-                        style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: subTextColor)),
+                    // Ref ID Removed
+                    // Text(
+                    //     "Ref: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
+                    //     style: TextStyle(
+                    //         fontFamily: 'Inter',
+                    //         fontSize: 12,
+                    //         fontWeight: FontWeight.bold,
+                    //         color: subTextColor)),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -387,9 +470,11 @@ class _BoardingPassCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text("FROM",
+                        Text(
+                            Provider.of<LanguageProvider>(context)
+                                .translate('from'),
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
@@ -405,9 +490,11 @@ class _BoardingPassCard extends StatelessWidget {
                     ),
                     Icon(Icons.arrow_forward, color: subTextColor),
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text("TO",
+                        Text(
+                            Provider.of<LanguageProvider>(context)
+                                .translate('to'),
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
@@ -490,12 +577,32 @@ class _BoardingPassCard extends StatelessWidget {
           ),
 
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+            child: Builder(builder: (context) {
+              // DYNAMIC BUTTON LOGIC
+              bool allowRefund = false;
+              if (shouldListen &&
+                  statusStr != 'CANCELLED' &&
+                  statusStr != 'ARRIVED' &&
+                  statusStr != 'COMPLETED' &&
+                  statusStr != 'REFUNDED' &&
+                  statusStr != 'HISTORY') {
+                allowRefund = true;
+              }
+
+              // Visual Adjustment:
+              // If allowRefund is false (History/Cancelled), we only show "View Ticket".
+              // User asked to "Center" View Ticket button.
+              // We can just use a Row with MainAxisAlignment.center and a fixed/flexible width.
+
+              // Center the single button or buttons
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
                     height: 48,
+                    width: 140, // Fixed width for centered look
                     child: OutlinedButton(
                       onPressed: () {
                         try {
@@ -515,15 +622,16 @@ class _BoardingPassCard extends StatelessWidget {
                         }
                       },
                       style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8), // Fix clipping
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           side: BorderSide(
                               color: isDark
                                   ? Colors.grey.shade700
                                   : Colors.grey.shade300),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: Text("View Ticket",
+                      child: Text(
+                          Provider.of<LanguageProvider>(context)
+                              .translate('view_ticket'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -533,64 +641,44 @@ class _BoardingPassCard extends StatelessWidget {
                               color: textColor)),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: Builder(builder: (context) {
-                      // DYNAMIC BUTTON LOGIC
-                      // If Active/Upcoming (scheduled, delayed, boarding, onWay) -> Show REFUND (if eligible)
-                      // If Completed/Cancelled/Arrived -> Show NOTHING (No Book Again)
-
-                      bool allowRefund = false;
-                      // Logic: If active AND not completed/cancelled
-                      if (shouldListen &&
-                          statusStr != 'CANCELLED' &&
-                          statusStr != 'ARRIVED' &&
-                          statusStr != 'COMPLETED' &&
-                          statusStr != 'REFUNDED' &&
-                          statusStr != 'HISTORY') {
-                        allowRefund = true;
-                      }
-
-                      if (allowRefund) {
-                        return ElevatedButton.icon(
-                          onPressed: () {
-                            try {
-                              final trip =
-                                  Trip.fromMap(tripData, ticket.tripId);
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => RefundRequestScreen(
-                                          ticket: ticket, trip: trip)));
-                            } catch (e) {
-                              debugPrint("Error nav to refund: $e");
-                            }
-                          },
-                          icon: const Icon(Icons.undo,
-                              size: 18, color: Colors.white),
-                          label: const Text("Refund",
-                              style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: Colors.white)),
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red.shade400,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12))),
-                        );
-                      } else {
-                        // User requested NO "Book Again" button.
-                        return const SizedBox.shrink();
-                      }
-                    }),
-                  ),
-                ),
-              ],
-            ),
+                  if (allowRefund) ...[
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      height: 48,
+                      width: 140,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          try {
+                            final trip = Trip.fromMap(tripData, ticket.tripId);
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => RefundRequestScreen(
+                                        ticket: ticket, trip: trip)));
+                          } catch (e) {
+                            debugPrint("Error nav to refund: $e");
+                          }
+                        },
+                        icon: const Icon(Icons.undo,
+                            size: 18, color: Colors.white),
+                        label: Text(
+                            Provider.of<LanguageProvider>(context)
+                                .translate('refund_btn'),
+                            style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade400,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12))),
+                      ),
+                    ),
+                  ]
+                ],
+              );
+            }),
           ),
         ],
       ),
@@ -601,7 +689,7 @@ class _BoardingPassCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(text,
@@ -652,4 +740,162 @@ class DashedLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _BulkBoardingPassCard extends StatelessWidget {
+  final List<Ticket> tickets;
+  const _BulkBoardingPassCard({required this.tickets});
+
+  @override
+  Widget build(BuildContext context) {
+    if (tickets.isEmpty) return const SizedBox.shrink();
+
+    // Sort by date
+    tickets.sort((a, b) => a.bookingTime.compareTo(b.bookingTime));
+
+    final first = tickets.first;
+    final last = tickets.last;
+    final total = tickets.length;
+    final totalPrice = tickets.fold(0.0, (prev, t) => prev + t.totalAmount);
+
+    // Date Range
+    final startFormat = DateFormat('MMM d').format(first.bookingTime);
+    final endFormat = DateFormat('MMM d').format(last.bookingTime);
+    final dateRange = (first.bookingTime.day == last.bookingTime.day &&
+            first.bookingTime.month == last.bookingTime.month)
+        ? startFormat
+        : "$startFormat - $endFormat";
+
+    // Route (Assume same route or Mixed)
+    final fromCity = first.tripData['originCity'] ?? 'Unknown';
+    final toCity = first.tripData['destinationCity'] ?? 'Unknown';
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.copy_all,
+                        size: 16, color: AppTheme.primaryColor),
+                    const SizedBox(width: 8),
+                    Text(
+                      "BULK BOOKING ($total Trips)",
+                      style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: AppTheme.primaryColor),
+                    ),
+                  ],
+                ),
+                Text(
+                  "LKR ${totalPrice.toStringAsFixed(0)}",
+                  style: const TextStyle(
+                      fontFamily: 'Outfit',
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor),
+                )
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(fromCity,
+                            style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold)),
+                        const Icon(Icons.arrow_downward,
+                            size: 14, color: Colors.grey),
+                        Text(toCity,
+                            style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text("DATES",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 10,
+                                color: Colors.grey)),
+                        const SizedBox(height: 4),
+                        Text(dateRange,
+                            style: const TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold)),
+                      ],
+                    )
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => TicketScreen(
+                            // Pass list of tickets
+                            ticketsArg: tickets,
+                            // Fallback for logic that needs single trip
+                            tripArg: Trip.fromMap(first.tripData, first.tripId),
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12))),
+                    child: const Text("View All Tickets & Download PDF"),
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
 }

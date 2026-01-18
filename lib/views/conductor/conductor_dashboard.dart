@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_view_model.dart'; // EnrichedTrip
@@ -12,6 +12,7 @@ import '../../utils/app_constants.dart';
 // import '../layout/conductor_navbar.dart';
 // import '../admin/layout/admin_bottom_nav.dart';
 import '../admin/admin_dashboard.dart';
+import '../../utils/language_provider.dart';
 import 'conductor_trip_management_screen.dart';
 import '../layout/custom_app_bar.dart';
 import 'package:intl/intl.dart';
@@ -104,10 +105,11 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                         await Provider.of<AuthService>(context, listen: false)
                             .signOut();
                         if (context.mounted) {
-                          Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                  builder: (_) => const LoginScreen()),
-                              (route) => false);
+                          Navigator.of(context, rootNavigator: true)
+                              .pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                      builder: (_) => const LoginScreen()),
+                                  (route) => false);
                         }
                       },
                       icon: const Icon(Icons.logout, color: Colors.red),
@@ -161,14 +163,18 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             child: const Icon(Icons.search, size: 64, color: Colors.blue),
           ),
           const SizedBox(height: 24),
-          Text("Manage Trip",
+          Text(
+              Provider.of<LanguageProvider>(context)
+                  .translate('find_trip_title'),
               style: TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
-          Text("Find your trip to sell tickets or update status.",
+          Text(
+              Provider.of<LanguageProvider>(context)
+                  .translate('manage_routes_desc'),
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontFamily: 'Inter',
@@ -183,8 +189,11 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                     context: context, builder: (_) => const FindTripDialog());
               },
               icon: const Icon(Icons.search),
-              label: const Text("Find & Manage Trip",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              label: Text(
+                  Provider.of<LanguageProvider>(context)
+                      .translate('search_trips_button'),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
@@ -198,9 +207,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
     );
   }
 
-  // _searchBus removed as manual input is deprecated.
-
-  // Show loading
+  // ...
 
   Widget _buildAdminBanner() {
     return Container(
@@ -213,10 +220,11 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            "Admin Preview Mode",
-            style:
-                TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+          Text(
+            Provider.of<LanguageProvider>(context)
+                .translate('admin_preview_mode'),
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.black87),
           ),
           TextButton(
             onPressed: () {
@@ -225,7 +233,9 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   MaterialPageRoute(builder: (_) => const AdminDashboard()),
                   (route) => false);
             },
-            child: const Text("Exit", style: TextStyle(color: Colors.black87)),
+            child: Text(
+                Provider.of<LanguageProvider>(context).translate('exit'),
+                style: const TextStyle(color: Colors.black87)),
           )
         ],
       ),
@@ -362,40 +372,42 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
 
     if (ticket != null) {
       // Access Control: Check if trip is expired
-      // Assume "Completed" if Departure + Duration (Arrival) + Buffer (e.g., 4 hours) is passed.
-      // Or simply: Departure Time + 12 hours (Fail safe) if Arrival not available.
-      // ticket.tripData['departureTime'] is usually a string ISO or Timestamp.
-      // We need to parse it carefully.
+      final now = DateTime.now();
+
+      DateTime? arrivalTime;
       try {
-        DateTime? arrivalTime;
         if (ticket.tripData['arrivalTime'] != null) {
-          // It might be a Timestamp or String
           final val = ticket.tripData['arrivalTime'];
           if (val is String) {
             arrivalTime = DateTime.tryParse(val);
+          } else if (val is Timestamp) {
+            arrivalTime = val.toDate();
           }
-          // If it's Firestore Timestamp, we can't easily import it here without mess logic.
-          // But usually it's passed as ISO string in the map from controller if 'verifyTicket' handles it.
-          // Let's assume Trip.fromMap handles it.
         } else if (ticket.tripData['departureTime'] != null) {
           final val = ticket.tripData['departureTime'];
           DateTime? depTime;
           if (val is String) {
             depTime = DateTime.tryParse(val);
+          } else if (val is Timestamp) {
+            depTime = val.toDate();
           }
-          // Fallback estimate: 4 hours trip (reduced from 6)
           if (depTime != null) {
+            // Fallback: 4h trip duration
             arrivalTime = depTime.add(const Duration(hours: 4));
           }
         }
 
         if (arrivalTime != null) {
-          final now = DateTime.now();
-          // Allow access up to 2 hours after arrival for post-trip tasks (reduced from 4)
-          if (now.isAfter(arrivalTime.add(const Duration(hours: 2)))) {
+          // Access allowed only up to 12 hours AFTER departure (or 4h after arrival)
+          // Using strict 12h from departure as the primary "Time Passed" rule per user Constraint.
+          final depTime = ticket.tripData['departureTime'] is Timestamp
+              ? (ticket.tripData['departureTime'] as Timestamp).toDate()
+              : DateTime.now(); // Fallback
+
+          if (now.difference(depTime).inHours > 12) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("Cannot scan: Trip has ended."),
+                  content: Text("Access Denied: Trip Schedule Expired (>12h)."),
                   backgroundColor: Colors.red));
             }
             return;
@@ -549,8 +561,49 @@ class _FindTripDialogState extends State<FindTripDialog> {
           .searchTrips(_selectedFromCity!, _selectedToCity!, _selectedDate);
       final enriched = await controller.enrichTrips(trips);
 
+      // Filter out trips that started > 4 hours ago to declutter (unless active)
+      // User requested not to see 5AM trips at 10AM.
+      final now = DateTime.now();
+      final filtered = enriched.where((t) {
+        // Access Control Logic - Robust & Dynamic
+        // 1. Hide trips from previous days (unless they started late last night and are still active? User said "controlling 5 AM bus at 3 PM")
+        // User Requirement: "Prevent Conductor from accessing buses after their scheduled time has passed" (e.g. 5AM bus accessed at 3PM - 10 hours diff)
+
+        if (t.departureTime.day != now.day) {
+          // If different day, only allow if it's potentially an overnight trip that JUST started or arriving?
+          // Simplest Robust Logic: Strict 12-18 hour access window from Departure Time.
+
+          // If it's a future trip (tomorrow), allow it (Planning).
+          if (t.departureTime.isAfter(now)) return true;
+
+          // If it's a past trip (> 12 hours ago), HIDE IT.
+          if (now.difference(t.departureTime).inHours > 12) return false;
+        } else {
+          // SAME DAY
+          // If Scheduled 5 AM, Now 3 PM (15:00) -> Diff 10 hours.
+          // If status is 'Arrived' or 'Completed', hide immediately/shortly.
+          // If status is 'Scheduled'/'Delayed', keep it visible UNLESS it's absurdly late?
+
+          // User specific example: "controlling 5 AM bus at 3 PM".
+          // This implies even if it's "Scheduled", it should be hidden if 10 hours passed?
+          // But what if the bus is genuinely delayed by 10 hours?
+          // "Prevent ... after scheduled time has passed".
+
+          // Let's use a "Safety Window".
+          // Standard Bus Trip in SL < 8-10 Hours?
+          // Let's range it: Hide if (Now > Departure + 12 Hours) REGARDLESS of status.
+          // This forces the system to cleanup old trips.
+
+          if (now.difference(t.departureTime).inHours > 12) {
+            return false;
+          }
+        }
+
+        return true;
+      }).toList();
+
       setState(() {
-        _results = enriched;
+        _results = filtered;
       });
     } catch (e) {
       debugPrint("Error searching trips: $e");
@@ -573,8 +626,10 @@ class _FindTripDialogState extends State<FindTripDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Find Trip",
-                        style: TextStyle(
+                    Text(
+                        Provider.of<LanguageProvider>(context)
+                            .translate('find_trip_title'),
+                        style: const TextStyle(
                             fontFamily: 'Outfit',
                             fontSize: 20,
                             fontWeight: FontWeight.bold)),
@@ -595,10 +650,11 @@ class _FindTripDialogState extends State<FindTripDialog> {
                         .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                         .toList(),
                     onChanged: (v) => setState(() => _selectedFromCity = v),
-                    decoration: const InputDecoration(
-                        labelText: "From City",
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.location_on_outlined)),
+                    decoration: InputDecoration(
+                        labelText: Provider.of<LanguageProvider>(context)
+                            .translate('from'),
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.location_on_outlined)),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
@@ -608,10 +664,11 @@ class _FindTripDialogState extends State<FindTripDialog> {
                         .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                         .toList(),
                     onChanged: (v) => setState(() => _selectedToCity = v),
-                    decoration: const InputDecoration(
-                        labelText: "To City",
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.flag_outlined)),
+                    decoration: InputDecoration(
+                        labelText: Provider.of<LanguageProvider>(context)
+                            .translate('to'),
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.flag_outlined)),
                   ),
                   const SizedBox(height: 12),
                   InkWell(
@@ -626,10 +683,11 @@ class _FindTripDialogState extends State<FindTripDialog> {
                       if (d != null) setState(() => _selectedDate = d);
                     },
                     child: InputDecorator(
-                      decoration: const InputDecoration(
-                          labelText: "Date",
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.calendar_today)),
+                      decoration: InputDecoration(
+                          labelText: Provider.of<LanguageProvider>(context)
+                              .translate('select_date'),
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.calendar_today)),
                       child:
                           Text(DateFormat('yyyy-MM-dd').format(_selectedDate)),
                     ),
@@ -644,14 +702,17 @@ class _FindTripDialogState extends State<FindTripDialog> {
                           foregroundColor: Colors.white),
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text("Search Trips",
-                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          : Text(
+                              Provider.of<LanguageProvider>(context)
+                                  .translate('search_trips_button'),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   )
                 ] else ...[
                   // --- RESULTS LIST ---
                   Text(
-                      "Results for ${DateFormat('MMM d').format(_selectedDate)}",
+                      "${Provider.of<LanguageProvider>(context).translate('results_for')} ${DateFormat('MMM d').format(_selectedDate)}",
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.grey)),
                   const SizedBox(height: 12),
@@ -690,15 +751,28 @@ class _FindTripDialogState extends State<FindTripDialog> {
                             onTap: () {
                               // Access Control check
                               final now = DateTime.now();
-                              // Allow up to 4 hours after arrival (or 12 hours after departure if arrival null)
-                              final accessLimit = trip.arrivalTime
+
+                              // Fallback if arrivalTime is suspect (same as departure usually means missing duration)
+                              DateTime effectiveArrival = trip.arrivalTime;
+                              if (trip.arrivalTime
+                                      .difference(trip.departureTime)
+                                      .inMinutes <
+                                  30) {
+                                // Assert at least 4 hours if data invalid
+                                effectiveArrival = trip.departureTime
+                                    .add(const Duration(hours: 4));
+                              }
+
+                              // Allow up to 4 hours after optimized arrival time
+                              final accessLimit = effectiveArrival
                                   .add(const Duration(hours: 4));
 
-                              if (now.isAfter(accessLimit)) {
+                              if (now.isAfter(accessLimit) ||
+                                  trip.status == 'cancelled') {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                         content: Text(
-                                            "Access Denied: Trip completed."),
+                                            "Access Denied: Trip completed or expired."),
                                         backgroundColor: Colors.red));
                                 return;
                               }

@@ -116,15 +116,21 @@ class FirestoreService {
       final dayEnd = DateTime(
           targetDate.year, targetDate.month, targetDate.day, 23, 59, 59);
 
-      final existing = await _db
+      final existingQuery = await _db
           .collection(tripCollection)
           .where('scheduleId', isEqualTo: schedule.id)
-          .where('departureDateTime', isGreaterThanOrEqualTo: dayStart)
-          .where('departureDateTime', isLessThanOrEqualTo: dayEnd)
-          .limit(1)
           .get();
 
-      if (existing.docs.isNotEmpty) {
+      // Filter in memory to avoid composite index error
+      final existing = existingQuery.docs.where((doc) {
+        final data = doc.data();
+        if (data['departureDateTime'] == null) return false;
+        final dt = (data['departureDateTime'] as Timestamp).toDate();
+        return dt.isAfter(dayStart.subtract(const Duration(seconds: 1))) &&
+            dt.isBefore(dayEnd.add(const Duration(seconds: 1)));
+      }).toList();
+
+      if (existing.isNotEmpty) {
         continue; // Already exists
       }
 
@@ -162,6 +168,52 @@ class FirestoreService {
       await batch.commit();
     }
     return createdCount;
+  }
+
+  /// Ensures a trip exists for a specific date, creating it if necessary.
+  Future<Trip?> ensureTripExists(
+      ScheduleModel schedule, RouteModel route, DateTime date) async {
+    // 1. Check if exists
+    final existing = await getTripByScheduleAndDate(schedule.id, date);
+    if (existing != null) return existing;
+
+    // 2. Check validity (Recurrence)
+    if (!schedule.recurrenceDays.contains(date.weekday)) {
+      return null; // Not scheduled for this day
+    }
+
+    // 3. Create
+    final docRef = _db.collection(tripCollection).doc();
+
+    // Parse time
+    int depHour = 0;
+    int depMinute = 0;
+    try {
+      final parts = schedule.departureTime.trim().split(':');
+      depHour = int.parse(parts[0]);
+      depMinute = int.parse(parts[1]);
+    } catch (_) {}
+
+    final departureDateTime =
+        DateTime(date.year, date.month, date.day, depHour, depMinute);
+    final arrivalDateTime =
+        departureDateTime.add(Duration(minutes: route.estimatedDurationMins));
+
+    final newTrip = Trip(
+      id: docRef.id,
+      scheduleId: schedule.id,
+      date: date,
+      originCity: route.originCity,
+      destinationCity: route.destinationCity,
+      departureDateTime: departureDateTime,
+      arrivalDateTime: arrivalDateTime,
+      price: schedule.basePrice,
+      status: TripStatus.scheduled.name,
+      bookedSeatNumbers: [],
+    );
+
+    await docRef.set(newTrip.toJson());
+    return newTrip;
   }
 
   // --- TRIPS (Read/Write) ---
@@ -233,13 +285,19 @@ class FirestoreService {
     final snapshot = await _db
         .collection(tripCollection)
         .where('scheduleId', isEqualTo: scheduleId)
-        .where('departureDateTime', isGreaterThanOrEqualTo: dayStart)
-        .where('departureDateTime', isLessThanOrEqualTo: dayEnd)
-        .limit(1)
         .get();
 
-    if (snapshot.docs.isEmpty) return null;
-    return Trip.fromFirestore(snapshot.docs.first);
+    // Filter in memory to avoid composite index
+    final docs = snapshot.docs.where((doc) {
+      final data = doc.data();
+      if (data['departureDateTime'] == null) return false;
+      final dt = (data['departureDateTime'] as Timestamp).toDate();
+      return dt.isAfter(dayStart.subtract(const Duration(seconds: 1))) &&
+          dt.isBefore(dayEnd.add(const Duration(seconds: 1)));
+    }).toList();
+
+    if (docs.isEmpty) return null;
+    return Trip.fromFirestore(docs.first);
   }
 
   // Method to join Schedule data (Optimization: Client side join or Cloud Function preferable)
@@ -289,6 +347,7 @@ class FirestoreService {
           .toList(), // Legacy int support if Ticket not refactored
       passengerName: user.displayName ?? user.email ?? 'Guest',
       passengerPhone: user.phoneNumber ?? "N/A",
+      passengerEmail: user.email,
       bookingTime: DateTime.now(),
       totalAmount: trip.price * seatIds.length,
       tripData:
@@ -321,27 +380,32 @@ class FirestoreService {
       }
     }
 
-    final routeSnap = await _db.collection(routeCollection).get();
-    final Set<String> cities = {};
+    try {
+      final routeSnap = await _db.collection(routeCollection).get();
+      final Set<String> cities = {};
 
-    if (routeSnap.docs.isNotEmpty) {
-      for (var doc in routeSnap.docs) {
-        final data = doc.data();
-        // New Schema Keys
-        // New Schema Keys with Fallback
-        var origin = data['originCity'] ?? data['fromCity'];
-        var dest = data['destinationCity'] ?? data['toCity'];
+      if (routeSnap.docs.isNotEmpty) {
+        for (var doc in routeSnap.docs) {
+          final data = doc.data();
+          // New Schema Keys with Fallback
+          var origin = data['originCity'] ?? data['fromCity'];
+          var dest = data['destinationCity'] ?? data['toCity'];
 
-        if (origin != null) cities.add(origin.toString());
-        if (dest != null) cities.add(dest.toString());
+          if (origin != null) cities.add(origin.toString());
+          if (dest != null) cities.add(dest.toString());
+        }
       }
-    }
 
-    if (cities.isEmpty) return [];
-    final result = cities.toList()..sort();
-    _cachedCities = result;
-    CacheService().saveCities(result);
-    return result;
+      if (cities.isEmpty) return [];
+      final result = cities.toList()..sort();
+      _cachedCities = result;
+      CacheService().saveCities(result);
+      return result;
+    } catch (e) {
+      debugPrint("Info: Using Fallback cities due to DB Error/Limit: $e");
+      // Fallback to keep UI working
+      return ["Colombo", "Kandy", "Galle", "Jaffna", "Matara", "Kurunegala"];
+    }
   }
 
   // ... (Keeping generic User Management methods as is) ...
@@ -425,6 +489,7 @@ class FirestoreService {
         seatNumbers: seatIds.map((e) => int.tryParse(e) ?? 0).toList(),
         passengerName: user.displayName ?? 'Guest',
         passengerPhone: 'N/A',
+        passengerEmail: user.email,
         bookingTime: DateTime.now(),
         totalAmount: trip.price * seatIds.length,
         tripData: tripData,
@@ -445,8 +510,13 @@ class FirestoreService {
       List<Trip> trips, List<int> seatNumbers, User user) async {
     List<String> seatIds = seatNumbers.map((e) => e.toString()).toList();
     List<String> ids = [];
+    final batchId = "BATCH_${DateTime.now().millisecondsSinceEpoch}";
+
     for (var trip in trips) {
-      ids.add(await createPendingBooking(trip, seatIds, user));
+      // Pass batchId in extraDetails so it persists in tripData
+      ids.add(await createPendingBooking(trip, seatIds, user, extraDetails: {
+        'batchId': batchId,
+      }));
     }
     return ids;
   }
@@ -494,8 +564,9 @@ class FirestoreService {
     return confirmedTickets;
   }
 
-  Future<Ticket> createOfflineBooking(Trip trip, List<int> seatNumbers,
-      String passengerName, User conductor) async {
+  Future<Ticket> createOfflineBooking(
+      Trip trip, List<int> seatNumbers, String passengerName, User conductor,
+      {String? phoneNumber}) async {
     List<String> seatIds = seatNumbers.map((e) => e.toString()).toList();
     final ticketRef = _db.collection(ticketCollection).doc();
 
@@ -510,7 +581,8 @@ class FirestoreService {
         userId: conductor.uid,
         seatNumbers: seatNumbers,
         passengerName: passengerName,
-        passengerPhone: 'Offline',
+        passengerPhone: phoneNumber ?? 'Offline',
+        passengerEmail: null,
         bookingTime: DateTime.now(),
         totalAmount: trip.price * seatNumbers.length,
         tripData: trip.toJson(),

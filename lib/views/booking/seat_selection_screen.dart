@@ -4,6 +4,7 @@ import '../../controllers/trip_controller.dart';
 import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../utils/app_theme.dart';
 import '../../services/firestore_service.dart';
+import '../../services/sms_service.dart'; // Added for SMS
 
 import 'payment_screen.dart';
 // import 'package:google_fonts/google_fonts.dart';
@@ -96,13 +97,22 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                               const SizedBox(height: 40),
 
                               // The Bus Visual (Refactored)
-                              BusLayoutWidget(
-                                trip: widget.trip.trip,
-                                totalSeats: widget.trip.totalSeats,
-                                selectedSeats: selectedSeats,
-                                isDark: isDark,
-                                onSeatToggle: (seatNum) {
-                                  controller.toggleSeat(seatNum.toString());
+                              StreamBuilder<EnrichedTrip?>(
+                                stream: controller
+                                    .getTripRealtimeStream(widget.trip.trip.id),
+                                initialData: widget.trip,
+                                builder: (context, snapshot) {
+                                  final currentTrip =
+                                      snapshot.data?.trip ?? widget.trip.trip;
+                                  return BusLayoutWidget(
+                                    trip: currentTrip,
+                                    totalSeats: widget.trip.totalSeats,
+                                    selectedSeats: selectedSeats,
+                                    isDark: isDark,
+                                    onSeatToggle: (seatNum) {
+                                      controller.toggleSeat(seatNum.toString());
+                                    },
+                                  );
                                 },
                               ),
 
@@ -401,6 +411,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
     final total = widget.trip.price * controller.selectedSeats.length;
     final TextEditingController nameController = TextEditingController();
+    final TextEditingController phoneNumberController = TextEditingController();
 
     showDialog(
         context: context,
@@ -408,31 +419,43 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               title: const Text("Issue Cash Ticket",
                   style: TextStyle(
                       fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Review Booking:",
-                      style: TextStyle(
-                          fontFamily: 'Inter', fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text("Seats: ${controller.selectedSeats.join(', ')}"),
-                  Text("Total Amount: LKR ${total.toStringAsFixed(0)}",
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green)),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                        labelText: "Passenger Name (Optional)",
-                        border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text("Collect cash before confirming.",
-                      style: TextStyle(color: Colors.red, fontSize: 12))
-                ],
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Review Booking:",
+                        style: TextStyle(
+                            fontFamily: 'Inter', fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Text("Seats: ${controller.selectedSeats.join(', ')}"),
+                    Text("Total Amount: LKR ${total.toStringAsFixed(0)}",
+                        style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green)),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                          labelText: "Passenger Name (Optional)",
+                          border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: phoneNumberController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                          labelText: "Mobile Number (Required)",
+                          hintText: "07xxxxxxxx or +947xxxxxxxx",
+                          helperText: "For SMS Ticket",
+                          border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text("Collect cash before confirming.",
+                        style: TextStyle(color: Colors.red, fontSize: 12))
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -440,14 +463,32 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                     child: const Text("Cancel")),
                 ElevatedButton(
                     onPressed: () async {
+                      // 1. Validation for SL Number
+                      String phone = phoneNumberController.text.trim();
+                      if (phone.startsWith('94')) phone = '+$phone';
+
+                      bool isValid = false;
+                      if (phone.startsWith('07') && phone.length == 10) {
+                        isValid = true;
+                      }
+                      if (phone.startsWith('+947') && phone.length == 12) {
+                        isValid = true;
+                      }
+
+                      if (!isValid) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text(
+                                "Invalid SL Number. Use 07xxxxxxxx or +947xxxxxxxx"),
+                            backgroundColor: Colors.red));
+                        return;
+                      }
+
                       Navigator.pop(ctx);
                       final String pName = nameController.text.isEmpty
                           ? "Offline Passenger"
                           : nameController.text;
 
-                      // Use Controller method for consistency
                       try {
-                        // Direct Service Call for Offline Ticket
                         final ticket = await FirestoreService()
                             .createOfflineBooking(
                                 widget.trip.trip,
@@ -455,9 +496,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                     .map((e) => int.tryParse(e) ?? 0)
                                     .toList(),
                                 pName,
-                                user);
+                                user,
+                                phoneNumber: phone);
 
-                        // Refresh trip to show taken seats
                         if (context.mounted) {
                           Provider.of<TripController>(context, listen: false)
                               .selectTrip(widget.trip);
@@ -466,15 +507,21 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                               content: Text(
-                                  "Ticket Issued! ID: ${ticket.ticketId.substring(0, 5)}...")));
+                                  "Ticket Issued! ID: ${ticket.ticketId.substring(0, 5)}... SMS Sending...")));
 
-                          Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const PaymentSuccessScreen(),
-                                  settings: RouteSettings(arguments: {
-                                    'booking_id': ticket.ticketId
-                                  })));
+                          await SmsService.sendTicketCopy(ticket);
+
+                          if (context.mounted) {
+                            Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        const PaymentSuccessScreen(),
+                                    settings: RouteSettings(arguments: {
+                                      'booking_id': ticket.ticketId,
+                                      'phone_number': phone
+                                    })));
+                          }
                         }
                       } catch (e) {
                         if (context.mounted) {
@@ -486,7 +533,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white),
-                    child: const Text("Confirm & Print"))
+                    child: const Text("Confirm & Send SMS"))
               ],
             ));
   }

@@ -83,11 +83,12 @@ class RefundService {
 
     // Create Notification for Admin? (Via Cloud Function usually, or here)
     // Create Notification for User
-    await _db.collection('notifications').add({
+    // Create Notification for User
+    await FirebaseFirestore.instance.collection('notifications').add({
       'userId': request.userId,
       'title': 'Refund Request Received',
       'body':
-          'Your refund request for trip to ${request.tripId} has been received.', // Better text needed
+          'Your refund request for trip to ${request.tripId} has been received.',
       'type': 'refundStatus',
       'relatedId': request.id,
       'timestamp': FieldValue.serverTimestamp(),

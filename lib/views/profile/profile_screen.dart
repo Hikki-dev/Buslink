@@ -21,6 +21,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart'; // for kIsWeb
 import '../settings/account_settings_screen.dart';
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool showBackButton;
@@ -459,6 +460,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       child: const Icon(Icons.logout,
                                           color: Colors.red),
                                     ),
+// Add import at top (handled by multi-change if possible or usually add to top first)
                                     title: Text(
                                       lp.translate('log_out'),
                                       style: const TextStyle(
@@ -466,7 +468,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           fontWeight: FontWeight.w600,
                                           color: Colors.red),
                                     ),
-                                    onTap: () => authService.signOut(),
+                                    onTap: () async {
+                                      await authService.signOut();
+                                      if (context.mounted) {
+                                        Navigator.of(context,
+                                                rootNavigator: true)
+                                            .pushAndRemoveUntil(
+                                                MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        const LoginScreen()),
+                                                (route) => false);
+                                      }
+                                    },
                                   ),
                                 ],
                               ),
@@ -565,38 +578,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
       debugPrint("Read ${bytes.length} bytes.");
 
       debugPrint("Starting upload...");
+      TaskSnapshot snapshot; // Capture snapshot
       if (kIsWeb) {
-        await storageRef.putData(
+        snapshot = await storageRef.putData(
             bytes,
             SettableMetadata(
               contentType: 'image/jpeg',
               customMetadata: {'picked-file-path': image.path},
             ));
       } else {
-        // Add metadata to file upload too
-        await storageRef.putFile(
+        snapshot = await storageRef.putFile(
             File(image.path),
             SettableMetadata(
               contentType: 'image/jpeg',
             ));
       }
-      debugPrint("Upload complete. Getting URL...");
+      debugPrint("Upload process complete. Getting URL...");
 
-      // Retry logic for getDownloadURL to avoid race conditions
-      String? downloadUrl;
-      for (int i = 0; i < 3; i++) {
-        try {
-          downloadUrl = await storageRef.getDownloadURL();
-          break;
-        } catch (e) {
-          debugPrint("Attempt ${i + 1} to get URL failed: $e");
-          await Future.delayed(const Duration(seconds: 1));
-        }
-      }
-
-      if (downloadUrl == null) {
-        throw Exception("Could not retrieve download URL after upload.");
-      }
+      // Use snapshot.ref to get URL -> safest way
+      final downloadUrl = await snapshot.ref.getDownloadURL();
 
       debugPrint("Download URL: $downloadUrl");
 

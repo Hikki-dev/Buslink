@@ -178,6 +178,7 @@ class Ticket {
   final String status;
   final String? shortId;
   final String? paymentIntentId; // Added for Refund processing
+  final String? passengerEmail; // Added for Search
 
   Ticket({
     required this.ticketId,
@@ -186,6 +187,7 @@ class Ticket {
     required this.seatNumbers,
     required this.passengerName,
     required this.passengerPhone,
+    this.passengerEmail,
     required this.bookingTime,
     required this.totalAmount,
     required this.tripData,
@@ -202,6 +204,7 @@ class Ticket {
       seatNumbers: List<int>.from(data['seatNumbers'] ?? []),
       passengerName: data['userName'] ?? 'Guest',
       passengerPhone: data['passengerPhone'] ?? 'N/A',
+      passengerEmail: data['passengerEmail'] ?? data['email'],
       bookingTime: (data['bookingTime'] as Timestamp).toDate(),
       totalAmount: (data['totalAmount'] ?? 0).toDouble(),
       tripData: data['tripData'] as Map<String, dynamic>? ?? {},
@@ -224,6 +227,7 @@ class Ticket {
       'seatNumbers': seatNumbers,
       'userName': passengerName,
       'passengerPhone': passengerPhone,
+      'passengerEmail': passengerEmail,
       'bookingTime': Timestamp.fromDate(bookingTime),
       'totalAmount': totalAmount,
       'tripData': tripData,

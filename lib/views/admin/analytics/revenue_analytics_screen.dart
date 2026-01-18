@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../../utils/app_theme.dart';
+import '../../../../utils/language_provider.dart';
+import 'package:provider/provider.dart';
 
 class RevenueAnalyticsScreen extends StatefulWidget {
   const RevenueAnalyticsScreen({super.key});
@@ -33,7 +35,46 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
                 ),
               ),
               TextButton(
-                  onPressed: _pickDateRange, child: const Text("Refine Date"))
+                  onPressed: _pickDateRange,
+                  child: Text(Provider.of<LanguageProvider>(context)
+                      .translate('refine_date'))),
+              // Quick Select
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.tune),
+                tooltip: "Quick Select",
+                onSelected: (val) {
+                  DateTime now = DateTime.now();
+                  DateTime start = now;
+                  DateTime end = now;
+
+                  if (val == '7') {
+                    start = now.subtract(const Duration(days: 7));
+                  } else if (val == '30') {
+                    start = now.subtract(const Duration(days: 30));
+                  } else if (val == 'month') {
+                    start = DateTime(now.year, now.month, 1);
+                    end = DateTime(now.year, now.month + 1, 0);
+                  }
+                  setState(() {
+                    _startDate = start;
+                    _endDate = end;
+                  });
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                      value: '7',
+                      child: Text(Provider.of<LanguageProvider>(context)
+                          .translate('last_7_days'))),
+                  PopupMenuItem(
+                      value: '30',
+                      child: Text(Provider.of<LanguageProvider>(context)
+                          .translate('last_30_days'))),
+                  PopupMenuItem(
+                      value: 'month',
+                      child: Text(Provider.of<LanguageProvider>(context)
+                          .translate('this_month'))),
+                ],
+              )
             ],
           ),
         ),
@@ -73,15 +114,19 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
                       children: [
                         _buildKPIs(stats),
                         const SizedBox(height: 32),
-                        const Text("Net Revenue Over Time",
-                            style: TextStyle(
+                        Text(
+                            Provider.of<LanguageProvider>(context)
+                                .translate('net_revenue_over_time'),
+                            style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
-                        _buildLineChartPlaceholder(
+                        _buildScatterChart(
                             stats['daily'] as Map<String, double>),
                         const SizedBox(height: 32),
-                        const Text("Top Routes by Net Revenue",
-                            style: TextStyle(
+                        Text(
+                            Provider.of<LanguageProvider>(context)
+                                .translate('top_routes_revenue'),
+                            style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
                         _buildRouteTable(
@@ -101,6 +146,7 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
   Future<void> _pickDateRange() async {
     final picked = await showDateRangePicker(
       context: context,
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
       firstDate: DateTime(2024),
       lastDate: DateTime.now().add(const Duration(days: 1)),
       initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
@@ -209,13 +255,15 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
       children: [
         Expanded(
             child: _kpiCard(
-                "30-Day Revenue",
+                Provider.of<LanguageProvider>(context)
+                    .translate('revenue_30_days'),
                 "LKR ${(stats['total'] as double).toStringAsFixed(0)}",
                 Colors.green)),
         const SizedBox(width: 16),
         Expanded(
             child: _kpiCard(
-                "Today's Revenue",
+                Provider.of<LanguageProvider>(context)
+                    .translate('revenue_today'),
                 "LKR ${(stats['today'] as double).toStringAsFixed(0)}",
                 Colors.blue)),
       ],
@@ -249,12 +297,14 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
     );
   }
 
-  Widget _buildLineChartPlaceholder(Map<String, double> daily) {
+  Widget _buildScatterChart(Map<String, double> daily) {
     if (daily.isEmpty) {
       return Container(
           height: 200,
           color: Colors.grey.withValues(alpha: 0.1),
-          child: const Center(child: Text("No Data")));
+          child: Center(
+              child: Text(Provider.of<LanguageProvider>(context)
+                  .translate('no_data'))));
     }
     final keys = daily.keys.toList()..sort();
     final maxVal = daily.values.isNotEmpty
@@ -262,32 +312,104 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
         : 1.0;
 
     return SizedBox(
-      height: 200,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: keys.map((k) {
-          final val = daily[k]!;
-          final h = (val / maxVal) * 180;
-          return Expanded(
-            child: Tooltip(
-              message: "$k: LKR $val",
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                height: h < 5 ? 5 : h,
-                color: AppTheme.primaryColor.withValues(alpha: 0.6),
-              ),
+      height: 250,
+      child: LayoutBuilder(builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+        // Padding for axes
+        const double xStart = 0;
+        const double yBottom = 20;
+        final double plotW = w - xStart;
+        final double plotH = h - yBottom;
+
+        return Stack(
+          children: [
+            // Grid Lines
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(5, (index) {
+                return Container(
+                  height: 1,
+                  color: Colors.grey.withValues(alpha: 0.1),
+                );
+              }),
             ),
-          );
-        }).toList(),
-      ),
+
+            // Text("Revenue Scatter", style: TextStyle(color: Colors.grey)),
+
+            // Dots
+            ...List.generate(keys.length, (index) {
+              final k = keys[index];
+              final val = daily[k]!;
+
+              // X Position: Index based distribution
+              final double x = xStart +
+                  (index / (keys.length > 1 ? keys.length - 1 : 1)) *
+                      (plotW - 20) +
+                  10;
+
+              // Y Position: Relative to max value
+              final double y = yBottom + (val / maxVal) * (plotH - 20);
+
+              return Positioned(
+                bottom: y,
+                left: x - 6, // Centered
+                child: Tooltip(
+                  message: "$k: LKR ${val.toStringAsFixed(0)}",
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          spreadRadius: 2,
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+
+            // X Axis Labels (Sampled to avoid overcrowding)
+            Positioned(
+              bottom: 0,
+              left: xStart,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(keys.length, (index) {
+                  // Show label if it's start, end, or every 4th/5th depending on count
+                  int step = (keys.length / 5).ceil();
+                  if (step < 1) step = 1;
+
+                  if (index % step == 0 || index == keys.length - 1) {
+                    return Text(keys[index],
+                        style:
+                            const TextStyle(fontSize: 10, color: Colors.grey));
+                  }
+                  return const SizedBox.shrink();
+                }),
+              ),
+            )
+          ],
+        );
+      }),
     );
   }
 
   Widget _buildRouteTable(Map<String, double> routes) {
     if (routes.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Center(child: Text("No route data available")),
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+            child: Text(Provider.of<LanguageProvider>(context)
+                .translate('no_route_data'))),
       );
     }
     return Card(

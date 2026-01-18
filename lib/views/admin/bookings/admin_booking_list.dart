@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../../utils/app_theme.dart';
+import '../../../../utils/language_provider.dart';
+import 'package:provider/provider.dart';
 import 'booking_details_screen.dart';
 
 class AdminBookingListScreen extends StatefulWidget {
@@ -52,21 +54,61 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
     }
   }
 
-  Query _buildQuery() {
-    Query query = FirebaseFirestore.instance.collection('tickets');
+  // Pagination State
+  final int _limit = 20;
+  DocumentSnapshot? _lastDocument;
+  bool _isLoading = false;
+  bool _hasMore = true;
+  List<DocumentSnapshot> _bookings = [];
 
-    // NUCLEAR OPTION: Fetch raw data to bypass schema inconsistencies (missing fields).
-    // We rely completely on client-side filtering for Status and Date.
-    // Default order is Document ID. This guarantees we get data if it exists.
+  @override
+  void initState() {
+    super.initState();
+    _fetchBookings();
+  }
 
-    return query.limit(1000);
+  Future<void> _fetchBookings({bool refresh = false}) async {
+    if (_isLoading) return;
+    if (refresh) {
+      _bookings = [];
+      _lastDocument = null;
+      _hasMore = true;
+    }
+    if (!_hasMore) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      Query query = FirebaseFirestore.instance
+          .collection('tickets')
+          .orderBy(FieldPath.documentId) // Stable Sort
+          .limit(_limit);
+
+      if (_lastDocument != null) {
+        query = query.startAfterDocument(_lastDocument!);
+      }
+
+      final snap = await query.get();
+      if (snap.docs.length < _limit) {
+        _hasMore = false;
+      }
+      if (snap.docs.isNotEmpty) {
+        _lastDocument = snap.docs.last;
+        _bookings.addAll(snap.docs);
+      }
+    } catch (e) {
+      debugPrint("Error fetching bookings: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Booking Management"),
+        title: Text(Provider.of<LanguageProvider>(context)
+            .translate('booking_management_title')),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         elevation: 1,
@@ -86,11 +128,11 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
             color: Theme.of(context).cardColor,
             child: Column(
               children: [
-                // Search Row (Still Client Side mostly for name, but could be separate)
+                // Search Row
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: "Search by Username, Name or Ref ID",
+                    hintText: "Enter customer's login email",
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -112,12 +154,16 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: _selectedStatus,
-                            hint: const Text("Filter Status"),
+                            hint: Text(Provider.of<LanguageProvider>(context)
+                                .translate('filter_status_hint')),
                             isExpanded: true,
                             items: _statusOptions.map((s) {
                               return DropdownMenuItem(
                                 value: s,
-                                child: Text(s.toUpperCase(),
+                                child: Text(
+                                    Provider.of<LanguageProvider>(context)
+                                        .translate('status_$s')
+                                        .toUpperCase(),
                                     style: const TextStyle(fontSize: 13)),
                               );
                             }).toList(),
@@ -143,19 +189,17 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  _selectedDate == null
-                                      ? "Travel Date"
-                                      : DateFormat('MMM d, yyyy')
-                                          .format(_selectedDate!),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  _selectedDate != null
+                                      ? DateFormat('yyyy-MM-dd')
+                                          .format(_selectedDate!)
+                                      : Provider.of<LanguageProvider>(context)
+                                          .translate('travel_date_hint'),
                                   style: TextStyle(
-                                      color: _selectedDate == null
-                                          ? Colors.grey.shade600
-                                          : Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.color),
+                                      color: _selectedDate != null
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                          : Colors.grey.shade600),
                                 ),
                               ),
                               const Icon(Icons.calendar_today,
@@ -174,141 +218,85 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
 
           // LIST SECTION
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _buildQuery().snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(
-                      child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text("Error: ${snapshot.error}",
-                        style: const TextStyle(color: Colors.red)),
-                  ));
-                }
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            child: _isLoading && _bookings.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : _bookings.isEmpty
+                    ? Center(
+                        child: Text(Provider.of<LanguageProvider>(context)
+                            .translate('no_bookings_found')))
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(8),
+                        itemCount: _bookings.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == _bookings.length) {
+                            // Bottom Loader / Load More
+                            return Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Center(
+                                child: _hasMore
+                                    ? _isLoading
+                                        ? const CircularProgressIndicator()
+                                        : ElevatedButton(
+                                            onPressed: () => _fetchBookings(),
+                                            child: const Text("Load More"))
+                                    : const Text("No more bookings"),
+                              ),
+                            );
+                          }
 
-                List<DocumentSnapshot> docs = List.from(snapshot.data!.docs);
+                          // Render Trip Card
+                          final doc = _bookings[index];
+                          final data = doc.data() as Map<String, dynamic>;
+                          final id = doc.id;
 
-                // SORTING: Sort by Departure Time Descending (Newest/Future first)
-                docs.sort((a, b) {
-                  final dataA = a.data() as Map<String, dynamic>;
-                  final dataB = b.data() as Map<String, dynamic>;
+                          // --- FILTERING (Client Side) ---
+                          // Status
+                          final status = (data['status'] ?? 'confirmed');
+                          if (_selectedStatus != null &&
+                              status != _selectedStatus) {
+                            return const SizedBox.shrink();
+                          }
 
-                  // Handle varying date fields/formats
-                  final tripDataA =
-                      dataA['tripData'] as Map<String, dynamic>? ?? {};
-                  final tripDataB =
-                      dataB['tripData'] as Map<String, dynamic>? ?? {};
+                          // Search (Email Only per user request)
+                          if (_searchController.text.isNotEmpty) {
+                            final q = _searchController.text.toLowerCase();
+                            final email = (data['passengerEmail'] ?? '')
+                                .toString()
+                                .toLowerCase();
 
-                  final valA = tripDataA['departureDateTime'] ??
-                      tripDataA['departureTime'] ??
-                      dataA['departureTime'];
-                  final valB = tripDataB['departureDateTime'] ??
-                      tripDataB['departureTime'] ??
-                      dataB['departureTime'];
+                            // fallback for user email in root
+                            final userEmail =
+                                (data['email'] ?? '').toString().toLowerCase();
 
-                  DateTime? timeA;
-                  DateTime? timeB;
+                            if (!email.contains(q) && !userEmail.contains(q)) {
+                              return const SizedBox.shrink();
+                            }
+                          }
 
-                  if (valA is Timestamp) {
-                    timeA = valA.toDate();
-                  } else if (valA is String) {
-                    timeA = DateTime.tryParse(valA);
-                  }
+                          // Date Filter
+                          if (_selectedDate != null) {
+                            if (data['bookingTime'] != null) {
+                              final bt =
+                                  (data['bookingTime'] as Timestamp).toDate();
+                              if (bt.year != _selectedDate!.year ||
+                                  bt.month != _selectedDate!.month ||
+                                  bt.day != _selectedDate!.day) {
+                                return const SizedBox.shrink();
+                              }
+                            }
+                          }
 
-                  if (valB is Timestamp) {
-                    timeB = valB.toDate();
-                  } else if (valB is String) {
-                    timeB = DateTime.tryParse(valB);
-                  }
-
-                  if (timeA == null && timeB == null) return 0;
-                  if (timeA == null) return 1; // Put invalid dates at bottom
-                  if (timeB == null) return -1;
-
-                  return timeB.compareTo(timeA); // Descending
-                });
-
-                // 1. Client-Side Text Search Filter (If not handled by server query efficiently)
-                if (_searchController.text.isNotEmpty) {
-                  final query = _searchController.text.toLowerCase();
-                  docs = docs.where((d) {
-                    final data = d.data() as Map<String, dynamic>;
-                    final name =
-                        (data['userName'] ?? '').toString().toLowerCase();
-                    final id = d.id.toLowerCase();
-                    final passName =
-                        (data['passengerName'] ?? '').toString().toLowerCase();
-                    final email =
-                        (data['email'] ?? '').toString().toLowerCase();
-
-                    // Include Email search as well
-                    return name.contains(query) ||
-                        id.contains(query) ||
-                        passName.contains(query) ||
-                        email.contains(query);
-                  }).toList();
-                }
-
-                // 2. Client-Side Status Filter (Apply even if searching)
-                if (_selectedStatus != null) {
-                  docs = docs.where((d) {
-                    final data = d.data() as Map<String, dynamic>;
-                    final status =
-                        (data['status'] ?? '').toString().toLowerCase();
-                    return status == _selectedStatus!.toLowerCase();
-                  }).toList();
-                }
-
-                // 3. Client-Side Date Filter (Apply even if searching)
-                if (_selectedDate != null) {
-                  docs = docs.where((d) {
-                    final data = d.data() as Map<String, dynamic>;
-                    final tripData =
-                        data['tripData'] as Map<String, dynamic>? ?? {};
-                    final timestamp = tripData['departureDateTime'] ??
-                        tripData['departureTime'] ??
-                        data['departureTime'];
-
-                    if (timestamp == null) return false; // Skip if no date
-
-                    DateTime? date;
-                    if (timestamp is Timestamp) {
-                      date = timestamp.toDate();
-                    } else if (timestamp is String) {
-                      date = DateTime.tryParse(timestamp);
-                    }
-
-                    if (date == null) return false;
-
-                    return date.year == _selectedDate!.year &&
-                        date.month == _selectedDate!.month &&
-                        date.day == _selectedDate!.day;
-                  }).toList();
-                }
-
-                if (docs.isEmpty) {
-                  return const Center(child: Text("No bookings found"));
-                }
-
-                return ListView.builder(
-                  itemCount: docs.length,
-                  itemBuilder: (context, index) {
-                    final data = docs[index].data() as Map<String, dynamic>;
-                    return _buildBookingTile(data, docs[index].id);
-                  },
-                );
-              },
-            ),
-          )
+                          return _buildBookingTile(data, id);
+                        },
+                      ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildBookingTile(Map<String, dynamic> data, String id) {
+    // Helper to build tile and keep build method clean
     final status = (data['status'] ?? 'unknown').toString().toLowerCase();
     Color statusColor = Colors.grey;
     if (status == 'confirmed') statusColor = Colors.green;
@@ -327,6 +315,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
         data['toCity'] ??
         'N/A';
 
+    // Parse date safely
     final timestamp = tripData['departureDateTime'] ??
         tripData['departureTime'] ??
         data['departureTime'];
@@ -335,7 +324,6 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
     if (timestamp is Timestamp) {
       departureDate = timestamp.toDate();
     } else if (timestamp is String) {
-      // Try parse if string
       departureDate = DateTime.tryParse(timestamp);
     }
 
@@ -386,26 +374,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                 ],
               ),
               const SizedBox(height: 6),
-              Row(
-                children: [
-                  Text("Ref: ${id.substring(0, 8)}...",
-                      style: const TextStyle(fontSize: 12)),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: id));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Booking Reference Copied"),
-                          duration: Duration(seconds: 1),
-                        ),
-                      );
-                    },
-                    child: const Icon(Icons.copy,
-                        size: 16, color: AppTheme.primaryColor),
-                  ),
-                ],
-              ),
+              // Removed Reference ID display as per user request
             ],
           ),
           trailing: Column(

@@ -60,16 +60,28 @@ class _LateDeparturesDashboardState extends State<LateDeparturesDashboard> {
         }
 
         if (depTime == null) continue;
+
+        // Filter by Specific Day
         if (depTime.year != _selectedDate.year ||
-            depTime.month != _selectedDate.month) {
+            depTime.month != _selectedDate.month ||
+            depTime.day != _selectedDate.day) {
           continue;
         }
 
-        // Route Filter
-        if (_selectedRoute != null) {
-          // Check route field. Assuming 'routeId' or 'routeName' or 'fromCity'-'toCity'
-          final route = "${data['fromCity']} - ${data['toCity']}";
-          if (route != _selectedRoute) continue;
+        // Route Filter (Search Text)
+        if (_selectedRoute != null && _selectedRoute!.isNotEmpty) {
+          final query = _selectedRoute!.toLowerCase();
+          final routeStr =
+              "${data['fromCity']} - ${data['toCity']}".toLowerCase();
+          final fromCity = (data['fromCity'] ?? '').toString().toLowerCase();
+          final toCity = (data['toCity'] ?? '').toString().toLowerCase();
+
+          // Fuzzy search: Match "from - to" OR individual cities
+          if (!routeStr.contains(query) &&
+              !fromCity.contains(query) &&
+              !toCity.contains(query)) {
+            continue;
+          }
         }
 
         total++;
@@ -115,52 +127,34 @@ class _LateDeparturesDashboardState extends State<LateDeparturesDashboard> {
             // Controls Row
             Row(
               children: [
-                // Route Selector (Mocked list plus dynamic from DB ideally, but simplified here)
+                // Route Search Field (Replaces Dropdown)
                 Expanded(
-                  child: DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                          labelText: "Select Route",
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 0)),
-                      value: _selectedRoute,
-                      items: const [
-                        DropdownMenuItem(
-                            value: null, child: Text("All Routes")),
-                        DropdownMenuItem(
-                            value: "Colombo - Kandy",
-                            child: Text("Colombo - Kandy")),
-                        DropdownMenuItem(
-                            value: "Kandy - Colombo",
-                            child: Text("Kandy - Colombo")),
-                        DropdownMenuItem(
-                            value: "Colombo - Galle",
-                            child: Text("Colombo - Galle")),
-                        DropdownMenuItem(
-                            value: "Galle - Colombo",
-                            child: Text("Galle - Colombo")),
-                        DropdownMenuItem(
-                            value: "Colombo - Jaffna",
-                            child: Text("Colombo - Jaffna")),
-                      ],
-                      onChanged: (val) {
-                        setState(() => _selectedRoute = val);
-                        _fetchStats();
-                      }),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: "Search Route (e.g. Colombo)",
+                      hintText: "Enter Origin or Destination",
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      prefixIcon: const Icon(Icons.search),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 0),
+                    ),
+                    onChanged: (val) {
+                      setState(() => _selectedRoute = val);
+                      _fetchStats();
+                    },
+                  ),
                 ),
                 const SizedBox(width: 16),
-                // Month Selector
+                // Date Selector (Specific Day)
                 Expanded(
                   child: InkWell(
                     onTap: () async {
-                      // Simple Year Month Picker implementation
-                      // For now, just DatePicker
                       final picked = await showDatePicker(
                           context: context,
                           initialDate: _selectedDate,
                           firstDate: DateTime(2023),
-                          lastDate: DateTime.now());
+                          lastDate: DateTime(2030));
                       if (picked != null) {
                         setState(() => _selectedDate = picked);
                         _fetchStats();
@@ -168,12 +162,12 @@ class _LateDeparturesDashboardState extends State<LateDeparturesDashboard> {
                     },
                     child: InputDecorator(
                       decoration: InputDecoration(
-                          labelText: "Month",
+                          labelText: "Date",
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12)),
-                          suffixIcon: const Icon(Icons.calendar_month)),
+                          suffixIcon: const Icon(Icons.calendar_today)),
                       child:
-                          Text(DateFormat('MMMM yyyy').format(_selectedDate)),
+                          Text(DateFormat('MMM d, yyyy').format(_selectedDate)),
                     ),
                   ),
                 )

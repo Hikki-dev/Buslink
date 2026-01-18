@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/language_provider.dart';
 import '../auth/login_screen.dart';
 
 class ConductorNavBar extends StatelessWidget {
@@ -70,13 +71,57 @@ class ConductorNavBar extends StatelessWidget {
           const SizedBox(width: 60),
 
           // Conductor Specific Generic Items
-          _navItem(context, "Dashboard", 0, Icons.dashboard_outlined),
-          _navItem(context, "Scan Ticket", 1,
+          _navItem(
+              context,
+              Provider.of<LanguageProvider>(context)
+                  .translate('admin_dashboard'),
+              0,
+              Icons.dashboard_outlined),
+          _navItem(
+              context,
+              Provider.of<LanguageProvider>(context).translate('scan_ticket'),
+              1,
               Icons.qr_code_scanner), // Unique feature
-          _navItem(context, "Reports", 2, Icons.analytics_outlined),
-          _navItem(context, "Profile", 3, Icons.person_outline),
+          _navItem(
+              context,
+              Provider.of<LanguageProvider>(context).translate('reports'),
+              2,
+              Icons.analytics_outlined),
+          _navItem(
+              context,
+              Provider.of<LanguageProvider>(context).translate('nav_profile'),
+              3,
+              Icons.person_outline),
 
           const Spacer(),
+
+          // Language Selector
+          Consumer<LanguageProvider>(
+            builder: (context, languageProvider, _) {
+              return PopupMenuButton<String>(
+                icon: const Icon(Icons.language, color: Colors.grey),
+                tooltip: "Change Language",
+                onSelected: (String code) {
+                  languageProvider.setLanguage(code);
+                },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'en',
+                    child: Text('English'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'si',
+                    child: Text('සිංහල (Sinhala)'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'ta',
+                    child: Text('தமிழ் (Tamil)'),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(width: 16),
 
           // Profile Dropdown
           PopupMenuButton<String>(

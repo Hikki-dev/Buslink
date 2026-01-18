@@ -8,6 +8,7 @@ import '../models/trip_view_model.dart'; // EnrichedTrip
 import '../services/firestore_service.dart';
 import '../services/notification_service.dart' as import_notification_service;
 import '../services/sms_service.dart'; // Added Import
+import 'package:intl/intl.dart';
 
 class TripController extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
@@ -397,7 +398,12 @@ class TripController extends ChangeNotifier {
   List<String> availableCities = [];
 
   Future<void> fetchAvailableCities() async {
-    availableCities = await getAvailableCities();
+    try {
+      availableCities = await getAvailableCities();
+    } catch (e) {
+      debugPrint("Error fetching cities (Quota/Network): $e");
+      // Fallback or empty allowed
+    }
     notifyListeners();
   }
 
@@ -463,7 +469,10 @@ class TripController extends ChangeNotifier {
           savedSchedule, route, 30); // Generate for 30 days
     } catch (e) {
       debugPrint("Error creating recurring route: $e");
-      rethrow; // expose specific error to UI
+      if (e is FormatException) {
+        throw Exception("Invalid data format: Please check dates and numbers.");
+      }
+      throw Exception("Failed to generate trips: $e");
     } finally {
       isLoading = false;
       notifyListeners();
@@ -504,6 +513,9 @@ class TripController extends ChangeNotifier {
   }
 
   void selectTrip(EnrichedTrip trip) {
+    if (selectedTrip?.trip.id != trip.trip.id) {
+      selectedSeats.clear();
+    }
     selectedTrip = trip;
     // In real app, load booked seats here
     notifyListeners();
@@ -521,35 +533,76 @@ class TripController extends ChangeNotifier {
 
     if (isBulkBooking && bulkDates.isNotEmpty) {
       List<String> bookingIds = [];
-      final scheduleId = selectedTrip!.schedule.id;
-      final seatIds = selectedSeats;
+      final schedule = selectedTrip!.schedule;
+      final route = selectedTrip!.route;
 
       // Extra details (Operator/Bus) are constant for the schedule
       final extraDetails = {
         'busNumber': selectedTrip!.busNumber,
         'operatorName': selectedTrip!.operatorName,
-        'scheduleId': scheduleId,
+        'scheduleId': schedule.id,
       };
 
       for (var date in bulkDates) {
         try {
-          // Find Trip for Date
-          final tripInstance = await _firestoreService.getTripByScheduleAndDate(
-              scheduleId, date);
+          // 1. Ensure Trip Exists
+          final tripInstance =
+              await _firestoreService.ensureTripExists(schedule, route, date);
 
           if (tripInstance != null) {
+            // 2. Auto-Assign Seats (Real allocation)
+            // Fetch fresh trip to be safe about concurrency/latest state
+            // (ensureTrip might return local object, but for booking we want latest availability if accessed concurrently)
+            // But ensureTrip returns what it just created or fetched.
+
+            // Find available seats
+            List<String> assignableSeats = [];
+            int needed = selectedSeats
+                .length; // From Quantity logic (e.g. 2 items of "-1")
+
+            // If selectedSeats contains explicit IDs (e.g. "3", "4"), use them.
+            // If it contains "-1", we must find seats.
+            bool needsAutoAssign = selectedSeats.contains("-1");
+
+            if (needsAutoAssign) {
+              final booked = tripInstance.bookedSeatNumbers.toSet();
+              for (int i = 1; i <= schedule.totalSeats; i++) {
+                if (assignableSeats.length >= needed) break;
+                if (!booked.contains(i.toString())) {
+                  assignableSeats.add(i.toString());
+                }
+              }
+
+              if (assignableSeats.length < needed) {
+                throw Exception(
+                    "Not enough seats available on ${DateFormat('yyyy-MM-dd').format(date)}");
+              }
+            } else {
+              // Validate specific seats
+              for (var s in selectedSeats) {
+                if (tripInstance.bookedSeatNumbers.contains(s)) {
+                  throw Exception(
+                      "Seat $s already booked on ${DateFormat('yyyy-MM-dd').format(date)}");
+                }
+              }
+              assignableSeats = List.from(selectedSeats);
+            }
+
             final id = await _firestoreService.createPendingBooking(
-                tripInstance, seatIds, user,
+                tripInstance, assignableSeats, user,
                 extraDetails: extraDetails);
             bookingIds.add(id);
           } else {
-            // Optional: Auto-generate trip if missing?
-            // For now, skip and log.
-            debugPrint(
-                "Bulk Booking: Trip not found for schedule $scheduleId on $date");
+            // Trip could not be created (e.g. wrong day of week?)
+            // Should we skip or fail? Fail is safer.
+            throw Exception(
+                "No schedule available for ${DateFormat('yyyy-MM-dd').format(date)}");
           }
         } catch (e) {
           debugPrint("Bulk Booking Error date $date: $e");
+          // Enhance error message for user
+          throw Exception(
+              "Error on ${DateFormat('MMM d').format(date)}: ${e.toString().replaceAll('Exception:', '').trim()}");
         }
       }
 
@@ -613,21 +666,34 @@ class TripController extends ChangeNotifier {
         final tickets = await _firestoreService.confirmBulkBookings(ids,
             paymentIntentId: paymentIntentId);
 
-        // Notify for each ticket
-        for (var ticket in tickets) {
-          if (ticket.userId.isNotEmpty) {
-            final tripTitle =
-                "${ticket.tripData['originCity']} to ${ticket.tripData['destinationCity']}";
-            // Fire and forget notification
-            import_notification_service.NotificationService.createNotification(
-              userId: ticket.userId,
-              title: "Booking Confirmed",
-              body:
-                  "Your trip ($tripTitle) is confirmed. Seat(s): ${ticket.seatNumbers.join(', ')}",
-              type: "booking",
-              relatedId: ticket.ticketId,
-            );
+        // Notify (Aggregated)
+        // Group by User and Trip
+        final Map<String, List<Ticket>> userTickets = {};
+        for (var t in tickets) {
+          if (t.userId.isNotEmpty) {
+            final key = "${t.userId}_${t.tripId}";
+            userTickets.putIfAbsent(key, () => []).add(t);
           }
+        }
+
+        for (var key in userTickets.keys) {
+          final bundle = userTickets[key]!;
+          if (bundle.isEmpty) continue;
+          final first = bundle.first;
+          final userId = first.userId;
+          final tripTitle =
+              "${first.tripData['originCity']} to ${first.tripData['destinationCity']}";
+          final seats = bundle.expand((t) => t.seatNumbers).join(', ');
+
+          // Fire and forget notification (Single Summary)
+          import_notification_service.NotificationService.createNotification(
+            userId: userId,
+            title: "Booking Confirmed",
+            body:
+                "Your trip ($tripTitle) is confirmed. Seats: $seats. Total: ${bundle.length} ticket(s).",
+            type: "booking",
+            relatedId: first.ticketId, // Link to first ticket or bundle?
+          );
         }
         return true;
       } catch (e) {
@@ -654,6 +720,32 @@ class TripController extends ChangeNotifier {
           type: "booking",
           relatedId: ticket.ticketId,
         );
+
+        // --- SCHEDULE LOCAL REMINDER ---
+        // Parse Departure Time from tripData
+        try {
+          DateTime? departTime;
+          final dRaw = ticket.tripData['departureTime'];
+          if (dRaw is Timestamp) departTime = dRaw.toDate();
+          if (dRaw is DateTime) departTime = dRaw;
+          if (dRaw is String) departTime = DateTime.tryParse(dRaw);
+
+          if (departTime != null) {
+            // Schedule for 1 hour before
+            final reminderTime = departTime.subtract(const Duration(hours: 1));
+            // Create a unique ID from ticket hash
+            final notifId = ticket.ticketId.hashCode;
+
+            await import_notification_service.NotificationService
+                .scheduleTripReminder(
+                    notifId,
+                    "Trip Reminder",
+                    "Your bus to ${ticket.tripData['destinationCity']} leaves in 1 hour!",
+                    reminderTime);
+          }
+        } catch (e) {
+          debugPrint("Failed to schedule local reminder: $e");
+        }
       }
       return true;
     } catch (e) {

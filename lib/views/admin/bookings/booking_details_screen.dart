@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../../utils/app_theme.dart';
 import '../refunds/admin_refund_list.dart'; // Import for navigation
+import '../../../../utils/language_provider.dart';
+import 'package:provider/provider.dart';
 
 class BookingDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -104,8 +106,7 @@ class BookingDetailsScreen extends StatelessWidget {
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2)),
-                  Text("Referred as \$${bookingId.substring(0, 8)}",
-                      style: TextStyle(color: statusColor.withOpacity(0.8))),
+                  // Reference ID removed as per user request
                 ],
               ),
             ),
@@ -119,10 +120,11 @@ class BookingDetailsScreen extends StatelessWidget {
               children: [
                 _buildCopyRow(context, "Booking ID", bookingId),
                 const Divider(),
-                _buildInfoRow("Route", route),
-                _buildInfoRow("Date", dateStr),
-                _buildInfoRow("Bus Number", busNumber),
+                _buildInfoRow(context, "Route", route),
+                _buildInfoRow(context, "Date", dateStr),
+                _buildInfoRow(context, "Bus Number", busNumber),
                 _buildInfoRow(
+                    context,
                     "Seat Numbers",
                     (data['seatNumbers'] as List<dynamic>?)?.join(", ") ??
                         "N/A"),
@@ -136,7 +138,7 @@ class BookingDetailsScreen extends StatelessWidget {
               title: "Passenger Details",
               icon: Icons.person,
               children: [
-                _buildInfoRow("Name", passengerName),
+                _buildInfoRow(context, "Name", passengerName),
                 if (data['userEmail'] != null)
                   _buildCopyRow(context, "Email", data['userEmail']),
               ],
@@ -161,7 +163,7 @@ class BookingDetailsScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                _buildInfoRow("Status", paymentStatus),
+                _buildInfoRow(context, "Status", paymentStatus),
               ],
             ),
             const SizedBox(height: 32),
@@ -229,7 +231,7 @@ class BookingDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
@@ -237,7 +239,9 @@ class BookingDetailsScreen extends StatelessWidget {
         children: [
           Expanded(
             flex: 4,
-            child: Text(label,
+            child: Text(
+                Provider.of<LanguageProvider>(context)
+                    .translate(label.toLowerCase().replaceAll(' ', '_')),
                 style:
                     const TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
           ),

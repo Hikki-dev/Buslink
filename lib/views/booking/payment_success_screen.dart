@@ -13,6 +13,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:flutter/foundation.dart'; // kIsWeb
+import '../../utils/file_downloader.dart';
 
 // import '../../views/home/home_screen.dart'; // Unused
 import '../customer_main_screen.dart';
@@ -110,20 +111,50 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     List<Ticket> tickets = [];
 
     try {
+      // 1. Confirm and Verify all bookings
       for (final id in bookingIds) {
         if (id.trim().isEmpty) continue;
-        // Pass paymentIntentId
         final success = await controller.confirmBooking(id.trim(),
             paymentIntentId: paymentIntentId);
         if (!success) {
           allSuccess = false;
           break;
         }
-        // Fetch the verified ticket details
-        // Note: confirmBooking updates currentTicket, but we need to collect them
         final ticket = await controller.verifyTicket(id.trim());
         if (ticket != null) {
           tickets.add(ticket);
+        }
+      }
+
+      // 2. Parallel Repair of Ticket Data (if needed)
+      if (allSuccess && tickets.isNotEmpty) {
+        // Identify tickets needing repair
+        final ticketsToRepair = tickets.where((t) =>
+            t.tripData['fromCity'] == null || t.tripData['toCity'] == null);
+
+        if (ticketsToRepair.isNotEmpty) {
+          debugPrint(
+              "Repairing ${ticketsToRepair.length} tickets in parallel...");
+          await Future.wait(ticketsToRepair.map((ticket) async {
+            try {
+              final tripDoc = await FirebaseFirestore.instance
+                  .collection('trips')
+                  .doc(ticket.tripId)
+                  .get();
+
+              if (tripDoc.exists) {
+                final tMap = tripDoc.data()!;
+                ticket.tripData['fromCity'] = tMap['fromCity'];
+                ticket.tripData['toCity'] = tMap['toCity'];
+                ticket.tripData['busNumber'] = tMap['busNumber'];
+                ticket.tripData['platformNumber'] = tMap['platformNumber'];
+                ticket.tripData['departureTime'] = tMap['departureTime'];
+                ticket.tripData['operatorName'] = tMap['operatorName'];
+              }
+            } catch (e) {
+              debugPrint("Failed to repair ticket ${ticket.ticketId}: $e");
+            }
+          }));
         }
       }
     } catch (e) {
@@ -139,56 +170,18 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         _message = "Payment Confirmed!";
       });
 
-      // Send SMS Copies
+      // Send Notifications (Fire & Forget, now with Push!)
       for (final ticket in tickets) {
-        // --- DATA REPAIR START ---
-        // If Ticket doesn't have partial Trip Data (common if created via Quick Buy without populating details)
-        // We fetch the trip doc and Patch it for UI
-        if (ticket.tripData['fromCity'] == null ||
-            ticket.tripData['toCity'] == null) {
-          try {
-            debugPrint("Repairing Ticket Data for ${ticket.ticketId}...");
-            final tripDoc = await FirebaseFirestore.instance
-                .collection('trips')
-                .doc(ticket.tripId)
-                .get();
-
-            if (tripDoc.exists) {
-              final tMap = tripDoc.data()!;
-              // We manually update the local ticket object's tripData
-              ticket.tripData['fromCity'] = tMap['fromCity'];
-              ticket.tripData['toCity'] = tMap['toCity'];
-              ticket.tripData['busNumber'] = tMap['busNumber'];
-              ticket.tripData['platformNumber'] = tMap['platformNumber'];
-              ticket.tripData['departureTime'] = tMap['departureTime'];
-              ticket.tripData['operatorName'] = tMap['operatorName'];
-            }
-          } catch (e) {
-            debugPrint("Failed to repair ticket data: $e");
-          }
-        }
-        // --- DATA REPAIR END ---
-
-        // Create In-App Notification
         if (ticket.userId.isNotEmpty) {
-          NotificationService.createNotification(
+          NotificationService.sendNotificationToUser(
             userId: ticket.userId,
             title: "Booking Confirmed",
             body:
                 "Your trip to ${ticket.tripData['toCity'] ?? 'Destination'} is confirmed!",
-            type:
-                "booking", // Ensure this type is handled in NotificationScreen icons
+            type: "booking",
             relatedId: ticket.ticketId,
           );
         }
-
-        // SmsService.sendTicketCopy(ticket); // Removed auto-trigger for client-side SMS UX
-      }
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Receipt sent via SMS")),
-        );
       }
     } else {
       if (context.mounted) {
@@ -209,6 +202,92 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     );
     final doc = pw.Document();
 
+    // 1. Add Summary Page if multiple tickets
+    if (tickets.length > 1) {
+      doc.addPage(pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            double totalAmount =
+                tickets.fold(0, (sum, item) => sum + item.totalAmount);
+
+            return pw.Center(
+                child: pw.Column(children: [
+              pw.Header(
+                  level: 0,
+                  child: pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text("BusLink",
+                            style: pw.TextStyle(
+                                fontSize: 24,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColors.red900)),
+                        pw.Text("BOOKING SUMMARY",
+                            style: pw.TextStyle(
+                                fontSize: 20,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColors.grey)),
+                      ])),
+              pw.SizedBox(height: 20),
+              pw.Container(
+                  padding: const pw.EdgeInsets.all(20),
+                  decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.grey300)),
+                  child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Row(
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Text("Total Tickets: ${tickets.length}",
+                                  style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold,
+                                      fontSize: 18)),
+                              pw.Text(
+                                  "Total Paid: LKR ${totalAmount.toStringAsFixed(0)}",
+                                  style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold,
+                                      fontSize: 18,
+                                      color: PdfColors.green900)),
+                            ]),
+                        pw.Divider(),
+                        pw.SizedBox(height: 10),
+                        // List of Tickets
+                        ...tickets.map((t) {
+                          final tData = t.tripData;
+                          final tripDate = tData['departureTime'] is Timestamp
+                              ? (tData['departureTime'] as Timestamp).toDate()
+                              : DateTime.parse(
+                                  tData['departureTime'].toString());
+                          return pw.Padding(
+                              padding: const pw.EdgeInsets.only(bottom: 8),
+                              child: pw.Row(children: [
+                                pw.Expanded(
+                                    flex: 2,
+                                    child: pw.Text(DateFormat('yyyy-MM-dd')
+                                        .format(tripDate))),
+                                pw.Expanded(
+                                    flex: 3,
+                                    child: pw.Text(
+                                        "${tData['fromCity']} -> ${tData['toCity']}")),
+                                pw.Expanded(
+                                    flex: 2,
+                                    child: pw.Text(
+                                        "Seat: ${t.seatNumbers.join(',')}")),
+                                pw.Text(
+                                    "LKR ${t.totalAmount.toStringAsFixed(0)}")
+                              ]));
+                        }),
+                      ])),
+              pw.SizedBox(height: 20),
+              pw.Text("Individual tickets are attached in the following pages.",
+                  style: const pw.TextStyle(color: PdfColors.grey)),
+            ]));
+          }));
+    }
+
+    // 2. Add Individual Ticket Pages
     for (final ticket in tickets) {
       // Construct Trip from Ticket Data (Snapshot)
       final tData = ticket.tripData;
@@ -313,8 +392,25 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       );
     }
 
-    await Printing.sharePdf(
-        bytes: await doc.save(), filename: 'buslink_tickets.pdf');
+    final bytes = await doc.save();
+
+    try {
+      if (kIsWeb) {
+        await downloadBytesForWeb(bytes, 'buslink_tickets.pdf');
+      } else {
+        await Printing.sharePdf(bytes: bytes, filename: 'buslink_tickets.pdf');
+      }
+    } catch (e) {
+      debugPrint("Error sharing PDF: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to download/share PDF: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -668,14 +764,21 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.black)),
             const SizedBox(height: 4),
-            Text("Full ID: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
-                style: const TextStyle(
-                    fontFamily: 'Inter', fontSize: 12, color: Colors.black54)),
             SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: OutlinedButton.icon(
-                  onPressed: () => SmsService.sendTicketCopy(ticket),
+                  onPressed: () async {
+                    final success = await SmsService.sendTicketCopy(ticket);
+                    if (context.mounted) {
+                      if (!success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text("Could not launch SMS app."),
+                                backgroundColor: Colors.red));
+                      }
+                    }
+                  },
                   icon: const Icon(Icons.sms_outlined),
                   label: const Text("Share via SMS"),
                   style: OutlinedButton.styleFrom(
@@ -685,17 +788,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                         borderRadius: BorderRadius.circular(12)),
                   ),
                 )),
-            const SizedBox(height: 12),
-            SizedBox(
-                width: double.infinity,
-                height: 56,
-                // Removed Individual Download Button from Card to reduce clutter
-                // since we have the main download button below the carousel.
-                child: Center(
-                    child: Text(
-                  "Trip #${ticket.ticketId.substring(0, 6).toUpperCase()}",
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ))),
           ],
         ));
   }

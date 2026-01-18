@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import '../../../models/refund_model.dart';
 import '../../../models/refund_transaction_model.dart';
 import '../../../services/stripe_service.dart';
+import '../../../../utils/language_provider.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../services/notification_service.dart';
 
@@ -24,7 +26,9 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Refund Details")),
+      appBar: AppBar(
+          title: Text(Provider.of<LanguageProvider>(context)
+              .translate('refund_details_title'))),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
             .collection('refunds')
@@ -55,7 +59,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                         ? Colors.green.withValues(alpha: 0.1)
                         : Colors.red.withValues(alpha: 0.1),
                     child: Text(
-                      "This refund has been ${refund.status.name.toUpperCase()}",
+                      "${Provider.of<LanguageProvider>(context).translate('refund_status_banner')} ${refund.status.name.toUpperCase()}",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
@@ -94,7 +98,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
               children: [
                 Flexible(
                   child: SelectableText(
-                    "Booking Ref: ${refund.ticketId}",
+                    "${Provider.of<LanguageProvider>(context).translate('ref_prefix')} : ${refund.ticketId}",
                     style: const TextStyle(
                         fontFamily: 'Inter', color: Colors.grey),
                   ),
@@ -104,9 +108,10 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                   borderRadius: BorderRadius.circular(12),
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: refund.ticketId));
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text("Booking Ref copied!"),
-                      duration: Duration(seconds: 1),
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(Provider.of<LanguageProvider>(context)
+                          .translate('booking_ref_copied')),
+                      duration: const Duration(seconds: 1),
                     ));
                   },
                   child: Container(
@@ -134,17 +139,28 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
           border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(
         children: [
-          _row("Trip Price", "LKR ${refund.tripPrice.toStringAsFixed(2)}"),
-          _row("Cancellation Rule",
+          _row(Provider.of<LanguageProvider>(context).translate('trip_price'),
+              "LKR ${refund.tripPrice.toStringAsFixed(2)}"),
+          _row(
+              Provider.of<LanguageProvider>(context)
+                  .translate('cancellation_rule'),
               "${(refund.refundPercentage * 100).toInt()}% Refund"),
           const Divider(),
-          _row("Refund Amount", "LKR ${refund.refundAmount.toStringAsFixed(2)}",
+          _row(
+              Provider.of<LanguageProvider>(context)
+                  .translate('refund_amount_prefix'),
+              "LKR ${refund.refundAmount.toStringAsFixed(2)}",
               isBold: true),
           const SizedBox(height: 16),
-          _row("Reason", refund.reason.name),
+          _row(
+              Provider.of<LanguageProvider>(context).translate('reason_prefix'),
+              refund.reason.name),
           if (refund.otherReasonText != null &&
               refund.otherReasonText!.isNotEmpty)
-            _row("Comment", refund.otherReasonText!),
+            _row(
+                Provider.of<LanguageProvider>(context)
+                    .translate('comment_label'),
+                refund.otherReasonText!),
         ],
       ),
     );
@@ -180,7 +196,8 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 foregroundColor: Colors.red,
                 side: const BorderSide(color: Colors.red)),
-            child: const Text("Reject"),
+            child: Text(Provider.of<LanguageProvider>(context)
+                .translate('reject_button')),
           ),
         ),
         const SizedBox(width: 16),
@@ -192,7 +209,9 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                 backgroundColor: Colors.green),
             child: _isLoading
                 ? const CircularProgressIndicator(color: Colors.white)
-                : const Text("Approve & Refund",
+                : Text(
+                    Provider.of<LanguageProvider>(context)
+                        .translate('approve_refund_button'),
                     style: TextStyle(color: Colors.white)),
           ),
         ),
@@ -263,8 +282,9 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
           relatedId: refund.id);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Refund Processed Successfully")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(Provider.of<LanguageProvider>(context)
+              .translate('refund_processed_success'))));
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Error: $e")));
@@ -277,34 +297,44 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
     showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-              title: const Text("Reject Refund"),
+              title: Text(Provider.of<LanguageProvider>(context)
+                  .translate('reject_dialog_title')),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("Please select a valid reason for rejection."),
+                  Text(Provider.of<LanguageProvider>(context)
+                      .translate('reject_dialog_desc')),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                           value: "Policy Violation",
-                          child: Text("Policy Violation")),
+                          child: Text(Provider.of<LanguageProvider>(context)
+                              .translate('reason_policy'))),
                       DropdownMenuItem(
                           value: "Already Used",
-                          child: Text("Ticket Already Used")),
-                      DropdownMenuItem(value: "Other", child: Text("Other")),
+                          child: Text(Provider.of<LanguageProvider>(context)
+                              .translate('reason_used'))),
+                      DropdownMenuItem(
+                          value: "Other",
+                          child: Text(Provider.of<LanguageProvider>(context)
+                              .translate('reason_other'))),
                     ],
                     onChanged: (v) {
                       // If using dropdown, state handling needed. Simple text field for now as per spec "Comment box".
                       // Spec says "Reason dropdown (mandatory)".
                       _rejectReasonController.text = v ?? "";
                     },
-                    hint: const Text("Select Reason"),
+                    hint: Text(Provider.of<LanguageProvider>(context)
+                        .translate('select_reason_hint')),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _rejectReasonController,
-                    decoration: const InputDecoration(
-                        labelText: "Comment", border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                        labelText: Provider.of<LanguageProvider>(context)
+                            .translate('comment_label'),
+                        border: const OutlineInputBorder()),
                     maxLines: 3,
                   )
                 ],
@@ -312,7 +342,8 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: const Text("Cancel")),
+                    child: Text(Provider.of<LanguageProvider>(context)
+                        .translate('cancel_button'))),
                 ElevatedButton(
                     onPressed: () async {
                       if (_rejectReasonController.text.isEmpty) return;
@@ -321,7 +352,9 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                     },
                     style:
                         ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    child: const Text("Confirm Reject",
+                    child: Text(
+                        Provider.of<LanguageProvider>(context)
+                            .translate('confirm_reject_button'),
                         style: TextStyle(color: Colors.white)))
               ],
             ));

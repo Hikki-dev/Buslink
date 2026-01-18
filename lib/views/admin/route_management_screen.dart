@@ -395,6 +395,11 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
 
     final formKey = GlobalKey<FormState>();
     String? selectedRouteId = schedule?.routeId ?? routes.first.id;
+    // Validate initial selectedRouteId
+    if (routes.isNotEmpty && !routes.any((r) => r.id == selectedRouteId)) {
+      selectedRouteId = routes.first.id;
+    }
+
     final operatorCtrl =
         TextEditingController(text: schedule?.operatorName ?? '');
     final busNumCtrl = TextEditingController(text: schedule?.busNumber ?? '');
@@ -595,8 +600,14 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                       }
                     } catch (e) {
                       if (context.mounted) {
+                        String err = "Error: $e";
+                        if (e.toString().contains("failed-precondition") ||
+                            e.toString().contains("index")) {
+                          err =
+                              "Configuration Error: Missing Database Index. Please contact support.";
+                        }
                         ScaffoldMessenger.of(context)
-                            .showSnackBar(SnackBar(content: Text("Error: $e")));
+                            .showSnackBar(SnackBar(content: Text(err)));
                       }
                     }
                   },

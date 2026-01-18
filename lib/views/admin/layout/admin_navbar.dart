@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_theme.dart';
+import '../../../utils/language_provider.dart';
 
 import '../../conductor/conductor_dashboard.dart';
 import '../admin_dashboard.dart';
 import '../admin_user_management.dart';
 import '../../customer_main_screen.dart';
+import '../../auth/login_screen.dart';
 
 class AdminNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -90,7 +92,8 @@ class AdminNavBar extends StatelessWidget {
                   if (MediaQuery.of(context).size.width > 800) ...[
                     _navLink(
                         context,
-                        "Dashboard",
+                        Provider.of<LanguageProvider>(context)
+                            .translate('admin_dashboard'),
                         0,
                         () => Navigator.pushReplacement(
                             context,
@@ -98,7 +101,8 @@ class AdminNavBar extends StatelessWidget {
                                 builder: (_) => const AdminDashboard()))),
                     _navLink(
                         context,
-                        "User View",
+                        Provider.of<LanguageProvider>(context)
+                            .translate('user_view'),
                         1,
                         () => Navigator.push(
                             context,
@@ -107,7 +111,8 @@ class AdminNavBar extends StatelessWidget {
                                     isAdminView: true, initialIndex: 0)))),
                     _navLink(
                         context,
-                        "Conductor View",
+                        Provider.of<LanguageProvider>(context)
+                            .translate('conductor_view'),
                         2,
                         () => Navigator.push(
                             context,
@@ -116,7 +121,8 @@ class AdminNavBar extends StatelessWidget {
                                     isAdminView: true)))),
                     _navLink(
                         context,
-                        "Roles",
+                        Provider.of<LanguageProvider>(context)
+                            .translate('roles'),
                         3, // Index 3
                         () => Navigator.push(
                             context,
@@ -158,22 +164,58 @@ class AdminNavBar extends StatelessWidget {
                             break;
                         }
                       },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                            value: 'Dashboard', child: Text("Dashboard")),
-                        const PopupMenuItem(
-                            value: 'User View', child: Text("User View")),
-                        const PopupMenuItem(
-                            value: 'Conductor View',
-                            child: Text("Conductor View")),
-                        const PopupMenuItem(
-                            value: 'Roles', child: Text("Roles")),
-                      ],
+                      itemBuilder: (context) {
+                        final lp = Provider.of<LanguageProvider>(context,
+                            listen: false);
+                        return [
+                          PopupMenuItem(
+                              value: 'Dashboard',
+                              child: Text(lp.translate('admin_dashboard'))),
+                          PopupMenuItem(
+                              value: 'User View',
+                              child: Text(lp.translate('user_view'))),
+                          PopupMenuItem(
+                              value: 'Conductor View',
+                              child: Text(lp.translate('conductor_view'))),
+                          PopupMenuItem(
+                              value: 'Roles',
+                              child: Text(lp.translate('roles'))),
+                        ];
+                      },
                     ),
                   ],
 
-                  if (MediaQuery.of(context).size.width > 800)
-                    const SizedBox(width: 24),
+                  if (MediaQuery.of(context).size.width > 800) ...[
+                    const SizedBox(width: 16),
+                    // Language Selector (Desktop)
+                    Consumer<LanguageProvider>(
+                      builder: (context, languageProvider, _) {
+                        return PopupMenuButton<String>(
+                          icon: const Icon(Icons.language, color: Colors.grey),
+                          tooltip: "Change Language",
+                          onSelected: (String code) {
+                            languageProvider.setLanguage(code);
+                          },
+                          itemBuilder: (BuildContext context) =>
+                              <PopupMenuEntry<String>>[
+                            const PopupMenuItem<String>(
+                              value: 'en',
+                              child: Text('English'),
+                            ),
+                            const PopupMenuItem<String>(
+                              value: 'si',
+                              child: Text('සිංහල (Sinhala)'),
+                            ),
+                            const PopupMenuItem<String>(
+                              value: 'ta',
+                              child: Text('தமிழ் (Tamil)'),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                  ],
 
                   // User Profile / Logout
                   PopupMenuButton<String>(
@@ -181,11 +223,16 @@ class AdminNavBar extends StatelessWidget {
                       backgroundColor: AppTheme.primaryColor,
                       child: Icon(Icons.person, color: Colors.white),
                     ),
-                    onSelected: (value) {
+                    onSelected: (value) async {
                       if (value == 'logout') {
-                        authService.signOut();
-                        Navigator.of(context)
-                            .pushNamedAndRemoveUntil('/', (route) => false);
+                        await authService.signOut();
+                        if (context.mounted) {
+                          Navigator.of(context, rootNavigator: true)
+                              .pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                      builder: (_) => const LoginScreen()),
+                                  (route) => false);
+                        }
                       }
                     },
                     itemBuilder: (context) => [

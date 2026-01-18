@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../auth/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../controllers/trip_controller.dart';
@@ -6,6 +7,8 @@ import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
 import 'payment_screen.dart';
+import '../../utils/translations.dart';
+import '../../utils/language_provider.dart';
 
 class BulkConfirmationScreen extends StatefulWidget {
   final EnrichedTrip trip;
@@ -27,6 +30,10 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please login to continue")),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
       setState(() => _isProcessing = false);
       return;
@@ -67,11 +74,13 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
     final tripCtrl = Provider.of<TripController>(context);
     final total = tripCtrl.calculateBulkTotal(widget.trip.price);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final languageCode = Provider.of<LanguageProvider>(context).currentLanguage;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Bulk Booking Summary",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+            Translations.translate('bulk_booking_summary', languageCode),
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
       ),
@@ -82,15 +91,16 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
             // 1. Bus Details Card
             _buildDetailCard(
               context,
-              title: "Selected Route",
+              title: Translations.translate('selected_route', languageCode),
               content: Column(
                 children: [
-                  _buildRow("Operator", widget.trip.operatorName),
+                  _buildRow(Translations.translate('operator', languageCode),
+                      widget.trip.operatorName),
                   const SizedBox(height: 8),
-                  _buildRow("Route",
+                  _buildRow(Translations.translate('route', languageCode),
                       "${widget.trip.fromCity} - ${widget.trip.toCity}"),
                   const SizedBox(height: 8),
-                  _buildRow("Time",
+                  _buildRow(Translations.translate('time', languageCode),
                       DateFormat('hh:mm a').format(widget.trip.departureTime)),
                 ],
               ),
@@ -101,7 +111,8 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
             // 2. Dates List
             _buildDetailCard(
               context,
-              title: "Travel Dates (${tripCtrl.bulkDates.length} Days)",
+              title:
+                  "${Translations.translate('travel_dates', languageCode)} (${tripCtrl.bulkDates.length} ${Translations.translate('days', languageCode)})",
               content: Column(
                 children: tripCtrl.bulkDates.map((date) {
                   return Padding(
@@ -127,21 +138,24 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
             // 3. Price Breakdown
             _buildDetailCard(
               context,
-              title: "Price Breakdown",
+              title: Translations.translate('price_breakdown', languageCode),
               content: Column(
                 children: [
-                  _buildRow("Price per Ticket",
+                  _buildRow(
+                      Translations.translate('price_per_ticket', languageCode),
                       "LKR ${widget.trip.price.toStringAsFixed(2)}"),
                   const SizedBox(height: 8),
-                  _buildRow("Passengers", "${tripCtrl.seatsPerTrip}"),
+                  _buildRow(Translations.translate('passengers', languageCode),
+                      "${tripCtrl.seatsPerTrip}"),
                   const SizedBox(height: 8),
-                  _buildRow("Total Days", "${tripCtrl.bulkDates.length}"),
+                  _buildRow(Translations.translate('total_days', languageCode),
+                      "${tripCtrl.bulkDates.length}"),
                   const Divider(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("TOTAL AMOUNT",
-                          style: TextStyle(
+                      Text(Translations.translate('total_amount', languageCode),
+                          style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold)),
                       Text(
                         "LKR ${total.toStringAsFixed(2)}",
@@ -183,9 +197,9 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
                     height: 24,
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2))
-                : const Text("PROCEED TO PAYMENT",
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                : Text(Translations.translate('proceed_payment', languageCode),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ),
       ),

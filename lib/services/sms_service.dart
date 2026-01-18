@@ -9,10 +9,10 @@ class SmsService {
       FirebaseFirestore.instance.collection('outbound_messages');
 
   /// Launches the device's SMS app with a pre-filled message.
-  static Future<void> sendSMS(
+  static Future<bool> sendSMS(
       {required String phone, required String message}) async {
     try {
-      if (phone.isEmpty) return;
+      if (phone.isEmpty) return false;
 
       // Clean phone number
       final cleanPhone = phone.replaceAll(RegExp(r'\s+|-'), '');
@@ -35,15 +35,17 @@ class SmsService {
       }
 
       if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
         // Log "Attempted" to Firestore
         await _logSmsAttempt(phone, message);
+        return true;
       } else {
         debugPrint("Could not launch SMS url: $uri");
-        // Fallback? Copy to clipboard?
+        return false;
       }
     } catch (e) {
       debugPrint("Error sending SMS: $e");
+      return false;
     }
   }
 
@@ -80,7 +82,7 @@ class SmsService {
   }
 
   /// Sends a ticket copy via SMS (Client-side trigger)
-  static Future<void> sendTicketCopy(dynamic ticket) async {
+  static Future<bool> sendTicketCopy(dynamic ticket) async {
     // Dynamic to accept Ticket model without importing if avoiding circular deps
     // Or just cast if we know.
     // Re-using exiting logic but replacing implementation
@@ -89,7 +91,7 @@ class SmsService {
       final phone = (ticket.passengerPhone as String? ?? '');
       if (phone.isEmpty) {
         debugPrint("No phone number to send SMS.");
-        return;
+        return false;
       }
 
       final tripData = ticket.tripData as Map<String, dynamic>;
@@ -99,9 +101,10 @@ class SmsService {
           "Bus: ${tripData['busNumber']}. Seat: ${(ticket.seatNumbers as List).join(',')}. "
           "Show to conductor.";
 
-      await sendSMS(phone: phone, message: messageBody);
+      return await sendSMS(phone: phone, message: messageBody);
     } catch (e) {
       debugPrint("Error preparing ticket SMS: $e");
+      return false;
     }
   }
 

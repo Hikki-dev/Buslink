@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../utils/language_provider.dart';
 import 'notifications_screen.dart';
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
@@ -76,6 +77,34 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       themeController
                           .setTheme(isDark ? ThemeMode.light : ThemeMode.dark);
                     },
+                  );
+                },
+              ),
+
+              // Language Selector
+              Consumer<LanguageProvider>(
+                builder: (context, languageProvider, _) {
+                  return PopupMenuButton<String>(
+                    icon: const Icon(Icons.language),
+                    tooltip: "Change Language",
+                    onSelected: (String code) {
+                      languageProvider.setLanguage(code);
+                    },
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'en',
+                        child: Text('English'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'si',
+                        child: Text('සිංහල (Sinhala)'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'ta',
+                        child: Text('தமிழ் (Tamil)'),
+                      ),
+                    ],
                   );
                 },
               ),

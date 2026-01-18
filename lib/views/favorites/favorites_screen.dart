@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/language_provider.dart';
 import '../../controllers/trip_controller.dart';
 import '../../services/auth_service.dart';
 // import '../results/bus_list_screen.dart';
@@ -103,53 +104,50 @@ class FavoritesScreen extends StatelessWidget {
 
                       final favorites = snapshot.data!;
 
-                      return GridView.builder(
+                      return SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: isDesktop ? 3 : 1,
-                          mainAxisSpacing: 20,
-                          crossAxisSpacing: 20,
-                          childAspectRatio: isDesktop ? 1.5 : 1.8,
-                        ),
-                        itemCount: favorites.length,
-                        itemBuilder: (context, index) {
-                          final fav = favorites[index];
-                          return _FavoriteItemCard(
-                            from: fav['fromCity'] ?? 'Unknown',
-                            to: fav['toCity'] ?? 'Unknown',
-                            operator: fav['operatorName'] ?? 'Unknown',
-                            price: fav['price'] != null
-                                ? "LKR ${fav['price']}"
-                                : "Price Varies",
-                            onRemove: () async {
-                              await controller.removeFavorite(fav['id']);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text("Removed from favourites")),
-                                );
-                              }
-                            },
-                            onBook: () {
-                              // 1. Pre-fill Search
-                              controller.setFromCity(fav['fromCity']);
-                              controller.setToCity(fav['toCity']);
-                              // Set date to today or let user pick. User wants manual selection.
-                              // Setting it to today ensures the field isn't empty, but user can change it.
-                              // controller.setDepartureDate(DateTime.now());
-
-                              // 2. Navigate to Home Screen for Manual Date Selection
-                              // We use pushAndRemoveUntil to reset the stack to Home
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CustomerMainScreen(
-                                            initialIndex: 0)),
-                                (route) => false,
+                        child: Center(
+                          child: Wrap(
+                            spacing: 20,
+                            runSpacing: 20,
+                            alignment: WrapAlignment.center,
+                            children: favorites.map((fav) {
+                              return SizedBox(
+                                width: isDesktop ? 350 : double.infinity,
+                                child: _FavoriteItemCard(
+                                  from: fav['fromCity'] ?? 'Unknown',
+                                  to: fav['toCity'] ?? 'Unknown',
+                                  operator: fav['operatorName'] ?? 'Unknown',
+                                  price: fav['price'] != null
+                                      ? "LKR ${fav['price']}"
+                                      : "Price Varies",
+                                  onRemove: () async {
+                                    await controller.removeFavorite(fav['id']);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                "Removed from favourites")),
+                                      );
+                                    }
+                                  },
+                                  onBook: () {
+                                    controller.setFromCity(fav['fromCity']);
+                                    controller.setToCity(fav['toCity']);
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const CustomerMainScreen(
+                                                  initialIndex: 0)),
+                                      (route) => false,
+                                    );
+                                  },
+                                ),
                               );
-                            },
-                          );
-                        },
+                            }).toList(),
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -210,7 +208,7 @@ class _FavoriteItemCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const Text("FROM",
                               style: TextStyle(
@@ -219,6 +217,7 @@ class _FavoriteItemCard extends StatelessWidget {
                                   color: Colors.grey,
                                   fontWeight: FontWeight.bold)),
                           Text(from,
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                   fontFamily: 'Outfit',
                                   fontSize: 18,
@@ -231,7 +230,7 @@ class _FavoriteItemCard extends StatelessWidget {
                         color: Colors.grey.shade500),
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const Text("TO",
                               style: TextStyle(
@@ -240,6 +239,7 @@ class _FavoriteItemCard extends StatelessWidget {
                                   color: Colors.grey,
                                   fontWeight: FontWeight.bold)),
                           Text(to,
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                   fontFamily: 'Outfit',
                                   fontSize: 18,
@@ -253,10 +253,10 @@ class _FavoriteItemCard extends StatelessWidget {
 
                 // Operator & Price
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.center, // Centered
                   children: [
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(operator,
                             style: TextStyle(
@@ -270,6 +270,7 @@ class _FavoriteItemCard extends StatelessWidget {
                                 color: Colors.grey)),
                       ],
                     ),
+                    const SizedBox(width: 24), // Spacing
                     Text(price,
                         style: const TextStyle(
                             fontFamily: 'Outfit',
@@ -290,8 +291,10 @@ class _FavoriteItemCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         elevation: 0),
-                    child: const Text("BOOK AGAIN",
-                        style: TextStyle(
+                    child: Text(
+                        Provider.of<LanguageProvider>(context)
+                            .translate('book_again'),
+                        style: const TextStyle(
                             fontFamily: 'Outfit',
                             fontWeight: FontWeight.bold,
                             color: Colors.white)),

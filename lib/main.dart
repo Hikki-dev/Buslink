@@ -295,8 +295,8 @@ class AuthWrapper extends StatelessWidget {
       }
     }
 
-    // 3. Guest / Default
-    return const CustomerMainScreen();
+    // 3. Guest / Default -> Force Login
+    return const LoginScreen();
   }
 }
 

@@ -17,7 +17,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../layout/app_footer.dart';
-import '../../services/auth_service.dart';
+// import '../../services/auth_service.dart'; // Unused
 import '../../services/firestore_service.dart';
 import '../booking/bulk_confirmation_screen.dart';
 import '../booking/bulk_quantity_dialog.dart';
@@ -260,7 +260,8 @@ class _BusListScreenState extends State<BusListScreen> {
     final lp = Provider.of<LanguageProvider>(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('${controller.fromCity} ➔ ${controller.toCity}',
+        title: Text(
+            '${lp.translate(controller.fromCity?.toLowerCase().replaceAll(' ', '_') ?? "")} ➔ ${lp.translate(controller.toCity?.toLowerCase().replaceAll(' ', '_') ?? "")}',
             style: const TextStyle(
                 fontFamily: 'Outfit',
                 fontWeight: FontWeight.bold,
@@ -308,6 +309,7 @@ class _BusListScreenState extends State<BusListScreen> {
       {bool isMobile = false}) {
     // Determine which city's weather is being shown
     final weatherCity = controller.toCity ?? controller.fromCity ?? "Colombo";
+    final weatherCityKey = weatherCity.toLowerCase().replaceAll(' ', '_');
     final lp = Provider.of<LanguageProvider>(context);
 
     // ... (Weather UI same but translation for headers?)
@@ -341,7 +343,7 @@ class _BusListScreenState extends State<BusListScreen> {
                                     fontFamily: 'Outfit',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18)),
-                            Text(weatherCity,
+                            Text(lp.translate(weatherCityKey),
                                 style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
@@ -385,7 +387,7 @@ class _BusListScreenState extends State<BusListScreen> {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
                                     color: Colors.black)),
-                            Text(weatherCity,
+                            Text(lp.translate(weatherCityKey),
                                 style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
@@ -402,7 +404,7 @@ class _BusListScreenState extends State<BusListScreen> {
                           mainAxisSize: MainAxisSize.min,
                           // Time
                           children: [
-                            // const RouteFavoriteButton(), // Removed
+                            // const SizedBox(width: 8),
                             // const SizedBox(width: 8),
                             const _ClockWidget(fontSize: 24),
                           ],
@@ -1113,9 +1115,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
     // Filter Logic to translate "Days" if bulk
     String displayPrice = priceLabel;
     if (controller.isBulkBooking) {
-      // "LKR 5000 (x5 Days)" -> Need to translate "Days"? Maybe.
-      // For now keep it simple or use replace.
-      // displayPrice = priceLabel.replaceAll('Days', lp.translate('days'));
+      displayPrice = priceLabel.replaceAll('Days', lp.translate('days'));
     }
 
     return Container(
@@ -1217,104 +1217,6 @@ class _BusTicketCardState extends State<_BusTicketCard> {
           )
         ],
       ),
-    );
-  }
-}
-
-class RouteFavoriteButton extends StatefulWidget {
-  const RouteFavoriteButton({super.key});
-
-  @override
-  State<RouteFavoriteButton> createState() => _RouteFavoriteButtonState();
-}
-
-class _RouteFavoriteButtonState extends State<RouteFavoriteButton> {
-  bool _isFavorite = false;
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkStatus();
-  }
-
-  Future<void> _checkStatus() async {
-    final controller = Provider.of<TripController>(context, listen: false);
-    final user = Provider.of<AuthService>(context, listen: false).currentUser;
-    if (user != null &&
-        controller.fromCity != null &&
-        controller.toCity != null) {
-      final isFav = await controller.isRouteFavorite(
-          controller.fromCity!, controller.toCity!);
-      if (mounted) setState(() => _isFavorite = isFav);
-    }
-  }
-
-  Future<void> _toggle() async {
-    final controller = Provider.of<TripController>(context, listen: false);
-    final user = Provider.of<AuthService>(context, listen: false).currentUser;
-
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please login to save favorites")));
-      return;
-    }
-
-    if (controller.fromCity == null || controller.toCity == null) return;
-
-    // VALIDATION: Cannot favorite if no trips exist
-    if (controller.searchResults.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Cannot add route to favorites: No valid trips found!"),
-        backgroundColor: Colors.red,
-      ));
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    // Calculate best price
-    double? minPrice;
-    if (controller.searchResults.isNotEmpty) {
-      minPrice = controller.searchResults
-          .map((t) => t.price)
-          .reduce((a, b) => a < b ? a : b);
-    }
-
-    await controller.toggleRouteFavorite(
-        controller.fromCity!, controller.toCity!,
-        operatorName: "Various Operators", price: minPrice);
-
-    // Toggle state immediately for UI (optimistic) or wait?
-    // We can just flip it:
-    setState(() {
-      _isFavorite = !_isFavorite;
-      _isLoading = false;
-    });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(_isFavorite
-              ? "Route saved to favorites"
-              : "Route removed from favorites"),
-          duration: const Duration(seconds: 1)));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: _isLoading ? null : _toggle,
-      icon: _isLoading
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2))
-          : Icon(
-              _isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: _isFavorite ? Colors.red : Colors.grey,
-            ),
-      tooltip: "Save Route",
     );
   }
 }

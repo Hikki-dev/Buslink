@@ -41,10 +41,13 @@ dependencies:
   cached_network_image: ^3.4.1
   mobile_scanner: ^7.1.4
   web: ^1.1.1
+  googleapis_auth: ^1.4.1 # For FCM V1 Access Token Generation
   cloud_functions: ^6.0.5
   geolocator: ^14.0.2
   get: ^4.6.6
   google_maps_flutter: ^2.5.0
+  flutter_local_notifications: ^19.5.0
+  timezone: ^0.10.1
 
 dev_dependencies:
   flutter_test:
