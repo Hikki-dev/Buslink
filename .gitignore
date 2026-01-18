@@ -73,3 +73,7 @@ android/key.properties
 node_modules/
 push.json
 scripts/service-account.json
+
+
+
+assets/service_account.json

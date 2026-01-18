@@ -591,88 +591,88 @@ class _BoardingPassCard extends StatelessWidget {
                 allowRefund = true;
               }
 
-              // Visual Adjustment:
-              // If allowRefund is false (History/Cancelled), we only show "View Ticket".
-              // User asked to "Center" View Ticket button.
-              // We can just use a Row with MainAxisAlignment.center and a fixed/flexible width.
-
-              // Center the single button or buttons
               return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    height: 48,
-                    width: 140, // Fixed width for centered look
-                    child: OutlinedButton(
-                      onPressed: () {
-                        try {
-                          final trip =
-                              Trip.fromMap(ticket.tripData, ticket.tripId);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => TicketScreen(
-                                  ticketArg: ticket, tripArg: trip),
-                            ),
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Error opening ticket: $e")),
-                          );
-                        }
-                      },
-                      style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          side: BorderSide(
-                              color: isDark
-                                  ? Colors.grey.shade700
-                                  : Colors.grey.shade300),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                      child: Text(
-                          Provider.of<LanguageProvider>(context)
-                              .translate('view_ticket'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: textColor)),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          try {
+                            final trip =
+                                Trip.fromMap(ticket.tripData, ticket.tripId);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => TicketScreen(
+                                    ticketArg: ticket, tripArg: trip),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text("Error opening ticket: $e")),
+                            );
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            side: BorderSide(
+                                color: isDark
+                                    ? Colors.grey.shade700
+                                    : Colors.grey.shade300),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12))),
+                        child: Text(
+                            Provider.of<LanguageProvider>(context)
+                                .translate('view_ticket'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: textColor)),
+                      ),
                     ),
                   ),
                   if (allowRefund) ...[
                     const SizedBox(width: 12),
-                    SizedBox(
-                      height: 48,
-                      width: 140,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          try {
-                            final trip = Trip.fromMap(tripData, ticket.tripId);
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => RefundRequestScreen(
-                                        ticket: ticket, trip: trip)));
-                          } catch (e) {
-                            debugPrint("Error nav to refund: $e");
-                          }
-                        },
-                        icon: const Icon(Icons.undo,
-                            size: 18, color: Colors.white),
-                        label: Text(
-                            Provider.of<LanguageProvider>(context)
-                                .translate('refund_btn'),
-                            style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: Colors.white)),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade400,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12))),
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            try {
+                              final trip =
+                                  Trip.fromMap(tripData, ticket.tripId);
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => RefundRequestScreen(
+                                          ticket: ticket, trip: trip)));
+                            } catch (e) {
+                              debugPrint("Error nav to refund: $e");
+                            }
+                          },
+                          icon: const Icon(Icons.undo,
+                              size: 18, color: Colors.white),
+                          label: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                                Provider.of<LanguageProvider>(context)
+                                    .translate('refund_btn'),
+                                style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Colors.white)),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red.shade400,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12))),
+                        ),
                       ),
                     ),
                   ]

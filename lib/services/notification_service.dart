@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart'; // For rootBundle
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import '../models/notification_model.dart';
+import '../services/firestore_service.dart'; // Import Added
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     as fln;
 import 'package:timezone/timezone.dart' as tz;
@@ -12,7 +14,6 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:googleapis_auth/auth_io.dart';
-import 'package:googleapis_auth/googleapis_auth.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -29,26 +30,28 @@ class NotificationService {
   static final fln.FlutterLocalNotificationsPlugin _localNotifications =
       fln.FlutterLocalNotificationsPlugin();
 
-  // Credentials provided by user (BusLink Service Account)
-  // TODO: IMPORTANT - Replace this with your actual service account JSON for local testing.
-  // DO NOT COMMIT REAL CREDENTIALS TO GIT.
-  // Ideally, move this logic to a backend server.
-  static const Map<String, dynamic> _serviceAccountJson = {
-    "type": "service_account",
-    "project_id": "buslink-416e1",
-    // ... Add your real credentials here locally ...
-  };
+  static const String _projectId = "buslink-416e1";
+  // Generated from Firebase Console -> Project Settings -> Cloud Messaging -> Web Configuration
+  static const String _vapidKey =
+      "BMMQ7rRJHlKZ_-0CHE9LvFP4Vd5tarNDOx0loA7lraCOPmPOfvVEPCCxtrkyMa7Lc3iNEDuuCkxClMClEbSjPTE";
 
+  // Loaded via Asset (Secure Option 2)
   static Future<String?> _getAccessToken() async {
     try {
+      // 1. Load JSON from assets
+      final jsonString =
+          await rootBundle.loadString('assets/service_account.json');
+
+      final serviceAccountMap = json.decode(jsonString);
+
       final accountCredentials =
-          ServiceAccountCredentials.fromJson(_serviceAccountJson);
+          ServiceAccountCredentials.fromJson(serviceAccountMap);
       final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
       final client = await clientViaServiceAccount(accountCredentials, scopes);
-      final credentials = client.credentials; // Not a future
+      final credentials = client.credentials;
       return credentials.accessToken.data;
     } catch (e) {
-      debugPrint("Error getting access token: $e");
+      debugPrint("Error getting access token (Asset Load): $e");
       return null;
     }
   }
@@ -93,12 +96,12 @@ class NotificationService {
         ?.requestNotificationsPermission();
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      await _setupToken();
-      return;
-    }
-
-    if (settings.authorizationStatus == AuthorizationStatus.denied) {
-      return;
+      if (kDebugMode) print('User granted permission');
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
+      if (kDebugMode) print('User granted provisional permission');
+    } else {
+      if (kDebugMode) print('User declined or has not accepted permission');
     }
 
     if (context.mounted) {
@@ -110,12 +113,11 @@ class NotificationService {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset('assets/images/notification_bell.png',
-                  height: 60,
-                  errorBuilder: (_, __, ___) => const Icon(
-                      Icons.notifications_active,
-                      size: 50,
-                      color: Colors.amber)),
+              Icon(
+                Icons.notifications_active,
+                color: Colors.amber,
+                size: 50,
+              ),
               const SizedBox(height: 16),
               const Text(
                 "We need to send you notifications for:",
@@ -191,9 +193,9 @@ class NotificationService {
   static Future<void> sendPushToToken(
       String token, String title, String body) async {
     try {
-      final projectId = _serviceAccountJson['project_id'];
-      if (projectId == 'YOUR_PROJECT_ID') {
-        debugPrint("FCM Error: Service Account not configured.");
+      const projectId = _projectId;
+      if (projectId.isEmpty) {
+        debugPrint("FCM Error: Project ID not configured.");
         return;
       }
 
@@ -316,10 +318,11 @@ class NotificationService {
     required String userId,
     required String title,
     required String body,
-    String type = 'general',
+    String type =
+        'general', // Types: 'general', 'tripStatus', 'booking', 'delay', 'promotion'
     String? relatedId,
   }) async {
-    // 1. Create Firestore Record (In-App)
+    // 1. Create Firestore Record (Always save to In-App History)
     await createNotification(
         userId: userId,
         title: title,
@@ -327,8 +330,35 @@ class NotificationService {
         type: type,
         relatedId: relatedId);
 
-    // 2. Fetch User Token
+    // 2. Check User Preferences BEFORE sending Push
     try {
+      final fs = FirestoreService();
+      final prefs = await fs.getNotificationPreferences(userId);
+
+      // Default to TRUE if prefs not set yet
+      bool allowPush = true;
+
+      if (prefs != null) {
+        if (type == 'tripStatus' || type == 'delay') {
+          allowPush = prefs['tripUpdates'] ?? true;
+        } else if (type == 'booking') {
+          allowPush = prefs['bookingConfirmations'] ?? true;
+        } else if (type == 'promotion') {
+          allowPush = prefs['promotions'] ?? true;
+        } else if (type == 'reminder') {
+          allowPush = prefs['reminders'] ?? true;
+        } else if (type == 'duty') {
+          allowPush = prefs['dutyAssignments'] ?? true;
+        }
+      }
+
+      if (!allowPush) {
+        if (kDebugMode)
+          print("Push suppressed by user preference (Type: $type)");
+        return;
+      }
+
+      // 3. Fetch Token & Send
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
@@ -337,14 +367,11 @@ class NotificationService {
         final data = userDoc.data();
         final token = data?['fcmToken'];
         if (token != null && token.toString().isNotEmpty) {
-          // 3. Send FCM Push
           await sendPushToToken(token.toString(), title, body);
-        } else {
-          debugPrint("No FCM token found for user $userId");
         }
       }
     } catch (e) {
-      debugPrint("Error fetching user token for push: $e");
+      debugPrint("Error in sendNotificationToUser: $e");
     }
   }
 
@@ -356,53 +383,42 @@ class NotificationService {
       if (kDebugMode) {
         print("Notifying passengers for trip $tripId: Status $newStatus");
       }
-      // 1. Find all active bookings (tickets) for this trip
+      // 1. Find all active bookings for trip
       final ticketsSnapshot = await FirebaseFirestore.instance
           .collection('tickets')
           .where('tripId', isEqualTo: tripId)
           .where('status', isEqualTo: 'confirmed')
           .get();
 
-      if (ticketsSnapshot.docs.isEmpty) {
-        if (kDebugMode) print("No passengers to notify for trip $tripId");
-        return;
-      }
+      if (ticketsSnapshot.docs.isEmpty) return;
 
       final batch = FirebaseFirestore.instance.batch();
 
-      // 2. batch create notifications & Send Pushes
+      // 2. Loop passengers
       for (var doc in ticketsSnapshot.docs) {
         final data = doc.data();
         final userId = data['userId'];
 
         if (userId != null) {
-          final docRef =
-              FirebaseFirestore.instance.collection('notifications').doc();
-
-          String title = 'Trip Update: $newStatus';
+          // Construct Message
+          String title = 'Trip Update';
           String message = "Your trip ($routeName) is now $newStatus.";
-          String type = 'tripStatus'; // Default
+          String type = 'tripStatus';
 
           if (newStatus == 'DELAYED') {
             title = "Trip Delayed";
             message =
-                "Heads up! Your trip ($routeName) is delayed by $delayMinutes minutes.";
+                "Your trip ($routeName) is delayed by $delayMinutes mins.";
             type = 'delay';
-          } else if (newStatus == 'DEPARTED') {
-            title = "Bus Departed";
-            message = "Your bus ($routeName) has departed!";
-            type = 'tripStatus';
-          } else if (newStatus == 'ARRIVED') {
-            title = "Arrived";
-            message = "You have arrived at your destination ($routeName).";
-            type = 'tripStatus';
           } else if (newStatus == 'CANCELLED') {
             title = "Trip Cancelled";
             message = "Urgent: Your trip ($routeName) has been cancelled.";
-            type = 'cancellation';
+            type = 'tripStatus'; // Treated as update
           }
 
-          // A. Add to In-App Notifications
+          // A. Create In-App Notification (Batch)
+          final docRef =
+              FirebaseFirestore.instance.collection('notifications').doc();
           batch.set(docRef, {
             'userId': userId,
             'title': title,
@@ -413,57 +429,136 @@ class NotificationService {
             'isRead': false,
           });
 
-          // B. Send Push Notification (Fire & Forget)
-          FirebaseFirestore.instance
-              .collection('users')
-              .doc(userId)
-              .get()
-              .then((userDoc) {
-            if (userDoc.exists) {
-              final userData = userDoc.data();
-              // Try 'fcmToken' first, if likely simple string
-              // In saveTokenToUser, we save both.
-              final token = userData?['fcmToken'];
-              if (token != null && token.toString().isNotEmpty) {
-                sendPushToToken(token.toString(), title, message);
-              }
-            }
-          });
+          // B. Trigger Individual Send (Handles Pref Check internally)
+          // Note: We can't batch 'sends' easily with individual pref checks in a loop efficiently without Logic.
+          // Better: Fire and Forget the send so we don't block the batch commit?
+          // Or just call the single method (which writes to Firestore again - DUPLICATE!)
+          // Correct approach:
+          // We already batched the "In-App" write above.
+          // Now we just need the "Push" part.
+          // Extract Push Logic to a helper function that checks prefs?
+
+          // FAST FIX: Just call _checkAndSendPush independent of Firestore batch.
+          _checkAndSendPush(userId, title, message, type);
         }
       }
 
       await batch.commit();
-      if (kDebugMode) {
-        print(
-            "Notifications processed for ${ticketsSnapshot.docs.length} passengers.");
-      }
     } catch (e) {
-      if (kDebugMode) {
-        print("Error in notifyTripStatusChange: $e");
+      debugPrint("Error in notifyTripStatusChange: $e");
+    }
+  }
+
+  static Future<void> _checkAndSendPush(
+      String userId, String title, String body, String type) async {
+    try {
+      final fs = FirestoreService();
+      final prefs = await fs.getNotificationPreferences(userId);
+      bool allowPush = true;
+      if (prefs != null) {
+        if (type == 'tripStatus' || type == 'delay')
+          allowPush = prefs['tripUpdates'] ?? true;
       }
+
+      if (!allowPush) return;
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      final token = userDoc.data()?['fcmToken'];
+      if (token != null) await sendPushToToken(token.toString(), title, body);
+    } catch (e) {
+      // Ignore
     }
   }
 
   /// Saves the FCM token to the user's Firestore profile
   static Future<void> saveTokenToUser(String userId) async {
     try {
-      String? token = await _firebaseMessaging.getToken();
-      if (token == null) return;
+      String? token;
 
-      final userRef =
-          FirebaseFirestore.instance.collection('users').doc(userId);
+      if (kIsWeb) {
+        // REPLACE THIS WITH YOUR GENERATED KEY FROM FIREBASE CONSOLE
+        token = await _firebaseMessaging.getToken(vapidKey: _vapidKey);
+      } else {
+        token = await _firebaseMessaging.getToken();
+      }
 
-      await userRef.set({
-        'fcmToken': token,
-        'fcmTokens': FieldValue.arrayUnion([token]),
-        'lastTokenUpdate': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      if (token != null) {
+        if (kDebugMode) print("FCM Token: $token");
 
-      if (kDebugMode) {
-        print("FCM Token saved for user $userId");
+        // SUBSCRIBE TO TOPIC (Android/iOS only, Web requires Admin SDK)
+        if (!kIsWeb) {
+          await _firebaseMessaging.subscribeToTopic('app_promotion');
+          if (kDebugMode) print("Subscribed to 'app_promotion' topic");
+        }
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .update({
+          'fcmToken': token,
+          'lastTokenUpdate': FieldValue.serverTimestamp(),
+          'platform': kIsWeb ? 'web' : Platform.operatingSystem,
+        }).catchError((e) {
+          debugPrint("Error updating user token (doc might not exist): $e");
+          FirebaseFirestore.instance.collection('users').doc(userId).set({
+            'fcmToken': token,
+            'lastTokenUpdate': FieldValue.serverTimestamp(),
+            'platform': kIsWeb ? 'web' : Platform.operatingSystem,
+          }, SetOptions(merge: true));
+        });
       }
     } catch (e) {
       debugPrint("Error saving FCM token: $e");
+    }
+  }
+
+  /// Sends a TEST Topic Notification (Simulates Server)
+  static Future<void> sendTestTopicNotification() async {
+    try {
+      final accessToken = await _getAccessToken();
+      if (accessToken == null) {
+        debugPrint("FCM Error: Could not get access token.");
+        return;
+      }
+
+      // Construct Message with Platform Overrides
+      final body = {
+        "message": {
+          "topic": "app_promotion",
+          "notification": {
+            "title": "A new app is available",
+            "body": "Check out our latest app in the app store."
+          },
+          "android": {
+            "notification": {
+              "title": "A new Android app is available",
+              "body": "Our latest app is available on Google Play store"
+            }
+          }
+        }
+      };
+
+      final response = await http.post(
+        Uri.parse(
+            'https://fcm.googleapis.com/v1/projects/$_projectId/messages:send'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint("Topic Message Sent Successfully: ${response.body}");
+      } else {
+        debugPrint(
+            "Error sending Topic Message: ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Error sending test topic notification: $e");
     }
   }
 

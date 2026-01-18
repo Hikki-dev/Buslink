@@ -48,6 +48,7 @@ dependencies:
   google_maps_flutter: ^2.5.0
   flutter_local_notifications: ^19.5.0
   timezone: ^0.10.1
+  rxdart: ^0.28.0
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +63,7 @@ flutter:
   assets:
     - assets/images/
     - .env
+    - assets/service_account.json
 
   fonts:
     - family: Outfit

@@ -118,7 +118,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       if (redirectUrl != null) {
         final uri = Uri.parse(redirectUrl);
         if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, webOnlyWindowName: '_self');
+          await launchUrl(uri, webOnlyWindowName: '_blank');
         } else {
           throw Exception("Could not launch Stripe Checkout.");
         }

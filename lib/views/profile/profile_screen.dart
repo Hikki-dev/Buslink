@@ -21,6 +21,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart'; // for kIsWeb
 import '../settings/account_settings_screen.dart';
+import '../settings/notification_settings_screen.dart';
 import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -289,11 +290,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.w600),
                                     ),
-                                    trailing: Switch(
-                                      value: true,
-                                      activeTrackColor: AppTheme.primaryColor,
-                                      onChanged: (v) {},
-                                    ),
+                                    trailing: const Icon(Icons.chevron_right,
+                                        color: Colors.grey),
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const NotificationSettingsScreen()));
+                                    },
                                   ),
                                   const Divider(height: 1),
                                   ListTile(

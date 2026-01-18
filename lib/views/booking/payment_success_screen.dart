@@ -200,213 +200,226 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
           content: Text(
               "Generating ${tickets.length > 1 ? 'Booking PDF' : 'Ticket PDF'}...")),
     );
-    final doc = pw.Document();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text(
+              "Generating ${tickets.length > 1 ? 'Booking PDF' : 'Ticket PDF'}...")),
+    );
 
-    // 1. Add Summary Page if multiple tickets
-    if (tickets.length > 1) {
-      doc.addPage(pw.Page(
-          pageFormat: PdfPageFormat.a4,
-          build: (pw.Context context) {
-            double totalAmount =
-                tickets.fold(0, (sum, item) => sum + item.totalAmount);
+    try {
+      final doc = pw.Document();
 
-            return pw.Center(
-                child: pw.Column(children: [
-              pw.Header(
-                  level: 0,
-                  child: pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Text("BusLink",
-                            style: pw.TextStyle(
-                                fontSize: 24,
-                                fontWeight: pw.FontWeight.bold,
-                                color: PdfColors.red900)),
-                        pw.Text("BOOKING SUMMARY",
-                            style: pw.TextStyle(
-                                fontSize: 20,
-                                fontWeight: pw.FontWeight.bold,
-                                color: PdfColors.grey)),
-                      ])),
-              pw.SizedBox(height: 20),
-              pw.Container(
-                  padding: const pw.EdgeInsets.all(20),
-                  decoration: pw.BoxDecoration(
-                      border: pw.Border.all(color: PdfColors.grey300)),
-                  child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Row(
+      // 1. Add Summary Page if multiple tickets
+      if (tickets.length > 1) {
+        doc.addPage(pw.Page(
+            pageFormat: PdfPageFormat.a4,
+            build: (pw.Context context) {
+              double totalAmount =
+                  tickets.fold(0, (sum, item) => sum + item.totalAmount);
+
+              return pw.Center(
+                  child: pw.Column(children: [
+                pw.Header(
+                    level: 0,
+                    child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text("BusLink",
+                              style: pw.TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: PdfColors.red900)),
+                          pw.Text("BOOKING SUMMARY",
+                              style: pw.TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: PdfColors.grey)),
+                        ])),
+                pw.SizedBox(height: 20),
+                pw.Container(
+                    padding: const pw.EdgeInsets.all(20),
+                    decoration: pw.BoxDecoration(
+                        border: pw.Border.all(color: PdfColors.grey300)),
+                    child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Row(
+                              mainAxisAlignment:
+                                  pw.MainAxisAlignment.spaceBetween,
+                              children: [
+                                pw.Text("Total Tickets: ${tickets.length}",
+                                    style: pw.TextStyle(
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 18)),
+                                pw.Text(
+                                    "Total Paid: LKR ${totalAmount.toStringAsFixed(0)}",
+                                    style: pw.TextStyle(
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 18,
+                                        color: PdfColors.green900)),
+                              ]),
+                          pw.Divider(),
+                          pw.SizedBox(height: 10),
+                          // List of Tickets
+                          ...tickets.map((t) {
+                            final tData = t.tripData;
+                            final tripDate = tData['departureTime'] is Timestamp
+                                ? (tData['departureTime'] as Timestamp).toDate()
+                                : DateTime.tryParse(
+                                        tData['departureTime'].toString()) ??
+                                    DateTime.now();
+                            return pw.Padding(
+                                padding: const pw.EdgeInsets.only(bottom: 8),
+                                child: pw.Row(children: [
+                                  pw.Expanded(
+                                      flex: 2,
+                                      child: pw.Text(DateFormat('yyyy-MM-dd')
+                                          .format(tripDate))),
+                                  pw.Expanded(
+                                      flex: 3,
+                                      child: pw.Text(
+                                          "${tData['fromCity']} -> ${tData['toCity']}")),
+                                  pw.Expanded(
+                                      flex: 2,
+                                      child: pw.Text(
+                                          "Seat: ${t.seatNumbers.join(',')}")),
+                                  pw.Text(
+                                      "LKR ${t.totalAmount.toStringAsFixed(0)}")
+                                ]));
+                          }),
+                        ])),
+                pw.SizedBox(height: 20),
+                pw.Text(
+                    "Individual tickets are attached in the following pages.",
+                    style: const pw.TextStyle(color: PdfColors.grey)),
+              ]));
+            }));
+      }
+
+      // 2. Add Individual Ticket Pages
+      for (final ticket in tickets) {
+        // Construct Trip from Ticket Data (Snapshot)
+        final tData = ticket.tripData;
+        final tripDate = tData['departureTime'] is Timestamp
+            ? (tData['departureTime'] as Timestamp).toDate()
+            : DateTime.tryParse(tData['departureTime'].toString()) ??
+                DateTime.now();
+
+        final fromCity = tData['fromCity'] ?? tData['originCity'] ?? '';
+        final toCity = tData['toCity'] ?? tData['destinationCity'] ?? '';
+        final busNum = tData['busNumber'] ?? '';
+        final platform = tData['platformNumber'] ?? 'TBD';
+
+        doc.addPage(
+          pw.Page(
+            pageFormat: PdfPageFormat.a4,
+            build: (pw.Context context) {
+              return pw.Center(
+                child: pw.Column(
+                  children: [
+                    pw.Header(
+                        level: 0,
+                        child: pw.Row(
                             mainAxisAlignment:
                                 pw.MainAxisAlignment.spaceBetween,
                             children: [
-                              pw.Text("Total Tickets: ${tickets.length}",
+                              pw.Text("BusLink",
                                   style: pw.TextStyle(
+                                      fontSize: 24,
                                       fontWeight: pw.FontWeight.bold,
-                                      fontSize: 18)),
-                              pw.Text(
-                                  "Total Paid: LKR ${totalAmount.toStringAsFixed(0)}",
+                                      color: PdfColors.red900)),
+                              pw.Text("E-TICKET",
                                   style: pw.TextStyle(
+                                      fontSize: 20,
                                       fontWeight: pw.FontWeight.bold,
+                                      color: PdfColors.grey)),
+                            ])),
+                    pw.SizedBox(height: 20),
+                    pw.Container(
+                        padding: const pw.EdgeInsets.all(20),
+                        decoration: pw.BoxDecoration(
+                            border: pw.Border.all(color: PdfColors.grey300)),
+                        child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Row(
+                                  mainAxisAlignment:
+                                      pw.MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    pw.Text(
+                                        "Ticket Code: ${ticket.shortId ?? ticket.ticketId.substring(0, 8).toUpperCase()}",
+                                        style: pw.TextStyle(
+                                            fontWeight: pw.FontWeight.bold,
+                                            fontSize: 18)),
+                                    pw.Text(
+                                        "Date: ${DateFormat('yyyy-MM-dd').format(tripDate)}"),
+                                  ]),
+                              pw.Divider(),
+                              pw.Text("FROM: $fromCity  ->  TO: $toCity",
+                                  style: pw.TextStyle(
                                       fontSize: 18,
-                                      color: PdfColors.green900)),
-                            ]),
-                        pw.Divider(),
-                        pw.SizedBox(height: 10),
-                        // List of Tickets
-                        ...tickets.map((t) {
-                          final tData = t.tripData;
-                          final tripDate = tData['departureTime'] is Timestamp
-                              ? (tData['departureTime'] as Timestamp).toDate()
-                              : DateTime.parse(
-                                  tData['departureTime'].toString());
-                          return pw.Padding(
-                              padding: const pw.EdgeInsets.only(bottom: 8),
-                              child: pw.Row(children: [
-                                pw.Expanded(
-                                    flex: 2,
-                                    child: pw.Text(DateFormat('yyyy-MM-dd')
-                                        .format(tripDate))),
-                                pw.Expanded(
-                                    flex: 3,
-                                    child: pw.Text(
-                                        "${tData['fromCity']} -> ${tData['toCity']}")),
-                                pw.Expanded(
-                                    flex: 2,
-                                    child: pw.Text(
-                                        "Seat: ${t.seatNumbers.join(',')}")),
-                                pw.Text(
-                                    "LKR ${t.totalAmount.toStringAsFixed(0)}")
-                              ]));
-                        }),
-                      ])),
-              pw.SizedBox(height: 20),
-              pw.Text("Individual tickets are attached in the following pages.",
-                  style: const pw.TextStyle(color: PdfColors.grey)),
-            ]));
-          }));
-    }
-
-    // 2. Add Individual Ticket Pages
-    for (final ticket in tickets) {
-      // Construct Trip from Ticket Data (Snapshot)
-      final tData = ticket.tripData;
-      final tripDate = tData['departureTime'] is Timestamp
-          ? (tData['departureTime'] as Timestamp).toDate()
-          : DateTime.parse(tData['departureTime'].toString());
-
-      final fromCity = tData['fromCity'] ?? tData['originCity'] ?? '';
-      final toCity = tData['toCity'] ?? tData['destinationCity'] ?? '';
-      final busNum = tData['busNumber'] ?? '';
-      final platform = tData['platformNumber'] ?? 'TBD';
-
-      doc.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat.a4,
-          build: (pw.Context context) {
-            return pw.Center(
-              child: pw.Column(
-                children: [
-                  pw.Header(
-                      level: 0,
-                      child: pw.Row(
-                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                          children: [
-                            pw.Text("BusLink",
-                                style: pw.TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: pw.FontWeight.bold,
-                                    color: PdfColors.red900)),
-                            pw.Text("E-TICKET",
-                                style: pw.TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: pw.FontWeight.bold,
-                                    color: PdfColors.grey)),
-                          ])),
-                  pw.SizedBox(height: 20),
-                  pw.Container(
-                      padding: const pw.EdgeInsets.all(20),
-                      decoration: pw.BoxDecoration(
-                          border: pw.Border.all(color: PdfColors.grey300)),
-                      child: pw.Column(
-                          crossAxisAlignment: pw.CrossAxisAlignment.start,
-                          children: [
-                            pw.Row(
-                                mainAxisAlignment:
-                                    pw.MainAxisAlignment.spaceBetween,
-                                children: [
-                                  pw.Text(
-                                      "Ticket Code: ${ticket.shortId ?? ticket.ticketId.substring(0, 8).toUpperCase()}",
+                                      fontWeight: pw.FontWeight.bold)),
+                              pw.SizedBox(height: 10),
+                              pw.Text("Bus: $busNum"),
+                              pw.Text(
+                                  "Departure: ${DateFormat('hh:mm a').format(tripDate)}"),
+                              pw.Text("Platform: $platform"),
+                              pw.SizedBox(height: 10),
+                              pw.Text("Passenger: ${ticket.passengerName}"),
+                              pw.Text(
+                                  "Seats: ${ticket.seatNumbers.join(', ')}"),
+                              pw.Text("Quantity: ${ticket.seatNumbers.length}"),
+                              pw.Divider(),
+                              pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Text(
+                                      "Total Paid: LKR ${ticket.totalAmount.toStringAsFixed(0)}",
                                       style: pw.TextStyle(
+                                          fontSize: 16,
                                           fontWeight: pw.FontWeight.bold,
-                                          fontSize: 18)),
-                                  pw.Text(
-                                      "Date: ${DateFormat('yyyy-MM-dd').format(tripDate)}"),
-                                ]),
-                            pw.Divider(),
-                            pw.Text("FROM: $fromCity  ->  TO: $toCity",
-                                style: pw.TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: pw.FontWeight.bold)),
-                            pw.SizedBox(height: 10),
-                            pw.Text("Bus: $busNum"),
-                            pw.Text(
-                                "Departure: ${DateFormat('hh:mm a').format(tripDate)}"),
-                            pw.Text("Platform: $platform"),
-                            pw.SizedBox(height: 10),
-                            pw.Text("Passenger: ${ticket.passengerName}"),
-                            pw.Text("Seats: ${ticket.seatNumbers.join(', ')}"),
-                            pw.Text("Quantity: ${ticket.seatNumbers.length}"),
-                            pw.Divider(),
-                            pw.Align(
-                                alignment: pw.Alignment.centerRight,
-                                child: pw.Text(
-                                    "Total Paid: LKR ${ticket.totalAmount.toStringAsFixed(0)}",
-                                    style: pw.TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: pw.FontWeight.bold,
-                                        color: PdfColors.red900)))
-                          ])),
-                  pw.SizedBox(height: 20),
-                  pw.BarcodeWidget(
-                    barcode: pw.Barcode.qrCode(),
-                    data: ticket.shortId ?? ticket.ticketId,
-                    width: 150,
-                    height: 150,
-                  ),
-                  pw.SizedBox(height: 20),
-                  pw.Text(
-                      "SHOW the 4 DIGIT CODE TO CONDUCTOR or TELL CONDUCTOR TO SCAN QR",
-                      style: const pw.TextStyle(color: PdfColors.grey)),
-                  if (tickets.length > 1) ...[
-                    pw.SizedBox(height: 10),
+                                          color: PdfColors.red900)))
+                            ])),
+                    pw.SizedBox(height: 20),
+                    pw.BarcodeWidget(
+                      barcode: pw.Barcode.qrCode(),
+                      data: ticket.shortId ?? ticket.ticketId,
+                      width: 150,
+                      height: 150,
+                    ),
+                    pw.SizedBox(height: 20),
                     pw.Text(
-                        "Ticket ${tickets.indexOf(ticket) + 1} of ${tickets.length}",
-                        style: const pw.TextStyle(color: PdfColors.grey500)),
-                  ]
-                ],
-              ),
-            );
-          },
-        ),
-      );
-    }
+                        "SHOW the 4 DIGIT CODE TO CONDUCTOR or TELL CONDUCTOR TO SCAN QR",
+                        style: const pw.TextStyle(color: PdfColors.grey)),
+                    if (tickets.length > 1) ...[
+                      pw.SizedBox(height: 10),
+                      pw.Text(
+                          "Ticket ${tickets.indexOf(ticket) + 1} of ${tickets.length}",
+                          style: const pw.TextStyle(color: PdfColors.grey500)),
+                    ]
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      }
 
-    final bytes = await doc.save();
+      final bytes = await doc.save();
 
-    try {
       if (kIsWeb) {
         await downloadBytesForWeb(bytes, 'buslink_tickets.pdf');
       } else {
         await Printing.sharePdf(bytes: bytes, filename: 'buslink_tickets.pdf');
       }
-    } catch (e) {
-      debugPrint("Error sharing PDF: $e");
+    } catch (e, stackTrace) {
+      debugPrint("Error generating/sharing PDF: $e");
+      debugPrint(stackTrace.toString());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Failed to download/share PDF: $e"),
+            content: Text("Failed to generate PDF: $e"),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

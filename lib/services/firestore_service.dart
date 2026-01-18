@@ -436,6 +436,23 @@ class FirestoreService {
     return _db.collection('users').doc(uid).delete();
   }
 
+  // --- NOTIFICATION PREFERENCES ---
+  Future<Map<String, dynamic>?> getNotificationPreferences(String uid) async {
+    final doc = await _db.collection(userCollection).doc(uid).get();
+    if (doc.exists && doc.data()!.containsKey('notificationPreferences')) {
+      return doc.data()!['notificationPreferences'] as Map<String, dynamic>;
+    }
+    return null; // Return null implies defaults
+  }
+
+  Future<void> updateNotificationPreferences(
+      String uid, Map<String, dynamic> prefs) async {
+    await _db
+        .collection(userCollection)
+        .doc(uid)
+        .update({'notificationPreferences': prefs});
+  }
+
   // --- MISSING METHODS RESTORED & REFACTORED ---
 
   Future<List<Trip>> getTripsByConductor(String conductorId) async {

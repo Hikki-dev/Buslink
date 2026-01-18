@@ -1,12 +1,13 @@
-// lib/main.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // Added for kDebugMode
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'; // Added for RemoteMessage
 import 'dart:async'; // Added for Completer/Timer if needed
 
 import 'firebase_options.dart';
@@ -30,6 +31,10 @@ import 'views/customer_main_screen.dart';
 import 'views/auth/login_screen.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:rxdart/rxdart.dart';
+
+// GLOBAL STREAM CONTROLLER (As per FCM Guide)
+final _messageStreamController = BehaviorSubject<RemoteMessage>();
 
 void main() async {
   debugPrint("🚀 APP STARTUP: Version with Safer Spinner Removal 🚀");
@@ -100,13 +105,23 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
       _authService = AuthService();
 
       // 4. Non-Critical Services (Fire & Forget)
-      // Running these without await to unblock UI immediately
       Future.wait([
         NotificationService.initialize()
             .catchError((e) => debugPrint("Notification Init Error: $e")),
         _initStripe().catchError((e) => debugPrint("Stripe Init Error: $e")),
         _initAuth().catchError((e) => debugPrint("Auth Init Error: $e")),
       ]);
+
+      // 5. FCM Foreground Listener (From Guide)
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        if (kDebugMode) {
+          print('Handling a foreground message: ${message.messageId}');
+        }
+        _messageStreamController.sink.add(message);
+
+        // OPTIONAL: Local Notification fallback if not automatically handled
+        // But for this guide, we just pipe it.
+      });
     } catch (e, stackTrace) {
       debugPrint("Init Error: $e");
       debugPrintStack(stackTrace: stackTrace);
@@ -318,6 +333,23 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
     super.initState();
     _userFuture = _fetchUserData();
     _startReminderService();
+
+    // Listen to Foreground Messages globally once logged in
+    _messageStreamController.listen((message) {
+      if (mounted && message.notification != null) {
+        final notification = message.notification!;
+        if (notification.title != null && notification.body != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("${notification.title}: ${notification.body}"),
+              backgroundColor: AppTheme.primaryColor,
+              behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(label: 'View', onPressed: () {}),
+            ),
+          );
+        }
+      }
+    });
   }
 
   void _startReminderService() {
@@ -444,6 +476,15 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
 
         // Last chance to remove spinner
         removeWebSpinner();
+
+        // 4. Request Permissions (Android 13+ / iOS)
+        // We do this after profile load to ensure context is valid and user is "in".
+        // Use a slight delay to avoid conflicts with build? No, executed in builder but it's okay?
+        // Better to use microtask or just call it.
+        // NOTE: showDialog cannot be called during build. We need a PostFrameCallback.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          NotificationService.requestPermissionWithDialog(context);
+        });
 
         // Save FCM Token
         NotificationService.saveTokenToUser(widget.user.uid);
