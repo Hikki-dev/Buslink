@@ -717,7 +717,17 @@ class _FindTripDialogState extends State<FindTripDialog> {
                           fontWeight: FontWeight.bold, color: Colors.grey)),
                   const SizedBox(height: 12),
                   if (_isLoading)
-                    const Center(child: CircularProgressIndicator())
+                    const Center(
+                        child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: AppTheme.primaryColor),
+                        SizedBox(height: 16),
+                        Text("Searching for trips...",
+                            style: TextStyle(
+                                fontFamily: 'Inter', color: Colors.grey))
+                      ],
+                    ))
                   else if (_results.isEmpty)
                     const Center(
                         child: Padding(

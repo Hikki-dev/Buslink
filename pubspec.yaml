@@ -63,7 +63,6 @@ flutter:
   assets:
     - assets/images/
     - .env
-    - assets/service_account.json
 
   fonts:
     - family: Outfit

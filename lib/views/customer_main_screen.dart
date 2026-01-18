@@ -10,6 +10,7 @@ import 'profile/profile_screen.dart';
 import '../controllers/trip_controller.dart';
 import 'layout/notifications_screen.dart'; // Added Import
 import '../services/notification_service.dart'; // Added for Permission Dialog
+import '../services/auth_service.dart'; // Added for Logout
 
 class CustomerMainScreen extends StatefulWidget {
   final bool isAdminView;
@@ -280,10 +281,14 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                           ],
                         ),
                         TextButton.icon(
-                          onPressed: () {
-                            // Force clean exit to root to prevent navigator stack corruption
-                            Navigator.pushNamedAndRemoveUntil(
-                                context, '/', (route) => false);
+                          onPressed: () async {
+                            await Provider.of<AuthService>(context,
+                                    listen: false)
+                                .signOut();
+                            if (context.mounted) {
+                              Navigator.pushNamedAndRemoveUntil(
+                                  context, '/login', (route) => false);
+                            }
                           },
                           icon: const Icon(Icons.logout,
                               size: 18, color: Colors.black87),

@@ -8,6 +8,7 @@ import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart'; // Added for RemoteMessage
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Added Import
 import 'dart:async'; // Added for Completer/Timer if needed
 
 import 'firebase_options.dart';
@@ -87,6 +88,10 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
     _initialize();
   }
 
+  // Global Local Notification Plugin
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   Future<void> _initialize() async {
     try {
       // 1. Load Env (Fast) - Critical for other steps
@@ -104,7 +109,36 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
 
       _authService = AuthService();
 
-      // 4. Non-Critical Services (Fire & Forget)
+      // 4. Local Notification Init (Android/iOS)
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+
+      final DarwinInitializationSettings initializationSettingsDarwin =
+          DarwinInitializationSettings();
+
+      final InitializationSettings initializationSettings =
+          InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsDarwin,
+      );
+
+      await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+      // Create High Importance Channel (Android)
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'high_importance_channel', // id
+        'High Importance Notifications', // title
+        description:
+            'This channel is used for important notifications.', // description
+        importance: Importance.max,
+      );
+
+      await _flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channel);
+
+      // 5. Non-Critical Services
       Future.wait([
         NotificationService.initialize()
             .catchError((e) => debugPrint("Notification Init Error: $e")),
@@ -112,15 +146,33 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
         _initAuth().catchError((e) => debugPrint("Auth Init Error: $e")),
       ]);
 
-      // 5. FCM Foreground Listener (From Guide)
+      // 6. FCM Foreground Listener (From Guide)
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         if (kDebugMode) {
           print('Handling a foreground message: ${message.messageId}');
         }
         _messageStreamController.sink.add(message);
 
-        // OPTIONAL: Local Notification fallback if not automatically handled
-        // But for this guide, we just pipe it.
+        // SHOW LOCAL NOTIFICATION (Heads Up)
+        RemoteNotification? notification = message.notification;
+        AndroidNotification? android = message.notification?.android;
+
+        if (notification != null && android != null && !kIsWeb) {
+          _flutterLocalNotificationsPlugin.show(
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                channel.id,
+                channel.name,
+                channelDescription: channel.description,
+                icon: android.smallIcon,
+                // other properties...
+              ),
+            ),
+          );
+        }
       });
     } catch (e, stackTrace) {
       debugPrint("Init Error: $e");

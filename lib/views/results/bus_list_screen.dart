@@ -219,7 +219,18 @@ class _BusListScreenState extends State<BusListScreen> {
                             const Center(
                                 child: Padding(
                                     padding: EdgeInsets.all(40),
-                                    child: CircularProgressIndicator()))
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        CircularProgressIndicator(
+                                            color: AppTheme.primaryColor),
+                                        SizedBox(height: 16),
+                                        Text("Finding best routes...",
+                                            style: TextStyle(
+                                                fontFamily: 'Inter',
+                                                color: Colors.grey))
+                                      ],
+                                    )))
                           else if (trips.isEmpty)
                             _buildEmptyState()
                           else

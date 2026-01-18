@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/firestore_service.dart';
-import '../../services/notification_service.dart'; // Added
+
 import '../../utils/app_theme.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
@@ -147,21 +147,7 @@ class _NotificationSettingsScreenState
                     Icons.work),
 
                 const SizedBox(height: 40),
-                Center(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text("Sending Test Topic Push...")));
-                      await NotificationService.sendTestTopicNotification();
-                    },
-                    icon: const Icon(Icons.notifications_active),
-                    label: const Text("Test Topic Push ('app_promotion')"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade200,
-                      foregroundColor: Colors.black,
-                    ),
-                  ),
-                )
+                // Test button removed as per request
               ],
             ),
     );

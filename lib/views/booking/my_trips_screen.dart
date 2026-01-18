@@ -115,7 +115,19 @@ class MyTripsScreen extends StatelessWidget {
                     body: user == null
                         ? _buildLoginPrompt(context)
                         : isLoading
-                            ? const Center(child: CircularProgressIndicator())
+                            ? const Center(
+                                child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  CircularProgressIndicator(
+                                      color: AppTheme.primaryColor),
+                                  SizedBox(height: 16),
+                                  Text("Loading your trips...",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          color: Colors.grey))
+                                ],
+                              ))
                             : hasError
                                 ? Center(
                                     child: Text("Error: ${snapshot.error}"))

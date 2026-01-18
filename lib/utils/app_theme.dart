@@ -163,6 +163,12 @@ class AppTheme {
       color: Colors.white,
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
     ),
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: ZoomPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      },
+    ),
   );
 
   static final ThemeData darkTheme = ThemeData(
@@ -286,6 +292,12 @@ class AppTheme {
           fontSize: 16,
           color: Colors.white,
           fontWeight: FontWeight.w800),
+    ),
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: ZoomPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      },
     ),
   );
 }

@@ -15,6 +15,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:googleapis_auth/auth_io.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Added Import
+
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -30,18 +32,22 @@ class NotificationService {
   static final fln.FlutterLocalNotificationsPlugin _localNotifications =
       fln.FlutterLocalNotificationsPlugin();
 
-  static const String _projectId = "buslink-416e1";
-  // Generated from Firebase Console -> Project Settings -> Cloud Messaging -> Web Configuration
-  static const String _vapidKey =
-      "BMMQ7rRJHlKZ_-0CHE9LvFP4Vd5tarNDOx0loA7lraCOPmPOfvVEPCCxtrkyMa7Lc3iNEDuuCkxClMClEbSjPTE";
+  static String get _projectId =>
+      dotenv.env['FIREBASE_PROJECT_ID'] ?? "buslink-416e1";
+  static String get _vapidKey => dotenv.env['FIREBASE_VAPID_KEY'] ?? "";
 
-  // Loaded via Asset (Secure Option 2)
+  // Loaded via .env (Secure Option)
   static Future<String?> _getAccessToken() async {
     try {
-      // 1. Load JSON from assets
-      final jsonString =
-          await rootBundle.loadString('assets/service_account.json');
+      // 1. Load Base64 String from .env
+      final base64String = dotenv.env['FIREBASE_SERVICE_ACCOUNT_BASE64'] ?? '';
+      if (base64String.isEmpty) {
+        debugPrint("Error: FIREBASE_SERVICE_ACCOUNT_BASE64 not found in .env");
+        return null;
+      }
 
+      // 2. Decode Base64 -> String -> Map
+      final jsonString = utf8.decode(base64.decode(base64String));
       final serviceAccountMap = json.decode(jsonString);
 
       final accountCredentials =
@@ -51,7 +57,7 @@ class NotificationService {
       final credentials = client.credentials;
       return credentials.accessToken.data;
     } catch (e) {
-      debugPrint("Error getting access token (Asset Load): $e");
+      debugPrint("Error getting access token (Env Load): $e");
       return null;
     }
   }
@@ -95,11 +101,11 @@ class NotificationService {
             fln.AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      if (kDebugMode) print('User granted permission');
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
-      if (kDebugMode) print('User granted provisional permission');
+    if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional) {
+      if (kDebugMode)
+        print('User already granted permission (Loop Prevention)');
+      return;
     } else {
       if (kDebugMode) print('User declined or has not accepted permission');
     }
@@ -193,7 +199,7 @@ class NotificationService {
   static Future<void> sendPushToToken(
       String token, String title, String body) async {
     try {
-      const projectId = _projectId;
+      final projectId = _projectId;
       if (projectId.isEmpty) {
         debugPrint("FCM Error: Project ID not configured.");
         return;

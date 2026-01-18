@@ -474,15 +474,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           color: Colors.red),
                                     ),
                                     onTap: () async {
-                                      await authService.signOut();
-                                      if (context.mounted) {
-                                        Navigator.of(context,
-                                                rootNavigator: true)
-                                            .pushAndRemoveUntil(
-                                                MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        const LoginScreen()),
-                                                (route) => false);
+                                      // Show Loading Dialog
+                                      showDialog(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (context) => const Center(
+                                              child:
+                                                  CircularProgressIndicator()));
+
+                                      try {
+                                        // Minimum delay to show visual feedback
+                                        await Future.delayed(
+                                            const Duration(milliseconds: 500));
+                                        await authService.signOut();
+                                        if (context.mounted) {
+                                          Navigator.of(context,
+                                                  rootNavigator: true)
+                                              .pushAndRemoveUntil(
+                                                  MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const LoginScreen()),
+                                                  (route) => false);
+                                        }
+                                      } catch (e) {
+                                        // Close dialog if error
+                                        if (context.mounted) {
+                                          Navigator.pop(context);
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(SnackBar(
+                                                  content: Text(
+                                                      "Logout failed: $e")));
+                                        }
                                       }
                                     },
                                   ),

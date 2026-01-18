@@ -730,11 +730,18 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
 
   Widget _buildTicketCard(Ticket ticket, bool isDark) {
     // Extract date for display
+    // Extract date for display
     final tData = ticket.tripData;
-    final dateStr = tData['departureTime'] is Timestamp
-        ? DateFormat('MMM d, yyyy')
-            .format((tData['departureTime'] as Timestamp).toDate())
-        : "Date unavailable";
+    DateTime tripDate;
+    if (tData['departureTime'] is Timestamp) {
+      tripDate = (tData['departureTime'] as Timestamp).toDate();
+    } else if (tData['departureTime'] is String) {
+      tripDate = DateTime.tryParse(tData['departureTime']) ?? DateTime.now();
+    } else {
+      tripDate = DateTime.now();
+    }
+
+    final dateStr = DateFormat('MMM d, yyyy').format(tripDate);
 
     return Container(
         margin: const EdgeInsets.only(bottom: 24),
