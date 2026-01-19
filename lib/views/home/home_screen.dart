@@ -879,7 +879,8 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
               liveTrip = ongoingTrips.firstWhere((t) =>
                   t.status == 'boarding' ||
                   t.status == 'departed' ||
-                  t.status == 'onWay');
+                  t.status == 'onWay' ||
+                  t.status == 'arrived'); // Keep visible when Arrived
             } catch (_) {}
 
             return Column(

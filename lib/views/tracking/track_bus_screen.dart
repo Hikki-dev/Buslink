@@ -19,6 +19,7 @@ class TrackBusScreen extends StatefulWidget {
 class _TrackBusScreenState extends State<TrackBusScreen> {
   final MapController _mapController = MapController();
   LatLng? _currentBusPos;
+  bool _hasCentered = false; // Track if we have auto-centered once
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +55,14 @@ class _TrackBusScreenState extends State<TrackBusScreen> {
           final lp = Provider.of<LanguageProvider>(context); // Get Provider
           if (snapshot.hasData && snapshot.data != null) {
             _currentBusPos = snapshot.data!;
+            // Auto-center ONLY once when we first get a signal
+            if (!_hasCentered) {
+              _hasCentered = true;
+              // Use a microtask to avoid build collisions
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _mapController.move(_currentBusPos!, 15.0);
+              });
+            }
           }
 
           final displayPos = _currentBusPos ??
@@ -172,6 +181,21 @@ class _TrackBusScreenState extends State<TrackBusScreen> {
             ],
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          if (_currentBusPos != null) {
+            _mapController.move(_currentBusPos!, 16.0);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(
+                    Provider.of<LanguageProvider>(context, listen: false)
+                        .translate('waiting_signal'))));
+          }
+        },
+        label: const Text("Recenter"),
+        icon: const Icon(Icons.my_location),
+        backgroundColor: AppTheme.primaryColor,
       ),
     );
   }

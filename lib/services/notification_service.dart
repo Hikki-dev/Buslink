@@ -40,7 +40,8 @@ class NotificationService {
   static Future<String?> _getAccessToken() async {
     try {
       // 1. Load Base64 String from .env
-      final base64String = dotenv.env['FIREBASE_SERVICE_ACCOUNT_BASE64'] ?? '';
+      final base64String = (dotenv.env['FIREBASE_SERVICE_ACCOUNT_BASE64'] ?? '')
+          .replaceAll(RegExp(r'\s+'), ''); // Sanitize newlines/spaces
       if (base64String.isEmpty) {
         debugPrint("Error: FIREBASE_SERVICE_ACCOUNT_BASE64 not found in .env");
         return null;
