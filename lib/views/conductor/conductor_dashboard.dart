@@ -37,7 +37,11 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
   @override
   void initState() {
     super.initState();
-    // No auto-load needed for search-based flow
+    // Auto-load cities
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<TripController>(context, listen: false)
+          .fetchAvailableCities();
+    });
   }
 
   @override
@@ -62,11 +66,13 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             : CustomAppBar(
                 isAdminView: widget.isAdminView,
                 hideActions: false,
-                title: const Text("Conductor Dashboard",
+                title: Text("Conductor Dashboard",
                     style: TextStyle(
                         fontFamily: 'Outfit',
                         fontWeight: FontWeight.bold,
-                        color: Colors.black)),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface)), // Adaptive color
               ),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         // REMOVED BOTTOM NAV BAR as requested
@@ -645,33 +651,47 @@ class _FindTripDialogState extends State<FindTripDialog> {
                 if (!_hasSearched ||
                     (_hasSearched && _results.isEmpty && _isLoading)) ...[
                   // --- INPUT FORM ---
-                  DropdownButtonFormField<String>(
-                    key: const Key('fromCityDropdown'),
-                    initialValue: _selectedFromCity,
-                    items: AppConstants.cities
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedFromCity = v),
-                    decoration: InputDecoration(
-                        labelText: Provider.of<LanguageProvider>(context)
-                            .translate('from'),
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.location_on_outlined)),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    key: const Key('toCityDropdown'),
-                    initialValue: _selectedToCity,
-                    items: AppConstants.cities
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedToCity = v),
-                    decoration: InputDecoration(
-                        labelText: Provider.of<LanguageProvider>(context)
-                            .translate('to'),
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.flag_outlined)),
-                  ),
+                  Consumer<TripController>(builder: (context, tripCtrl, child) {
+                    final cities = tripCtrl.availableCities.isNotEmpty
+                        ? tripCtrl.availableCities
+                        : AppConstants.cities; // Fallback
+
+                    return Column(
+                      children: [
+                        DropdownButtonFormField<String>(
+                          key: const Key('fromCityDropdown'),
+                          initialValue: _selectedFromCity,
+                          items: cities
+                              .map((c) =>
+                                  DropdownMenuItem(value: c, child: Text(c)))
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => _selectedFromCity = v),
+                          decoration: InputDecoration(
+                              labelText: Provider.of<LanguageProvider>(context)
+                                  .translate('from'),
+                              border: const OutlineInputBorder(),
+                              prefixIcon:
+                                  const Icon(Icons.location_on_outlined)),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          key: const Key('toCityDropdown'),
+                          initialValue: _selectedToCity,
+                          items: cities
+                              .map((c) =>
+                                  DropdownMenuItem(value: c, child: Text(c)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _selectedToCity = v),
+                          decoration: InputDecoration(
+                              labelText: Provider.of<LanguageProvider>(context)
+                                  .translate('to'),
+                              border: const OutlineInputBorder(),
+                              prefixIcon: const Icon(Icons.flag_outlined)),
+                        ),
+                      ],
+                    );
+                  }),
                   const SizedBox(height: 12),
                   InkWell(
                     onTap: () async {

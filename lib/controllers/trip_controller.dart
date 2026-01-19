@@ -170,12 +170,12 @@ class TripController extends ChangeNotifier {
         final routeName = "${trip.originCity} to ${trip.destinationCity}";
 
         // Map enum to string expected by Service
-        String statusStr = 'UNKNOWN';
-        if (status == TripStatus.delayed) statusStr = 'DELAYED';
-        if (status == TripStatus.departed) statusStr = 'DEPARTED';
-        if (status == TripStatus.arrived) statusStr = 'ARRIVED';
-        if (status == TripStatus.cancelled) statusStr = 'CANCELLED';
-        if (status == TripStatus.onWay) statusStr = 'ON WAY';
+        String statusStr = 'unknown';
+        if (status == TripStatus.delayed) statusStr = 'delayed';
+        if (status == TripStatus.departed) statusStr = 'departed';
+        if (status == TripStatus.arrived) statusStr = 'arrived';
+        if (status == TripStatus.cancelled) statusStr = 'cancelled';
+        if (status == TripStatus.onWay) statusStr = 'on way';
 
         // 1. In-App Notification
         await import_notification_service.NotificationService

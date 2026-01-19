@@ -852,10 +852,12 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
               }
 
               // 3. Non-Active Past Check
-              bool isActive = t.status == 'boarding' ||
-                  t.status == 'departed' ||
-                  t.status == 'onWay' ||
-                  t.status == 'arrived';
+              final s = t.status.toLowerCase();
+              bool isActive = s == 'boarding' ||
+                  s == 'departed' ||
+                  s == 'onway' ||
+                  s == 'on way' ||
+                  s == 'arrived';
 
               if (!isActive && DateTime.now().isAfter(t.arrivalTime)) {
                 return false;
@@ -876,11 +878,15 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
             // Check for Live Trip (Active Status)
             EnrichedTrip? liveTrip;
             try {
-              liveTrip = ongoingTrips.firstWhere((t) =>
-                  t.status == 'boarding' ||
-                  t.status == 'departed' ||
-                  t.status == 'onWay' ||
-                  t.status == 'arrived'); // Keep visible when Arrived
+              liveTrip = ongoingTrips.firstWhere((t) {
+                final s = t.status.toLowerCase();
+                return s == 'boarding' ||
+                    s == 'departed' ||
+                    s ==
+                        'onway' || // onWay might be onway or onWay, toLowerCase makes it onway
+                    s == 'on way' ||
+                    s == 'arrived';
+              });
             } catch (_) {}
 
             return Column(
@@ -1015,15 +1021,16 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
 
   int _getTripRank(String status) {
     // 0 = Highest Priority (Active)
-    if (status == 'departed' || status == 'onWay' || status == 'boarding') {
+    final s = status.toLowerCase();
+    if (s == 'departed' || s == 'onway' || s == 'on way' || s == 'boarding') {
       return 0;
     }
     // 1 = Scheduled / On Time
-    if (status == 'scheduled' || status == 'onTime' || status == 'delayed') {
+    if (s == 'scheduled' || s == 'ontime' || s == 'on time' || s == 'delayed') {
       return 1;
     }
     // 2 = Arrived (Lowest priority for upcoming view)
-    if (status == 'arrived') {
+    if (s == 'arrived') {
       return 2;
     }
     // 3 = Others (should be filtered out anyway)
