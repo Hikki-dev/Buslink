@@ -15,6 +15,9 @@ import '../../models/trip_model.dart';
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/notification_service.dart'; // Added
+import '../tracking/track_bus_screen.dart'; // Added
+import '../../utils/language_provider.dart'; // Added
+
 // import '../home/home_screen.dart'; // Unused
 
 class TicketScreen extends StatefulWidget {
@@ -33,6 +36,7 @@ class _TicketScreenState extends State<TicketScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
+    final lp = Provider.of<LanguageProvider>(context); // Added
     // final authService = Provider.of<AuthService>(context, listen: false); // Unused
     // final user = authService.currentUser; // Unused
     final Trip? trip = widget.tripArg ?? controller.selectedTrip?.trip;
@@ -67,7 +71,10 @@ class _TicketScreenState extends State<TicketScreen> {
               Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(isBulk ? "Bulk Tickets (${tickets.length})" : "Course",
+        title: Text(
+            isBulk
+                ? "${lp.translate('bulk_booking')} (${tickets.length})"
+                : lp.translate('route'),
             style: TextStyle(
                 fontFamily: 'Outfit',
                 color: Theme.of(context).colorScheme.onSurface,
@@ -78,7 +85,7 @@ class _TicketScreenState extends State<TicketScreen> {
             icon: Icon(Icons.chat_bubble_outline,
                 color: Theme.of(context).colorScheme.onSurface),
             onPressed: () => _showFeedbackDialog(context),
-            tooltip: "Give Feedback",
+            tooltip: lp.translate('app_feedback'),
           ),
           IconButton(
             icon: Icon(Icons.download_rounded,
@@ -94,12 +101,18 @@ class _TicketScreenState extends State<TicketScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(isBulk ? "BUNDLE (${tickets.length})" : "E-TICKET",
+              Text(
+                  isBulk
+                      ? "${lp.translate('bundle')} (${tickets.length})"
+                      : lp.translate('e_ticket'),
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       letterSpacing: 2,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade400)),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant
+                          .withValues(alpha: 0.5))),
               const SizedBox(height: 16),
               if (isBulk)
                 SizedBox(
@@ -126,8 +139,9 @@ class _TicketScreenState extends State<TicketScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () => _downloadPdf(context, trip, tickets),
                   icon: const Icon(Icons.picture_as_pdf),
-                  label: Text(
-                      isBulk ? "Download Consolidated PDF" : "Download PDF"),
+                  label: Text(isBulk
+                      ? "Download Consolidated PDF"
+                      : "Download PDF"), // TODO: Translate
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,
@@ -152,6 +166,7 @@ class _TicketScreenState extends State<TicketScreen> {
   }
 
   Widget _buildTicketCard(BuildContext context, Trip trip, Ticket ticket) {
+    final lp = Provider.of<LanguageProvider>(context); // Added
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 400),
@@ -160,7 +175,7 @@ class _TicketScreenState extends State<TicketScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 40,
               offset: const Offset(0, 20))
         ],
@@ -178,7 +193,7 @@ class _TicketScreenState extends State<TicketScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Boarding Pass",
+                Text(lp.translate('boarding_pass'),
                     style: TextStyle(
                         fontFamily: 'Outfit',
                         color: Colors.white,
@@ -188,9 +203,9 @@ class _TicketScreenState extends State<TicketScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4)),
-                  child: const Text("CONFIRMED",
+                  child: Text(lp.translate('confirmed').toUpperCase(),
                       style: TextStyle(
                           fontFamily: 'Inter',
                           color: Colors.white,
@@ -212,12 +227,16 @@ class _TicketScreenState extends State<TicketScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("FROM",
+                        Text(lp.translate('from'),
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
-                                color: Colors.grey)),
-                        Text(trip.fromCity,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant)),
+                        Text(
+                            lp.translate(
+                                trip.fromCity.toLowerCase()), // Translated City
                             style: const TextStyle(
                                 fontFamily: 'Outfit',
                                 fontSize: 24,
@@ -225,16 +244,24 @@ class _TicketScreenState extends State<TicketScreen> {
                       ],
                     ),
                     Icon(Icons.directions_bus,
-                        color: Colors.grey.shade300, size: 32),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withValues(alpha: 0.3),
+                        size: 32),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text("TO",
+                        Text(lp.translate('to'),
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
-                                color: Colors.grey)),
-                        Text(trip.toCity,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant)),
+                        Text(
+                            lp.translate(
+                                trip.toCity.toLowerCase()), // Translated City
                             style: const TextStyle(
                                 fontFamily: 'Outfit',
                                 fontSize: 24,
@@ -249,16 +276,22 @@ class _TicketScreenState extends State<TicketScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _infoCol(
-                        "Date", DateFormat('MMM d').format(trip.departureTime)),
-                    _infoCol("Time",
+                    _infoCol(lp.translate('travel_dates'),
+                        DateFormat('MMM d').format(trip.departureTime)),
+                    _infoCol(lp.translate('time'),
                         DateFormat('hh:mm a').format(trip.departureTime)),
-                    _infoCol("Seats", "${ticket.seatNumbers.length}"),
+                    _infoCol(
+                        lp.translate('seats'), "${ticket.seatNumbers.length}"),
                   ],
                 ),
 
                 const SizedBox(height: 32),
-                Container(height: 1, color: Colors.grey.shade100),
+                Container(
+                    height: 1,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withValues(alpha: 0.1)),
                 const SizedBox(height: 32),
 
                 // QR
@@ -277,8 +310,8 @@ class _TicketScreenState extends State<TicketScreen> {
                 ),
                 const SizedBox(height: 16),
                 const SizedBox(height: 16),
-                const Text(
-                  "SHOW 4-DIGIT CODE OR SCAN QR",
+                Text(
+                  lp.translate('show_qr_code'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontFamily: 'Outfit',
@@ -294,10 +327,40 @@ class _TicketScreenState extends State<TicketScreen> {
                     fontFamily: 'Outfit',
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: Colors
+                        .black, // Scanner needs high contrast, keep black or adaptive?
+                    // QR is usually black on white. Keep text black for now if background is white card.
                   ),
                 ),
                 const SizedBox(height: 24),
+
+                // TRACK BUS BUTTON (New Feature)
+                if (trip.status != 'completed' &&
+                    trip.status != 'cancelled') ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => TrackBusScreen(trip: trip)));
+                      },
+                      icon: const Icon(Icons.gps_fixed, color: Colors.blue),
+                      label: Text(lp.translate('track_bus_live'),
+                          style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue)),
+                      style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.blue),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
 
                 // Passenger & Total
                 Row(
@@ -306,11 +369,13 @@ class _TicketScreenState extends State<TicketScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("Passenger",
+                        Text(lp.translate('passenger'),
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
-                                color: Colors.grey)),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant)),
                         Text(ticket.passengerName,
                             style: const TextStyle(
                                 fontFamily: 'Inter',
@@ -320,11 +385,13 @@ class _TicketScreenState extends State<TicketScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text("Total Price",
+                        Text(lp.translate('total_price'),
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
-                                color: Colors.grey)),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant)),
                         Text(
                           "LKR ${ticket.totalAmount.toStringAsFixed(0)}",
                           style: TextStyle(
@@ -359,7 +426,11 @@ class _TicketScreenState extends State<TicketScreen> {
                 // Dashed line
                 Center(
                     child: Text("- - - - - - - - - - - - - - - - - - - -",
-                        style: TextStyle(color: Colors.grey.shade300)))
+                        style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withOpacity(0.3))))
               ],
             ),
           ),
@@ -374,15 +445,18 @@ class _TicketScreenState extends State<TicketScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 9,
-                color: Colors.grey,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text(val,
-            style: const TextStyle(
-                fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 14))
+            style: TextStyle(
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurface))
       ],
     );
   }
@@ -655,7 +729,11 @@ class __FeedbackDialogState extends State<_FeedbackDialog> {
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               const Text("Rate your experience",
-                  style: TextStyle(fontFamily: 'Inter', color: Colors.grey)),
+                  style: TextStyle(
+                      fontFamily: 'Inter',
+                      color: Colors
+                          .grey)), // Revert to generic grey or access theme if possible. accessing theme in Dialog might require removing const.
+
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

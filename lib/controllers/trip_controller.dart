@@ -7,7 +7,7 @@ import '../models/route_model.dart'; // Added
 import '../models/trip_view_model.dart'; // EnrichedTrip
 import '../services/firestore_service.dart';
 import '../services/notification_service.dart' as import_notification_service;
-import '../services/sms_service.dart'; // Added Import
+import '../services/sms_service.dart'; // Re-added for Automated SMS
 import 'package:intl/intl.dart';
 
 class TripController extends ChangeNotifier {
@@ -57,7 +57,22 @@ class TripController extends ChangeNotifier {
       notifyListeners();
 
       // 1. Fetch Trips (Instances)
-      final trips = await _firestoreService.searchTrips(from, to, date);
+      var trips = await _firestoreService.searchTrips(from, to, date);
+
+      // FILTER: If searching for TODAY, hide buses that have already departed
+      // (User request: "if time rn is 12 AM then all busses before that should not be shown")
+      final now = DateTime.now();
+      if (date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day) {
+        trips = trips.where((t) {
+          // Keep if departure is in future OR if it's already active (boarding/departed/onWay)
+          // because a user might want to track a bus they just missed or see if it's running late.
+          // BUT User specifically said "before that should not be shown".
+          // So let's align with "Scheduled time is in future" strict rule for new bookings.
+          return t.departureDateTime.isAfter(now);
+        }).toList();
+      }
 
       // 2. Enrich (Fetch Schedules)
       searchResults = await enrichTrips(trips);
@@ -186,16 +201,20 @@ class TripController extends ChangeNotifier {
 
         if (phones.isNotEmpty) {
           // Construct SMS Body
-          String smsBody = "BusLink: Trip $routeName is now $statusStr.";
-          if (delayMinutes > 0) smsBody += " Delayed by ${delayMinutes}m.";
 
           // Trigger Batch SMS (Opens SMS App)
           // Create instance to avoid static if needed, or import static
           // We need to import sms_service.dart. I will assume it is available or add import.
-          // Actually, let's use the full import path to be safe or add it to file.
-          // Since I can't see the top of the file right now to add import, I'll rely on existing or add it now.
-          // Wait, I saw imports earlier. I need to add `import '../services/sms_service.dart';`
-          await SmsService.sendBatchSMS(phones, smsBody);
+          // SMS Removed per privacy requirements
+          // await SmsService.sendBatchSMS(phones, smsBody);
+        }
+        if (phones.isNotEmpty) {
+          // Trigger Automated SMS (Firestore Write)
+          // "look your bus has arrived, bus got delayed by this many minutes or whatever"
+          String extraMsg = "";
+          if (delayMinutes > 0) extraMsg = "Delay: $delayMinutes mins.";
+
+          await SmsService.sendTripStatusUpdate(phones, statusStr, extraMsg);
         }
       }
     } catch (e) {

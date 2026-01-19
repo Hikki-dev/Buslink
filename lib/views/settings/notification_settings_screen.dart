@@ -188,7 +188,7 @@ class _NotificationSettingsScreenState
         subtitle: Text(subtitle,
             style: const TextStyle(color: Colors.grey, fontSize: 13)),
         value: value,
-        activeColor: AppTheme.primaryColor,
+        activeThumbColor: AppTheme.primaryColor,
         onChanged: onChanged,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

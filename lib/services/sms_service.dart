@@ -37,7 +37,7 @@ class SmsService {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
         // Log "Attempted" to Firestore
-        await _logSmsAttempt(phone, message);
+        await _logSmsAttempt(phone, message, 'launched');
         return true;
       } else {
         debugPrint("Could not launch SMS url: $uri");
@@ -49,31 +49,56 @@ class SmsService {
     }
   }
 
-  /// Batch SMS (Looping - Admin must press back/send multiple times or use Group if supported)
-  /// Note: 'sms:number1,number2' works on some Androids, iOS does not support pre-filling multiple recipients easily via standard scheme.
-  /// Strategy: We will try to launch one "Group" SMS if possible, or just log warn.
-  /// Actually, standard "sms:1,2,3" works on many modern Androids. iOS is tricky.
-  static Future<void> sendBatchSMS(List<String> phones, String message) async {
+  /// Automated Server-Side Trigger (No UI Launch)
+  /// Queues messages to Firestore for processing by Cloud Functions.
+  static Future<void> queueBatchSMS(List<String> phones, String message) async {
     if (phones.isEmpty) return;
 
-    // Deduplicate
+    final validPhones =
+        phones.where((p) => p.isNotEmpty && p.length > 7).toSet().toList();
+
+    if (validPhones.isEmpty) return;
+
+    try {
+      // Create a batch or single document depending on Extension logic.
+      // E.g., 'messages' collection where each doc is a message.
+      WriteBatch batch = FirebaseFirestore.instance.batch();
+
+      for (String phone in validPhones) {
+        DocumentReference docRef = _outboundMessages.doc();
+        batch.set(docRef, {
+          'to': phone, // Standard field for extensions
+          'body': message,
+          'status': 'queued',
+          'channel': 'SMS_AUTOMATED', // Distinguish from manual
+          'createdAt': FieldValue.serverTimestamp(),
+          'deliveryStatus': 'pending'
+        });
+      }
+
+      await batch.commit();
+      debugPrint("Queued ${validPhones.length} SMS messages to Firestore.");
+    } catch (e) {
+      debugPrint("Error queuing SMS batch: $e");
+    }
+  }
+
+  /// Legacy Batch (Manual Launch) - Kept for fallback if needed, but not used by Conductor
+  static Future<void> sendBatchSMS(List<String> phones, String message) async {
+    if (phones.isEmpty) return;
     final uniquePhones = phones.toSet().toList();
-
-    // Attempt comma separated (Android style)
     final String recipientString = uniquePhones.join(',');
-
-    // For now, simpler to just treat as single launch
-    // If this fails on iOS, we might need a specific package, but let's try standard scheme first.
     await sendSMS(phone: recipientString, message: message);
   }
 
-  static Future<void> _logSmsAttempt(String phone, String message) async {
+  static Future<void> _logSmsAttempt(
+      String phone, String message, String status) async {
     try {
       await _outboundMessages.add({
         'channel': 'SMS_CLIENT_SIDE',
         'phoneNumber': phone,
         'messageBody': message,
-        'status': 'launched',
+        'status': status,
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -83,19 +108,11 @@ class SmsService {
 
   /// Sends a ticket copy via SMS (Client-side trigger)
   static Future<bool> sendTicketCopy(dynamic ticket) async {
-    // Dynamic to accept Ticket model without importing if avoiding circular deps
-    // Or just cast if we know.
-    // Re-using exiting logic but replacing implementation
     try {
-      // Access fields safely
       final phone = (ticket.passengerPhone as String? ?? '');
-      if (phone.isEmpty) {
-        debugPrint("No phone number to send SMS.");
-        return false;
-      }
+      if (phone.isEmpty) return false;
 
       final tripData = ticket.tripData as Map<String, dynamic>;
-      // Construct Message
       final messageBody = "BusLink Ticket: ${ticket.ticketId.substring(0, 4)} "
           "From ${tripData['originCity'] ?? tripData['fromCity']} To ${tripData['destinationCity'] ?? tripData['toCity']}. "
           "Bus: ${tripData['busNumber']}. Seat: ${(ticket.seatNumbers as List).join(',')}. "
@@ -108,20 +125,14 @@ class SmsService {
     }
   }
 
-  /// Sends a trip status update to multiple passengers
+  /// Sends a trip status update to multiple passengers (AUTOMATED)
   static Future<void> sendTripStatusUpdate(
       List<String> phones, String status, String message) async {
     if (phones.isEmpty) return;
 
-    // Filter out invalid numbers
-    final validPhones =
-        phones.where((p) => p.isNotEmpty && p.length > 7).toList();
-
-    if (validPhones.isEmpty) return;
-
     final fullMessage = "BusLink Update: Your trip is now $status. $message";
 
-    // Attempt Batch
-    await sendBatchSMS(validPhones, fullMessage);
+    // Use Queue instead of Launch
+    await queueBatchSMS(phones, fullMessage);
   }
 }

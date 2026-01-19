@@ -151,11 +151,22 @@ class Trip {
       delayMinutes: data['delayMinutes'] ?? 0,
       bookedSeatNumbers: List<String>.from(
           data['bookedSeatNumbers'] ?? data['bookedSeats'] ?? []),
-      currentLocation: (data['currentLocation'] as Map<String, dynamic>?)?.map(
-        (k, v) => MapEntry(k, (v as num).toDouble()),
-      ),
+      currentLocation: _parseGeoPoint(data['currentLocation']),
       conductorId: data['conductorId'],
     );
+  }
+
+  static Map<String, double>? _parseGeoPoint(dynamic val) {
+    if (val == null) return null;
+    if (val is GeoPoint) {
+      return {'lat': val.latitude, 'lng': val.longitude};
+    }
+    if (val is Map) {
+      return (val as Map<String, dynamic>).map(
+        (k, v) => MapEntry(k, (v as num).toDouble()),
+      );
+    }
+    return null;
   }
 }
 

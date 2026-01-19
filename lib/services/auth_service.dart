@@ -140,7 +140,7 @@ class AuthService {
   }
 
   Future<UserCredential?> signUpWithEmail(BuildContext context, String email,
-      String password, String? phoneNumber) async {
+      String password, String? phoneNumber, String displayName) async {
     try {
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -149,10 +149,15 @@ class AuthService {
       final user = userCredential.user;
 
       if (user != null) {
+        // Update Auth Profile
+        await user.updateDisplayName(displayName);
+
+        // Save to Firestore
         await _db.collection('users').doc(user.uid).set({
           'uid': user.uid,
           'email': user.email,
           'phoneNumber': phoneNumber, // Save phone number
+          'displayName': displayName, // Save Name
           'role': 'customer', // Default role
           'createdAt': FieldValue.serverTimestamp(),
         });

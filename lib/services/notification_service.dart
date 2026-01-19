@@ -103,8 +103,9 @@ class NotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
-      if (kDebugMode)
+      if (kDebugMode) {
         print('User already granted permission (Loop Prevention)');
+      }
       return;
     } else {
       if (kDebugMode) print('User declined or has not accepted permission');
@@ -238,9 +239,10 @@ class NotificationService {
       if (response.statusCode == 200) {
         if (kDebugMode) print("Push notification sent to $token");
       } else {
-        if (kDebugMode)
+        if (kDebugMode) {
           print(
               "Failed to send push: ${response.statusCode} - ${response.body}");
+        }
       }
     } catch (e) {
       if (kDebugMode) {
@@ -359,8 +361,9 @@ class NotificationService {
       }
 
       if (!allowPush) {
-        if (kDebugMode)
+        if (kDebugMode) {
           print("Push suppressed by user preference (Type: $type)");
+        }
         return;
       }
 
@@ -462,8 +465,9 @@ class NotificationService {
       final prefs = await fs.getNotificationPreferences(userId);
       bool allowPush = true;
       if (prefs != null) {
-        if (type == 'tripStatus' || type == 'delay')
+        if (type == 'tripStatus' || type == 'delay') {
           allowPush = prefs['tripUpdates'] ?? true;
+        }
       }
 
       if (!allowPush) return;

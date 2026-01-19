@@ -782,7 +782,7 @@ class _BulkBoardingPassCard extends StatelessWidget {
     final fromCity = first.tripData['originCity'] ?? 'Unknown';
     final toCity = first.tripData['destinationCity'] ?? 'Unknown';
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // final isDark = Theme.of(context).brightness == Brightness.dark; // Unused
 
     return Container(
       width: double.infinity,

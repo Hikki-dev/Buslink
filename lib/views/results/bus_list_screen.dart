@@ -21,6 +21,8 @@ import '../layout/app_footer.dart';
 import '../../services/firestore_service.dart';
 import '../booking/bulk_confirmation_screen.dart';
 import '../booking/bulk_quantity_dialog.dart';
+import 'package:rxdart/rxdart.dart'; // For Stream Merging
+import '../../services/location_service.dart'; // For Live Locations
 import '../../utils/language_provider.dart';
 
 part 'parts/clock_widget.dart';
@@ -475,6 +477,8 @@ class _BusListScreenState extends State<BusListScreen> {
                               MarkerLayer(
                                 markers: _createMarkers(controller),
                               ),
+                              _buildLiveBusLayer(
+                                  controller.searchResults), // Add Live Layer
                             ],
                           ),
                         ),
@@ -603,6 +607,73 @@ class _BusListScreenState extends State<BusListScreen> {
       }
     }
     return markers;
+  }
+
+  Widget _buildLiveBusLayer(List<EnrichedTrip> trips) {
+    if (trips.isEmpty) return const SizedBox.shrink();
+
+    // Create a list of streams, one for each trip
+    List<Stream<Map<String, dynamic>>> streams = trips.map((trip) {
+      return LocationService().getBusLocationStream(trip.id).map((pos) {
+        return {
+          'tripId': trip.id,
+          'pos': pos,
+          'heading':
+              0.0, // LocationService stream currently returns only LatLng? update if heading needed
+        };
+      });
+    }).toList();
+
+    // Combine them into a single stream of List
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: Rx.combineLatestList(streams),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+
+        final updates = snapshot.data!;
+        final List<Marker> markers = [];
+
+        for (var i = 0; i < updates.length; i++) {
+          final data = updates[i];
+          final latlng.LatLng? pos = data['pos'];
+          if (pos == null) continue;
+
+          markers.add(Marker(
+            point: pos,
+            width: 50,
+            height: 50,
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black26, blurRadius: 4)
+                    ],
+                    border: Border.all(color: AppTheme.primaryColor, width: 2),
+                  ),
+                  child: const Icon(Icons.directions_bus,
+                      color: AppTheme.primaryColor, size: 20),
+                ),
+                // Optional: Label
+                // Container(
+                //   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                //   decoration: BoxDecoration(
+                //     color: Colors.white,
+                //     borderRadius: BorderRadius.circular(4)
+                //   ),
+                //   child: Text("Bus", style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold)),
+                // )
+              ],
+            ),
+          ));
+        }
+
+        return MarkerLayer(markers: markers);
+      },
+    );
   }
 
   List<Polyline> _createPolylines(TripController controller) {

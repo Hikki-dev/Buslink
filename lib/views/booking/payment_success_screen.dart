@@ -14,6 +14,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:flutter/foundation.dart'; // kIsWeb
 import '../../utils/file_downloader.dart';
+import 'dart:io'; // Added
+import 'package:open_filex/open_filex.dart'; // Added
 
 // import '../../views/home/home_screen.dart'; // Unused
 import '../customer_main_screen.dart';
@@ -195,11 +197,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   }
 
   Future<void> _downloadTickets(List<Ticket> tickets) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(
-              "Generating ${tickets.length > 1 ? 'Booking PDF' : 'Ticket PDF'}...")),
-    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
           content: Text(
@@ -405,11 +402,48 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       }
 
       final bytes = await doc.save();
+      final fileName = 'buslink_tickets.pdf';
 
       if (kIsWeb) {
-        await downloadBytesForWeb(bytes, 'buslink_tickets.pdf');
+        await downloadBytesForWeb(bytes, fileName);
+      } else if (Platform.isAndroid) {
+        // Android-specific download logic
+        try {
+          final directory = Directory('/storage/emulated/0/Download');
+          if (!await directory.exists()) {
+            // Fallback to share if Download folder isn't accessible
+            await Printing.sharePdf(bytes: bytes, filename: fileName);
+            return;
+          }
+
+          final file = File('${directory.path}/$fileName');
+          await file.writeAsBytes(bytes);
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text("Saved to Downloads: $fileName"),
+              backgroundColor: Colors.green,
+              action: SnackBarAction(
+                label: "OPEN",
+                textColor: Colors.white,
+                onPressed: () {
+                  OpenFilex.open(file.path);
+                },
+              ),
+            ));
+
+            NotificationService.showLocalNotification(
+                id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                title: "Tickets Downloaded",
+                body: "Your tickets have been saved to Downloads.");
+          }
+        } catch (e) {
+          debugPrint("Download Error: $e. Fallback to Share.");
+          await Printing.sharePdf(bytes: bytes, filename: fileName);
+        }
       } else {
-        await Printing.sharePdf(bytes: bytes, filename: 'buslink_tickets.pdf');
+        // iOS and others
+        await Printing.sharePdf(bytes: bytes, filename: fileName);
       }
     } catch (e, stackTrace) {
       debugPrint("Error generating/sharing PDF: $e");

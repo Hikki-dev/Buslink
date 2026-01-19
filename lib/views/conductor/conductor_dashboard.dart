@@ -566,37 +566,39 @@ class _FindTripDialogState extends State<FindTripDialog> {
       final now = DateTime.now();
       final filtered = enriched.where((t) {
         // Access Control Logic - Robust & Dynamic
-        // 1. Hide trips from previous days (unless they started late last night and are still active? User said "controlling 5 AM bus at 3 PM")
-        // User Requirement: "Prevent Conductor from accessing buses after their scheduled time has passed" (e.g. 5AM bus accessed at 3PM - 10 hours diff)
 
-        if (t.departureTime.day != now.day) {
-          // If different day, only allow if it's potentially an overnight trip that JUST started or arriving?
-          // Simplest Robust Logic: Strict 12-18 hour access window from Departure Time.
+        // 1. If it's a future trip (tomorrow), allow it (Planning).
+        if (t.departureTime.day > now.day) return true;
+        if (t.departureTime.year > now.year ||
+            t.departureTime.month > now.month) return true;
 
-          // If it's a future trip (tomorrow), allow it (Planning).
-          if (t.departureTime.isAfter(now)) return true;
+        // 2. SAME DAY LOGIC
+        final diffHours = now.difference(t.departureTime).inHours;
 
-          // If it's a past trip (> 12 hours ago), HIDE IT.
-          if (now.difference(t.departureTime).inHours > 12) return false;
-        } else {
-          // SAME DAY
-          // If Scheduled 5 AM, Now 3 PM (15:00) -> Diff 10 hours.
-          // If status is 'Arrived' or 'Completed', hide immediately/shortly.
-          // If status is 'Scheduled'/'Delayed', keep it visible UNLESS it's absurdly late?
+        // If trip is ACTIVE (Departed/OnWay/Delayed), show it regardless of time (within reason, say 24h)
+        // This ensures a delayed bus driven at 3 PM (scheduled 5 AM) is still visible IF status was updated.
+        // However, if status is still 'Scheduled' at 3 PM for a 5 AM bus, it's likely a stale/missed record.
 
-          // User specific example: "controlling 5 AM bus at 3 PM".
-          // This implies even if it's "Scheduled", it should be hidden if 10 hours passed?
-          // But what if the bus is genuinely delayed by 10 hours?
-          // "Prevent ... after scheduled time has passed".
+        if (t.status == 'departed' ||
+            t.status == 'on_way' ||
+            t.status == 'delayed') {
+          // Keep active trips visible for up to 18 hours to allow for very long journeys
+          return diffHours < 18;
+        }
 
-          // Let's use a "Safety Window".
-          // Standard Bus Trip in SL < 8-10 Hours?
-          // Let's range it: Hide if (Now > Departure + 12 Hours) REGARDLESS of status.
-          // This forces the system to cleanup old trips.
+        // 3. If Scheduled/Completed/Cancelled
+        if (t.status == 'completed' || t.status == 'cancelled') {
+          // Hide immediately or after short buffer
+          return false;
+        }
 
-          if (now.difference(t.departureTime).inHours > 12) {
-            return false;
-          }
+        // 4. If Scheduled but time passed
+        // User Request: "1.51 PM and its showing me 5AM trips... show me the current ones only"
+        // Implicitly: Hide trips scheduled more than X hours ago if they haven't started.
+        // Let's set a strict window: Hide trips scheduled > 4 hours ago if they are still 'scheduled'.
+        // (Assuming a bus won't start 4 hours late without status update to 'Delayed')
+        if (diffHours > 3) {
+          return false;
         }
 
         return true;

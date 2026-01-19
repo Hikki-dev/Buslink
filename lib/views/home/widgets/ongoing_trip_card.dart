@@ -56,9 +56,7 @@ class OngoingTripCard extends StatelessWidget {
                                 fontFamily: 'Outfit',
                                 fontWeight: FontWeight.w800,
                                 fontSize: 20, // Reduced from 22
-                                color: isDark
-                                    ? Colors.white
-                                    : Colors.black, // Strict Black
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                     ),
                     const SizedBox(height: 4), // Reduced from 6
@@ -104,7 +102,7 @@ class OngoingTripCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _buildStatusBadge(trip.status),
+              _buildStatusBadge(context, trip.status, lp), // Passed context
             ],
           ),
           const SizedBox(height: 12), // Reduced from 16
@@ -120,9 +118,7 @@ class OngoingTripCard extends StatelessWidget {
                           fontFamily: 'Outfit',
                           fontWeight: FontWeight.w600,
                           fontSize: 16, // Reduced from 18
-                          color: isDark
-                              ? Colors.white70
-                              : Colors.black87, // Darker
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                   ),
                   const SizedBox(height: 2),
@@ -132,8 +128,7 @@ class OngoingTripCard extends StatelessWidget {
                       fontFamily: 'Inter',
                       fontSize: 13, // Reduced from 14
                       fontWeight: FontWeight.w500,
-                      color:
-                          isDark ? Colors.white : Colors.black, // Strict Black
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -146,7 +141,7 @@ class OngoingTripCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildLocationInfo(
-                    lp.translate('origin'), trip.fromCity, isDark),
+                    context, lp.translate('origin'), trip.fromCity, isDark),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4.0), // Reduced
@@ -154,7 +149,7 @@ class OngoingTripCard extends StatelessWidget {
               ),
               Expanded(
                 child: _buildLocationInfo(
-                    lp.translate('destination'), trip.toCity, isDark,
+                    context, lp.translate('destination'), trip.toCity, isDark,
                     alignRight: true),
               ),
             ],
@@ -177,7 +172,7 @@ class OngoingTripCard extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 16, // Reduced
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : Colors.black)),
+                          color: Theme.of(context).colorScheme.onSurface)),
                 ],
               ),
               Column(
@@ -189,7 +184,7 @@ class OngoingTripCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: isDark
                               ? Colors.white
-                              : Colors.black)), // Strict Black
+                              : Theme.of(context).colorScheme.onSurface)),
                   Text("LKR ${paidAmount.toStringAsFixed(0)}",
                       style: TextStyle(
                           fontSize: 16, // Reduced
@@ -206,7 +201,8 @@ class OngoingTripCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLocationInfo(String label, String city, bool isDark,
+  Widget _buildLocationInfo(
+      BuildContext context, String label, String city, bool isDark,
       {bool alignRight = false}) {
     return Column(
       crossAxisAlignment:
@@ -218,7 +214,7 @@ class OngoingTripCard extends StatelessWidget {
             fontFamily: 'Outfit',
             fontSize: 12,
             letterSpacing: 1.0,
-            color: isDark ? Colors.white : Colors.black, // Strict Black
+            color: Theme.of(context).colorScheme.onSurface, // Theme
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -229,14 +225,15 @@ class OngoingTripCard extends StatelessWidget {
             fontFamily: 'Outfit',
             fontSize: 22,
             fontWeight: FontWeight.w800,
-            color: isDark ? Colors.white : Colors.black, // Strict Black
+            color: Theme.of(context).colorScheme.onSurface, // Theme
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStatusBadge(String status) {
+  Widget _buildStatusBadge(
+      BuildContext context, String status, LanguageProvider lp) {
     Color bg;
     Color text;
     String label;
@@ -246,28 +243,28 @@ class OngoingTripCard extends StatelessWidget {
       case 'onWay':
         bg = Colors.green.withValues(alpha: 0.1);
         text = Colors.green;
-        label = "Active";
+        label = lp.translate('active');
         break;
       case 'delayed':
         bg = Colors.orange.withValues(alpha: 0.1);
         text = Colors.orange;
-        label = "Delayed";
+        label = lp.translate('delayed');
         break;
       case 'cancelled':
         bg = Colors.red.withValues(alpha: 0.1);
         text = Colors.red;
-        label = "Cancelled";
+        label = lp.translate('cancelled');
         break;
       case 'arrived':
       case 'completed':
         bg = Colors.blue.withValues(alpha: 0.1);
         text = Colors.blue;
-        label = "Completed";
+        label = lp.translate('stat_completed'); // 'Completed'
         break;
       default:
         bg = Colors.grey.withValues(alpha: 0.1);
         text = Colors.grey;
-        label = "Scheduled";
+        label = lp.translate('scheduled');
     }
 
     // Since _buildStatusBadge is a method, we cannot access 'lp' directly unless passed or fetched.

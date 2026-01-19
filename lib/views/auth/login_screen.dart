@@ -18,12 +18,15 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController(); // Added
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController(); // Added
   bool _isLogin = true;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false; // Added
   int _currentBgIndex = 0;
   Timer? _bgTimer;
   final List<String> _bgImages = [
@@ -56,9 +59,11 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _bgTimer?.cancel();
+    _nameController.dispose(); // Added
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose(); // Added
     super.dispose();
   }
 
@@ -73,6 +78,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _submitAuthForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     setState(() => _isLoading = true);
     final authService = Provider.of<AuthService>(context, listen: false);
 
@@ -96,7 +105,12 @@ class _LoginScreenState extends State<LoginScreen> {
         cred = await authService.signInWithEmail(context, email, password);
       } else {
         cred = await authService.signUpWithEmail(
-            context, email, password, _phoneController.text.trim());
+            context,
+            email,
+            password,
+            _phoneController.text.trim(),
+            _nameController.text.trim() // Added displayName
+            );
       }
 
       if (cred != null && cred.user != null && mounted) {
@@ -232,8 +246,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.red.shade900.withValues(alpha: 0.8),
-                          Colors.red.shade800.withValues(alpha: 0.9),
+                          Colors.red.shade900.withOpacity(0.8),
+                          Colors.red.shade800.withOpacity(0.9),
                         ],
                       ),
                     ),
@@ -259,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
+                                color: Colors.black.withOpacity(0.2),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -323,7 +337,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+          color: Theme.of(context).primaryColor.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -401,17 +415,57 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
           const SizedBox(height: 32),
+          if (!_isLogin) ...[
+            _buildPremiumTextField(
+              controller: _nameController,
+              label: 'Full Name',
+              hint: 'Enter your full name',
+              icon: Icons.person_outline_rounded,
+              theme: theme,
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Name is required';
+                if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(v)) {
+                  return 'Enter a valid name (Alphabets only)';
+                }
+                if (v.length < 3) return 'Name too short';
+                return null;
+              },
+            ),
+            const SizedBox(height: 24),
+          ],
           _buildPremiumTextField(
             controller: _emailController,
             label: lp.translate('email'),
             hint: lp.translate('email_hint'),
             icon: Icons.email_outlined,
             theme: theme,
-            validator: (v) =>
-                v == null || !v.contains('@') ? 'Enter a valid email' : null,
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Email is required';
+              if (!RegExp(
+                      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+                  .hasMatch(v)) {
+                return 'Enter a valid email address';
+              }
+              return null;
+            },
           ),
-          // Phone Field Removed
-
+          if (!_isLogin) ...[
+            const SizedBox(height: 24),
+            _buildPremiumTextField(
+              controller: _phoneController,
+              label: 'Phone Number',
+              hint: '07XXXXXXXX',
+              icon: Icons.phone_rounded,
+              theme: theme,
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Phone number is required';
+                if (!RegExp(r"^\d{10}$").hasMatch(v.replaceAll(' ', ''))) {
+                  return 'Enter a valid 10-digit phone number';
+                }
+                return null;
+              },
+            ),
+          ],
           const SizedBox(height: 24),
           _buildPremiumTextField(
             controller: _passwordController,
@@ -428,6 +482,32 @@ class _LoginScreenState extends State<LoginScreen> {
                 : null,
             onFieldSubmitted: _submitAuthForm, // Submit on Enter
           ),
+          if (!_isLogin) ...[
+            const SizedBox(height: 24),
+            _buildPremiumTextField(
+              controller: _confirmPasswordController,
+              label:
+                  'Confirm Password', // Hardcoded for now, or use lp.translate
+              hint: 'Re-enter your password',
+              icon: Icons.lock_outline_rounded,
+              theme: theme,
+              isPassword: true,
+              isPasswordVisible:
+                  _isConfirmPasswordVisible, // Use separate state
+              onVisibilityToggle: () => setState(() =>
+                  _isConfirmPasswordVisible =
+                      !_isConfirmPasswordVisible), // Toggle
+              validator: (v) {
+                if (v == null || v.isEmpty) {
+                  return 'Please confirm your password';
+                }
+                if (v != _passwordController.text) {
+                  return 'Passwords do not match';
+                }
+                return null;
+              },
+            ),
+          ],
           const SizedBox(height: 16),
           if (_isLogin)
             Align(

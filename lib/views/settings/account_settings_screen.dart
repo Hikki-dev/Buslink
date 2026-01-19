@@ -168,8 +168,9 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                     fillColor: Theme.of(context).cardColor,
                     helperText: "Format: +94 7X XXX XXXX"),
                 validator: (val) {
-                  if (val == null || val.isEmpty)
+                  if (val == null || val.isEmpty) {
                     return "Phone cannot be empty";
+                  }
                   // Simple SL regex check for MVP
                   // Allows +947... or 07...
                   final phoneRegex = RegExp(r'^(?:\+94|0)7\d{8}$');

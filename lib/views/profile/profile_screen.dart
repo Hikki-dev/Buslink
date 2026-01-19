@@ -18,7 +18,7 @@ import '../layout/custom_app_bar.dart';
 // IMPORTS FOR PROFILE UPLOAD & SETTINGS
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart'; // for kIsWeb
+// for kIsWeb
 import '../settings/account_settings_screen.dart';
 import '../settings/notification_settings_screen.dart';
 import '../auth/login_screen.dart';

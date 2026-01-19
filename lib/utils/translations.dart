@@ -13,6 +13,11 @@ class Translations {
       'password_hint': 'Your password',
       'forgot_password': 'Forgot password?',
       'login_button': 'Log In',
+      // New Live Keys
+      'track_now': 'Track Now',
+      'your_bus_is_here': 'Your Bus is Here!',
+      'journey_live': 'Live Journey',
+      'view_ticket': 'View Ticket',
       'signup_button': 'Sign Up',
       'no_account': "Don't have an account?",
       'have_account': 'Already have an account?',
@@ -203,7 +208,7 @@ class Translations {
       'ref': 'Ref',
       'from': 'FROM',
       'to': 'TO',
-      'view_ticket': 'View Ticket',
+      // 'view_ticket': 'View Ticket', // Moved to general keys
       'book_again': 'BOOK AGAIN',
       'standard_bus': 'Standard Bus',
       'seats_count': 'Seats',
@@ -243,6 +248,20 @@ class Translations {
       'route_management_desc':
           'Manage bus schedules, prices, and availability.',
       'add_new_trip': 'Add New Trip',
+      // Ticket Screen
+      'boarding_pass': 'Boarding Pass',
+      'show_qr_code': 'SHOW 4-DIGIT CODE OR SCAN QR',
+      'track_bus_live': 'TRACK BUS LIVE',
+      'passenger': 'Passenger',
+      'total_price': 'Total Price',
+      'e_ticket': 'E-TICKET',
+      'bundle': 'BUNDLE',
+      // Tracking Screen (Restored)
+      'signal_active': 'Signal Active',
+      'waiting_signal': 'Waiting for Signal...',
+      'bus_moving': 'Bus is moving',
+      'bus_no_update': 'Bus location not updated recently',
+
       'add_route': 'Add Route',
       'manage_routes': 'Manage Routes',
       'refunds': 'Refunds',
@@ -411,6 +430,11 @@ class Translations {
       'password_hint': 'ඔබේ මුරපදය',
       'forgot_password': 'මුරපදය අමතකද?',
       'login_button': 'ඇතුළු වන්න',
+      // New Live Keys SI
+      'track_now': 'දැන් හඹා යන්න',
+      'your_bus_is_here': 'ඔබේ බස් රථය පැමිණ ඇත!',
+      'journey_live': 'සජීවී ගමන',
+      'view_ticket': 'ටිකට්පත බලන්න',
       'signup_button': 'ලියාපදිංචි වන්න',
       'no_account': "ගිණුමක් නොමැතිද?",
       'have_account': 'දැනටමත් ගිණුමක් තිබේද?',
@@ -587,6 +611,20 @@ class Translations {
       'route_management_desc':
           'බස් කාලසටහන්, ගාස්තු සහ ලබා ගත හැකි බව කළමනාකරණය කරන්න.',
       'add_new_trip': 'නව ගමනක් එක් කරන්න',
+      // Ticket Screen SI
+      'boarding_pass': 'පුවරුව බලපත්‍රය',
+      'show_qr_code': 'අංක 4 කේතය පෙන්වන්න හෝ ස්කෑන් කරන්න',
+      'track_bus_live': 'බස් රථය හඹා යන්න',
+      'passenger': 'මගියා',
+      'total_price': 'මුළු මුදල',
+      'e_ticket': 'E-ටිකට්',
+      'bundle': 'ටිකට් එකතුව',
+      // Tracking Screen SI (Restored)
+      'signal_active': 'සංඥාව සක්‍රියයි',
+      'waiting_signal': 'සංඥාව බලාපොරොත්තු වෙමින්...',
+      'bus_moving': 'බස් රථය ගමන් කරයි',
+      'bus_no_update': 'ස්ථානය යාවත්කාලීන වී නොමැත',
+
       'add_route': 'මාර්ගයක් එක් කරන්න',
       'manage_routes': 'මාර්ග කළමනාකරණය',
       'refunds': 'මුදල් ආපසු ගෙවීම්',
@@ -698,6 +736,11 @@ class Translations {
       'password_hint': 'உங்கள் கடவுச்சொல்',
       'forgot_password': 'கடவுச்சொல் மறந்துவிட்டதா?',
       'login_button': 'உள்நுழைய',
+      // New Live Keys TA
+      'track_now': 'கண்காணிக்கவும்',
+      'your_bus_is_here': 'உங்கள் பேருந்து இங்கே!',
+      'journey_live': 'நேரடி பயணம்',
+      'view_ticket': 'டிக்கெட்',
       'signup_button': 'பதிவு செய்யவும்',
       'no_account': "கணக்கு இல்லையா?",
       'have_account': 'ஏற்கனவே கணக்கு உள்ளதா?',
@@ -868,8 +911,21 @@ class Translations {
       // Admin Dashboard TA
       'route_management': 'பாதை மேலாண்மை',
       'route_management_desc':
-          'பஸ் அட்டவணைகள், கட்டணங்கள் மற்றும் இருப்பை நிர்வகிக்கவும்.',
-      'add_new_trip': 'புதிய பயணத்தைச் சேர்க்கவும்',
+          'பேருந்து அட்டவணைகள் மற்றும் விலைகளை நிர்வகிக்கவும்.',
+      'add_new_trip': 'புதிய பயணத்தை சேர்க்கவும்',
+      // Ticket Screen TA
+      'boarding_pass': 'போர்டிங் பாஸ்',
+      'show_qr_code': 'குறியீட்டைக் காட்டு அல்லது ஸ்கேன் செய்',
+      'track_bus_live': 'நேரடி கண்காணிப்பு',
+      'passenger': 'பயணி',
+      'total_price': 'மொத்த விலை',
+      'e_ticket': 'மின்னணு டிக்கெட்',
+      'bundle': 'தொகுப்பு',
+      // Tracking Screen TA
+      'signal_active': 'சிக்னல் செயலில்',
+      'waiting_signal': 'சிக்னலுக்காக காத்திருக்கிறது...',
+      'bus_moving': 'பேருந்து நகர்கிறது',
+      'bus_no_update': 'இடம் புதுப்பிக்கப்படவில்லை',
       'add_route': 'பாதையைச் சேர்க்கவும்',
       'manage_routes': 'பாதைகளை நிர்வகிக்கவும்',
       'refunds': 'திரும்பப் பெறுதல்கள்',

@@ -24,7 +24,7 @@ import 'widgets/ongoing_trip_card.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
 import '../layout/notifications_screen.dart';
-
+import '../tracking/track_bus_screen.dart'; // Added
 import '../../data/destinations_data.dart';
 
 // Mock Data for Popular Destinatinos
@@ -841,17 +841,21 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
 
             var ongoingTrips = snapshot.data!.where((t) {
               // FILTER LOGIC
-              // User: "ones that are completed should dissappear"
+              // 1. Explicit Status Check
               if (t.status == 'completed' || t.status == 'cancelled') {
                 return false;
               }
 
-              // Also hide if strictly in the past and not active
-              // But if it is 'active' (e.g. onWay) but past arrival time, KEEP IT.
+              // 2. SAFETY NET: Stale Trip Check
+              if (DateTime.now().difference(t.arrivalTime).inHours > 18) {
+                return false;
+              }
+
+              // 3. Non-Active Past Check
               bool isActive = t.status == 'boarding' ||
                   t.status == 'departed' ||
                   t.status == 'onWay' ||
-                  t.status == 'arrived'; // Arrived is shown until Completed
+                  t.status == 'arrived';
 
               if (!isActive && DateTime.now().isAfter(t.arrivalTime)) {
                 return false;
@@ -862,7 +866,6 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
             if (ongoingTrips.isEmpty) return const SizedBox.shrink();
 
             // Custom Sort: Active Match -> Scheduled
-            // Custom Sort: Active Match -> Scheduled
             ongoingTrips.sort((a, b) {
               int rankA = _getTripRank(a.status);
               int rankB = _getTripRank(b.status);
@@ -870,54 +873,81 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
               return a.departureTime.compareTo(b.departureTime);
             });
 
-            // Removed single trip optimization to ensure consistent height constraint (520px) via PageView wrapper
-            // if (ongoingTrips.length == 1) ...
+            // Check for Live Trip (Active Status)
+            EnrichedTrip? liveTrip;
+            try {
+              liveTrip = ongoingTrips.firstWhere((t) =>
+                  t.status == 'boarding' ||
+                  t.status == 'departed' ||
+                  t.status == 'onWay');
+            } catch (_) {}
 
-            return Stack(
-              alignment: Alignment.center,
+            return Column(
               children: [
-                SizedBox(
-                  height: 370,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: ongoingTrips.length,
-                    onPageChanged: (i) => setState(() => _currentPage = i),
-                    itemBuilder: (context, index) {
-                      final ticket = widget.tickets.firstWhere(
-                          (tk) => tk.tripId == ongoingTrips[index].id,
-                          orElse: () => widget.tickets[0]);
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: OngoingTripCard(
-                          trip: ongoingTrips[index],
-                          seatCount: ticket.seatNumbers.length,
-                          paidAmount: ticket.totalAmount,
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 12),
+                if (liveTrip != null)
+                  LiveJourneyCard(
+                    trip: liveTrip,
+                    onTap: () {
+                      final ticket = widget.tickets
+                          .firstWhere((t) => t.tripId == liveTrip!.id);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TrackBusScreen(
+                            trip: liveTrip!.trip, // Use inner trip object
+                          ),
                         ),
                       );
                     },
                   ),
-                ),
-                if (_currentPage > 0)
-                  Positioned(
-                    left: 10,
-                    child: _buildArrowButton(Icons.arrow_back_ios_new, () {
-                      _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut);
-                    }),
-                  ),
-                if (_currentPage < ongoingTrips.length - 1)
-                  Positioned(
-                    right: 10,
-                    child: _buildArrowButton(Icons.arrow_forward_ios, () {
-                      _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut);
-                    }),
-                  ),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      height: 370,
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: ongoingTrips.length,
+                        onPageChanged: (i) => setState(() => _currentPage = i),
+                        itemBuilder: (context, index) {
+                          final ticket = widget.tickets.firstWhere(
+                              (tk) => tk.tripId == ongoingTrips[index].id,
+                              orElse: () => widget.tickets[0]); // Fallback
+
+                          return Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: OngoingTripCard(
+                              trip: ongoingTrips[index],
+                              seatCount: ticket.seatNumbers.length,
+                              paidAmount: ticket.totalAmount,
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 12),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    if (_currentPage > 0)
+                      Positioned(
+                        left: 10,
+                        child: _buildArrowButton(Icons.arrow_back_ios_new, () {
+                          _pageController.previousPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut);
+                        }),
+                      ),
+                    if (_currentPage < ongoingTrips.length - 1)
+                      Positioned(
+                        right: 10,
+                        child: _buildArrowButton(Icons.arrow_forward_ios, () {
+                          _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut);
+                        }),
+                      ),
+                  ],
+                )
               ],
             );
           },
@@ -997,6 +1027,122 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
     }
     // 3 = Others (should be filtered out anyway)
     return 3;
+  }
+}
+
+class LiveJourneyCard extends StatelessWidget {
+  final EnrichedTrip trip;
+  final VoidCallback onTap;
+
+  const LiveJourneyCard({super.key, required this.trip, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageProvider>(context);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDark
+                ? [const Color(0xFF1E3A8A), const Color(0xFF2563EB)]
+                : [const Color(0xFF2563EB), const Color(0xFF60A5FA)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.blue.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.circle,
+                          color: Colors.greenAccent, size: 10),
+                      const SizedBox(width: 8),
+                      Text(
+                        lang.translate('journey_live'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  trip.busNumber,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              lang.translate('your_bus_is_here'),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "${trip.originCity} ➔ ${trip.destinationCity}",
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: Text(
+                  lang.translate('track_now').toUpperCase(),
+                  style: const TextStyle(
+                    color: Color(0xFF2563EB),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

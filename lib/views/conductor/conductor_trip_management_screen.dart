@@ -81,10 +81,8 @@ class _ConductorTripManagementScreenState
     final controller = Provider.of<TripController>(context);
 
     // If trip status updates, we want to reflect it.
-    // If trip status updates, we want to reflect it.
-    // Note: TripController might need updates to handle EnrichedTrip for conductor selection
-    final currentTrip = widget.trip;
-    // Simplified for now: Assume widget.trip is the source or handled by controller externally
+    // Not used here, fetched in stream builder
+    // final currentTrip = widget.trip;
 
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -108,176 +106,217 @@ class _ConductorTripManagementScreenState
             Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: BackButton(color: isDark ? Colors.white : Colors.black),
+        actions: [
+          // Language Selector
+          Consumer<LanguageProvider>(
+            builder: (context, languageProvider, _) {
+              return PopupMenuButton<String>(
+                icon: Icon(Icons.language,
+                    color: isDark ? Colors.white : Colors.black),
+                tooltip: "Change Language",
+                onSelected: (String code) {
+                  languageProvider.setLanguage(code);
+                },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'en',
+                    child: Text('English'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'si',
+                    child: Text('සිංහල (Sinhala)'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'ta',
+                    child: Text('தமிழ் (Tamil)'),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header Info
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: isDark ? Colors.white10 : Colors.grey.shade200)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: StreamBuilder<EnrichedTrip?>(
+        stream: controller.getTripRealtimeStream(widget.trip.id),
+        initialData: widget.trip,
+        builder: (context, snapshot) {
+          final currentTrip = snapshot.data ?? widget.trip;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header Info
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color:
+                              isDark ? Colors.white10 : Colors.grey.shade200)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                          "Trip T${currentTrip.id.substring(0, 4).toUpperCase()}",
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                              "Trip T${currentTrip.id.substring(0, 4).toUpperCase()}",
+                              style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.grey.shade500,
+                                  fontWeight: FontWeight.bold)),
+                          if (_isTracking)
+                            const Icon(Icons.gps_fixed,
+                                color: Colors.green, size: 16)
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text("${currentTrip.fromCity} ➔ ${currentTrip.toCity}",
                           style: TextStyle(
-                              fontFamily: 'Inter',
-                              color: isDark
-                                  ? Colors.white70
-                                  : Colors.grey.shade500,
-                              fontWeight: FontWeight.bold)),
-                      if (_isTracking)
-                        const Icon(Icons.gps_fixed,
-                            color: Colors.green, size: 16)
+                              fontFamily: 'Outfit',
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black)),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Icon(Icons.access_time,
+                              size: 20,
+                              color: isDark ? Colors.white70 : Colors.black54),
+                          const SizedBox(width: 8),
+                          Text(
+                              DateFormat('hh:mm a')
+                                  .format(currentTrip.departureTime),
+                              style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      isDark ? Colors.white : Colors.black87)),
+                          const SizedBox(width: 24),
+                          Icon(Icons.directions_bus,
+                              size: 20,
+                              color: isDark ? Colors.white70 : Colors.black54),
+                          const SizedBox(width: 8),
+                          Text(currentTrip.busNumber,
+                              style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      isDark ? Colors.white : Colors.black87)),
+                        ],
+                      )
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text("${currentTrip.fromCity} ➔ ${currentTrip.toCity}",
-                      style: TextStyle(
-                          fontFamily: 'Outfit',
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black)),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time,
-                          size: 20,
-                          color: isDark ? Colors.white70 : Colors.black54),
-                      const SizedBox(width: 8),
-                      Text(
-                          DateFormat('hh:mm a')
-                              .format(currentTrip.departureTime),
-                          style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : Colors.black87)),
-                      const SizedBox(width: 24),
-                      Icon(Icons.directions_bus,
-                          size: 20,
-                          color: isDark ? Colors.white70 : Colors.black54),
-                      const SizedBox(width: 8),
-                      Text(currentTrip.busNumber,
-                          style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : Colors.black87)),
-                    ],
-                  )
-                ],
-              ),
-            ),
+                ),
 
-            const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-            // CASHPAYMENT SECTION
-            Text(
-                Provider.of<LanguageProvider>(context)
-                    .translate('cash_ticketing_title'),
-                style: TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Colors.black)),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 60,
-              child: ElevatedButton.icon(
-                onPressed: () =>
-                    _showCashBookingDialog(context, controller, currentTrip),
-                icon: const Icon(Icons.attach_money),
-                label: Text(
+                // CASHPAYMENT SECTION
+                Text(
                     Provider.of<LanguageProvider>(context)
-                        .translate('issue_cash_ticket'),
-                    style: const TextStyle(
-                        fontFamily: 'Inter',
+                        .translate('cash_ticketing_title'),
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.shade700,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    elevation: 4),
-              ),
+                        color: isDark ? Colors.white : Colors.black)),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 60,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showCashBookingDialog(
+                        context, controller, currentTrip),
+                    icon: const Icon(Icons.attach_money),
+                    label: Text(
+                        Provider.of<LanguageProvider>(context)
+                            .translate('issue_cash_ticket'),
+                        style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade700,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        elevation: 4),
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                Text(
+                    Provider.of<LanguageProvider>(context)
+                        .translate('update_trip_status_section'),
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black)),
+                const SizedBox(height: 16),
+
+                // STATUS BUTTONS
+                _buildStatusButton(
+                    context,
+                    controller,
+                    currentTrip,
+                    Provider.of<LanguageProvider>(context)
+                        .translate('departed'),
+                    TripStatus.departed,
+                    Colors.green.shade600,
+                    Icons.departure_board),
+                const SizedBox(height: 16),
+                _buildStatusButton(
+                    context,
+                    controller,
+                    currentTrip,
+                    Provider.of<LanguageProvider>(context).translate('on_way'),
+                    TripStatus.onWay,
+                    Colors.blue.shade600,
+                    Icons.directions_bus_filled),
+                const SizedBox(height: 16),
+                _buildStatusButton(
+                    context,
+                    controller,
+                    currentTrip,
+                    Provider.of<LanguageProvider>(context).translate('arrived'),
+                    TripStatus.arrived,
+                    Colors.green.shade800,
+                    Icons.check_circle),
+                const SizedBox(height: 16),
+                _buildStatusButton(
+                    context,
+                    controller,
+                    currentTrip,
+                    Provider.of<LanguageProvider>(context).translate('delayed'),
+                    TripStatus.delayed,
+                    Colors.red.shade600,
+                    Icons.warning_amber_rounded,
+                    isDelay: true),
+
+                const SizedBox(height: 40),
+                Center(
+                  child: Text(
+                    "${Provider.of<LanguageProvider>(context).translate('current_status_label')}: ${currentTrip.status.toUpperCase()}", // Translated "Current Status"
+                    style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: _getStatusColor(currentTrip.status)),
+                  ),
+                )
+              ],
             ),
-
-            const SizedBox(height: 40),
-
-            Text(
-                Provider.of<LanguageProvider>(context)
-                    .translate('update_trip_status_section'),
-                style: TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Colors.black)),
-            const SizedBox(height: 16),
-
-            // STATUS BUTTONS
-            _buildStatusButton(
-                context,
-                controller,
-                currentTrip,
-                Provider.of<LanguageProvider>(context).translate('departed'),
-                TripStatus.departed,
-                Colors.green.shade600,
-                Icons.departure_board),
-            const SizedBox(height: 16),
-            _buildStatusButton(
-                context,
-                controller,
-                currentTrip,
-                Provider.of<LanguageProvider>(context).translate('on_way'),
-                TripStatus.onWay,
-                Colors.blue.shade600,
-                Icons.directions_bus_filled),
-            const SizedBox(height: 16),
-            _buildStatusButton(
-                context,
-                controller,
-                currentTrip,
-                Provider.of<LanguageProvider>(context).translate('arrived'),
-                TripStatus.arrived,
-                Colors.green.shade800,
-                Icons.check_circle),
-            const SizedBox(height: 16),
-            _buildStatusButton(
-                context,
-                controller,
-                currentTrip,
-                Provider.of<LanguageProvider>(context).translate('delayed'),
-                TripStatus.delayed,
-                Colors.red.shade600,
-                Icons.warning_amber_rounded,
-                isDelay: true),
-
-            const SizedBox(height: 40),
-            Center(
-              child: Text(
-                "${Provider.of<LanguageProvider>(context).translate('current_status_label')}: ${currentTrip.status.toUpperCase()}", // Translated "Current Status"
-                style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: _getStatusColor(currentTrip.status)),
-              ),
-            )
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -357,34 +396,12 @@ class _ConductorTripManagementScreenState
               if (context.mounted) {
                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("Trip marked as $label"),
+                    content: Text(
+                        "Trip marked as $label. Passengers notified (Push)."),
                     backgroundColor: Colors.green));
 
-                // Ask to notify passengers
-                bool? notify = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                          title: const Text("Notify Passengers?"),
-                          content: const Text(
-                              "Do you want to send an SMS update to all passengers regarding this status change?"),
-                          actions: [
-                            TextButton(
-                                onPressed: () => Navigator.pop(ctx, false),
-                                child: const Text("No")),
-                            ElevatedButton(
-                                onPressed: () => Navigator.pop(ctx, true),
-                                child: const Text("Yes, Notify")),
-                          ],
-                        ));
-
-                if (notify == true && context.mounted) {
-                  // Logic moved to controller or existing logic is sufficient.
-                  // Ideally we pass this 'notify' bool to the controller.
-                  // For now, assuming controller sends it by default, ensuring we don't double send.
-                  // Actually, controller sends it unconditionally currently.
-                  // To respect the dialog, we should update the controller later.
-                  // For this fix, I will remove the UI side double-send.
-                }
+                // Dialog removed for efficiency & privacy (SMS disabled)
+                // bool? notify = await showDialog... <- Removed
               }
             } catch (e) {
               if (context.mounted) {
