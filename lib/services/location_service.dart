@@ -45,10 +45,7 @@ class LocationService {
     // 3. Write to Firestore (trip_updates collection)
     try {
       await _firestoreService.updateTripRealtimeStatus(tripId, {
-        'status': 'inProgress', // Implicitly updating status? Or just location?
-        // Better to not overwrite status if we don't know it, but for location updates usually implies inProgress.
-        // However, we might be 'delayed'.
-        // Let's just update location fields.
+        // 'status': 'inProgress', // Removed to avoid overwriting Conductor's manual status
         'currentLat': lat,
         'currentLng': lng,
         'currentLocation': GeoPoint(lat, lng), // For geo-queries

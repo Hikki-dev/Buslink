@@ -8,12 +8,51 @@ import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../models/trip_model.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
-import '../../utils/app_constants.dart';
+
 // import '../layout/conductor_navbar.dart';
 // import '../admin/layout/admin_bottom_nav.dart';
 import '../admin/admin_dashboard.dart';
 import '../../utils/language_provider.dart';
 import 'conductor_trip_management_screen.dart';
+import '../booking/bus_layout_widget.dart';
+import 'package:intl/intl.dart';
+import '../../views/auth/login_screen.dart';
+import 'qr_scan_screen.dart';
+
+class ConductorDashboard extends StatefulWidget {
+  final bool isAdminView;
+  const ConductorDashboard({super.key, this.isAdminView = false});
+
+  @override
+  State<ConductorDashboard> createState() => _ConductorDashboardState();
+}
+
+class _ConductorDashboardState extends State<ConductorDashboard> {
+  final TextEditingController _ticketIdController = TextEditingController();
+  // final TextEditingController _busNumberController = TextEditingController(); // Unused
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-load cities
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<TripController>(context, listen: false)
+          .fetchAvailableCities();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticketIdController.dispose();
+    // _busNumberController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // get user from provider if needed
+    // final user = Provider.of<AuthService>(context).currentUser;
+
     return LayoutBuilder(builder: (context, constraints) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -24,12 +63,16 @@ import 'conductor_trip_management_screen.dart';
             children: [
               const Icon(Icons.directions_bus, color: AppTheme.primaryColor),
               const SizedBox(width: 8),
-              Text(
-                "Conductor Dashboard",
-                style: TextStyle(
-                    fontFamily: 'Outfit',
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface),
+              Expanded(
+                child: Text(
+                  Provider.of<LanguageProvider>(context)
+                      .translate('conductor_dashboard_title'),
+                  style: TextStyle(
+                      fontFamily: 'Outfit',
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -43,7 +86,11 @@ import 'conductor_trip_management_screen.dart';
                 return IconButton(
                   icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode,
                       color: Theme.of(context).colorScheme.onSurface),
-                  tooltip: isDark ? "Light Mode" : "Dark Mode",
+                  tooltip: isDark
+                      ? Provider.of<LanguageProvider>(context)
+                          .translate('light_mode')
+                      : Provider.of<LanguageProvider>(context)
+                          .translate('dark_mode_tooltip'),
                   onPressed: () {
                     themeController
                         .setTheme(isDark ? ThemeMode.light : ThemeMode.dark);
@@ -57,7 +104,8 @@ import 'conductor_trip_management_screen.dart';
                 return PopupMenuButton<String>(
                   icon: Icon(Icons.language,
                       color: Theme.of(context).colorScheme.onSurface),
-                  tooltip: "Change Language",
+                  tooltip: Provider.of<LanguageProvider>(context)
+                      .translate('change_language'),
                   onSelected: (String code) {
                     languageProvider.setLanguage(code);
                   },
@@ -127,7 +175,9 @@ import 'conductor_trip_management_screen.dart';
                         }
                       },
                       icon: const Icon(Icons.logout, color: Colors.red),
-                      label: const Text("Logout",
+                      label: Text(
+                          Provider.of<LanguageProvider>(context)
+                              .translate('log_out'),
                           style: TextStyle(
                               fontFamily: 'Outfit',
                               fontWeight: FontWeight.bold,
@@ -284,14 +334,18 @@ import 'conductor_trip_management_screen.dart';
                 size: 64, color: AppTheme.primaryColor),
           ),
           const SizedBox(height: 24),
-          Text("Scan Ticket",
+          Text(
+              Provider.of<LanguageProvider>(context)
+                  .translate('scan_ticket_title'),
               style: TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
-          Text("Use camera or enter Ticket ID",
+          Text(
+              Provider.of<LanguageProvider>(context)
+                  .translate('scan_ticket_desc'),
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontFamily: 'Inter',
@@ -305,7 +359,8 @@ import 'conductor_trip_management_screen.dart';
                   style:
                       TextStyle(color: Theme.of(context).colorScheme.onSurface),
                   decoration: InputDecoration(
-                    labelText: "Manual Ticket ID",
+                    labelText: Provider.of<LanguageProvider>(context)
+                        .translate('manual_ticket_id'),
                     hintText: "e.g. TICKET-1234",
                     prefixIcon: const Icon(Icons.keyboard),
                     border: OutlineInputBorder(
@@ -339,7 +394,8 @@ import 'conductor_trip_management_screen.dart';
                     }
                   },
                   icon: const Icon(Icons.camera_alt),
-                  label: const Text("Use Camera"),
+                  label: Text(Provider.of<LanguageProvider>(context)
+                      .translate('use_camera')),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     side: BorderSide(color: AppTheme.primaryColor),
@@ -351,7 +407,8 @@ import 'conductor_trip_management_screen.dart';
                 child: ElevatedButton.icon(
                   onPressed: () => _verifyTicket(_ticketIdController.text),
                   icon: const Icon(Icons.check),
-                  label: const Text("Verify"),
+                  label: Text(Provider.of<LanguageProvider>(context)
+                      .translate('verify_button')),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,
@@ -369,8 +426,9 @@ import 'conductor_trip_management_screen.dart';
 
   void _verifyTicket(String ticketId) async {
     if (ticketId.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please enter a Ticket ID")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(Provider.of<LanguageProvider>(context, listen: false)
+              .translate('please_enter_ticket_id'))));
       return;
     }
     final controller = Provider.of<TripController>(context, listen: false);
@@ -420,8 +478,10 @@ import 'conductor_trip_management_screen.dart';
 
           if (now.difference(depTime).inHours > 12) {
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("Access Denied: Trip Schedule Expired (>12h)."),
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(
+                      Provider.of<LanguageProvider>(context, listen: false)
+                          .translate('access_denied_12h')),
                   backgroundColor: Colors.red));
             }
             return;
@@ -435,7 +495,8 @@ import 'conductor_trip_management_screen.dart';
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("Invalid Ticket ID: $ticketId"),
+            content: Text(
+                "${Provider.of<LanguageProvider>(context, listen: false).translate('invalid_ticket_id')}: $ticketId"),
             backgroundColor: Colors.red));
       }
     }
@@ -464,7 +525,8 @@ import 'conductor_trip_management_screen.dart';
                         color: Colors.green, size: 48),
                   ),
                   const SizedBox(height: 16),
-                  Text("Verified Code: ${ticket.shortId ?? 'N/A'}",
+                  Text(
+                      "${Provider.of<LanguageProvider>(context).translate('verified_code')}: ${ticket.shortId ?? 'N/A'}",
                       style: const TextStyle(
                           fontFamily: 'Outfit',
                           fontSize: 24,
@@ -473,16 +535,29 @@ import 'conductor_trip_management_screen.dart';
                   const SizedBox(height: 24),
                   const Divider(),
                   const SizedBox(height: 16),
-                  _ticketDetailRow("Passenger", ticket.passengerName),
-                  _ticketDetailRow("Seats", ticket.seatNumbers.join(", ")),
                   _ticketDetailRow(
-                      "Bus No", ticket.tripData['busNumber'] ?? 'N/A'),
+                      Provider.of<LanguageProvider>(context)
+                          .translate('passenger'),
+                      ticket.passengerName),
                   _ticketDetailRow(
-                      "From", ticket.tripData['fromCity'] ?? 'N/A'),
-                  _ticketDetailRow("To", ticket.tripData['toCity'] ?? 'N/A'),
+                      Provider.of<LanguageProvider>(context).translate('seats'),
+                      ticket.seatNumbers.join(", ")),
+                  _ticketDetailRow(
+                      Provider.of<LanguageProvider>(context)
+                          .translate('bus_no'),
+                      ticket.tripData['busNumber'] ?? 'N/A'),
+                  _ticketDetailRow(
+                      Provider.of<LanguageProvider>(context)
+                          .translate('origin'),
+                      ticket.tripData['fromCity'] ?? 'N/A'),
+                  _ticketDetailRow(
+                      Provider.of<LanguageProvider>(context)
+                          .translate('destination'),
+                      ticket.tripData['toCity'] ?? 'N/A'),
 
                   const SizedBox(height: 16),
-                  const Text("Seat Location:",
+                  Text(
+                      "${Provider.of<LanguageProvider>(context).translate('seat_location')}:",
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
 
@@ -510,7 +585,8 @@ import 'conductor_trip_management_screen.dart';
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16)),
-                      child: const Text("Approve Boarding"),
+                      child: Text(Provider.of<LanguageProvider>(context)
+                          .translate('approve_boarding')),
                     ),
                   )
                 ],
@@ -556,6 +632,16 @@ class _FindTripDialogState extends State<FindTripDialog> {
   bool _hasSearched = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Fetch cities dynamically when dialog opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<TripController>(context, listen: false)
+          .fetchAvailableCities();
+    });
+  }
+
+  @override
   void dispose() {
     super.dispose();
   }
@@ -584,7 +670,9 @@ class _FindTripDialogState extends State<FindTripDialog> {
         // 1. If it's a future trip (tomorrow), allow it (Planning).
         if (t.departureTime.day > now.day) return true;
         if (t.departureTime.year > now.year ||
-            t.departureTime.month > now.month) return true;
+            t.departureTime.month > now.month) {
+          return true;
+        }
 
         // 2. SAME DAY LOGIC
         final diffHours = now.difference(t.departureTime).inHours;
@@ -642,13 +730,16 @@ class _FindTripDialogState extends State<FindTripDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                        Provider.of<LanguageProvider>(context)
-                            .translate('find_trip_title'),
-                        style: const TextStyle(
-                            fontFamily: 'Outfit',
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Text(
+                          Provider.of<LanguageProvider>(context)
+                              .translate('find_trip_title'),
+                          style: const TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis),
+                    ),
                     IconButton(
                       icon: const Icon(Icons.close),
                       onPressed: () => Navigator.pop(context),
@@ -660,9 +751,7 @@ class _FindTripDialogState extends State<FindTripDialog> {
                     (_hasSearched && _results.isEmpty && _isLoading)) ...[
                   // --- INPUT FORM ---
                   Consumer<TripController>(builder: (context, tripCtrl, child) {
-                    final cities = tripCtrl.availableCities.isNotEmpty
-                        ? tripCtrl.availableCities
-                        : AppConstants.cities; // Fallback
+                    final cities = tripCtrl.availableCities;
 
                     return Column(
                       children: [
@@ -677,7 +766,7 @@ class _FindTripDialogState extends State<FindTripDialog> {
                               setState(() => _selectedFromCity = v),
                           decoration: InputDecoration(
                               labelText: Provider.of<LanguageProvider>(context)
-                                  .translate('from'),
+                                  .translate('origin'),
                               border: const OutlineInputBorder(),
                               prefixIcon:
                                   const Icon(Icons.location_on_outlined)),
@@ -693,7 +782,7 @@ class _FindTripDialogState extends State<FindTripDialog> {
                           onChanged: (v) => setState(() => _selectedToCity = v),
                           decoration: InputDecoration(
                               labelText: Provider.of<LanguageProvider>(context)
-                                  .translate('to'),
+                                  .translate('destination'),
                               border: const OutlineInputBorder(),
                               prefixIcon: const Icon(Icons.flag_outlined)),
                         ),
@@ -747,22 +836,26 @@ class _FindTripDialogState extends State<FindTripDialog> {
                           fontWeight: FontWeight.bold, color: Colors.grey)),
                   const SizedBox(height: 12),
                   if (_isLoading)
-                    const Center(
+                    Center(
                         child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircularProgressIndicator(color: AppTheme.primaryColor),
-                        SizedBox(height: 16),
-                        Text("Searching for trips...",
-                            style: TextStyle(
+                        const CircularProgressIndicator(
+                            color: AppTheme.primaryColor),
+                        const SizedBox(height: 16),
+                        Text(
+                            Provider.of<LanguageProvider>(context)
+                                .translate('searching_trips_loading'),
+                            style: const TextStyle(
                                 fontFamily: 'Inter', color: Colors.grey))
                       ],
                     ))
                   else if (_results.isEmpty)
-                    const Center(
+                    Center(
                         child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Text("No trips found."),
+                      padding: const EdgeInsets.all(20.0),
+                      child: Text(Provider.of<LanguageProvider>(context)
+                          .translate('no_trips_found_today')),
                     ))
                   else
                     SizedBox(
@@ -810,9 +903,13 @@ class _FindTripDialogState extends State<FindTripDialog> {
                               if (now.isAfter(accessLimit) ||
                                   trip.status == 'cancelled') {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
+                                    SnackBar(
                                         content: Text(
-                                            "Access Denied: Trip completed or expired."),
+                                            Provider.of<LanguageProvider>(
+                                                    context,
+                                                    listen: false)
+                                                .translate(
+                                                    'access_denied_expired')),
                                         backgroundColor: Colors.red));
                                 return;
                               }
@@ -836,7 +933,8 @@ class _FindTripDialogState extends State<FindTripDialog> {
                             _hasSearched = false;
                             _results = [];
                           }),
-                      child: const Text("Search Again"))
+                      child: Text(Provider.of<LanguageProvider>(context)
+                          .translate('search_again')))
                 ]
               ],
             )));

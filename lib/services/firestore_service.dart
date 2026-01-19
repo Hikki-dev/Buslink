@@ -320,6 +320,17 @@ class FirestoreService {
     final ticketRef = _db.collection(ticketCollection).doc();
     final tripRef = _db.collection(tripCollection).doc(trip.id);
 
+    // Fetch FCM Token - Critical for Conductor Notifications
+    String? fcmToken;
+    try {
+      final userDoc = await _db.collection(userCollection).doc(user.uid).get();
+      if (userDoc.exists && userDoc.data()!.containsKey('fcmToken')) {
+        fcmToken = userDoc.data()!['fcmToken'];
+      }
+    } catch (e) {
+      debugPrint("Error fetching FCM token during booking: $e");
+    }
+
     await _db.runTransaction((transaction) async {
       DocumentSnapshot freshTripSnap = await transaction.get(tripRef);
       if (!freshTripSnap.exists) {
@@ -353,6 +364,7 @@ class FirestoreService {
       tripData:
           extraTripDetails, // Contains denormalized details for Ticket history
       shortId: _generateShortId(),
+      fcmToken: fcmToken,
     );
 
     // Note: Ticket.toJson needs manual adjustment if we want to store strings for seats there too.
@@ -513,11 +525,33 @@ class FirestoreService {
         status: 'pending',
         shortId: _generateShortId());
 
-    await ticketRef.set(ticket.toJson());
-
     final tripRef = _db.collection(tripCollection).doc(trip.id);
-    await tripRef.update({
-      'bookedSeatNumbers': FieldValue.arrayUnion(seatIds),
+
+    // Use Transaction to block seats ATOMICALLY
+    await _db.runTransaction((transaction) async {
+      DocumentSnapshot snapshot = await transaction.get(tripRef);
+
+      if (!snapshot.exists) {
+        throw Exception("Trip does not exist!");
+      }
+
+      // Re-check availability within transaction
+      List<dynamic> currentBooked = snapshot.get('bookedSeatNumbers') ?? [];
+
+      for (String seatId in seatIds) {
+        if (currentBooked.contains(seatId)) {
+          throw Exception(
+              "Seat $seatId is already booked! Please select another.");
+        }
+      }
+
+      // Add to booked list
+      transaction.update(tripRef, {
+        'bookedSeatNumbers': FieldValue.arrayUnion(seatIds),
+      });
+
+      // Writes must come after reads
+      transaction.set(ticketRef, ticket.toJson());
     });
 
     return ticketRef.id;

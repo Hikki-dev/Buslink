@@ -308,7 +308,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                   final route = routeMap[schedule.routeId];
                   final routeName = route != null
                       ? "${route.originCity} ➝ ${route.destinationCity}"
-                      : "Unknown Route (${schedule.routeId})";
+                      : "Route ID: ${schedule.routeId}"; // Fallback for deleted routes
 
                   return Card(
                     elevation: 2,
@@ -342,8 +342,8 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                              "Operator: ${schedule.operatorName} • Bus: ${schedule.busNumber}"),
+                          // Removed Operator Name as requested
+                          Text("Bus: ${schedule.busNumber}"),
                           Text("Price: LKR ${schedule.basePrice}"),
                           Text(
                               "Days: ${_getDaysString(schedule.recurrenceDays)}"),

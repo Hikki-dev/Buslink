@@ -113,7 +113,9 @@ class FavoritesScreen extends StatelessWidget {
                             alignment: WrapAlignment.center,
                             children: favorites.map((fav) {
                               return SizedBox(
-                                width: isDesktop ? 350 : double.infinity,
+                                width: isDesktop
+                                    ? 450
+                                    : 600, // Increased width for better layout
                                 child: _FavoriteItemCard(
                                   from: fav['fromCity'] ?? 'Unknown',
                                   to: fav['toCity'] ?? 'Unknown',

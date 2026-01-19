@@ -244,14 +244,22 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  ...RefundReason.values.map((r) => RadioListTile<RefundReason>(
-                        title: Text(_formatReason(r)),
-                        value: r,
-                        groupValue: _selectedReason,
-                        onChanged: (val) =>
-                            setState(() => _selectedReason = val),
-                        contentPadding: EdgeInsets.zero,
-                      )),
+                  RadioGroup<RefundReason>(
+                    groupValue: _selectedReason,
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedReason = val);
+                    },
+                    child: Column(
+                      children: RefundReason.values
+                          .map((r) => RadioListTile<RefundReason>(
+                                title: Text(_formatReason(r)),
+                                value: r,
+                                contentPadding: EdgeInsets.zero,
+                                // groupValue and onChanged are managed by RadioGroup ancestor
+                              ))
+                          .toList(),
+                    ),
+                  ),
 
                   if (_selectedReason == RefundReason.other)
                     TextField(

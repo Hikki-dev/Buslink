@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/refund_model.dart';
+import 'notification_service.dart' as import_notification_service;
 
 class RefundService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -81,18 +82,26 @@ class RefundService {
         .doc(request.ticketId)
         .update({'status': 'refund_requested'});
 
-    // Create Notification for Admin? (Via Cloud Function usually, or here)
     // Create Notification for User
-    // Create Notification for User
-    await FirebaseFirestore.instance.collection('notifications').add({
-      'userId': request.userId,
-      'title': 'Refund Request Received',
-      'body':
-          'Your refund request for trip to ${request.tripId} has been received.',
-      'type': 'refundStatus',
-      'relatedId': request.id,
-      'timestamp': FieldValue.serverTimestamp(),
-      'isRead': false,
-    });
+    String userName = "Passenger";
+    if (request.passengerName.isNotEmpty) {
+      userName = request.passengerName.split(' ').first;
+    }
+
+    await import_notification_service.NotificationService.sendNotificationToUser(
+        userId: request.userId,
+        title: 'Refund Request Received',
+        body:
+            'Hello $userName, we received your refund request for trip to ${request.tripId}. We will review it shortly.',
+        type: 'refundStatus',
+        relatedId: request.id);
+
+    // Immediate Local Notification (Reliability Fallback)
+    await import_notification_service.NotificationService.showLocalNotification(
+        id: request.id.hashCode,
+        title: 'Refund Request Received',
+        body:
+            'Hello $userName, we received your refund request for trip to ${request.tripId}.',
+        payload: request.id);
   }
 }

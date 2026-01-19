@@ -1,4 +1,4 @@
-import 'package:flutter/services.dart'; // For rootBundle
+// For rootBundle
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -402,32 +402,48 @@ class NotificationService {
           .get();
 
       if (ticketsSnapshot.docs.isEmpty) return;
-
       final batch = FirebaseFirestore.instance.batch();
+      bool hasFirestoreUpdates = false;
 
       // 2. Loop passengers
       for (var doc in ticketsSnapshot.docs) {
         final data = doc.data();
         final userId = data['userId'];
+        final String? fcmToken = data['fcmToken']; // Get embedded token
+
+        // Personalization Logic
+        String userName = "Passenger";
+        if (data['passengerName'] != null &&
+            data['passengerName'].toString().isNotEmpty) {
+          userName = data['passengerName'].toString();
+          if (userName.contains(' ')) {
+            userName = userName.split(' ').first;
+          }
+        }
 
         if (userId != null) {
           // Construct Message
           String title = 'Trip Update';
-          String message = "Your trip ($routeName) is now $newStatus.";
+          String message =
+              "$userName, your trip ($routeName) is now $newStatus.";
           String type = 'tripStatus';
 
           if (newStatus == 'DELAYED') {
             title = "Trip Delayed";
             message =
-                "Your trip ($routeName) is delayed by $delayMinutes mins.";
+                "Hey $userName, sorry! Your trip ($routeName) is delayed by $delayMinutes mins.";
             type = 'delay';
           } else if (newStatus == 'CANCELLED') {
             title = "Trip Cancelled";
-            message = "Urgent: Your trip ($routeName) has been cancelled.";
-            type = 'tripStatus'; // Treated as update
+            message =
+                "Urgent: $userName, your trip ($routeName) has been cancelled.";
+            type = 'tripStatus';
+          } else if (newStatus == 'arrived') {
+            message = "Heads up $userName! Your bus ($routeName) has arrived.";
           }
 
           // A. Create In-App Notification (Batch)
+          // Note: If this fails due to permissions, we catch it later.
           final docRef =
               FirebaseFirestore.instance.collection('notifications').doc();
           batch.set(docRef, {
@@ -439,22 +455,29 @@ class NotificationService {
             'timestamp': FieldValue.serverTimestamp(),
             'isRead': false,
           });
+          hasFirestoreUpdates = true;
 
-          // B. Trigger Individual Send (Handles Pref Check internally)
-          // Note: We can't batch 'sends' easily with individual pref checks in a loop efficiently without Logic.
-          // Better: Fire and Forget the send so we don't block the batch commit?
-          // Or just call the single method (which writes to Firestore again - DUPLICATE!)
-          // Correct approach:
-          // We already batched the "In-App" write above.
-          // Now we just need the "Push" part.
-          // Extract Push Logic to a helper function that checks prefs?
-
-          // FAST FIX: Just call _checkAndSendPush independent of Firestore batch.
-          _checkAndSendPush(userId, title, message, type);
+          // B. Trigger Push (Robust)
+          // 1. If we have token in Ticket, use it directly (Bypasses User Read Permission)
+          if (fcmToken != null && fcmToken.isNotEmpty) {
+            // Direct send, assume prefs allowed (Reliability over Granularity for critical updates)
+            sendPushToToken(fcmToken, title, message);
+          } else {
+            // Fallback: Try to read user doc (Likely to fail for Conductor, but worth a shot)
+            _checkAndSendPush(userId, title, message, type);
+          }
         }
       }
 
-      await batch.commit();
+      if (hasFirestoreUpdates) {
+        try {
+          await batch.commit();
+        } catch (e) {
+          debugPrint(
+              "Warning: Failed to save in-app notifications (Permission/Network): $e");
+          // We continue, as Pushes were fired independently in the loop.
+        }
+      }
     } catch (e) {
       debugPrint("Error in notifyTripStatusChange: $e");
     }

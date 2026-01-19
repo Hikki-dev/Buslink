@@ -513,7 +513,6 @@ class TripController extends ChangeNotifier {
   // Helper for admin screen dropdowns
   List<RouteModel> availableRoutes = [];
   Future<void> fetchAvailableRoutes() async {
-    // TODO: Implement generic route fetch if needed for AdminScreen
     // For now, no-op or simple fetch stub
   }
 
@@ -546,12 +545,18 @@ class TripController extends ChangeNotifier {
     return price * selectedSeats.length * multiplier;
   }
 
+  // Bulk Passenger Sync State
+  int bulkPassengers = 1;
+  void setBulkPassengers(int val) {
+    bulkPassengers = val;
+    notifyListeners();
+  }
+
   // Method to handle user-only arg from BulkConfirmation (if needed)
   Future<String> createPendingBookingFromState(User user) async {
     if (selectedTrip == null) throw Exception("No trip selected");
 
     if (isBulkBooking && bulkDates.isNotEmpty) {
-      List<String> bookingIds = [];
       final schedule = selectedTrip!.schedule;
       final route = selectedTrip!.route;
 
@@ -562,7 +567,8 @@ class TripController extends ChangeNotifier {
         'scheduleId': schedule.id,
       };
 
-      for (var date in bulkDates) {
+      // Parallel Processing for Performance
+      final results = await Future.wait(bulkDates.map((date) async {
         try {
           // 1. Ensure Trip Exists
           final tripInstance =
@@ -570,18 +576,20 @@ class TripController extends ChangeNotifier {
 
           if (tripInstance != null) {
             // 2. Auto-Assign Seats (Real allocation)
-            // Fetch fresh trip to be safe about concurrency/latest state
-            // (ensureTrip might return local object, but for booking we want latest availability if accessed concurrently)
-            // But ensureTrip returns what it just created or fetched.
-
             // Find available seats
             List<String> assignableSeats = [];
-            int needed = selectedSeats
-                .length; // From Quantity logic (e.g. 2 items of "-1")
+            int needed = selectedSeats.isNotEmpty
+                ? selectedSeats.length
+                // Fallback to bulkPassengers if selectedSeats is empty (e.g. from flow specific)
+                // But usually selectedSeats is filled by "Auto-Assigned" logic in UI controller?
+                // Actually selectedSeats might be "-1" placeholder or empty.
+                // Let's rely on Quantity Dialog setting selectedSeats or just use numeric count.
+                : bulkPassengers;
 
-            // If selectedSeats contains explicit IDs (e.g. "3", "4"), use them.
-            // If it contains "-1", we must find seats.
-            bool needsAutoAssign = selectedSeats.contains("-1");
+            // Strict Logic: If selectedSeats has concrete IDs, use them (unlikely for bulk recurring)
+            // If selectedSeats has "-1" or is empty implying "Auto Selection", find seats.
+            bool needsAutoAssign =
+                selectedSeats.isEmpty || selectedSeats.contains("-1");
 
             if (needsAutoAssign) {
               final booked = tripInstance.bookedSeatNumbers.toSet();
@@ -597,7 +605,7 @@ class TripController extends ChangeNotifier {
                     "Not enough seats available on ${DateFormat('yyyy-MM-dd').format(date)}");
               }
             } else {
-              // Validate specific seats
+              // Validate specific seats (Only works if same seat map for all buses)
               for (var s in selectedSeats) {
                 if (tripInstance.bookedSeatNumbers.contains(s)) {
                   throw Exception(
@@ -610,25 +618,22 @@ class TripController extends ChangeNotifier {
             final id = await _firestoreService.createPendingBooking(
                 tripInstance, assignableSeats, user,
                 extraDetails: extraDetails);
-            bookingIds.add(id);
+            return id;
           } else {
-            // Trip could not be created (e.g. wrong day of week?)
-            // Should we skip or fail? Fail is safer.
             throw Exception(
                 "No schedule available for ${DateFormat('yyyy-MM-dd').format(date)}");
           }
         } catch (e) {
           debugPrint("Bulk Booking Error date $date: $e");
-          // Enhance error message for user
           throw Exception(
               "Error on ${DateFormat('MMM d').format(date)}: ${e.toString().replaceAll('Exception:', '').trim()}");
         }
-      }
+      }));
 
-      if (bookingIds.isEmpty) {
+      if (results.isEmpty) {
         throw Exception("No valid trips found for selected dates.");
       }
-      return bookingIds.join(',');
+      return results.join(',');
     } else {
       return createPendingBooking(selectedTrip!, selectedSeats);
     }
@@ -704,15 +709,31 @@ class TripController extends ChangeNotifier {
               "${first.tripData['originCity']} to ${first.tripData['destinationCity']}";
           final seats = bundle.expand((t) => t.seatNumbers).join(', ');
 
+          // Personalization
+          String userName = "Passenger";
+          if (first.passengerName.isNotEmpty) {
+            userName = first.passengerName.split(' ').first;
+          }
+
           // Fire and forget notification (Single Summary + Push)
           import_notification_service.NotificationService
               .sendNotificationToUser(
             userId: userId,
             title: "Booking Confirmed",
             body:
-                "Your trip ($tripTitle) is confirmed. Seats: $seats. Total: ${bundle.length} ticket(s).",
+                "Great news $userName! Your trip ($tripTitle) is confirmed. Seats: $seats. Total: ${bundle.length} ticket(s).",
             type: "booking",
             relatedId: first.ticketId, // Link to first ticket or bundle?
+          );
+
+          // Immediate Local Notification (Reliability Fallback)
+          await import_notification_service.NotificationService
+              .showLocalNotification(
+            id: first.ticketId.hashCode,
+            title: "Booking Confirmed",
+            body:
+                "Great news $userName! Your trip ($tripTitle) is confirmed. Seats: $seats. Total: ${bundle.length} ticket(s).",
+            payload: first.ticketId,
           );
         }
         return true;
@@ -731,14 +752,31 @@ class TripController extends ChangeNotifier {
       if (ticket.userId.isNotEmpty) {
         final tripTitle =
             "${ticket.tripData['originCity']} to ${ticket.tripData['destinationCity']}";
+
+        // Personalization
+        String userName = "Passenger";
+        if (ticket.passengerName.isNotEmpty) {
+          userName = ticket.passengerName.split(' ').first;
+        }
+
         await import_notification_service.NotificationService
             .sendNotificationToUser(
           userId: ticket.userId,
           title: "Booking Confirmed",
           body:
-              "Your trip ($tripTitle) is confirmed. Seat(s): ${ticket.seatNumbers.join(', ')}",
+              "Confirmed! $userName, your trip ($tripTitle) is all set. Seat(s): ${ticket.seatNumbers.join(', ')}",
           type: "booking",
           relatedId: ticket.ticketId,
+        );
+
+        // Immediate Local Notification (Reliability Fallback for User's own device)
+        await import_notification_service.NotificationService
+            .showLocalNotification(
+          id: ticket.ticketId.hashCode,
+          title: "Booking Confirmed",
+          body:
+              "Confirmed! $userName, your trip ($tripTitle) is all set. Seat(s): ${ticket.seatNumbers.join(', ')}",
+          payload: ticket.ticketId,
         );
 
         // --- SCHEDULE LOCAL REMINDER ---

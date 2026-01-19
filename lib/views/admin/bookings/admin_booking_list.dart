@@ -259,16 +259,27 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
 
                           // Search (Email Only per user request)
                           if (_searchController.text.isNotEmpty) {
-                            final q = _searchController.text.toLowerCase();
-                            final email = (data['passengerEmail'] ?? '')
-                                .toString()
-                                .toLowerCase();
-
-                            // fallback for user email in root
+                            final q =
+                                _searchController.text.toLowerCase().trim();
+                            // Checks passengerEmail (ticket) or user email (account)
+                            final passengerEmail =
+                                (data['passengerEmail'] ?? '')
+                                    .toString()
+                                    .toLowerCase();
                             final userEmail =
-                                (data['email'] ?? '').toString().toLowerCase();
+                                (data['email'] ?? '') // Sometimes duplicate
+                                    .toString()
+                                    .toLowerCase();
+                            final userDataEmail = (data['userData'] != null &&
+                                    data['userData']['email'] != null)
+                                ? data['userData']['email']
+                                    .toString()
+                                    .toLowerCase()
+                                : '';
 
-                            if (!email.contains(q) && !userEmail.contains(q)) {
+                            if (!passengerEmail.contains(q) &&
+                                !userEmail.contains(q) &&
+                                !userDataEmail.contains(q)) {
                               return const SizedBox.shrink();
                             }
                           }

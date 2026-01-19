@@ -388,6 +388,21 @@ class Translations {
       'please_enter_ticket_id': 'Please enter a Ticket ID',
       'invalid_ticket_id': 'Invalid Ticket ID',
       'access_denied_completed': 'Access Denied: Trip completed.',
+      // New Keys EN
+      'conductor_dashboard_title': 'Conductor Dashboard',
+      'light_mode': 'Light Mode',
+      'dark_mode_tooltip': 'Dark Mode',
+      'change_language': 'Change Language',
+      'access_denied_12h': 'Access Denied: Trip Schedule Expired (>12h).',
+      'ticket_details_title': 'Ticket Details',
+      'searching_trips_loading': 'Searching for trips...',
+      'no_trips_found_today': 'No trips found for today.',
+      'download_pdf': 'Download PDF',
+      'download_consolidated_pdf': 'Download Consolidated PDF',
+      'saved_to_downloads': 'Saved to Downloads',
+      'permission_denied':
+          'Storage permission denied. Please enable permission to download.',
+      'error_saving_pdf': 'Error saving PDF',
     },
     'si': {
       'welcome': 'ආයුබෝවන්!',
@@ -740,6 +755,21 @@ class Translations {
       'manage_routes_desc':
           'ටිකට්පත් විකිණීමට හෝ තත්ත්වය යාවත්කාලීන කිරීමට ගමන සොයන්න.',
       'access_denied_completed': 'ප්‍රවේශය තහනම්: ගමන අවසන් කර ඇත.',
+      // New Keys SI
+      'conductor_dashboard_title': 'කොන්දොස්තර පුවරුව',
+      'light_mode': 'ආලෝක ප්‍රකාරය',
+      'dark_mode_tooltip': 'අඳුරු ප්‍රකාරය',
+      'change_language': 'භාෂාව වෙනස් කරන්න',
+      'access_denied_12h':
+          'ප්‍රවේශය ප්‍රතික්ෂේප විය: ගමන් කාලසටහන කල් ඉකුත් වී ඇත (>පැය 12).',
+      'ticket_details_title': 'ප්‍රවේශ පත්‍ර විස්තර',
+      'searching_trips_loading': 'ගමන් සොයමින්...',
+      'no_trips_found_today': 'අද දින සඳහා ගමන් හමු නොවීය.',
+      'download_pdf': 'PDF බාගන්න',
+      'download_consolidated_pdf': 'ඒකාබද්ධ PDF බාගන්න',
+      'saved_to_downloads': 'බාගැනීම් වෙත සුරකින ලදි',
+      'permission_denied': 'ගොනු අවසරය ප්‍රතික්ෂේප විය.',
+      'error_saving_pdf': 'PDF සුරැකීමේ දෝෂයක්',
     },
     'ta': {
       'welcome': 'வரவேற்கிறோம்!',
@@ -1085,6 +1115,21 @@ class Translations {
       'manage_routes_desc':
           'டிக்கெட்டுகளை விற்க அல்லது நிலையைப் புதுப்பிக்க உங்கள் பயணத்தைக் கண்டறியவும்.',
       'access_denied_completed': 'அணுகல் மறுக்கப்பட்டது: பயணம் நிறைவடைந்தது.',
+      // New Keys TA
+      'conductor_dashboard_title': 'நடத்துனர் முகப்பு',
+      'light_mode': 'வெளிச்ச முறை',
+      'dark_mode_tooltip': 'இருண்ட முறை',
+      'change_language': 'மொழியை மாற்றவும்',
+      'access_denied_12h':
+          'அணுகல் மறுக்கப்பட்டது: பயண அட்டவணை காலாவதியானது (>12 மணி).',
+      'ticket_details_title': 'டிக்கெட் விவரங்கள்',
+      'searching_trips_loading': 'பயணங்களைத் தேடுகிறது...',
+      'no_trips_found_today': 'இன்றுக்கான பயணங்கள் எதுவும் இல்லை.',
+      'download_pdf': 'PDF பதிவிறக்கவும்',
+      'download_consolidated_pdf': 'ஒருங்கிணைந்த PDF ஐப் பதிவிறக்கவும்',
+      'saved_to_downloads': 'பதிவிறக்கங்களில் சேமிக்கப்பட்டது',
+      'permission_denied': 'சேமிப்பு அனுமதி மறுக்கப்பட்டது.',
+      'error_saving_pdf': 'PDF ஐ சேமிப்பதில் பிழை',
     },
   };
 

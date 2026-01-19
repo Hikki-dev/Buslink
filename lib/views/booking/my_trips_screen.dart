@@ -16,7 +16,7 @@ import '../layout/custom_app_bar.dart';
 import '../analytics/travel_stats_screen.dart';
 import 'refund_request_screen.dart';
 import '../../utils/language_provider.dart';
-import 'my_trips_stats_widget.dart';
+// import 'my_trips_stats_widget.dart';
 
 class MyTripsScreen extends StatelessWidget {
   final bool showBackButton;
@@ -199,7 +199,8 @@ class _TripsList extends StatelessWidget {
 
     // Helper to parse date consistently
     DateTime getTripDate(Map<String, dynamic> data, DateTime bookingTime) {
-      dynamic dep = data['departureTime'];
+      dynamic dep = data['departureDateTime'] ??
+          data['departureTime']; // Check departureDateTime first!
       if (dep is Timestamp) return dep.toDate();
       if (dep is DateTime) return dep;
       if (dep is String) {
@@ -307,31 +308,10 @@ class _TripsList extends StatelessWidget {
             child: ListView.separated(
               padding: const EdgeInsets.only(
                   bottom: 100, left: 16, right: 16, top: 16),
-              itemCount: displayItems.length +
-                  (isHistory ? 1 : 0), // +1 for Stats in History
+              itemCount: displayItems.length,
               separatorBuilder: (_, __) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
-                // Should show Stats first if History
-                if (isHistory) {
-                  if (index == 0) {
-                    // We need to re-implement _buildDashboardStats logic here or call a static/mixin method.
-                    // Since _buildDashboardStats is on parent State, we can't easily call it.
-                    // I will copy the stats logic briefly or better, make it a static helper or separate widget.
-                    // For now, I'll inline the logic for clarity and speed as refactoring entire class is risky.
-                    return TripsStatsWidget(allTickets: allTickets);
-                  }
-                  final item = displayItems[index - 1]; // Offset index
-                  if (item is List<Ticket>) {
-                    return _BulkBoardingPassCard(tickets: item);
-                  } else {
-                    return _BoardingPassCard(
-                      ticket: item as Ticket,
-                      shouldListen: !isHistory,
-                    );
-                  }
-                }
-
-                // Not History (Upcoming)
+                // Not History (Upcoming) OR History (Unified logic as Stats Removed)
                 final item = displayItems[index];
                 if (item is List<Ticket>) {
                   return _BulkBoardingPassCard(tickets: item);
@@ -420,7 +400,9 @@ class _BoardingPassCard extends StatelessWidget {
     final seatsCount = ticket.seatNumbers.length;
 
     DateTime depTime = ticket.bookingTime;
-    if (tripData['departureTime'] is Timestamp) {
+    if (tripData['departureDateTime'] is Timestamp) {
+      depTime = (tripData['departureDateTime'] as Timestamp).toDate();
+    } else if (tripData['departureTime'] is Timestamp) {
       depTime = (tripData['departureTime'] as Timestamp).toDate();
     }
 

@@ -140,15 +140,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // 3. Update State
       finalDestinations.shuffle();
-      if (!context.mounted) return;
+      if (!mounted) return;
       final isDesktop = MediaQuery.of(context).size.width > 900;
 
-      if (mounted) {
-        setState(() {
-          _currentDestinations =
-              finalDestinations.take(isDesktop ? 6 : 4).toList();
-        });
-      }
+      setState(() {
+        _currentDestinations =
+            finalDestinations.take(isDesktop ? 6 : 4).toList();
+      });
     } catch (e) {
       debugPrint("Error loading destinations: $e");
     }
@@ -224,7 +222,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // Update Helper Text/Logic (Optional, UI reads _bulkDates)
 
-        // Update Controller Seats (Removed legacy call)
+        // Update Helper Text/Logic (Optional, UI reads _bulkDates)
+
+        // Update Controller Seats (Synced)
+        if (result['seats'] != null) {
+          final int pCount = result['seats'] as int;
+          Provider.of<TripController>(context, listen: false)
+              .setBulkPassengers(pCount);
+          // Also set isBulkBooking true if not already
+          if (!_isBulkBooking) setState(() => _isBulkBooking = true);
+        }
       }
     } else {
       // Standard Single Select
@@ -499,55 +506,180 @@ class _HomeScreenState extends State<HomeScreen> {
       BuildContext context, User user, bool isDesktop) {
     return Column(
       children: [
-        const SizedBox(height: 48),
+        // Favorites Section
+        StreamBuilder<List<Map<String, dynamic>>>(
+            stream: Provider.of<FirestoreService>(context, listen: false)
+                .getUserFavoriteRoutes(user.uid),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return _buildFavoritesSection(context, snapshot.data!, isDesktop);
+            }),
+
+        const SizedBox(height: 24),
+
+        // Ongoing/History Trips
         StreamBuilder<List<Ticket>>(
           stream: Provider.of<FirestoreService>(context, listen: false)
               .getUserTickets(user.uid),
           builder: (context, ticketSnap) {
-            // Logic to filter tickets will be inside the inner StreamBuilder
-            // because we need the Trip object to know arrival time/status
-
             if (!ticketSnap.hasData || ticketSnap.data!.isEmpty) {
-              return _buildFavoritesOnly(context, user.uid);
+              return const SizedBox.shrink();
             }
 
             final tickets = ticketSnap.data!;
-
-            // We need to fetch Trip details for EACH ticket to filter them.
-            // This is a bit complex with Streams.
-            // For simplicity/performance, let's just show the loading state or
-            // proceed to the carousel which will handle filtering internally?
-            // BETTER APPROACH: The Carousel should filter.
-            // But if we pass all tickets, the carousel count might be wrong.
-            // Let's do a solution where we check the trip status inside the carousel item builder,
-            // OR ideally we should query differently.
-            // Given the current structure, let's filter in the Carousel widget by
-            // wrapping the list in a widget that fetches/filters or just checks logic.
-
-            // However, to decide whether to show "No Trips" state, we need to know.
-            // Let's pass ALL candidates to the carousel, and let the carousel
-            // hide the ones that are completed.
-
-            return StreamBuilder<List<Map<String, dynamic>>>(
-              stream: Provider.of<FirestoreService>(context, listen: false)
-                  .getUserFavoriteRoutes(user.uid),
-              builder: (context, favSnap) {
-                // Favorites removed as per request
-                return _TripsCarouselWidget(
-                    tickets: tickets,
-                    favoritesWidget: const SizedBox.shrink(),
-                    isDesktop: isDesktop);
-              },
-            );
+            // Filter logic if needed, but Carousel handles it roughly.
+            return _TripsCarouselWidget(
+                tickets: tickets,
+                favoritesWidget: const SizedBox.shrink(),
+                isDesktop: isDesktop);
           },
         ),
       ],
     );
   }
 
-  Widget _buildFavoritesOnly(BuildContext context, String uid) {
-    // Favorites removed as per request
-    return const SizedBox.shrink();
+  Widget _buildFavoritesSection(BuildContext context,
+      List<Map<String, dynamic>> favorites, bool isDesktop) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+            padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 0 : 24, vertical: 16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Text("Your Bookmarked Routes",
+                  style: TextStyle(
+                      fontFamily: 'Outfit',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface)),
+            )),
+        SizedBox(
+          height: 180, // Height for the card
+          child: ListView.separated(
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : 24),
+            scrollDirection: Axis.horizontal,
+            itemCount: favorites.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final fav = favorites[index];
+              return _HomeFavoriteCard(
+                from: fav['fromCity'] ?? '',
+                to: fav['toCity'] ?? '',
+                operator: fav['operatorName'] ?? 'Standard',
+                onTap: () {
+                  // Populate Search
+                  setState(() {
+                    _originController.text = fav['fromCity'] ?? '';
+                    _destinationController.text = fav['toCity'] ?? '';
+                  });
+                  // Scroll to top to show search fields
+                  _scrollController.animateTo(0,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeOut);
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HomeFavoriteCard extends StatelessWidget {
+  final String from;
+  final String to;
+  final String operator;
+  final VoidCallback onTap;
+
+  const _HomeFavoriteCard({
+    required this.from,
+    required this.to,
+    required this.operator,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 280,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E2225) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border:
+              Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.favorite,
+                      size: 16, color: AppTheme.primaryColor),
+                ),
+                const Spacer(),
+                const Icon(Icons.arrow_outward_rounded,
+                    size: 16, color: Colors.grey),
+              ],
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                Text(from,
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Theme.of(context).colorScheme.onSurface)),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child:
+                      Icon(Icons.arrow_forward, size: 14, color: Colors.grey),
+                ),
+                Text(to,
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Theme.of(context).colorScheme.onSurface)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text("Tap to quick book",
+                style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.5))),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -842,7 +974,10 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
             var ongoingTrips = snapshot.data!.where((t) {
               // FILTER LOGIC
               // 1. Explicit Status Check
-              if (t.status == 'completed' || t.status == 'cancelled') {
+              // User request: Hide 'arrived' trips (Completed)
+              if (t.status == 'completed' ||
+                  t.status == 'cancelled' ||
+                  t.status.toLowerCase() == 'arrived') {
                 return false;
               }
 
@@ -856,8 +991,7 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
               bool isActive = s == 'boarding' ||
                   s == 'departed' ||
                   s == 'onway' ||
-                  s == 'on way' ||
-                  s == 'arrived';
+                  s == 'on way'; // Removed 'arrived' from active check
 
               if (!isActive && DateTime.now().isAfter(t.arrivalTime)) {
                 return false;
@@ -895,8 +1029,8 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
                   LiveJourneyCard(
                     trip: liveTrip,
                     onTap: () {
-                      final ticket = widget.tickets
-                          .firstWhere((t) => t.tripId == liveTrip!.id);
+                      // final ticket = widget.tickets
+                      //    .firstWhere((t) => t.tripId == liveTrip!.id);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -911,7 +1045,7 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
                   alignment: Alignment.center,
                   children: [
                     SizedBox(
-                      height: 370,
+                      height: 390,
                       child: PageView.builder(
                         controller: _pageController,
                         itemCount: ongoingTrips.length,
@@ -1065,7 +1199,7 @@ class LiveJourneyCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.blue.withOpacity(0.3),
+              color: Colors.blue.withValues(alpha: 0.3),
               blurRadius: 15,
               offset: const Offset(0, 8),
             )
@@ -1081,7 +1215,7 @@ class LiveJourneyCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -1103,7 +1237,7 @@ class LiveJourneyCard extends StatelessWidget {
                 Text(
                   trip.busNumber,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1123,7 +1257,7 @@ class LiveJourneyCard extends StatelessWidget {
             Text(
               "${trip.originCity} ➔ ${trip.destinationCity}",
               style: TextStyle(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 fontSize: 16,
               ),
             ),

@@ -300,11 +300,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border:
-            isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+        border: isDark
+            ? Border.all(color: Colors.white.withValues(alpha: 0.1))
+            : null,
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 30,
               offset: const Offset(0, 10))
         ],

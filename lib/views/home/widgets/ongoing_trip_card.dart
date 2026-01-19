@@ -301,22 +301,24 @@ class OngoingTripCard extends StatelessWidget {
   }
 
   Widget _buildTrackingBar(String status, bool isDark, LanguageProvider lp) {
-    // Logic: Only the CURRENT active status should be colored.
-    // Past statuses should be greyed out (inactive).
-    // Future statuses should be greyed out.
-
+    // Logic: Cumulative progress
     final s = status.toLowerCase();
 
-    bool isDeparted = s == 'departed';
-    bool isOnWay = s == 'onway' || s == 'on way';
-    bool isArrived = s == 'arrived' || s == 'completed';
+    bool isArrivedState = s == 'arrived' || s == 'completed';
+    bool isOnWayState = s == 'onway' || s == 'on way' || s == 'on_way';
+    bool isDepartedState = s == 'departed';
+
+    // Cumulative Flags
+    bool isArrived = isArrivedState;
+    bool isOnWay = isOnWayState || isArrivedState;
+    bool isDeparted = isDepartedState || isOnWayState || isArrivedState;
 
     return Row(
       children: [
         Expanded(
           child: _buildTrackStep(
             lp.translate('departed'),
-            isDeparted, // Only active if EXACTLY departed
+            isDeparted,
             Colors.green,
             Icons.directions_bus,
             isDark,
@@ -326,7 +328,7 @@ class OngoingTripCard extends StatelessWidget {
         Expanded(
           child: _buildTrackStep(
             lp.translate('on_way'),
-            isOnWay, // Only active if EXACTLY on way
+            isOnWay,
             Colors.blue,
             Icons.map,
             isDark,
@@ -336,7 +338,7 @@ class OngoingTripCard extends StatelessWidget {
         Expanded(
           child: _buildTrackStep(
             lp.translate('arrived'),
-            isArrived, // Only active if arrived/completed
+            isArrived,
             Colors.orange,
             Icons.check_circle,
             isDark,

@@ -92,14 +92,17 @@ class _ConductorTripManagementScreenState
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Update Status",
+            Text(
+                Provider.of<LanguageProvider>(context)
+                    .translate('update_status_title'),
                 style: TextStyle(
                     fontFamily: 'Outfit',
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black)),
             if (_isTracking)
-              const Text("• Live Tracking Active",
-                  style: TextStyle(fontSize: 12, color: Colors.green))
+              Text(
+                  "• ${Provider.of<LanguageProvider>(context).translate('live_tracking_active')}",
+                  style: const TextStyle(fontSize: 12, color: Colors.green))
           ],
         ),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor ??
@@ -163,7 +166,7 @@ class _ConductorTripManagementScreenState
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                              "Trip T${currentTrip.id.substring(0, 4).toUpperCase()}",
+                              "${Provider.of<LanguageProvider>(context).translate('trip_label')} T${currentTrip.id.substring(0, 4).toUpperCase()}",
                               style: TextStyle(
                                   fontFamily: 'Inter',
                                   color: isDark
@@ -305,7 +308,7 @@ class _ConductorTripManagementScreenState
                 const SizedBox(height: 40),
                 Center(
                   child: Text(
-                    "${Provider.of<LanguageProvider>(context).translate('current_status_label')}: ${currentTrip.status.toUpperCase()}", // Translated "Current Status"
+                    "${Provider.of<LanguageProvider>(context).translate('current_status_label')}: ${_getTranslatedStatus(context, currentTrip.status)}",
                     style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
@@ -324,8 +327,9 @@ class _ConductorTripManagementScreenState
   Color _getStatusColor(String status) {
     final s = status.toLowerCase(); // Normalize
     if (s == 'delayed') return Colors.red;
-    if (s == 'arrived' || s == 'departed' || s == 'completed')
+    if (s == 'arrived' || s == 'departed' || s == 'completed') {
       return Colors.green;
+    }
     if (s == 'onway' || s == 'on way') return Colors.blue;
     return Colors.grey;
   }
@@ -446,5 +450,23 @@ class _ConductorTripManagementScreenState
         ),
       ),
     );
+  }
+
+  String _getTranslatedStatus(BuildContext context, String status) {
+    final s = status.toLowerCase();
+    final lang = Provider.of<LanguageProvider>(context);
+    if (s == 'departed') return lang.translate('departed');
+    if (s == 'onway' ||
+        s == 'on_way' ||
+        s == 'inprogress' ||
+        s == 'in_progress') {
+      return lang.translate('on_way');
+    }
+    if (s == 'arrived') return lang.translate('arrived');
+    if (s == 'delayed') return lang.translate('delayed');
+    if (s == 'scheduled') return lang.translate('scheduled');
+    if (s == 'cancelled') return lang.translate('cancelled');
+    if (s == 'completed') return lang.translate('stat_completed');
+    return status.toUpperCase();
   }
 }

@@ -171,22 +171,18 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
         // Let's check RefundModel in a moment.
         // Assuming it has data map.
         if (_searchController.text.isNotEmpty) {
-          final query = _searchController.text.toLowerCase();
+          final query = _searchController.text.toLowerCase().trim();
           docs = docs.where((d) {
             final data = d.data() as Map<String, dynamic>;
-            // Often refunds don't store email directly, they might store it in 'userData' or just use 'userId'.
-            // If email is missing, we can't filter by it.
-            // User specifically asked for EMAIL search.
-            // Email search ONLY
+
+            // Search Priority: Email fields only
+            final passengerEmail =
+                (data['passengerEmail'] ?? '').toString().toLowerCase();
             final email = (data['email'] ?? '').toString().toLowerCase();
-            // Fallback to checking nested userData for email if main Doc doesn't have it
             final userEmail =
                 (data['userData'] != null && data['userData']['email'] != null)
                     ? data['userData']['email'].toString().toLowerCase()
                     : '';
-
-            final passengerEmail =
-                (data['passengerEmail'] ?? '').toString().toLowerCase();
 
             return email.contains(query) ||
                 userEmail.contains(query) ||

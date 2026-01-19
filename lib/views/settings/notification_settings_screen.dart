@@ -78,8 +78,10 @@ class _NotificationSettingsScreenState
       });
     } catch (e) {
       debugPrint("Error saving pref: $e");
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Failed to save setting: $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to save setting: $e")));
+      }
     }
   }
 

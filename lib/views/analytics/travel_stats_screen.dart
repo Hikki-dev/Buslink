@@ -140,7 +140,9 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
       final delay = (data['delayMinutes'] ?? 0) as int;
 
       DateTime? date;
-      if (data['departureTime'] is Timestamp) {
+      if (data['departureDateTime'] is Timestamp) {
+        date = (data['departureDateTime'] as Timestamp).toDate();
+      } else if (data['departureTime'] is Timestamp) {
         date = (data['departureTime'] as Timestamp).toDate();
       } else if (data['bookingTime'] is Timestamp) {
         date = (data['bookingTime'] as Timestamp).toDate();
@@ -173,7 +175,10 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
       totalSpent += (amt is num) ? amt.toDouble() : 0.0;
 
       // City
-      final dest = data['toCity'] ?? data['destination'] ?? 'Unknown';
+      final dest = data['destinationCity'] ??
+          data['toCity'] ??
+          data['destination'] ??
+          'Unknown';
       citiesVisited[dest] = (citiesVisited[dest] ?? 0) + 1;
 
       // Date (Already parsed above)

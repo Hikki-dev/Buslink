@@ -64,9 +64,11 @@ class BookingDetailsScreen extends StatelessWidget {
     Color statusColor = Colors.grey;
     if (status == 'CONFIRMED') {
       statusColor = Colors.green;
-    } else if (status == 'REFUNDED')
+    } else if (status == 'REFUNDED') {
       statusColor = Colors.red;
-    else if (status == 'CANCELLED') statusColor = Colors.orange;
+    } else if (status == 'CANCELLED') {
+      statusColor = Colors.orange;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -118,7 +120,7 @@ class BookingDetailsScreen extends StatelessWidget {
               title: "Trip Information",
               icon: Icons.directions_bus,
               children: [
-                _buildCopyRow(context, "Booking ID", bookingId),
+                // _buildCopyRow(context, "Booking ID", bookingId), // Removed as per "remove every ref id" request
                 const Divider(),
                 _buildInfoRow(context, "Route", route),
                 _buildInfoRow(context, "Date", dateStr),
@@ -207,7 +209,7 @@ class BookingDetailsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4))
         ],

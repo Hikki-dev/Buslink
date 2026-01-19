@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_theme.dart';
 import '../../models/trip_model.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/trip_controller.dart';
 
 class BulkQuantityDialog extends StatefulWidget {
   final Trip trip;
@@ -19,8 +21,15 @@ class BulkQuantityDialog extends StatefulWidget {
 }
 
 class _BulkQuantityDialogState extends State<BulkQuantityDialog> {
-  int _qty = 1;
+  late int _qty;
   static const int maxSeats = 50; // Safety limit
+
+  @override
+  void initState() {
+    super.initState();
+    final ctrl = Provider.of<TripController>(context, listen: false);
+    _qty = ctrl.bulkPassengers > 0 ? ctrl.bulkPassengers : 1;
+  }
 
   @override
   Widget build(BuildContext context) {

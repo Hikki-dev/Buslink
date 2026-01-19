@@ -179,8 +179,7 @@ class Ticket {
   final String ticketId;
   final String tripId;
   final String userId;
-  final List<int>
-      seatNumbers; // Keeping as int for now as Ticket wasn't specified to change
+  final List<int> seatNumbers;
   final String passengerName;
   final String passengerPhone;
   final DateTime bookingTime;
@@ -188,8 +187,9 @@ class Ticket {
   final Map<String, dynamic> tripData;
   final String status;
   final String? shortId;
-  final String? paymentIntentId; // Added for Refund processing
-  final String? passengerEmail; // Added for Search
+  final String? paymentIntentId;
+  final String? passengerEmail;
+  final String? fcmToken; // Added to allow push without User read access
 
   Ticket({
     required this.ticketId,
@@ -205,6 +205,7 @@ class Ticket {
     this.status = 'confirmed',
     this.shortId,
     this.paymentIntentId,
+    this.fcmToken,
   });
 
   factory Ticket.fromMap(Map<String, dynamic> data, String id) {
@@ -222,6 +223,7 @@ class Ticket {
       status: data['status'] ?? 'confirmed',
       shortId: data['shortId'],
       paymentIntentId: data['paymentIntentId'],
+      fcmToken: data['fcmToken'],
     );
   }
 
@@ -245,6 +247,7 @@ class Ticket {
       'status': status,
       'shortId': shortId,
       'paymentIntentId': paymentIntentId,
+      'fcmToken': fcmToken,
     };
   }
 }

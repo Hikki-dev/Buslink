@@ -16,6 +16,9 @@ import 'package:flutter/foundation.dart'; // kIsWeb
 import '../../utils/file_downloader.dart';
 import 'dart:io'; // Added
 import 'package:open_filex/open_filex.dart'; // Added
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../../utils/language_provider.dart'; // Added
 
 // import '../../views/home/home_screen.dart'; // Unused
 import '../customer_main_screen.dart';
@@ -211,8 +214,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         doc.addPage(pw.Page(
             pageFormat: PdfPageFormat.a4,
             build: (pw.Context context) {
-              double totalAmount =
-                  tickets.fold(0, (sum, item) => sum + item.totalAmount);
+              double totalAmount = tickets.fold(
+                  0, (currentSum, item) => currentSum + item.totalAmount);
 
               return pw.Center(
                   child: pw.Column(children: [
@@ -401,6 +404,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         );
       }
 
+      final lp = Provider.of<LanguageProvider>(context, listen: false);
       final bytes = await doc.save();
       final fileName = 'buslink_tickets.pdf';
 
@@ -408,38 +412,51 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         await downloadBytesForWeb(bytes, fileName);
       } else if (Platform.isAndroid) {
         // Android-specific download logic
-        try {
-          final directory = Directory('/storage/emulated/0/Download');
-          if (!await directory.exists()) {
-            // Fallback to share if Download folder isn't accessible
+        if (await Permission.storage.request().isGranted ||
+            await Permission.manageExternalStorage.request().isGranted) {
+          try {
+            final directory = Directory('/storage/emulated/0/Download');
+            Directory? targetDir = directory;
+            if (!await directory.exists()) {
+              targetDir = await getExternalStorageDirectory();
+            }
+
+            if (targetDir != null) {
+              final file = File('${targetDir.path}/$fileName');
+              await file.writeAsBytes(bytes);
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content:
+                      Text("${lp.translate('saved_to_downloads')}: $fileName"),
+                  backgroundColor: Colors.green,
+                  action: SnackBarAction(
+                    label: "OPEN",
+                    textColor: Colors.white,
+                    onPressed: () {
+                      OpenFilex.open(file.path);
+                    },
+                  ),
+                ));
+
+                NotificationService.showLocalNotification(
+                    id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                    title: "Tickets Downloaded",
+                    body: "Your tickets have been saved to Downloads.");
+              }
+            } else {
+              await Printing.sharePdf(bytes: bytes, filename: fileName);
+            }
+          } catch (e) {
+            debugPrint("Download Error: $e. Fallback to Share.");
             await Printing.sharePdf(bytes: bytes, filename: fileName);
-            return;
           }
-
-          final file = File('${directory.path}/$fileName');
-          await file.writeAsBytes(bytes);
-
+        } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text("Saved to Downloads: $fileName"),
-              backgroundColor: Colors.green,
-              action: SnackBarAction(
-                label: "OPEN",
-                textColor: Colors.white,
-                onPressed: () {
-                  OpenFilex.open(file.path);
-                },
-              ),
-            ));
-
-            NotificationService.showLocalNotification(
-                id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-                title: "Tickets Downloaded",
-                body: "Your tickets have been saved to Downloads.");
+                content: Text(lp.translate('permission_denied')),
+                backgroundColor: Colors.red));
           }
-        } catch (e) {
-          debugPrint("Download Error: $e. Fallback to Share.");
-          await Printing.sharePdf(bytes: bytes, filename: fileName);
         }
       } else {
         // iOS and others
@@ -449,9 +466,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       debugPrint("Error generating/sharing PDF: $e");
       debugPrint(stackTrace.toString());
       if (mounted) {
+        final lp = Provider.of<LanguageProvider>(context, listen: false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Failed to generate PDF: $e"),
+            content: Text("${lp.translate('error_saving_pdf')}: $e"),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),
@@ -463,6 +481,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lp = Provider.of<LanguageProvider>(context);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -621,8 +640,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                           icon: const Icon(Icons.picture_as_pdf),
                           label: Text(
                               _verifiedTickets.length > 1
-                                  ? "Download All Tickets (PDF)"
-                                  : "Download Ticket (PDF)",
+                                  ? lp.translate('download_consolidated_pdf')
+                                  : lp.translate('download_pdf'),
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 16)),
                         ),
@@ -824,7 +843,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () async {
                     final success = await SmsService.sendTicketCopy(ticket);
-                    if (context.mounted) {
+                    if (mounted) {
                       if (!success) {
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
