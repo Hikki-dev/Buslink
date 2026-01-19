@@ -14,66 +14,74 @@ import '../../utils/app_constants.dart';
 import '../admin/admin_dashboard.dart';
 import '../../utils/language_provider.dart';
 import 'conductor_trip_management_screen.dart';
-import '../layout/custom_app_bar.dart';
-import 'package:intl/intl.dart';
-// for kIsWeb
-import '../../views/auth/login_screen.dart';
-import 'qr_scan_screen.dart';
-
-import '../booking/bus_layout_widget.dart';
-
-class ConductorDashboard extends StatefulWidget {
-  final bool isAdminView;
-  const ConductorDashboard({super.key, this.isAdminView = false});
-
-  @override
-  State<ConductorDashboard> createState() => _ConductorDashboardState();
-}
-
-class _ConductorDashboardState extends State<ConductorDashboard> {
-  final TextEditingController _ticketIdController = TextEditingController();
-  final TextEditingController _busNumberController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    // Auto-load cities
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<TripController>(context, listen: false)
-          .fetchAvailableCities();
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticketIdController.dispose();
-    _busNumberController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // final String conductorName =
-    //     user?.displayName?.split(' ').first ?? 'Conductor';
-
     return LayoutBuilder(builder: (context, constraints) {
-      final isDesktop = constraints.maxWidth > 900;
       final isDark = Theme.of(context).brightness == Brightness.dark;
 
       return Scaffold(
-        appBar: isDesktop
-            ? null
-            : CustomAppBar(
-                isAdminView: widget.isAdminView,
-                hideActions: false,
-                title: Text("Conductor Dashboard",
-                    style: TextStyle(
-                        fontFamily: 'Outfit',
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface)), // Adaptive color
+        appBar: AppBar(
+          automaticallyImplyLeading: false, // No back button on dashboard
+          title: Row(
+            children: [
+              const Icon(Icons.directions_bus, color: AppTheme.primaryColor),
+              const SizedBox(width: 8),
+              Text(
+                "Conductor Dashboard",
+                style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface),
               ),
+            ],
+          ),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          actions: [
+            // 1. Theme Selector
+            Consumer<ThemeController>(
+              builder: (context, themeController, _) {
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                return IconButton(
+                  icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode,
+                      color: Theme.of(context).colorScheme.onSurface),
+                  tooltip: isDark ? "Light Mode" : "Dark Mode",
+                  onPressed: () {
+                    themeController
+                        .setTheme(isDark ? ThemeMode.light : ThemeMode.dark);
+                  },
+                );
+              },
+            ),
+            // 2. Language Selector
+            Consumer<LanguageProvider>(
+              builder: (context, languageProvider, _) {
+                return PopupMenuButton<String>(
+                  icon: Icon(Icons.language,
+                      color: Theme.of(context).colorScheme.onSurface),
+                  tooltip: "Change Language",
+                  onSelected: (String code) {
+                    languageProvider.setLanguage(code);
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                    const PopupMenuItem<String>(
+                      value: 'en',
+                      child: Text('English'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'si',
+                      child: Text('සිංහල (Sinhala)'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'ta',
+                      child: Text('தமிழ் (Tamil)'),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         // REMOVED BOTTOM NAV BAR as requested
         body: Column(
