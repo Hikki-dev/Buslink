@@ -64,9 +64,11 @@ class OngoingTripCard extends StatelessWidget {
                     Builder(builder: (context) {
                       final now = DateTime.now();
                       final diff = trip.arrivalTime.difference(now);
-                      final isLive = trip.status == 'departed' ||
-                          trip.status == 'onWay' ||
-                          trip.status == 'delayed';
+                      final s = trip.status.toLowerCase();
+                      final isLive = s == 'departed' ||
+                          s == 'onway' ||
+                          s == 'on way' ||
+                          s == 'delayed';
 
                       // Only show if active and in future (or slightly late)
                       if (isLive && diff.inMinutes > 0) {
@@ -238,9 +240,10 @@ class OngoingTripCard extends StatelessWidget {
     Color text;
     String label;
 
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'departed':
-      case 'onWay':
+      case 'onway':
+      case 'on way':
         bg = Colors.green.withValues(alpha: 0.1);
         text = Colors.green;
         label = lp.translate('active');
@@ -302,9 +305,11 @@ class OngoingTripCard extends StatelessWidget {
     // Past statuses should be greyed out (inactive).
     // Future statuses should be greyed out.
 
-    bool isDeparted = status == 'departed';
-    bool isOnWay = status == 'onWay';
-    bool isArrived = status == 'arrived' || status == 'completed';
+    final s = status.toLowerCase();
+
+    bool isDeparted = s == 'departed';
+    bool isOnWay = s == 'onway' || s == 'on way';
+    bool isArrived = s == 'arrived' || s == 'completed';
 
     return Row(
       children: [

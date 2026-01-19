@@ -43,7 +43,8 @@ class NotificationService {
       final base64String = (dotenv.env['FIREBASE_SERVICE_ACCOUNT_BASE64'] ?? '')
           .replaceAll(RegExp(r'\s+'), ''); // Sanitize newlines/spaces
       if (base64String.isEmpty) {
-        debugPrint("Error: FIREBASE_SERVICE_ACCOUNT_BASE64 not found in .env");
+        debugPrint(
+            "Push Warning: FIREBASE_SERVICE_ACCOUNT_BASE64 missing. Push will fail, but In-App will work.");
         return null;
       }
 
@@ -478,9 +479,11 @@ class NotificationService {
           .doc(userId)
           .get();
       final token = userDoc.data()?['fcmToken'];
-      if (token != null) await sendPushToToken(token.toString(), title, body);
+      if (token != null && token.toString().isNotEmpty) {
+        await sendPushToToken(token.toString(), title, body);
+      }
     } catch (e) {
-      // Ignore
+      debugPrint("Push Notification Failed for $userId: $e");
     }
   }
 

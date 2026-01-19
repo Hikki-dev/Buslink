@@ -322,10 +322,11 @@ class _ConductorTripManagementScreenState
   }
 
   Color _getStatusColor(String status) {
-    // Adapter for String status
-    if (status == 'Delayed') return Colors.red;
-    if (status == 'Arrived' || status == 'Departed') return Colors.green;
-    if (status == 'OnWay') return Colors.blue;
+    final s = status.toLowerCase(); // Normalize
+    if (s == 'delayed') return Colors.red;
+    if (s == 'arrived' || s == 'departed' || s == 'completed')
+      return Colors.green;
+    if (s == 'onway' || s == 'on way') return Colors.blue;
     return Colors.grey;
   }
 
