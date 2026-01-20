@@ -482,7 +482,31 @@ class _BoardingPassCard extends StatelessWidget {
                                 color: textColor)),
                       ],
                     ),
-                    Icon(Icons.arrow_forward, color: subTextColor),
+                    Column(
+                      children: [
+                        Icon(Icons.directions_bus,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.3),
+                            size: 32),
+                        if (tripData['via'] != null &&
+                            tripData['via'] != 'Direct' &&
+                            tripData['via'].toString().isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text(
+                              "Via ${tripData['via']}",
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 10,
+                                color: subTextColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -832,8 +856,31 @@ class _BulkBoardingPassCard extends StatelessWidget {
                                 fontFamily: 'Outfit',
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold)),
-                        const Icon(Icons.arrow_downward,
-                            size: 14, color: Colors.grey),
+                        Column(
+                          children: [
+                            Icon(Icons.directions_bus,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant
+                                    .withValues(alpha: 0.3),
+                                size: 32),
+                            if (first.tripData['via'] != null &&
+                                first.tripData['via'] != 'Direct' &&
+                                first.tripData['via'].toString().isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  "Via ${first.tripData['via']}",
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                         Text(toCity,
                             style: TextStyle(
                                 fontFamily: 'Outfit',

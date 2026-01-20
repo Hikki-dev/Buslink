@@ -245,12 +245,32 @@ class _TicketScreenState extends State<TicketScreen> {
                                 fontWeight: FontWeight.bold)),
                       ],
                     ),
-                    Icon(Icons.directions_bus,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant
-                            .withValues(alpha: 0.3),
-                        size: 32),
+                    Column(
+                      children: [
+                        Icon(Icons.directions_bus,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.3),
+                            size: 32),
+                        if (trip.via.isNotEmpty && trip.via != 'Direct')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text(
+                              "Via ${trip.via}",
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 10,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant
+                                    .withValues(alpha: 0.7),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [

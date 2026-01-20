@@ -403,6 +403,20 @@ class Translations {
       'permission_denied':
           'Storage permission denied. Please enable permission to download.',
       'error_saving_pdf': 'Error saving PDF',
+      // Location Permissions
+      'location_services_disabled': 'Location Disabled',
+      'location_services_disabled_desc':
+          'Please enable location services to track your trip.',
+      'ok': 'OK',
+      'location_needed_title': 'Location Access Needed',
+      'location_needed_desc':
+          'We need your location to enable live tracking for passengers. This allows them to see where the bus is in real-time.',
+      'cancel': 'Cancel',
+      'allow_location': 'Allow',
+      'permission_denied_forever': 'Permission Required',
+      'permission_denied_forever_desc':
+          'Location permission is permanently denied. Please enable it in your device settings to use this feature.',
+      'open_settings': 'Open Settings',
     },
     'si': {
       'welcome': 'ආයුබෝවන්!',
@@ -770,6 +784,20 @@ class Translations {
       'saved_to_downloads': 'බාගැනීම් වෙත සුරකින ලදි',
       'permission_denied': 'ගොනු අවසරය ප්‍රතික්ෂේප විය.',
       'error_saving_pdf': 'PDF සුරැකීමේ දෝෂයක්',
+      // Location Permissions SI
+      'location_services_disabled': 'ස්ථාන සේවා අක්‍රියයි',
+      'location_services_disabled_desc':
+          'ගමන හඹා යෑමට කරුණාකර ස්ථාන සේවා සක්‍රීය කරන්න.',
+      'ok': 'හරි',
+      'location_needed_title': 'ස්ථාන ප්‍රවේශය අවශ්‍යයි',
+      'location_needed_desc':
+          'මගීන්ට සජීවී හඹා යෑම සක්‍රීය කිරීමට අපට ඔබේ ස්ථානය අවශ්‍ය වේ. මෙය ඔවුන්ට බස් රථය කොහේදැයි බැලීමට ඉඩ දෙයි.',
+      'cancel': 'අවලංගු කරන්න',
+      'allow_location': 'ඉඩ දෙන්න',
+      'permission_denied_forever': 'අවසර අවශ්‍යයි',
+      'permission_denied_forever_desc':
+          'ස්ථාන අවසරය ස්ථිරවම ප්‍රතික්ෂේප කර ඇත. කරුණාකර මෙය භාවිතා කිරීමට සැකසුම් හරහා එය සක්‍රීය කරන්න.',
+      'open_settings': 'සැකසුම් විවෘත කරන්න',
     },
     'ta': {
       'welcome': 'வரவேற்கிறோம்!',
@@ -798,6 +826,20 @@ class Translations {
       // Rest of Tamil
       'welcome_back': 'வணக்கம்',
       'login_subtitle': 'தொடர BusLink இல் உள்நுழையவும்.',
+      // Location Permissions TA
+      'location_services_disabled': 'இருப்பிடச் சேவை முடக்கப்பட்டுள்ளது',
+      'location_services_disabled_desc':
+          'உங்கள் பயணத்தைக் கண்காணிக்க இருப்பிடச் சேவையை இயக்கவும்.',
+      'ok': 'சரி',
+      'location_needed_title': 'இருப்பிட அனுமதி தேவை',
+      'location_needed_desc':
+          'பயணிகளுக்கான நேரடி கண்காணிப்பை இயக்க உங்கள் இருப்பிடம் தேவை. இது பேருந்து எங்குள்ளது என்பதைப் பார்க்க அவர்களுக்கு உதவுகிறது.',
+      'cancel': 'ரத்துசெய்',
+      'allow_location': 'அனுமதி',
+      'permission_denied_forever': 'அனுமதி தேவை',
+      'permission_denied_forever_desc':
+          'இருப்பிட அனுமதி நிரந்தரமாக மறுக்கப்பட்டது. இதைப் பயன்படுத்த அமைப்புகளில் அதை இயக்கவும்.',
+      'open_settings': 'அமைப்புகளைத் திறக்கவும்',
       'signup_subtitle':
           'இன்றே எங்களுடன் இணைந்து உங்கள் பயணத்தைத் தொடங்குங்கள்.',
       'email': 'மின்னஞ்சல்',

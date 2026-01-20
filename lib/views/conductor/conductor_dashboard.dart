@@ -8,6 +8,7 @@ import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../models/trip_model.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/location_permission_helper.dart'; // Added Import
 
 // import '../layout/conductor_navbar.dart';
 // import '../admin/layout/admin_bottom_nav.dart';
@@ -38,6 +39,9 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<TripController>(context, listen: false)
           .fetchAvailableCities();
+
+      // Prompt for Location Permission on Login (Conductor Only)
+      LocationPermissionHelper.checkAndRequestPermission(context);
     });
   }
 

@@ -542,50 +542,53 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFavoritesSection(BuildContext context,
       List<Map<String, dynamic>> favorites, bool isDesktop) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-            padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 0 : 24, vertical: 16),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 0 : 24, vertical: 16),
               child: Text("Your Bookmarked Routes",
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.onSurface)),
-            )),
-        SizedBox(
-          height: 180, // Height for the card
-          child: ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : 24),
-            scrollDirection: Axis.horizontal,
-            itemCount: favorites.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 16),
-            itemBuilder: (context, index) {
-              final fav = favorites[index];
-              return _HomeFavoriteCard(
-                from: fav['fromCity'] ?? '',
-                to: fav['toCity'] ?? '',
-                operator: fav['operatorName'] ?? 'Standard',
-                onTap: () {
-                  // Populate Search
-                  setState(() {
-                    _originController.text = fav['fromCity'] ?? '';
-                    _destinationController.text = fav['toCity'] ?? '';
-                  });
-                  // Scroll to top to show search fields
-                  _scrollController.animateTo(0,
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeOut);
+            ),
+            SizedBox(
+              height: 180, // Height for the card
+              child: ListView.separated(
+                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : 24),
+                scrollDirection: Axis.horizontal,
+                itemCount: favorites.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 16),
+                itemBuilder: (context, index) {
+                  final fav = favorites[index];
+                  return _HomeFavoriteCard(
+                    from: fav['fromCity'] ?? '',
+                    to: fav['toCity'] ?? '',
+                    operator: fav['operatorName'] ?? 'Standard',
+                    onTap: () {
+                      // Populate Search
+                      setState(() {
+                        _originController.text = fav['fromCity'] ?? '';
+                        _destinationController.text = fav['toCity'] ?? '';
+                      });
+                      // Scroll to top to show search fields
+                      _scrollController.animateTo(0,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeOut);
+                    },
+                  );
                 },
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

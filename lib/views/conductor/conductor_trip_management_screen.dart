@@ -8,7 +8,7 @@ import '../../controllers/trip_controller.dart';
 import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../models/trip_model.dart' show TripStatus;
 import '../../services/location_service.dart'; // Added
-// Added
+import '../../utils/location_permission_helper.dart'; // Added Import
 
 import '../booking/seat_selection_screen.dart';
 import '../../utils/language_provider.dart';
@@ -34,15 +34,13 @@ class _ConductorTripManagementScreenState
   }
 
   Future<void> _initLocationTracking() async {
-    // 1. Permission Check
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
+    // 1. Permission Check using Helper
+    // This will handle the "Ask Again" logic and "Why" dialog.
+    final hasPermission =
+        await LocationPermissionHelper.checkAndRequestPermission(context);
 
-    if (permission == LocationPermission.deniedForever ||
-        permission == LocationPermission.denied) {
-      // Cannot track
+    if (!hasPermission) {
+      // Cannot track, user denied even after explanation
       return;
     }
 

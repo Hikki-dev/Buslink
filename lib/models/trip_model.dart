@@ -34,6 +34,7 @@ class Trip {
   final Map<String, double>?
       currentLocation; // { "lat": double, "lng": double }
   final String? conductorId; // Denormalized from Schedule for easy query
+  final String via; // Added via field
 
   // Legacy/Helper fields that might be useful or were in original model
   // We keep them if they don't conflict, but prioritize the strict schema.
@@ -49,7 +50,7 @@ class Trip {
   // Compatibility Getters
   String get fromCity => originCity;
   String get toCity => destinationCity;
-  String get via => 'Direct'; // Default, or fetch from Route usage
+  // String get via => 'Direct'; // REMOVED - Using field now
   String get duration =>
       "${arrivalDateTime.difference(departureDateTime).inHours}h ${arrivalDateTime.difference(departureDateTime).inMinutes % 60}m";
   String get operatorName => 'Buslink'; // Default
@@ -73,6 +74,7 @@ class Trip {
     this.bookedSeatNumbers = const [],
     this.currentLocation,
     this.conductorId,
+    this.via = 'Direct',
   });
 
   // CopyWith
@@ -91,6 +93,7 @@ class Trip {
     List<String>? bookedSeatNumbers,
     Map<String, double>? currentLocation,
     String? conductorId,
+    String? via,
   }) {
     return Trip(
       id: id ?? this.id,
@@ -107,6 +110,7 @@ class Trip {
       bookedSeatNumbers: bookedSeatNumbers ?? this.bookedSeatNumbers,
       currentLocation: currentLocation ?? this.currentLocation,
       conductorId: conductorId ?? this.conductorId,
+      via: via ?? this.via,
     );
   }
 
@@ -126,6 +130,7 @@ class Trip {
       'bookedSeats': bookedSeatNumbers,
       'currentLocation': currentLocation,
       'conductorId': conductorId,
+      'via': via,
     };
   }
 
@@ -153,6 +158,7 @@ class Trip {
           data['bookedSeatNumbers'] ?? data['bookedSeats'] ?? []),
       currentLocation: _parseGeoPoint(data['currentLocation']),
       conductorId: data['conductorId'],
+      via: data['via'] ?? 'Direct',
     );
   }
 
