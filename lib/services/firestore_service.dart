@@ -37,6 +37,25 @@ class FirestoreService {
     return snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
   }
 
+  Stream<List<Trip>> searchTripsStream(
+    String fromCity,
+    String toCity,
+    DateTime date,
+  ) {
+    final DateTime dayStart = DateTime(date.year, date.month, date.day);
+    final DateTime nextDay = dayStart.add(const Duration(days: 1));
+
+    return _db
+        .collection(tripCollection)
+        .where('fromCity', isEqualTo: fromCity)
+        .where('toCity', isEqualTo: toCity)
+        .where('departureTime', isGreaterThanOrEqualTo: dayStart)
+        .where('departureTime', isLessThan: nextDay)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList());
+  }
+
   Future<List<Trip>> getTripsByDate(DateTime start, DateTime end) async {
     final snapshot = await _db
         .collection(tripCollection)
@@ -47,6 +66,17 @@ class FirestoreService {
 
     if (snapshot.docs.isEmpty) return [];
     return snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
+  }
+
+  Stream<List<Trip>> getTripsByDateStream(DateTime start, DateTime end) {
+    return _db
+        .collection(tripCollection)
+        .where('departureTime', isGreaterThanOrEqualTo: start)
+        .where('departureTime', isLessThanOrEqualTo: end)
+        .orderBy('departureTime')
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList());
   }
 
   // --- NEW: Method to find a trip by its bus number ---
@@ -159,6 +189,16 @@ class FirestoreService {
       return [];
     }
     return snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
+  }
+
+  Stream<List<Trip>> getAllTripsStream() {
+    return _db
+        .collection(tripCollection)
+        .orderBy('departureTime', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList());
   }
 
   Stream<List<Ticket>> getUserTickets(String userId) {

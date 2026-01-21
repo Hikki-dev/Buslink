@@ -138,9 +138,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         const SizedBox(height: 30),
 
                         // 4. Results
-                        Consumer<TripController>(
-                          builder: (context, ctl, _) {
-                            if (ctl.isLoading) {
+                        StreamBuilder<List<Trip>>(
+                          stream: controller.searchResultsStream,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
                               return const Center(
                                   child: Padding(
                                 padding: EdgeInsets.all(40.0),
@@ -148,19 +150,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               ));
                             }
 
-                            if (ctl.searchResults.isEmpty) {
+                            final trips = snapshot.data ?? [];
+
+                            if (trips.isEmpty) {
                               return _buildEmptyState();
                             }
 
                             return ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: ctl.searchResults.length,
+                              itemCount: trips.length,
                               separatorBuilder: (context, index) =>
                                   const SizedBox(height: 16),
                               itemBuilder: (context, index) {
                                 return _buildResultCard(
-                                    context, ctl.searchResults[index], ctl);
+                                    context, trips[index], controller);
                               },
                             );
                           },

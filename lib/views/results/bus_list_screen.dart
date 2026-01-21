@@ -99,7 +99,29 @@ class _BusListScreenState extends State<BusListScreen> {
     final controller = Provider.of<TripController>(context);
     final isDesktop = MediaQuery.of(context).size.width > 900;
 
-    List<Trip> trips = List.from(controller.searchResults);
+    return StreamBuilder<List<Trip>>(
+      stream: controller.searchResultsStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            controller.isLoading) {
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
+        }
+
+        final trips = _processTrips(snapshot.data ?? []);
+
+        return Scaffold(
+          backgroundColor: Colors.grey.shade50,
+          body: isDesktop
+              ? _buildDesktopLayout(context, isDesktop, trips, controller)
+              : _buildMobileLayout(context, trips, controller),
+        );
+      },
+    );
+  }
+
+  List<Trip> _processTrips(List<Trip> rawTrips) {
+    List<Trip> trips = List.from(rawTrips);
 
     // Filter Logic
     if (_selectedFilters.isNotEmpty) {
@@ -170,12 +192,7 @@ class _BusListScreenState extends State<BusListScreen> {
       trips.sort((a, b) => a.departureTime.compareTo(b.departureTime));
     }
 
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      body: isDesktop
-          ? _buildDesktopLayout(context, isDesktop, trips, controller)
-          : _buildMobileLayout(context, trips, controller),
-    );
+    return trips;
   }
 
   Widget _buildDesktopLayout(BuildContext context, bool isDesktop,

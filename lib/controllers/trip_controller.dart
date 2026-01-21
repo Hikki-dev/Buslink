@@ -57,6 +57,13 @@ class TripController extends ChangeNotifier {
     _setLoading(false);
   }
 
+  Stream<List<Trip>> get searchResultsStream {
+    if (fromCity == null || toCity == null || travelDate == null) {
+      return Stream.value([]);
+    }
+    return _service.searchTripsStream(fromCity!, toCity!, travelDate!);
+  }
+
   // --- ADDED: getTodaysTrips ---
   Future<List<Trip>> getTodaysTrips() async {
     final now = DateTime.now();
@@ -73,6 +80,12 @@ class TripController extends ChangeNotifier {
       debugPrint("Error fetching trips for date $date: $e");
       return [];
     }
+  }
+
+  Stream<List<Trip>> getTripsForDateStream(DateTime date) {
+    final dayStart = DateTime(date.year, date.month, date.day);
+    final dayEnd = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    return _service.getTripsByDateStream(dayStart, dayEnd);
   }
 
   // --- ADDED: Add Trip ---
@@ -360,6 +373,8 @@ class TripController extends ChangeNotifier {
     }
     _setLoading(false);
   }
+
+  Stream<List<Trip>> get allTripsStream => _service.getAllTripsStream();
 
   Future<bool> findTripByBusNumber(
       BuildContext context, String busNumber) async {

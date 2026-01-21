@@ -27,44 +27,11 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
   final TextEditingController _ticketIdController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
 
-  List<Trip> _todaysTrips = [];
-  List<Trip> _filteredTrips = [];
-  bool _loading = true;
+  // State variables for filtering are handled inside StreamBuilder now
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadTripsForDate(_selectedDate);
-    });
-  }
-
-  Future<void> _loadTripsForDate(DateTime date) async {
-    setState(() => _loading = true);
-    final controller = Provider.of<TripController>(context, listen: false);
-    final trips = await controller.getTripsForDate(date);
-    if (mounted) {
-      setState(() {
-        _todaysTrips = trips;
-        _filteredTrips = trips;
-        _loading = false;
-        _filterTrips(); // Re-apply current text filters
-      });
-    }
-  }
-
+  // Removed manual loading logic as we are switching to StreamBuilder
   void _filterTrips() {
-    final from = _fromController.text.toLowerCase().trim();
-    final to = _toController.text.toLowerCase().trim();
-
-    setState(() {
-      _filteredTrips = _todaysTrips.where((trip) {
-        final matchFrom =
-            from.isEmpty || trip.fromCity.toLowerCase().contains(from);
-        final matchTo = to.isEmpty || trip.toCity.toLowerCase().contains(to);
-        return matchFrom && matchTo;
-      }).toList();
-    });
+    setState(() {}); // Just trigger rebuild to re-filter in StreamBuilder
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -79,7 +46,6 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       setState(() {
         _selectedDate = picked;
       });
-      _loadTripsForDate(picked);
     }
   }
 
@@ -168,22 +134,46 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
   }
 
   Widget _buildBody(bool isDesktop, String conductorName) {
-    switch (_selectedIndex) {
-      case 0:
-        return _buildDashboardView(isDesktop, conductorName);
-      case 1:
-        return _buildScanTicketView();
-      case 2:
-        return _buildReportsView();
-      case 3:
-        return _buildProfileView(conductorName);
-      default:
-        return _buildDashboardView(isDesktop, conductorName);
-    }
+    final controller = Provider.of<TripController>(context);
+    return StreamBuilder<List<Trip>>(
+      stream: controller.getTripsForDateStream(_selectedDate),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final trips = snapshot.data ?? [];
+        // Apply manual filters
+        final from = _fromController.text.toLowerCase().trim();
+        final to = _toController.text.toLowerCase().trim();
+        final filteredTrips = trips.where((trip) {
+          final matchFrom =
+              from.isEmpty || trip.fromCity.toLowerCase().contains(from);
+          final matchTo = to.isEmpty || trip.toCity.toLowerCase().contains(to);
+          return matchFrom && matchTo;
+        }).toList();
+
+        switch (_selectedIndex) {
+          case 0:
+            return _buildDashboardView(
+                isDesktop, conductorName, trips, filteredTrips);
+          case 1:
+            return _buildScanTicketView();
+          case 2:
+            return _buildReportsView();
+          case 3:
+            return _buildProfileView(conductorName);
+          default:
+            return _buildDashboardView(
+                isDesktop, conductorName, trips, filteredTrips);
+        }
+      },
+    );
   }
 
   // --- VIEW 0: Dashboard (Existing) ---
-  Widget _buildDashboardView(bool isDesktop, String conductorName) {
+  Widget _buildDashboardView(bool isDesktop, String conductorName,
+      List<Trip> allTrips, List<Trip> filteredTrips) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +224,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                       children: [
                         _StatCard(
                             label: "Scheduled Trips",
-                            value: "${_todaysTrips.length}",
+                            value: "${allTrips.length}",
                             icon: Icons.directions_bus,
                             color: Colors.blue),
                       ],
@@ -304,7 +294,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
           ),
 
           // 3. Trips List
-          _buildTripsListSection(isDesktop),
+          _buildTripsListSection(isDesktop, filteredTrips),
 
           if (isDesktop) const AppFooter(),
         ],
@@ -704,16 +694,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
     );
   }
 
-  Widget _buildTripsListSection(bool isDesktop) {
-    if (_loading) {
-      return Container(
-        height: 300,
-        alignment: Alignment.center,
-        child: const CircularProgressIndicator(),
-      );
-    }
-
-    if (_filteredTrips.isEmpty) {
+  Widget _buildTripsListSection(bool isDesktop, List<Trip> filteredTrips) {
+    if (filteredTrips.isEmpty) {
       return Center(
         child: Container(
           padding: const EdgeInsets.all(40.0),
@@ -728,7 +710,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                     size: 48, color: Colors.grey.shade400),
               ),
               const SizedBox(height: 24),
-              Text("No trips found for today.",
+              Text("No trips found for this date.",
                   style: GoogleFonts.outfit(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -737,11 +719,6 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               Text("Try changing your search location or check back later.",
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(color: Colors.grey.shade500)),
-              const SizedBox(height: 24),
-              OutlinedButton(
-                onPressed: () => _loadTripsForDate(_selectedDate),
-                child: const Text("Refresh Schedule"),
-              )
             ],
           ),
         ),
@@ -756,17 +733,17 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Scheduled Trips (${_filteredTrips.length})",
+              Text("Scheduled Trips (${filteredTrips.length})",
                   style: GoogleFonts.outfit(
                       fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _filteredTrips.length,
+                itemCount: filteredTrips.length,
                 separatorBuilder: (ctx, i) => const SizedBox(height: 16),
                 itemBuilder: (ctx, i) {
-                  final trip = _filteredTrips[i];
+                  final trip = filteredTrips[i];
                   return _buildTripCard(trip, isDesktop);
                 },
               )
@@ -883,7 +860,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 context,
                 MaterialPageRoute(
                     builder: (_) => ConductorTripManagementScreen(trip: trip)))
-            .then((_) => _loadTripsForDate(_selectedDate));
+            .then((_) => setState(() {}));
       },
       style: ElevatedButton.styleFrom(
           backgroundColor: Colors.black,
