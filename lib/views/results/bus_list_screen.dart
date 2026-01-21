@@ -523,7 +523,7 @@ class _BusListScreenState extends State<BusListScreen> {
           ],
           color: AppTheme.primaryColor,
           strokeWidth: 4.0,
-          pattern: StrokePattern.dashed(segments: [10.0, 10.0]),
+          pattern: StrokePattern.dashed(segments: const [10.0, 10.0]),
         )
       ];
     }

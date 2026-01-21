@@ -37,7 +37,7 @@ class DesktopNavBar extends StatelessWidget {
             },
             child: Row(
               children: [
-                Icon(Icons.directions_bus,
+                const Icon(Icons.directions_bus,
                     color: AppTheme.primaryColor, size: 30),
                 const SizedBox(width: 8),
                 Text("BusLink",
