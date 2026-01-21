@@ -457,12 +457,13 @@ class _CurrentTripStatusCard extends StatelessWidget {
                     "Departed",
                     status == "departed" ||
                         status == "onWay" ||
+                        status == "delayed" ||
                         status == "arrived"),
                 const SizedBox(width: 8),
+                _statusIndicator("Delayed", status == "delayed"),
+                const SizedBox(width: 8),
                 _statusIndicator(
-                    "On Way",
-                    status == "onWay" ||
-                        status == "arrived"), // Simplified logic
+                    "On Way", status == "onWay" || status == "arrived"),
                 const SizedBox(width: 8),
                 _statusIndicator("Arrived", status == "arrived"),
               ],
@@ -884,7 +885,7 @@ class _FavoritesList extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 140,
+      height: 220, // Increased height for detailed card
       child: StreamBuilder<List<Map<String, dynamic>>>(
         stream: controller.getUserFavorites(user.uid),
         builder: (context, snapshot) {
@@ -913,6 +914,8 @@ class _FavoritesList extends StatelessWidget {
                 context,
                 fav['fromCity'] ?? 'Unknown',
                 fav['toCity'] ?? 'Unknown',
+                fav['operatorName'] ?? 'Bus Operator',
+                (fav['price'] ?? 0).toString(),
               );
             },
           );
@@ -921,35 +924,92 @@ class _FavoritesList extends StatelessWidget {
     );
   }
 
-  Widget _favCard(BuildContext context, String from, String to) {
+  Widget _favCard(BuildContext context, String from, String to, String operator,
+      String price) {
     return Container(
-      width: 250,
+      width: 320,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
-                color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))
+                color: Colors.black12, blurRadius: 15, offset: Offset(0, 8))
           ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.favorite, color: AppTheme.primaryColor),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text("$from - $to",
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20)),
+                child: Text("DAILY",
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor)),
               ),
+              const Icon(Icons.favorite, color: Colors.red, size: 20),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Text(from,
+                  style: GoogleFonts.outfit(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(Icons.arrow_forward,
+                    size: 16, color: Colors.grey.shade400),
+              ),
+              Text(to,
+                  style: GoogleFonts.outfit(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 8),
-          Text("Daily Service",
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+          Text(operator,
+              style: GoogleFonts.inter(
+                  color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("START FROM",
+                      style:
+                          GoogleFonts.inter(fontSize: 10, color: Colors.grey)),
+                  Text("LKR $price",
+                      style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: AppTheme.primaryColor)),
+                ],
+              ),
+              const Spacer(),
+              ElevatedButton(
+                onPressed: () {
+                  // Navigate to search
+                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12)),
+                child: const Text("Book Now"),
+              )
+            ],
+          )
         ],
       ),
     );
