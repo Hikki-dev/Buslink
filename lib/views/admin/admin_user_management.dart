@@ -29,7 +29,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     final controller = Provider.of<TripController>(context, listen: false);
 
     return LayoutBuilder(builder: (context, constraints) {
-      final isDesktop = constraints.maxWidth > 800;
+      final isDesktop = constraints.maxWidth > 900;
       return Scaffold(
         backgroundColor: Colors.grey.shade50,
         body: Column(
@@ -39,66 +39,63 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
                     vertical: isDesktop ? 40 : 20,
-                    horizontal: isDesktop ? 24 : 16),
+                    horizontal: isDesktop ? 40 : 16),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 20,
-                              offset: const Offset(0, 4),
+                      constraints: const BoxConstraints(maxWidth: 1200),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header Row
+                          if (isDesktop)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildHeaderTitle(),
+                                _buildSearchBar(),
+                              ],
+                            )
+                          else
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildHeaderTitle(),
+                                const SizedBox(height: 20),
+                                _buildSearchBar(fullWidth: true),
+                              ],
                             ),
-                          ],
-                        ),
-                        padding: EdgeInsets.all(isDesktop ? 32 : 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Header
-                            if (isDesktop)
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  _buildHeaderTitle(),
-                                  _buildSearchBar(),
-                                ],
-                              )
-                            else
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  _buildHeaderTitle(),
-                                  const SizedBox(height: 16),
-                                  _buildSearchBar(fullWidth: true),
-                                ],
-                              ),
-                            const SizedBox(height: 32),
-                            const Divider(),
-                            const SizedBox(height: 16),
 
-                            // User List Stream
-                            StreamBuilder<List<Map<String, dynamic>>>(
+                          const SizedBox(height: 30),
+
+                          // User List Container
+                          Container(
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 4),
+                                  )
+                                ]),
+                            clipBehavior: Clip.antiAlias,
+                            child: StreamBuilder<List<Map<String, dynamic>>>(
                               stream: controller.getAllUsers(),
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {
                                   return const Center(
-                                      child: CircularProgressIndicator());
+                                      child: Padding(
+                                    padding: EdgeInsets.all(40.0),
+                                    child: CircularProgressIndicator(),
+                                  ));
                                 }
                                 if (!snapshot.hasData ||
                                     snapshot.data!.isEmpty) {
-                                  return const Center(
-                                      child: Padding(
-                                    padding: EdgeInsets.all(40.0),
-                                    child: Text("No users found"),
-                                  ));
+                                  return _buildEmptyState();
                                 }
 
                                 // Filter
@@ -113,12 +110,14 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                                   return email.contains(q) || name.contains(q);
                                 }).toList();
 
+                                if (users.isEmpty) return _buildEmptyState();
+
                                 return ListView.separated(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
                                   itemCount: users.length,
-                                  separatorBuilder: (context, index) =>
-                                      Divider(color: Colors.grey.shade100),
+                                  separatorBuilder: (context, index) => Divider(
+                                      height: 1, color: Colors.grey.shade100),
                                   itemBuilder: (context, index) {
                                     final user = users[index];
                                     return _buildUserRow(context, user);
@@ -126,8 +125,8 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                                 );
                               },
                             ),
-                          ],
-                        ),
+                          )
+                        ],
                       ),
                     ),
                     const SizedBox(height: 60),
@@ -142,6 +141,9 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     });
   }
 
+  // Extension for Row to fix 'items' param error above, but Row uses children.
+  // Wait, I made a mistake in the previous logic block 'items: [...]'. fixing inline.
+
   Widget _buildHeaderTitle() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,16 +151,16 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         Text(
           "User Management",
           style: GoogleFonts.outfit(
-            fontSize: 28,
+            fontSize: 32,
             fontWeight: FontWeight.bold,
             color: AppTheme.darkText,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          "Manage roles and permissions for all users",
+          "Manage roles and access for all users",
           style: GoogleFonts.inter(
-            color: Colors.grey.shade500,
+            color: Colors.grey.shade600,
             fontSize: 16,
           ),
         ),
@@ -168,20 +170,23 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
 
   Widget _buildSearchBar({bool fullWidth = false}) {
     return SizedBox(
-      width: fullWidth ? double.infinity : 300,
+      width: fullWidth ? double.infinity : 320,
       child: TextField(
         controller: _searchController,
         onChanged: (val) {
           setState(() => _searchQuery = val);
         },
         decoration: InputDecoration(
-          hintText: "Search by email or name...",
-          prefixIcon: const Icon(Icons.search),
+          hintText: "Search users...",
+          prefixIcon: const Icon(Icons.search, size: 20),
+          filled: true,
+          fillColor: Colors.grey.shade100,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade200),
+            borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
     );
@@ -194,29 +199,30 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     final String uid = user['uid'] ?? '';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+            backgroundColor: _getRoleColor(role).withOpacity(0.1),
+            foregroundColor: _getRoleColor(role),
+            radius: 24,
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : 'U',
-              style: TextStyle(
-                  color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
           Expanded(
             flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16)),
+                    style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w600, fontSize: 16)),
                 Text(email,
-                    style:
-                        TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+                    style: GoogleFonts.inter(
+                        color: Colors.grey.shade500, fontSize: 14)),
               ],
             ),
           ),
@@ -225,13 +231,26 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
             child: _buildRoleBadge(role),
           ),
           IconButton(
-            icon: Icon(Icons.edit_outlined, color: Colors.grey.shade600),
+            icon: Icon(Icons.edit_outlined, color: Colors.grey.shade400),
             tooltip: "Edit Role",
             onPressed: () => _showEditRoleDialog(context, uid, name, role),
           ),
         ],
       ),
     );
+  }
+
+  Color _getRoleColor(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return Colors.red;
+      case 'manager':
+        return Colors.purple;
+      case 'conductor':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildRoleBadge(String role) {
@@ -241,16 +260,16 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
 
     switch (role.toLowerCase()) {
       case 'admin':
-        bg = Colors.red.shade100;
-        text = Colors.red.shade800;
+        bg = Colors.red.shade50;
+        text = Colors.red.shade700;
         break;
       case 'manager':
-        bg = Colors.purple.shade100;
-        text = Colors.purple.shade800;
+        bg = Colors.purple.shade50;
+        text = Colors.purple.shade700;
         break;
       case 'conductor':
-        bg = Colors.blue.shade100;
-        text = Colors.blue.shade800;
+        bg = Colors.blue.shade50;
+        text = Colors.blue.shade700;
         break;
       default:
         bg = Colors.grey.shade100;
@@ -263,13 +282,33 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(20),
-        ),
+            color: bg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+                color: bg == Colors.grey.shade100
+                    ? Colors.transparent
+                    : text.withOpacity(0.2))),
         child: Text(
           label,
-          style:
-              TextStyle(color: text, fontWeight: FontWeight.bold, fontSize: 12),
+          style: GoogleFonts.inter(
+              color: text, fontWeight: FontWeight.bold, fontSize: 11),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(Icons.person_off_outlined,
+                size: 48, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text("No users found",
+                style: GoogleFonts.inter(color: Colors.grey.shade500))
+          ],
         ),
       ),
     );
@@ -286,13 +325,17 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text("Manage Roles for $name"),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              title: Text("Edit Role",
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Assign a role to this user:"),
-                  const SizedBox(height: 16),
+                  Text("Assign a role to $name",
+                      style: GoogleFonts.inter(color: Colors.grey)),
+                  const SizedBox(height: 20),
                   _buildRadioTile("Customer", "customer", selectedRole,
                       (v) => setState(() => selectedRole = v!)),
                   _buildRadioTile("Conductor", "conductor", selectedRole,
@@ -306,7 +349,8 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel"),
+                  child: Text("Cancel",
+                      style: GoogleFonts.inter(color: Colors.grey)),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -318,7 +362,9 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8))),
                   child: const Text("Save Changes"),
                 ),
               ],
@@ -334,13 +380,23 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     final bool isSelected = value == groupValue;
     return InkWell(
       onTap: () => onChanged(value),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+            color: isSelected
+                ? AppTheme.primaryColor.withOpacity(0.05)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+                color:
+                    isSelected ? AppTheme.primaryColor : Colors.grey.shade200)),
         child: Row(
           children: [
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: isSelected ? AppTheme.primaryColor : Colors.grey,
+              color: isSelected ? AppTheme.primaryColor : Colors.grey.shade400,
               size: 20,
             ),
             const SizedBox(width: 12),

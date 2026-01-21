@@ -21,115 +21,153 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
-    final isDesktop = MediaQuery.of(context).size.width > 800;
+    final isDesktop = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       body: Column(
         children: [
-          // Admin Navbar
           const AdminNavBar(selectedIndex: 0),
-
           Expanded(
             child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                vertical: isDesktop ? 40 : 20,
+                horizontal: isDesktop ? 40 : 16,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 40),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 1. Header & Welcome
+                        Text("Dashboard",
+                            style: GoogleFonts.outfit(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.darkText)),
+                        Text("Welcome back, Admin",
+                            style: GoogleFonts.inter(
+                                color: Colors.grey.shade600, fontSize: 16)),
+                        const SizedBox(height: 30),
 
-                  // Title Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
-                      child: Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        // 2. Quick Actions Row (Scrollable)
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
                             children: [
-                              Text("Route Management",
-                                  style: GoogleFonts.outfit(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.darkText)),
-                              Text(
-                                  "Manage bus schedules, fares, and availability.",
-                                  style: GoogleFonts.inter(
-                                      color: Colors.grey, fontSize: 16)),
+                              _quickActionButton(
+                                context,
+                                "Add New Trip",
+                                Icons.add,
+                                Colors.red.shade700,
+                                Colors.white,
+                                onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const AdminScreen(trip: null))),
+                              ),
+                              const SizedBox(width: 12),
+                              _quickActionButton(
+                                context,
+                                "Add Route",
+                                Icons.alt_route,
+                                const Color(0xFF1E1E1E), // Dark
+                                Colors.white,
+                                onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const AdminScreen(trip: null))),
+                              ),
+                              const SizedBox(width: 12),
+                              _quickActionButton(
+                                context,
+                                "Manage Routes",
+                                Icons.map_outlined,
+                                Colors.white,
+                                Colors.black87,
+                                hasBorder: true,
+                              ),
+                              const SizedBox(width: 12),
+                              _quickActionButton(
+                                context,
+                                "Refunds",
+                                Icons.monetization_on_outlined,
+                                Colors.white,
+                                Colors.black87,
+                                hasBorder: true,
+                              ),
+                              const SizedBox(width: 12),
+                              _quickActionButton(
+                                context,
+                                "Bookings",
+                                Icons.confirmation_number_outlined,
+                                Colors.white,
+                                Colors.black87,
+                                hasBorder: true,
+                              ),
+                              const SizedBox(width: 12),
+                              _quickActionButton(
+                                context,
+                                "Analytics",
+                                Icons.bar_chart_outlined,
+                                Colors.white,
+                                Colors.black87,
+                                hasBorder: true,
+                              ),
+                              const SizedBox(width: 12),
+                              _quickActionButton(
+                                context,
+                                "App Feedback",
+                                Icons.feedback_outlined,
+                                Colors.white,
+                                Colors.black87,
+                                hasBorder: true,
+                              ),
                             ],
                           ),
-                          const Spacer(),
-                          if (isDesktop) _buildAddRouteButton(context)
-                        ],
-                      ),
-                    ),
-                  ),
+                        ),
+                        const SizedBox(height: 40),
 
-                  const SizedBox(height: 32),
+                        // 3. Search Section
+                        _buildSearchSection(context, controller, isDesktop),
+                        const SizedBox(height: 30),
 
-                  // Mobile Add Button
-                  if (!isDesktop) ...[
-                    _buildAddRouteButton(context),
-                    const SizedBox(height: 24),
-                  ],
+                        // 4. Results
+                        Consumer<TripController>(
+                          builder: (context, ctl, _) {
+                            if (ctl.isLoading) {
+                              return const Center(
+                                  child: Padding(
+                                padding: EdgeInsets.all(40.0),
+                                child: CircularProgressIndicator(),
+                              ));
+                            }
 
-                  // Search Section
-                  _buildSearchSection(context, controller, isDesktop),
+                            if (ctl.searchResults.isEmpty) {
+                              return _buildEmptyState();
+                            }
 
-                  const SizedBox(height: 32),
-
-                  // Results Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
-                      child: Consumer<TripController>(
-                        builder: (context, ctl, _) {
-                          if (ctl.isLoading) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          }
-
-                          // If search was performed and we have results
-                          // Note: ctl.searchResults might be empty initially or after search
-                          // We can check if filters are active or just show all/none.
-                          // Assuming search has been run or we show a default list.
-
-                          if (ctl.searchResults.isEmpty) {
-                            return Container(
-                              padding: const EdgeInsets.all(40),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.grey.shade200),
-                              ),
-                              child: Column(
-                                children: [
-                                  Icon(Icons.search_off,
-                                      size: 64, color: Colors.grey.shade300),
+                            return ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: ctl.searchResults.length,
+                              separatorBuilder: (context, index) =>
                                   const SizedBox(height: 16),
-                                  Text("No routes found matching your criteria",
-                                      style: GoogleFonts.inter(
-                                          fontSize: 16, color: Colors.grey)),
-                                ],
-                              ),
+                              itemBuilder: (context, index) {
+                                return _buildResultCard(
+                                    context, ctl.searchResults[index], ctl);
+                              },
                             );
-                          }
-
-                          return ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: ctl.searchResults.length,
-                            itemBuilder: (context, index) {
-                              return _buildResultRow(
-                                  context, ctl.searchResults[index], ctl);
-                            },
-                          );
-                        },
-                      ),
+                          },
+                        ),
+                      ],
                     ),
                   ),
-
                   const SizedBox(height: 60),
                   const AdminFooter(),
                 ],
@@ -141,113 +179,120 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildAddRouteButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AdminScreen(trip: null)));
-      },
-      icon: const Icon(Icons.add),
-      label: const Text("Add New Route"),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+  Widget _quickActionButton(
+      BuildContext context, String label, IconData icon, Color bg, Color fg,
+      {bool hasBorder = false, VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap ?? () {},
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(30), // Pill shape
+          border: hasBorder ? Border.all(color: Colors.grey.shade300) : null,
+          boxShadow: hasBorder
+              ? []
+              : [
+                  BoxShadow(
+                      color: bg.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4))
+                ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: fg, size: 20),
+            const SizedBox(width: 8),
+            Text(label,
+                style: GoogleFonts.inter(
+                    color: fg, fontWeight: FontWeight.w600, fontSize: 14)),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSearchSection(
       BuildContext context, TripController controller, bool isDesktop) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1000),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("FIND ROUTES",
-                  style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                      letterSpacing: 1)),
-              const SizedBox(height: 20),
-              if (isDesktop)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                        child: _buildSearchInput(context, controller, true)),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () => controller.searchTrips(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black87,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                        ),
-                        child: const Text("Search"),
-                      ),
-                    ),
-                  ],
-                )
-              else
-                Column(
-                  children: [
-                    _buildSearchInput(context, controller, false),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () => controller.searchTrips(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black87,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                        ),
-                        child: const Text("Search"),
-                      ),
-                    ),
-                  ],
-                )
-            ],
-          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("FIND ROUTES",
+              style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade400,
+                  letterSpacing: 1.2)),
+          const SizedBox(height: 20),
+          if (isDesktop)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(child: _buildSearchInput(context, controller, true)),
+                const SizedBox(width: 16),
+                _buildSearchButton(context, controller),
+              ],
+            )
+          else
+            Column(
+              children: [
+                _buildSearchInput(context, controller, false),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: _buildSearchButton(context, controller),
+                ),
+              ],
+            )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchButton(BuildContext context, TripController controller) {
+    return SizedBox(
+      height: 54, // Match input height
+      child: ElevatedButton(
+        onPressed: () => controller.searchTrips(context),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
+        child: const Text("Search"),
       ),
     );
   }
 
   Widget _buildSearchInput(
       BuildContext context, TripController controller, bool isDesktop) {
-    // Basic fields
     final originField = _dropdown(
-        hint: "Origin",
+        hint: "From",
+        icon: Icons.flight_takeoff,
         value: controller.fromCity,
         items: AppConstants.cities,
         onChanged: (v) => controller.setFromCity(v));
 
     final destField = _dropdown(
-        hint: "Destination",
+        hint: "To",
+        icon: Icons.flight_land,
         value: controller.toCity,
         items: AppConstants.cities,
         onChanged: (v) => controller.setToCity(v));
@@ -259,25 +304,40 @@ class _AdminDashboardState extends State<AdminDashboard> {
           initialDate: controller.travelDate ?? DateTime.now(),
           firstDate: DateTime.now().subtract(const Duration(days: 365)),
           lastDate: DateTime.now().add(const Duration(days: 365)),
+          builder: (context, child) {
+            return Theme(
+              data: ThemeData.light().copyWith(
+                primaryColor: AppTheme.primaryColor,
+                colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
+              ),
+              child: child!,
+            );
+          },
         );
         if (picked != null) controller.setDate(picked);
       },
       child: Container(
-        height: 50,
+        height: 54,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+            Icon(Icons.calendar_today_outlined,
+                size: 20, color: Colors.grey.shade600),
             const SizedBox(width: 12),
             Text(
               controller.travelDate != null
-                  ? DateFormat('yyyy-MM-dd').format(controller.travelDate!)
+                  ? DateFormat('EEE, MMM d').format(controller.travelDate!)
                   : "Select Date",
-              style: GoogleFonts.inter(color: Colors.black87),
+              style: GoogleFonts.inter(
+                  color: controller.travelDate != null
+                      ? Colors.black87
+                      : Colors.grey.shade500,
+                  fontWeight: FontWeight.w500),
             )
           ],
         ),
@@ -287,11 +347,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
     if (isDesktop) {
       return Row(
         children: [
-          Expanded(flex: 2, child: originField),
+          Expanded(child: originField),
           const SizedBox(width: 16),
-          Expanded(flex: 2, child: destField),
+          Expanded(child: destField),
           const SizedBox(width: 16),
-          Expanded(flex: 2, child: dateField),
+          Expanded(child: dateField),
         ],
       );
     } else {
@@ -309,6 +369,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _dropdown(
       {required String hint,
+      required IconData icon,
       required String? value,
       required List<String> items,
       required Function(String?) onChanged}) {
@@ -316,120 +377,166 @@ class _AdminDashboardState extends State<AdminDashboard> {
       initialValue: items.contains(value) ? value : null,
       decoration: InputDecoration(
         labelText: hint,
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade300)),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        prefixIcon: Icon(icon, color: Colors.grey.shade500, size: 20),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade200)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppTheme.primaryColor)),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
+      icon: const Icon(Icons.keyboard_arrow_down),
       items:
           items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
       onChanged: onChanged,
     );
   }
 
-  Widget _buildResultRow(
-      BuildContext context, Trip trip, TripController controller) {
+  Widget _buildEmptyState() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.all(60),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.search_off_rounded,
+                size: 40, color: Colors.grey.shade400),
+          ),
+          const SizedBox(height: 20),
+          Text("No routes found",
+              style: GoogleFonts.outfit(
+                  fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text("Try adjusting your search criteria",
+              style: GoogleFonts.inter(color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResultCard(
+      BuildContext context, Trip trip, TripController controller) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          // Bus Icon
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child:
-                const Icon(Icons.directions_bus, color: AppTheme.primaryColor),
+          // Left: Time & Icon
+          Column(
+            children: [
+              Text(DateFormat('HH:mm').format(trip.departureTime),
+                  style: GoogleFonts.outfit(
+                      fontSize: 20, fontWeight: FontWeight.bold)),
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                height: 40,
+                width: 2,
+                color: Colors.grey.shade200,
+              ),
+              Text(DateFormat('HH:mm').format(trip.arrivalTime),
+                  style: GoogleFonts.outfit(
+                      fontSize: 16, color: Colors.grey.shade500)),
+            ],
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 24),
 
-          // Details
+          // Middle: Route Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text(
-                      "${trip.fromCity} ➝ ${trip.toCity}",
-                      style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.bold, fontSize: 18),
-                    ),
+                    Text("${trip.fromCity} ➝ ${trip.toCity}",
+                        style: GoogleFonts.outfit(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(4)),
-                      child: Text(trip.busType,
-                          style: GoogleFonts.inter(
-                              fontSize: 10, fontWeight: FontWeight.bold)),
-                    )
+                    _tag(trip.busType, Colors.blue.shade50,
+                        Colors.blue.shade700),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  "Departs: ${DateFormat('HH:mm').format(trip.departureTime)} • Arrives: ${DateFormat('HH:mm').format(trip.arrivalTime)}",
-                  style: GoogleFonts.inter(color: Colors.grey.shade600),
-                ),
-                if (trip.via.isNotEmpty)
-                  Text(
-                    "Via: ${trip.via}",
-                    style: GoogleFonts.inter(
-                        color: Colors.grey.shade500, fontSize: 12),
-                  ),
+                Row(
+                  children: [
+                    Icon(Icons.directions_bus_outlined,
+                        size: 16, color: Colors.grey.shade500),
+                    const SizedBox(width: 6),
+                    Text(trip.operatorName,
+                        style: GoogleFonts.inter(color: Colors.grey.shade600)),
+                    const SizedBox(width: 16),
+                    if (trip.via.isNotEmpty) ...[
+                      Icon(Icons.alt_route_outlined,
+                          size: 16, color: Colors.grey.shade500),
+                      const SizedBox(width: 6),
+                      Text("Via ${trip.via}",
+                          style:
+                              GoogleFonts.inter(color: Colors.grey.shade600)),
+                    ]
+                  ],
+                )
               ],
             ),
           ),
 
-          // Actions
-          if (MediaQuery.of(context).size.width > 600) ...[
-            OutlinedButton(
+          // Right: Actions
+          Row(
+            children: [
+              IconButton(
                 onPressed: () {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (_) => AdminScreen(trip: trip)));
                 },
-                child: const Text("Edit Route")),
-            const SizedBox(width: 12),
-            IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: "Edit",
+              ),
+              IconButton(
                 onPressed: () => _confirmDelete(context, controller, trip.id),
-                icon: const Icon(Icons.delete_outline, color: Colors.red))
-          ] else ...[
-            PopupMenuButton(
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'edit', child: Text("Edit Route")),
-                const PopupMenuItem(
-                    value: 'delete',
-                    child: Text("Delete Bus",
-                        style: TextStyle(color: Colors.red))),
-              ],
-              onSelected: (val) {
-                if (val == 'edit') {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => AdminScreen(trip: trip)));
-                } else {
-                  _confirmDelete(context, controller, trip.id);
-                }
-              },
-            )
-          ]
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                tooltip: "Delete",
+              ),
+            ],
+          )
         ],
       ),
+    );
+  }
+
+  Widget _tag(String text, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(text,
+          style: GoogleFonts.inter(
+              fontSize: 11, fontWeight: FontWeight.bold, color: fg)),
     );
   }
 

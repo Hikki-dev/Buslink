@@ -209,389 +209,227 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final isDesktop = constraints.maxWidth > 800;
+      final isDesktop = constraints.maxWidth > 900;
       return Scaffold(
         backgroundColor: Colors.grey.shade50,
         body: Column(
           children: [
-            // Nav
-            const AdminNavBar(selectedIndex: 0), // Keeping 0 or handling back
-
+            const AdminNavBar(selectedIndex: 0),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
                     vertical: isDesktop ? 40 : 20,
-                    horizontal: isDesktop ? 24 : 16),
+                    horizontal: isDesktop ? 40 : 16),
                 child: Column(
                   children: [
-                    // Form Container
                     Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 800),
-                        child: Container(
-                          padding: EdgeInsets.all(isDesktop ? 32 : 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 20,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Header
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primaryColor
-                                            .withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Icon(
-                                          isEditing
-                                              ? Icons.edit
-                                              : Icons.add_road,
-                                          color: AppTheme.primaryColor),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Text(
-                                      isEditing
-                                          ? "Edit Route"
-                                          : "Add New Route",
-                                      style: GoogleFonts.outfit(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 32),
-
-                                _buildSectionHeader("A) Route Details"),
-
-                                // From / To
-                                Row(
-                                  children: [
-                                    Expanded(
-                                        child: _buildDropdown(
-                                            "From (Origin)",
-                                            _fromCity,
-                                            AppConstants.cities,
-                                            (v) => _fromCity = v)),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                        child: _buildDropdown(
-                                            "To (Destination)",
-                                            _toCity,
-                                            AppConstants.cities,
-                                            (v) => _toCity = v)),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-
-                                // Via / Duration
-                                Row(
-                                  children: [
-                                    Expanded(
-                                        child: _buildDropdown(
-                                            "Via / Route Variant",
-                                            _viaRoute,
-                                            _viaOptions,
-                                            (v) => _viaRoute = v)),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: TextFormField(
-                                        controller: _durationController,
-                                        readOnly: true,
-                                        onTap: () async {
-                                          TimeOfDay initial = const TimeOfDay(
-                                              hour: 3, minute: 30);
-                                          if (_durationController.text
-                                              .contains(':')) {
-                                            final parts = _durationController
-                                                .text
-                                                .split(':');
-                                            if (parts.length == 2) {
-                                              initial = TimeOfDay(
-                                                  hour:
-                                                      int.tryParse(parts[0]) ??
-                                                          3,
-                                                  minute:
-                                                      int.tryParse(parts[1]) ??
-                                                          30);
-                                            }
-                                          }
-
-                                          final TimeOfDay? picked =
-                                              await showTimePicker(
-                                            context: context,
-                                            initialTime: initial,
-                                            helpText: "SELECT TRAVEL DURATION",
-                                            initialEntryMode:
-                                                TimePickerEntryMode.input,
-                                            builder: (context, child) {
-                                              return MediaQuery(
-                                                data: MediaQuery.of(context)
-                                                    .copyWith(
-                                                        alwaysUse24HourFormat:
-                                                            true),
-                                                child: child!,
-                                              );
-                                            },
-                                          );
-
-                                          if (picked != null) {
-                                            final h = picked.hour
-                                                .toString()
-                                                .padLeft(2, '0');
-                                            final m = picked.minute
-                                                .toString()
-                                                .padLeft(2, '0');
-                                            setState(() {
-                                              _durationController.text =
-                                                  "$h:$m";
-                                              _calculateArrival();
-                                            });
-                                          }
-                                        },
-                                        decoration: const InputDecoration(
-                                          labelText: "Duration (HH:MM)",
-                                          border: OutlineInputBorder(),
-                                          hintText: "Tap to select",
-                                          suffixIcon:
-                                              Icon(Icons.timer_outlined),
-                                        ),
-                                        validator: (v) {
-                                          if (v == null || v.isEmpty) {
-                                            return "Required";
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 32),
-                                _buildSectionHeader("B) Schedule"),
-
-                                // Times
-                                Row(
-                                  children: [
-                                    Expanded(
-                                        child: _buildTimePicker(
-                                            "Departure Time", _departureTime,
-                                            (d) {
-                                      setState(() => _departureTime = d);
-                                      _calculateArrival();
-                                    })),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                        child: _buildTimePicker(
-                                            "Arrival Time",
-                                            _arrivalTime,
-                                            (d) => setState(
-                                                () => _arrivalTime = d))),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 20),
-
-                                // Toggle: Recurring vs Single
-                                if (!isEditing)
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header
+                              Row(
+                                children: [
                                   Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 8),
+                                    padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                        color: Colors.grey.shade100,
-                                        borderRadius: BorderRadius.circular(8)),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text("Schedule Type:",
-                                            style: GoogleFonts.inter(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14)),
-                                        const SizedBox(width: 16),
-                                        ToggleButtons(
-                                          isSelected: [
-                                            _isRecurring,
-                                            !_isRecurring
-                                          ],
-                                          onPressed: (index) {
-                                            setState(() {
-                                              _isRecurring = index == 0;
-                                            });
-                                          },
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          selectedColor: Colors.white,
-                                          fillColor: AppTheme.primaryColor,
-                                          children: const [
-                                            Padding(
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 16),
-                                                child: Text("Recurring Route")),
-                                            Padding(
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 16),
-                                                child: Text("One-Time Trip")),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                                        color: AppTheme.primaryColor,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                              color: AppTheme.primaryColor
+                                                  .withOpacity(0.3),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4))
+                                        ]),
+                                    child: Icon(
+                                        isEditing ? Icons.edit : Icons.add_road,
+                                        color: Colors.white,
+                                        size: 24),
                                   ),
-                                const SizedBox(height: 16),
+                                  const SizedBox(width: 20),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                          isEditing
+                                              ? "Edit Route"
+                                              : "Add New Route",
+                                          style: GoogleFonts.outfit(
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.darkText)),
+                                      Text(
+                                          "Fill in the details below to ${isEditing ? 'update' : 'create'} a bus route.",
+                                          style: GoogleFonts.inter(
+                                              color: Colors.grey.shade600)),
+                                    ],
+                                  )
+                                ],
+                              ),
+                              const SizedBox(height: 40),
 
-                                if (_isRecurring) ...[
-                                  Text("Operating Days (Weekly)",
-                                      style: GoogleFonts.inter(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14)),
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 10,
-                                    children: _daysOfWeek.map((day) {
-                                      final isSelected =
-                                          _operatingDays.contains(day);
-                                      return FilterChip(
-                                        label: Text(day.substring(0, 3)),
-                                        selected: isSelected,
-                                        onSelected: (selected) {
-                                          setState(() {
-                                            if (selected) {
-                                              _operatingDays.add(day);
-                                            } else {
-                                              _operatingDays.remove(day);
-                                            }
-                                          });
-                                        },
-                                        checkmarkColor: Colors.white,
-                                        selectedColor: AppTheme.primaryColor,
-                                        labelStyle: TextStyle(
-                                            color: isSelected
-                                                ? Colors.white
-                                                : Colors.black87),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ] else ...[
-                                  Text("Trip Date",
-                                      style: GoogleFonts.inter(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14)),
-                                  const SizedBox(height: 8),
-                                  InkWell(
-                                    onTap: () async {
-                                      final picked = await showDatePicker(
-                                        context: context,
-                                        initialDate:
-                                            _tripDate ?? DateTime.now(),
-                                        firstDate: DateTime.now(),
-                                        lastDate: DateTime.now()
-                                            .add(const Duration(days: 365)),
-                                      );
-                                      if (picked != null) {
-                                        setState(() => _tripDate = picked);
-                                      }
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.grey.shade400),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Row(
+                              // A) Route Details Card
+                              _buildCard(
+                                  title: "Route Details",
+                                  icon: Icons.map,
+                                  child: Column(
+                                    children: [
+                                      Row(
                                         children: [
-                                          Icon(Icons.calendar_month,
-                                              color: Colors.grey.shade600),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            _tripDate == null
-                                                ? "Select Date"
-                                                : DateFormat('EEE, MMM d, yyyy')
-                                                    .format(_tripDate!),
-                                            style: GoogleFonts.inter(
-                                                fontSize: 16,
-                                                color: _tripDate == null
-                                                    ? Colors.grey
-                                                    : Colors.black87),
-                                          ),
+                                          Expanded(
+                                              child: _buildDropdown(
+                                                  "From (Origin)",
+                                                  Icons.flight_takeoff,
+                                                  _fromCity,
+                                                  AppConstants.cities,
+                                                  (v) => _fromCity = v)),
+                                          const SizedBox(width: 20),
+                                          Expanded(
+                                              child: _buildDropdown(
+                                                  "To (Destination)",
+                                                  Icons.flight_land,
+                                                  _toCity,
+                                                  AppConstants.cities,
+                                                  (v) => _toCity = v)),
                                         ],
                                       ),
-                                    ),
+                                      const SizedBox(height: 20),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                              child: _buildDropdown(
+                                                  "Via / Route Variant",
+                                                  Icons.alt_route,
+                                                  _viaRoute,
+                                                  _viaOptions,
+                                                  (v) => _viaRoute = v)),
+                                          const SizedBox(width: 20),
+                                          Expanded(
+                                              child: _buildDurationField()),
+                                        ],
+                                      )
+                                    ],
+                                  )),
+                              const SizedBox(height: 24),
+
+                              // B) Schedule Card
+                              _buildCard(
+                                  title: "Schedule & Timing",
+                                  icon: Icons.schedule,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                              child: _buildTimePicker(
+                                                  "Departure Time",
+                                                  _departureTime, (d) {
+                                            setState(() => _departureTime = d);
+                                            _calculateArrival();
+                                          })),
+                                          const SizedBox(width: 20),
+                                          Expanded(
+                                              child: _buildTimePicker(
+                                                  "Arrival Time",
+                                                  _arrivalTime,
+                                                  (d) => setState(
+                                                      () => _arrivalTime = d))),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 24),
+                                      if (!isEditing)
+                                        _buildScheduleTypeToggle(),
+                                      const SizedBox(height: 24),
+                                      if (_isRecurring)
+                                        _buildRecurringDaysSelector()
+                                      else
+                                        _buildSingleDatePicker()
+                                    ],
+                                  )),
+                              const SizedBox(height: 24),
+
+                              // C) Bus Info Card
+                              _buildCard(
+                                  title: "Fare & Bus Information",
+                                  icon: Icons.directions_bus,
+                                  child: Column(
+                                    children: [
+                                      _buildTextField(
+                                          "Fare Amount (LKR)", _fareController,
+                                          isNumber: true,
+                                          icon: Icons.attach_money),
+                                      const SizedBox(height: 20),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                              child: _buildTextField(
+                                                  "Bus Number",
+                                                  _busNumberController,
+                                                  icon: Icons
+                                                      .confirmation_number)),
+                                          const SizedBox(width: 20),
+                                          Expanded(
+                                              child: _buildTextField(
+                                                  "Operator Name",
+                                                  _operatorController,
+                                                  icon: Icons.person)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                              child: _buildTextField(
+                                                  "Total Seats",
+                                                  _seatsController,
+                                                  isNumber: true,
+                                                  icon: Icons.event_seat)),
+                                          const SizedBox(width: 20),
+                                          Expanded(
+                                              child: _buildTextField(
+                                                  "Platform No.",
+                                                  _platformController,
+                                                  icon: Icons.signpost)),
+                                        ],
+                                      ),
+                                    ],
+                                  )),
+
+                              const SizedBox(height: 40),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 60,
+                                child: ElevatedButton(
+                                  onPressed: _save,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryColor,
+                                    foregroundColor: Colors.white,
+                                    elevation: 5,
+                                    shadowColor:
+                                        AppTheme.primaryColor.withOpacity(0.4),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
                                   ),
-                                ],
-
-                                const SizedBox(height: 32),
-                                _buildSectionHeader("C) Fare & Bus Info"),
-
-                                _buildTextField(
-                                    "Fare Amount (LKR)", _fareController,
-                                    isNumber: true, icon: Icons.attach_money),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                        child: _buildTextField(
-                                            "Bus Number", _busNumberController,
-                                            icon: Icons.directions_bus)),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                        child: _buildTextField("Operator Name",
-                                            _operatorController,
-                                            icon: Icons.person)),
-                                  ],
+                                  child: Text(
+                                      isEditing
+                                          ? "SAVE CHANGES"
+                                          : "CREATE ROUTE",
+                                      style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          letterSpacing: 1)),
                                 ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                        child: _buildTextField(
-                                            "Total Seats", _seatsController,
-                                            isNumber: true,
-                                            icon: Icons.event_seat)),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                        child: _buildTextField(
-                                            "Platform No.", _platformController,
-                                            icon: Icons.signpost)),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 48),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 56,
-                                  child: ElevatedButton(
-                                    onPressed: _save,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.primaryColor,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12)),
-                                    ),
-                                    child: Text(
-                                        isEditing
-                                            ? "SAVE CHANGES"
-                                            : "ADD ROUTE",
-                                        style: GoogleFonts.outfit(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16)),
-                                  ),
-                                )
-                              ],
-                            ),
+                              ),
+                              const SizedBox(height: 40),
+                            ],
                           ),
                         ),
                       ),
@@ -608,37 +446,258 @@ class _AdminScreenState extends State<AdminScreen> {
     });
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+  Widget _buildCard(
+      {required String title, required IconData icon, required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 20,
+                offset: const Offset(0, 10))
+          ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.darkText)),
-          const Divider(),
+          Row(
+            children: [
+              Icon(icon, color: AppTheme.primaryColor, size: 20),
+              const SizedBox(width: 12),
+              Text(title,
+                  style: GoogleFonts.outfit(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.darkText)),
+            ],
+          ),
+          const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Divider(height: 1)),
+          child
         ],
       ),
     );
   }
 
-  Widget _buildDropdown(String label, String? value, List<String> items,
-      Function(String?) onChanged) {
+  Widget _buildScheduleTypeToggle() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+          color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _toggleItem("Recurring Route", _isRecurring,
+              () => setState(() => _isRecurring = true)),
+          _toggleItem("One-Time Trip", !_isRecurring,
+              () => setState(() => _isRecurring = false)),
+        ],
+      ),
+    );
+  }
+
+  Widget _toggleItem(String label, bool isSelected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+              color: isSelected ? Colors.white : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2))
+                    ]
+                  : []),
+          child: Text(label,
+              style: GoogleFonts.inter(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? Colors.black : Colors.grey.shade600))),
+    );
+  }
+
+  Widget _buildRecurringDaysSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Operating Days",
+            style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          children: _daysOfWeek.map((day) {
+            final isSelected = _operatingDays.contains(day);
+            return FilterChip(
+              label: Text(day.substring(0, 3)),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    _operatingDays.add(day);
+                  } else {
+                    _operatingDays.remove(day);
+                  }
+                });
+              },
+              checkmarkColor: Colors.white,
+              selectedColor: AppTheme.primaryColor,
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(
+                      color: isSelected
+                          ? AppTheme.primaryColor
+                          : Colors.grey.shade200)),
+              labelStyle:
+                  TextStyle(color: isSelected ? Colors.white : Colors.black87),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSingleDatePicker() {
+    return InkWell(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: _tripDate ?? DateTime.now(),
+          firstDate: DateTime.now(),
+          lastDate: DateTime.now().add(const Duration(days: 365)),
+          builder: (context, child) {
+            return Theme(
+              data: ThemeData.light().copyWith(
+                primaryColor: AppTheme.primaryColor,
+                colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
+              ),
+              child: child!,
+            );
+          },
+        );
+        if (picked != null) {
+          setState(() => _tripDate = picked);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.grey.shade50),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_month, color: Colors.grey.shade600),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Trip Date",
+                    style: GoogleFonts.inter(
+                        fontSize: 12, color: Colors.grey.shade500)),
+                Text(
+                  _tripDate == null
+                      ? "Select Date"
+                      : DateFormat('EEE, MMM d, yyyy').format(_tripDate!),
+                  style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: _tripDate == null ? Colors.grey : Colors.black87),
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(String label, IconData icon, String? value,
+      List<String> items, Function(String?) onChanged) {
     return DropdownButtonFormField<String>(
       initialValue: items.contains(value) ? value : null,
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        prefixIcon: Icon(icon, color: Colors.grey.shade500, size: 20),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade200)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppTheme.primaryColor)),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
+      icon: const Icon(Icons.keyboard_arrow_down),
       items:
           items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
       onChanged: onChanged,
       validator: (v) => v == null ? "Required" : null,
+    );
+  }
+
+  Widget _buildDurationField() {
+    return TextFormField(
+      controller: _durationController,
+      readOnly: true,
+      onTap: () async {
+        // ... (Time picker logic same as before, condensed for brevity or reuse)
+        // Simplified implementation for cleaner replacement:
+        TimeOfDay initial = const TimeOfDay(hour: 3, minute: 30);
+        if (_durationController.text.contains(':')) {
+          final parts = _durationController.text.split(':');
+          if (parts.length == 2) {
+            initial = TimeOfDay(
+                hour: int.tryParse(parts[0]) ?? 3,
+                minute: int.tryParse(parts[1]) ?? 30);
+          }
+        }
+        final TimeOfDay? picked = await showTimePicker(
+            context: context,
+            initialTime: initial,
+            helpText: "SELECT DURATION",
+            initialEntryMode: TimePickerEntryMode.input,
+            builder: (context, child) {
+              return MediaQuery(
+                  data: MediaQuery.of(context)
+                      .copyWith(alwaysUse24HourFormat: true),
+                  child: child!);
+            });
+
+        if (picked != null) {
+          final h = picked.hour.toString().padLeft(2, '0');
+          final m = picked.minute.toString().padLeft(2, '0');
+          setState(() {
+            _durationController.text = "$h:$m";
+            _calculateArrival();
+          });
+        }
+      },
+      decoration: InputDecoration(
+        labelText: "Duration (HH:MM)",
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        prefixIcon:
+            const Icon(Icons.timer_outlined, color: Colors.grey, size: 20),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade200)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppTheme.primaryColor)),
+      ),
+      validator: (v) => v == null || v.isEmpty ? "Required" : null,
     );
   }
 
@@ -654,14 +713,31 @@ class _AdminScreenState extends State<AdminScreen> {
           onChanged(newDate);
         }
       },
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-          suffixIcon: const Icon(Icons.access_time),
-        ),
-        child: Text(DateFormat('hh:mm a').format(time)),
-      ),
+      child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200)),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label.toUpperCase(),
+                  style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade500)),
+              Row(
+                children: [
+                  Text(DateFormat('HH:mm').format(time),
+                      style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold, fontSize: 18)),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.access_time, size: 16, color: Colors.grey)
+                ],
+              )
+            ],
+          )),
     );
   }
 
@@ -673,9 +749,17 @@ class _AdminScreenState extends State<AdminScreen> {
       inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly] : [],
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
-        suffixIcon:
-            icon != null ? Icon(icon, size: 20, color: Colors.grey) : null,
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        prefixIcon: icon != null
+            ? Icon(icon, size: 20, color: Colors.grey.shade500)
+            : null,
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade200)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppTheme.primaryColor)),
       ),
       validator: (v) => v == null || v.isEmpty ? "Required" : null,
     );
