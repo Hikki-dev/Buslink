@@ -195,7 +195,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ? []
               : [
                   BoxShadow(
-                      color: bg.withOpacity(0.3),
+                      color: bg.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4))
                 ],
@@ -222,7 +222,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -308,7 +308,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             return Theme(
               data: ThemeData.light().copyWith(
                 primaryColor: AppTheme.primaryColor,
-                colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
+                colorScheme:
+                    const ColorScheme.light(primary: AppTheme.primaryColor),
               ),
               child: child!,
             );
@@ -385,7 +386,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             borderSide: BorderSide(color: Colors.grey.shade200)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppTheme.primaryColor)),
+            borderSide: const BorderSide(color: AppTheme.primaryColor)),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
@@ -437,7 +438,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),

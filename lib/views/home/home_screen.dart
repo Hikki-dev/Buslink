@@ -373,7 +373,7 @@ class _CurrentTripStatusCard extends StatelessWidget {
                         decoration: BoxDecoration(
                             color: AppTheme.primaryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20)),
-                        child: Text("Active",
+                        child: const Text("Active",
                             style: TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.primaryColor,
@@ -949,7 +949,7 @@ class _FavoritesList extends StatelessWidget {
                 decoration: BoxDecoration(
                     color: AppTheme.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20)),
-                child: Text("DAILY",
+                child: const Text("DAILY",
                     style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,

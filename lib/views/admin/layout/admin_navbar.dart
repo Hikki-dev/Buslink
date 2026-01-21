@@ -47,7 +47,7 @@ class AdminNavBar extends StatelessWidget {
                     color: AppTheme.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.admin_panel_settings,
+                  child: const Icon(Icons.admin_panel_settings,
                       color: AppTheme.primaryColor),
                 ),
                 const SizedBox(width: 12),
@@ -155,9 +155,9 @@ class AdminNavBar extends StatelessWidget {
 
           // User Profile / Logout
           PopupMenuButton(
-            child: CircleAvatar(
+            child: const CircleAvatar(
               backgroundColor: AppTheme.primaryColor,
-              child: const Icon(Icons.person, color: Colors.white),
+              child: Icon(Icons.person, color: Colors.white),
             ),
             itemBuilder: (context) => [
               const PopupMenuItem(enabled: false, child: Text("Admin User")),

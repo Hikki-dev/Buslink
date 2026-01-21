@@ -103,8 +103,8 @@ void main() {
           ],
           child: Consumer<ThemeController>(
             builder: (context, themeController, child) {
-              return MaterialApp(
-                home: const AuthWrapper(),
+              return const MaterialApp(
+                home: AuthWrapper(),
               );
             },
           ),
@@ -141,8 +141,8 @@ void main() {
           ],
           child: Consumer<ThemeController>(
             builder: (context, themeController, child) {
-              return MaterialApp(
-                home: const AuthWrapper(),
+              return const MaterialApp(
+                home: AuthWrapper(),
               );
             },
           ),

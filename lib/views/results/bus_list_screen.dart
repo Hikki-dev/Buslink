@@ -395,11 +395,11 @@ class _BusListScreenState extends State<BusListScreen> {
                 child: Stack(
                   children: [
                     FlutterMap(
-                      options: MapOptions(
-                        initialCenter: const latlng.LatLng(
-                            7.8731, 80.7718), // Sri Lanka Center
+                      options: const MapOptions(
+                        initialCenter:
+                            latlng.LatLng(7.8731, 80.7718), // Sri Lanka Center
                         initialZoom: 7,
-                        interactionOptions: const InteractionOptions(
+                        interactionOptions: InteractionOptions(
                             flags:
                                 InteractiveFlag.all & ~InteractiveFlag.rotate),
                       ),

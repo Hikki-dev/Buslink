@@ -208,7 +208,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                           radius: 30,
                           backgroundColor:
                               AppTheme.primaryColor.withValues(alpha: 0.1),
-                          child: Icon(Icons.person,
+                          child: const Icon(Icons.person,
                               size: 30, color: AppTheme.primaryColor),
                         ),
                         const SizedBox(width: 20),

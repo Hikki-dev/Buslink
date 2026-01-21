@@ -76,7 +76,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.04),
+                                    color: Colors.black.withValues(alpha: 0.04),
                                     blurRadius: 20,
                                     offset: const Offset(0, 4),
                                   )
@@ -203,7 +203,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: _getRoleColor(role).withOpacity(0.1),
+            backgroundColor: _getRoleColor(role).withValues(alpha: 0.1),
             foregroundColor: _getRoleColor(role),
             radius: 24,
             child: Text(
@@ -287,7 +287,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
             border: Border.all(
                 color: bg == Colors.grey.shade100
                     ? Colors.transparent
-                    : text.withOpacity(0.2))),
+                    : text.withValues(alpha: 0.2))),
         child: Text(
           label,
           style: GoogleFonts.inter(
@@ -386,7 +386,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         decoration: BoxDecoration(
             color: isSelected
-                ? AppTheme.primaryColor.withOpacity(0.05)
+                ? AppTheme.primaryColor.withValues(alpha: 0.05)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(

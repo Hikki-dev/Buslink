@@ -44,8 +44,8 @@ class _LandingHero extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.black.withOpacity(0.4),
-              Colors.black.withOpacity(0.7),
+              Colors.black.withValues(alpha: 0.4),
+              Colors.black.withValues(alpha: 0.7),
             ],
           ),
         ),
@@ -117,7 +117,7 @@ class _LandingHero extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
                               fontSize: isDesktop ? 20 : 16,
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               height: 1.5),
                         ),
                         const SizedBox(height: 48),

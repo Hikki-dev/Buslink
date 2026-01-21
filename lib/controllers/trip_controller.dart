@@ -131,7 +131,7 @@ class TripController extends ChangeNotifier {
       debugPrint("Route created with ID: ${routeRef.id}");
 
       // 2. Generate Trips for next 90 days
-      final int daysToGenerate = 90;
+      const int daysToGenerate = 90;
       final DateTime now = DateTime.now();
 
       // Calculate duration to maintain arrival time relative to departure

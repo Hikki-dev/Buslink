@@ -241,7 +241,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                         boxShadow: [
                                           BoxShadow(
                                               color: AppTheme.primaryColor
-                                                  .withOpacity(0.3),
+                                                  .withValues(alpha: 0.3),
                                               blurRadius: 10,
                                               offset: const Offset(0, 4))
                                         ]),
@@ -412,8 +412,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                     backgroundColor: AppTheme.primaryColor,
                                     foregroundColor: Colors.white,
                                     elevation: 5,
-                                    shadowColor:
-                                        AppTheme.primaryColor.withOpacity(0.4),
+                                    shadowColor: AppTheme.primaryColor
+                                        .withValues(alpha: 0.4),
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(16)),
@@ -455,7 +455,7 @@ class _AdminScreenState extends State<AdminScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 20,
                 offset: const Offset(0, 10))
           ]),
@@ -512,7 +512,7 @@ class _AdminScreenState extends State<AdminScreen> {
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 4,
                           offset: const Offset(0, 2))
                     ]
@@ -578,7 +578,8 @@ class _AdminScreenState extends State<AdminScreen> {
             return Theme(
               data: ThemeData.light().copyWith(
                 primaryColor: AppTheme.primaryColor,
-                colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
+                colorScheme:
+                    const ColorScheme.light(primary: AppTheme.primaryColor),
               ),
               child: child!,
             );
@@ -635,7 +636,7 @@ class _AdminScreenState extends State<AdminScreen> {
             borderSide: BorderSide(color: Colors.grey.shade200)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppTheme.primaryColor)),
+            borderSide: const BorderSide(color: AppTheme.primaryColor)),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
@@ -695,7 +696,7 @@ class _AdminScreenState extends State<AdminScreen> {
             borderSide: BorderSide(color: Colors.grey.shade200)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppTheme.primaryColor)),
+            borderSide: const BorderSide(color: AppTheme.primaryColor)),
       ),
       validator: (v) => v == null || v.isEmpty ? "Required" : null,
     );
@@ -759,7 +760,7 @@ class _AdminScreenState extends State<AdminScreen> {
             borderSide: BorderSide(color: Colors.grey.shade200)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppTheme.primaryColor)),
+            borderSide: const BorderSide(color: AppTheme.primaryColor)),
       ),
       validator: (v) => v == null || v.isEmpty ? "Required" : null,
     );
