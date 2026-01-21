@@ -54,7 +54,7 @@ class DesktopNavBar extends StatelessWidget {
           // Nav Items
           _navItem(context, "Home", 0),
           _navItem(context, "My Trips", 1),
-          _navItem(context, "Favorites", 2),
+          _navItem(context, "Favourites", 2),
           _navItem(context, "Profile", 3),
 
           const Spacer(),

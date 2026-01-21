@@ -21,21 +21,14 @@ class FirestoreService {
     DateTime date,
   ) async {
     final DateTime dayStart = DateTime(date.year, date.month, date.day);
-    final DateTime dayEnd = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      23,
-      59,
-      59,
-    );
+    final DateTime nextDay = dayStart.add(const Duration(days: 1));
 
     final snapshot = await _db
         .collection(tripCollection)
         .where('fromCity', isEqualTo: fromCity)
         .where('toCity', isEqualTo: toCity)
         .where('departureTime', isGreaterThanOrEqualTo: dayStart)
-        .where('departureTime', isLessThanOrEqualTo: dayEnd)
+        .where('departureTime', isLessThan: nextDay)
         .get();
 
     if (snapshot.docs.isEmpty) {

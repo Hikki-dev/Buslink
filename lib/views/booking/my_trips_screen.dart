@@ -44,16 +44,23 @@ class MyTripsScreen extends StatelessWidget {
         ),
         body: user == null
             ? _buildLoginPrompt()
-            : TabBarView(
+            : Column(
                 children: [
-                  _TripsList(
-                      controller: controller,
-                      userId: user.uid,
-                      isHistory: false),
-                  _TripsList(
-                      controller: controller,
-                      userId: user.uid,
-                      isHistory: true),
+                  _TripStatistics(userId: user.uid),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        _TripsList(
+                            controller: controller,
+                            userId: user.uid,
+                            isHistory: false),
+                        _TripsList(
+                            controller: controller,
+                            userId: user.uid,
+                            isHistory: true),
+                      ],
+                    ),
+                  ),
                 ],
               ),
       ),
@@ -70,6 +77,105 @@ class MyTripsScreen extends StatelessWidget {
           Text("Please sign in to view your trips",
               style: GoogleFonts.inter(fontSize: 16, color: Colors.grey)),
         ],
+      ),
+    );
+  }
+}
+
+class _TripStatistics extends StatelessWidget {
+  final String userId;
+  const _TripStatistics({required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    // We need to fetch tickets to count statuses.
+    // TripController has getUserTickets(userId).
+    // We can access it via Provider or new instance if needed, but Provider best.
+    final controller = Provider.of<TripController>(context, listen: false);
+
+    return StreamBuilder<List<Ticket>>(
+      stream: controller.getUserTickets(userId),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+
+        final tickets = snapshot.data!;
+        int upcoming = 0;
+        int delayed = 0;
+        int arrived = 0;
+        int cancelled = 0;
+
+        final now = DateTime.now();
+
+        for (var t in tickets) {
+          final status =
+              (t.tripData['status'] ?? 'scheduled').toString().toLowerCase();
+
+          if (status == 'cancelled') {
+            cancelled++;
+            continue;
+          }
+          if (status == 'delayed') {
+            delayed++;
+          }
+          if (status == 'arrived' || status == 'completed') {
+            arrived++;
+          }
+
+          // Upcoming logic (Date > Now)
+          DateTime? tripDate;
+          if (t.tripData['departureTime'] is Timestamp) {
+            tripDate = (t.tripData['departureTime'] as Timestamp).toDate();
+          } else {
+            tripDate = t.bookingTime;
+          }
+
+          if (tripDate.isAfter(now)) {
+            upcoming++;
+          }
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          color: Colors.white,
+          child: Row(
+            children: [
+              _statBox("Upcoming", "$upcoming", Colors.blue, Icons.schedule),
+              const SizedBox(width: 12),
+              _statBox("Delayed", "$delayed", Colors.orange, Icons.timer_off),
+              const SizedBox(width: 12),
+              _statBox("Arrived", "$arrived", Colors.green,
+                  Icons.check_circle_outline),
+              const SizedBox(width: 12),
+              _statBox(
+                  "Cancelled", "$cancelled", Colors.red, Icons.cancel_outlined),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _statBox(String label, String count, Color color, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.1)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 8),
+            Text(count,
+                style: GoogleFonts.outfit(
+                    fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+            Text(label,
+                style: GoogleFonts.inter(
+                    fontSize: 11, color: Colors.grey.shade600)),
+          ],
+        ),
       ),
     );
   }

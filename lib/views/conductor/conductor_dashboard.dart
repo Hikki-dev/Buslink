@@ -237,12 +237,6 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                             value: "${_todaysTrips.length}",
                             icon: Icons.directions_bus,
                             color: Colors.blue),
-                        const SizedBox(width: 20),
-                        const _StatCard(
-                            label: "Pending Issues",
-                            value: "0",
-                            icon: Icons.warning_amber,
-                            color: Colors.orange),
                       ],
                     ),
                   ],

@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   NavigationDestination(
                       icon: Icon(Icons.favorite_border),
                       selectedIcon: Icon(Icons.favorite),
-                      label: 'Favs'),
+                      label: 'Favourites'),
                   NavigationDestination(
                       icon: Icon(Icons.person_outline),
                       selectedIcon: Icon(Icons.person),
@@ -876,7 +876,7 @@ class _FavoritesList extends StatelessWidget {
         height: 100,
         child: Center(
           child: Text(
-            "Log in to view favorites",
+            "Log in to view favourites",
             style: TextStyle(color: Colors.grey.shade500),
           ),
         ),
@@ -895,7 +895,7 @@ class _FavoritesList extends StatelessWidget {
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(
               child: Text(
-                "No favorites added yet",
+                "No favourites added yet",
                 style: TextStyle(color: Colors.grey.shade500),
               ),
             );

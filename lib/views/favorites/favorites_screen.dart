@@ -29,7 +29,7 @@ class FavoritesScreen extends StatelessWidget {
       ),
       body: user == null
           ? Center(
-              child: Text("Please log in to view favorites",
+              child: Text("Please log in to view favourites",
                   style: GoogleFonts.inter(fontSize: 16, color: Colors.grey)),
             )
           : StreamBuilder<List<Map<String, dynamic>>>(
@@ -63,7 +63,7 @@ class FavoritesScreen extends StatelessWidget {
                     crossAxisCount: isDesktop ? 3 : 1,
                     mainAxisSpacing: 20,
                     crossAxisSpacing: 20,
-                    childAspectRatio: isDesktop ? 1.5 : 1.8,
+                    childAspectRatio: isDesktop ? 1.3 : 1.5,
                   ),
                   itemCount: favorites.length,
                   itemBuilder: (context, index) {

@@ -12,9 +12,9 @@ import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'utils/app_theme.dart';
 import 'views/admin/admin_dashboard.dart';
-import 'views/auth/login_screen.dart';
 import 'views/conductor/conductor_dashboard.dart';
 import 'views/home/home_screen.dart';
+import 'views/landing/landing_page.dart'; // Import Landing Page
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -93,7 +93,7 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
     if (user == null) {
-      return const LoginScreen();
+      return const LandingPage(); // Changed from LoginScreen()
     } else {
       return RoleDispatcher(user: user);
     }
