@@ -501,7 +501,7 @@ class _BusListScreenState extends State<BusListScreen> {
                                     const Icon(Icons.map,
                                         size: 16, color: AppTheme.primaryColor),
                                     const SizedBox(width: 8),
-                                    Text("live_route_preview",
+                                    Text("Live Route Preview",
                                         style: const TextStyle(
                                             fontFamily: 'Outfit',
                                             fontSize: 12,

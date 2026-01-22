@@ -18,10 +18,11 @@ import 'dart:io'; // Added
 import 'package:open_filex/open_filex.dart'; // Added
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
- // Added
+// Added
 
 // import '../../views/home/home_screen.dart'; // Unused
 import '../customer_main_screen.dart';
+import '../widgets/animated_favorite_button.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
   const PaymentSuccessScreen({super.key});
@@ -409,7 +410,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         );
       }
 
-      
       final bytes = await doc.save();
       final fileName = 'buslink_tickets.pdf';
 
@@ -432,8 +432,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
 
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content:
-                      Text("${"Saved to Downloads"}: $fileName"),
+                  content: Text("${"Saved to Downloads"}: $fileName"),
                   backgroundColor: Colors.green,
                   action: SnackBarAction(
                     label: "OPEN",
@@ -471,7 +470,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       debugPrint("Error generating/sharing PDF: $e");
       debugPrint(stackTrace.toString());
       if (mounted) {
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("${"Error saving PDF"}: $e"),
@@ -486,7 +484,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -655,13 +652,31 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     const SizedBox(height: 16),
                     // Add to Favorites Button
                     if (_verifiedTickets.isNotEmpty)
-                      _FavoriteRouteButton(
-                        userId: _verifiedTickets.first.userId,
-                        fromCity:
-                            _verifiedTickets.first.tripData['fromCity'] ?? '',
-                        toCity: _verifiedTickets.first.tripData['toCity'] ?? '',
-                        operatorName:
-                            _verifiedTickets.first.tripData['operatorName'],
+                      FutureBuilder<bool>(
+                        future:
+                            Provider.of<TripController>(context, listen: false)
+                                .isRouteFavorite(
+                          _verifiedTickets.first.tripData['fromCity'] ?? '',
+                          _verifiedTickets.first.tripData['toCity'] ?? '',
+                        ),
+                        builder: (context, snapshot) {
+                          return AnimatedFavoriteButton(
+                            isFavorite: snapshot.data ?? false,
+                            onToggle: () async {
+                              await Provider.of<TripController>(context,
+                                      listen: false)
+                                  .toggleRouteFavorite(
+                                _verifiedTickets.first.tripData['fromCity'] ??
+                                    '',
+                                _verifiedTickets.first.tripData['toCity'] ?? '',
+                                operatorName: _verifiedTickets
+                                    .first.tripData['operatorName'],
+                              );
+                              // Trigger rebuild
+                              (context as Element).markNeedsBuild();
+                            },
+                          );
+                        },
                       ),
                     const SizedBox(height: 40),
                     Row(
@@ -869,84 +884,5 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                 )),
           ],
         ));
-  }
-}
-
-class _FavoriteRouteButton extends StatefulWidget {
-  final String userId;
-  final String fromCity;
-  final String toCity;
-  final String? operatorName;
-
-  const _FavoriteRouteButton({
-    required this.userId,
-    required this.fromCity,
-    required this.toCity,
-    this.operatorName,
-  });
-
-  @override
-  State<_FavoriteRouteButton> createState() => _FavoriteRouteButtonState();
-}
-
-class _FavoriteRouteButtonState extends State<_FavoriteRouteButton> {
-  bool _isFavorite = false;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkFavorite();
-  }
-
-  Future<void> _checkFavorite() async {
-    final controller = Provider.of<TripController>(context, listen: false);
-    final fav =
-        await controller.isRouteFavorite(widget.fromCity, widget.toCity);
-    if (mounted) {
-      setState(() {
-        _isFavorite = fav;
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _toggle() async {
-    setState(() => _isLoading = true);
-    final controller = Provider.of<TripController>(context, listen: false);
-    await controller.toggleRouteFavorite(widget.fromCity, widget.toCity,
-        operatorName: widget.operatorName);
-
-    // Toggle state locally
-    if (mounted) {
-      setState(() {
-        _isFavorite = !_isFavorite;
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(_isFavorite
-              ? "Route added to Favorites"
-              : "Route removed from Favorites")));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) return const SizedBox.shrink();
-
-    return TextButton.icon(
-      onPressed: _toggle,
-      icon: Icon(
-        _isFavorite ? Icons.favorite : Icons.favorite_border,
-        color: _isFavorite ? Colors.red : Colors.grey,
-      ),
-      label: Text(
-        _isFavorite ? "Favorited Route" : "Add Route to Favorites",
-        style: TextStyle(
-          color: _isFavorite ? Colors.red : Colors.grey,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
   }
 }

@@ -18,7 +18,8 @@ import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/notification_service.dart'; // Added
 import '../tracking/track_bus_screen.dart'; // Added
- // Added
+import '../widgets/animated_favorite_button.dart';
+// Added
 
 // import '../home/home_screen.dart'; // Unused
 
@@ -38,7 +39,7 @@ class _TicketScreenState extends State<TicketScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
-     // Added
+    // Added
     // final authService = Provider.of<AuthService>(context, listen: false); // Unused
     // final user = authService.currentUser; // Unused
     final Trip? trip = widget.tripArg ?? controller.selectedTrip?.trip;
@@ -73,16 +74,28 @@ class _TicketScreenState extends State<TicketScreen> {
               Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-            isBulk
-                ? "${"Bulk Booking"} (${tickets.length})"
-                : "Route",
+        title: Text(isBulk ? "${"Bulk Booking"} (${tickets.length})" : "Route",
             style: TextStyle(
                 fontFamily: 'Outfit',
                 color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
+          FutureBuilder<bool>(
+            future: Provider.of<TripController>(context, listen: false)
+                .isRouteFavorite(trip.fromCity, trip.toCity),
+            builder: (context, snapshot) {
+              return AnimatedFavoriteButton(
+                isFavorite: snapshot.data ?? false,
+                onToggle: () async {
+                  await Provider.of<TripController>(context, listen: false)
+                      .toggleRouteFavorite(trip.fromCity, trip.toCity);
+                  // Trigger rebuild to update local state
+                  (context as Element).markNeedsBuild();
+                },
+              );
+            },
+          ),
           IconButton(
             icon: Icon(Icons.chat_bubble_outline,
                 color: Theme.of(context).colorScheme.onSurface),
@@ -103,10 +116,7 @@ class _TicketScreenState extends State<TicketScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                  isBulk
-                      ? "${"Bundle"} (${tickets.length})"
-                      : "E-Ticket",
+              Text(isBulk ? "${"Bundle"} (${tickets.length})" : "E-Ticket",
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       letterSpacing: 2,
@@ -141,9 +151,8 @@ class _TicketScreenState extends State<TicketScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () => _downloadPdf(context, trip, tickets),
                   icon: const Icon(Icons.picture_as_pdf),
-                  label: Text(isBulk
-                      ? "Download Consolidated PDF"
-                      : "Download PDF"),
+                  label: Text(
+                      isBulk ? "Download Consolidated PDF" : "Download PDF"),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,
@@ -168,7 +177,7 @@ class _TicketScreenState extends State<TicketScreen> {
   }
 
   Widget _buildTicketCard(BuildContext context, Trip trip, Ticket ticket) {
-     // Added
+    // Added
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 400),
@@ -236,9 +245,7 @@ class _TicketScreenState extends State<TicketScreen> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant)),
-                        Text(
-                            
-                                trip.fromCity.toLowerCase(), // Translated City
+                        Text(trip.fromCity.toLowerCase(), // Translated City
                             style: const TextStyle(
                                 fontFamily: 'Outfit',
                                 fontSize: 24,
@@ -281,9 +288,7 @@ class _TicketScreenState extends State<TicketScreen> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant)),
-                        Text(
-                            
-                                trip.toCity.toLowerCase(), // Translated City
+                        Text(trip.toCity.toLowerCase(), // Translated City
                             style: const TextStyle(
                                 fontFamily: 'Outfit',
                                 fontSize: 24,
@@ -302,8 +307,7 @@ class _TicketScreenState extends State<TicketScreen> {
                         DateFormat('MMM d').format(trip.departureTime)),
                     _infoCol("TIME",
                         DateFormat('hh:mm a').format(trip.departureTime)),
-                    _infoCol(
-                        "SEATS", "${ticket.seatNumbers.length}"),
+                    _infoCol("SEATS", "${ticket.seatNumbers.length}"),
                   ],
                 ),
 
@@ -475,7 +479,6 @@ class _TicketScreenState extends State<TicketScreen> {
 
   Future<void> _downloadPdf(
       BuildContext context, Trip trip, List<Ticket> tickets) async {
-    
     final doc = pw.Document();
     final isBulk = tickets.length > 1;
     // Use the first ticket for common details
@@ -673,8 +676,7 @@ class _TicketScreenState extends State<TicketScreen> {
               // Success Feedback
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content:
-                      Text("${"Saved to Downloads"}: $fileName"),
+                  content: Text("${"Saved to Downloads"}: $fileName"),
                   backgroundColor: Colors.green,
                   action: SnackBarAction(
                     label: "OPEN",
@@ -714,8 +716,8 @@ class _TicketScreenState extends State<TicketScreen> {
     } catch (e) {
       debugPrint("PDF Error: $e");
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error saving PDF")));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Error saving PDF")));
       }
     }
   }
