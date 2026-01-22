@@ -135,17 +135,28 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
       final fee = calc['cancellationFee']!;
 
       // 2. Resolve Robust User Data (Profile > Ticket > Auth)
+      final authUid = currentUser?.uid;
       Map<String, dynamic> resolvedUserData = widget.ticket.userData ?? {};
-      try {
-        final profileDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.ticket.userId)
-            .get();
-        if (profileDoc.exists) {
-          resolvedUserData = profileDoc.data()!;
+
+      // Only fetch profile if we have a valid UID to check against
+      final String? lookupId =
+          (widget.ticket.userId != 'guest' && widget.ticket.userId.isNotEmpty)
+              ? widget.ticket.userId
+              : authUid;
+
+      if (lookupId != null && lookupId != 'guest') {
+        try {
+          final profileDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(lookupId)
+              .get();
+          if (profileDoc.exists) {
+            resolvedUserData = profileDoc.data()!;
+          }
+        } catch (e) {
+          debugPrint(
+              "Warning: Could not fetch profile for refund ($lookupId): $e");
         }
-      } catch (e) {
-        debugPrint("Warning: Could not fetch profile for refund: $e");
       }
 
       final String pName = resolvedUserData['displayName'] ??
@@ -168,7 +179,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
         ticketId: widget.ticket.ticketId,
         bookingId: widget.ticket.ticketId,
         tripId: widget.trip.id,
-        userId: widget.ticket.userId,
+        userId: authUid ?? widget.ticket.userId, // ESSENTIAL for security rules
         passengerName: pName,
         passengerPhone: pPhone,
         email: pEmail,
@@ -176,6 +187,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
           'name': pName,
           'email': pEmail,
           'phone': pPhone,
+          'originalUserId': widget.ticket.userId, // Keep for audit
         },
         reason: _selectedReason!,
         otherReasonText: _otherReasonController.text.trim(),
