@@ -317,19 +317,33 @@ class FirestoreService {
       Map<String, dynamic>
           extraTripDetails // Passed from UI (merged Trip+Schedule)
       ) async {
+    // 1. Fetch User Data from Firestore (Primary Source for Profile)
+    Map<String, dynamic> userData = {};
+    try {
+      final userDoc = await _db.collection(userCollection).doc(user.uid).get();
+      if (userDoc.exists) {
+        userData = userDoc.data()!;
+      }
+    } catch (e) {
+      debugPrint("Warning: Could not fetch user profile for booking: $e");
+    }
+
+    // 2. Resolve Contact Info (Firestore > Auth > Guest)
+    final String pName = userData['displayName'] ??
+        userData['name'] ??
+        user.displayName ??
+        'Guest';
+    final String pEmail = userData['email'] ?? user.email ?? '';
+    final String pPhone = userData['phoneNumber'] ??
+        userData['phone'] ??
+        user.phoneNumber ??
+        'N/A';
+
     final ticketRef = _db.collection(ticketCollection).doc();
     final tripRef = _db.collection(tripCollection).doc(trip.id);
 
     // Fetch FCM Token - Critical for Conductor Notifications
-    String? fcmToken;
-    try {
-      final userDoc = await _db.collection(userCollection).doc(user.uid).get();
-      if (userDoc.exists && userDoc.data()!.containsKey('fcmToken')) {
-        fcmToken = userDoc.data()!['fcmToken'];
-      }
-    } catch (e) {
-      debugPrint("Error fetching FCM token during booking: $e");
-    }
+    String? fcmToken = userData['fcmToken'];
 
     await _db.runTransaction((transaction) async {
       DocumentSnapshot freshTripSnap = await transaction.get(tripRef);
@@ -353,25 +367,26 @@ class FirestoreService {
       ticketId: ticketRef.id,
       tripId: trip.id,
       userId: user.uid,
-      seatNumbers: seatIds
-          .map((e) => int.tryParse(e) ?? 0)
-          .toList(), // Legacy int support if Ticket not refactored
-      passengerName: user.displayName ?? user.email ?? 'Guest',
-      passengerPhone: user.phoneNumber ?? "N/A",
-      passengerEmail: user.email,
+      seatNumbers: seatIds.map((e) => int.tryParse(e) ?? 0).toList(),
+      passengerName: pName,
+      passengerPhone: pPhone,
+      passengerEmail: pEmail,
       bookingTime: DateTime.now(),
       totalAmount: trip.price * seatIds.length,
-      tripData:
-          extraTripDetails, // Contains denormalized details for Ticket history
+      tripData: extraTripDetails,
       shortId: _generateShortId(),
       fcmToken: fcmToken,
     );
 
-    // Note: Ticket.toJson needs manual adjustment if we want to store strings for seats there too.
-    // For now, standard behavior.
+    // Save with metadata for Search
+    final ticketMap = newTicket.toJson();
+    ticketMap['userData'] = {
+      'name': pName,
+      'email': pEmail,
+      'phone': pPhone,
+    };
 
-    // Hack: We need to serialize Ticket properly. If Ticket expects Ints, we converted above.
-    await ticketRef.set(newTicket.toJson());
+    await ticketRef.set(ticketMap);
     return newTicket;
   }
 
@@ -504,11 +519,34 @@ class FirestoreService {
   Future<String> createPendingBooking(
       Trip trip, List<String> seatIds, User user,
       {Map<String, dynamic>? extraDetails}) async {
+    // 1. Fetch User Data from Firestore
+    Map<String, dynamic> userData = {};
+    try {
+      final userDoc = await _db.collection(userCollection).doc(user.uid).get();
+      if (userDoc.exists) {
+        userData = userDoc.data()!;
+      }
+    } catch (e) {
+      debugPrint(
+          "Warning: Could not fetch user profile for pending booking: $e");
+    }
+
+    // 2. Resolve Contact Info
+    final String pName = userData['displayName'] ??
+        userData['name'] ??
+        user.displayName ??
+        'Guest';
+    final String pEmail = userData['email'] ?? user.email ?? '';
+    final String pPhone = userData['phoneNumber'] ??
+        userData['phone'] ??
+        user.phoneNumber ??
+        'N/A';
+
     final ticketRef = _db.collection(ticketCollection).doc();
 
-    final Map<String, dynamic> tripData = trip.toJson();
+    final Map<String, dynamic> tripDataSnapshot = trip.toJson();
     if (extraDetails != null) {
-      tripData.addAll(extraDetails);
+      tripDataSnapshot.addAll(extraDetails);
     }
 
     final ticket = Ticket(
@@ -516,12 +554,12 @@ class FirestoreService {
         tripId: trip.id,
         userId: user.uid,
         seatNumbers: seatIds.map((e) => int.tryParse(e) ?? 0).toList(),
-        passengerName: user.displayName ?? 'Guest',
-        passengerPhone: 'N/A',
-        passengerEmail: user.email,
+        passengerName: pName,
+        passengerPhone: pPhone,
+        passengerEmail: pEmail,
         bookingTime: DateTime.now(),
         totalAmount: trip.price * seatIds.length,
-        tripData: tripData,
+        tripData: tripDataSnapshot,
         status: 'pending',
         shortId: _generateShortId());
 
@@ -551,7 +589,13 @@ class FirestoreService {
       });
 
       // Writes must come after reads
-      transaction.set(ticketRef, ticket.toJson());
+      final finalTicketMap = ticket.toJson();
+      finalTicketMap['userData'] = {
+        'name': pName,
+        'email': pEmail,
+        'phone': pPhone,
+      };
+      transaction.set(ticketRef, finalTicketMap);
     });
 
     return ticketRef.id;
@@ -639,7 +683,14 @@ class FirestoreService {
         tripData: trip.toJson(),
         status: 'confirmed',
         shortId: _generateShortId());
-    await ticketRef.set(ticket.toJson());
+    // Save with consistency metadata for Search
+    final ticketMap = ticket.toJson();
+    ticketMap['userData'] = {
+      'name': passengerName,
+      'email': null,
+      'phone': phoneNumber ?? 'Offline',
+    };
+    await ticketRef.set(ticketMap);
     return ticket;
   }
 
