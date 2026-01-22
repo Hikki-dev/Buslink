@@ -24,10 +24,11 @@ service cloud.firestore {
       }
     }
     
-    // Trips (Public read, authenticated users can book/update seats)
+    // Trips (Public read, admins/conductors can edit everything, Users can ONLY update seat numbers)
     match /trips/{tripId} {
       allow read: if true;
-      allow update: if request.auth != null;
+      allow update: if isAdmin() || isConductor() || 
+                    (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookedSeatNumbers', 'blockedSeats']));
       allow create, delete: if isAdmin();
     }
 
@@ -49,20 +50,12 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // Tickets (Users own their tickets, admins/conductors can view all)
+    // Tickets (Users own their tickets, admins/conductors can view/cancel)
     match /tickets/{ticketId} {
-      allow read: if request.auth != null && (
-          resource.data.userId == request.auth.uid || 
-          resource == null || 
-          isAdmin() || 
-          isConductor()
-      );
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin() || isConductor());
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && (
-          resource.data.userId == request.auth.uid || 
-          isAdmin() || 
-          isConductor()
-      );
+      // Users can't update tickets (only admins/conductors can cancel/refund)
+      allow update: if isAdmin() || isConductor();
     }
 
     // Refunds (Users create their own, admins approve/reject)
