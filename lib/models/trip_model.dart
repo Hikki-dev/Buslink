@@ -145,11 +145,13 @@ class Trip {
     return Trip(
       id: id,
       scheduleId: data['scheduleId'] ?? '',
-      date: (data['date'] as Timestamp).toDate(),
+      date: _parseDateTime(data['date']),
       originCity: data['originCity'] ?? data['fromCity'] ?? '',
       destinationCity: data['destinationCity'] ?? data['toCity'] ?? '',
-      departureDateTime: (data['departureDateTime'] as Timestamp).toDate(),
-      arrivalDateTime: (data['arrivalDateTime'] as Timestamp).toDate(),
+      departureDateTime:
+          _parseDateTime(data['departureDateTime'] ?? data['departureTime']),
+      arrivalDateTime:
+          _parseDateTime(data['arrivalDateTime'] ?? data['arrivalTime']),
       price: (data['price'] ?? 0).toDouble(),
       status: data['status'] ?? 'Scheduled',
       totalSeats: data['totalSeats'] ?? 40,
@@ -160,6 +162,13 @@ class Trip {
       conductorId: data['conductorId'],
       via: data['via'] ?? 'Direct',
     );
+  }
+
+  static DateTime _parseDateTime(dynamic val) {
+    if (val == null) return DateTime.now(); // Fallback
+    if (val is Timestamp) return val.toDate();
+    if (val is String) return DateTime.tryParse(val) ?? DateTime.now();
+    return DateTime.now();
   }
 
   static Map<String, double>? _parseGeoPoint(dynamic val) {
@@ -223,7 +232,7 @@ class Ticket {
       passengerName: data['userName'] ?? 'Guest',
       passengerPhone: data['passengerPhone'] ?? 'N/A',
       passengerEmail: data['passengerEmail'] ?? data['email'],
-      bookingTime: (data['bookingTime'] as Timestamp).toDate(),
+      bookingTime: _parseTicketDate(data['bookingTime']),
       totalAmount: (data['totalAmount'] ?? 0).toDouble(),
       tripData: data['tripData'] as Map<String, dynamic>? ?? {},
       status: data['status'] ?? 'confirmed',
@@ -231,6 +240,12 @@ class Ticket {
       paymentIntentId: data['paymentIntentId'],
       fcmToken: data['fcmToken'],
     );
+  }
+
+  static DateTime _parseTicketDate(dynamic val) {
+    if (val == null) return DateTime.now();
+    if (val is Timestamp) return val.toDate();
+    return DateTime.now();
   }
 
   factory Ticket.fromFirestore(DocumentSnapshot doc) {

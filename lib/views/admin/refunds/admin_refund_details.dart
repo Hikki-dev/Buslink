@@ -6,8 +6,6 @@ import '../../../models/refund_model.dart';
 import '../../../models/refund_transaction_model.dart';
 import '../../../services/stripe_service.dart';
 
-
-
 import '../../../../services/notification_service.dart';
 
 class AdminRefundDetailsScreen extends StatefulWidget {
@@ -29,7 +27,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
       appBar: AppBar(title: Text('Refund Details')),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('Refunds')
+            .collection('refunds')
             .doc(widget.refundId)
             .snapshots(),
         builder: (context, snapshot) {
@@ -107,7 +105,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: refund.ticketId));
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-content: Text('Booking Reference Copied'),
+                      content: Text('Booking Reference Copied'),
                       duration: const Duration(seconds: 1),
                     ));
                   },
@@ -136,22 +134,17 @@ content: Text('Booking Reference Copied'),
           border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(
         children: [
-          _row("Trip Price",
-              "LKR ${refund.tripPrice.toStringAsFixed(2)}"),
+          _row("Trip Price", "LKR ${refund.tripPrice.toStringAsFixed(2)}"),
           _row('Cancellation Rule',
               "${(refund.refundPercentage * 100).toInt()}% Refund"),
           const Divider(),
-          _row('Refund Amount',
-              "LKR ${refund.refundAmount.toStringAsFixed(2)}",
+          _row('Refund Amount', "LKR ${refund.refundAmount.toStringAsFixed(2)}",
               isBold: true),
           const SizedBox(height: 16),
-          _row(
-              "Reason",
-              refund.reason.name),
+          _row("Reason", refund.reason.name),
           if (refund.otherReasonText != null &&
               refund.otherReasonText!.isNotEmpty)
-            _row('Comment',
-                refund.otherReasonText!),
+            _row('Comment', refund.otherReasonText!),
         ],
       ),
     );
@@ -187,7 +180,7 @@ content: Text('Booking Reference Copied'),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 foregroundColor: Colors.red,
                 side: const BorderSide(color: Colors.red)),
-child: Text('Reject'),
+            child: Text('Reject'),
           ),
         ),
         const SizedBox(width: 16),
@@ -199,8 +192,7 @@ child: Text('Reject'),
                 backgroundColor: Colors.green),
             child: _isLoading
                 ? const CircularProgressIndicator(color: Colors.white)
-                : Text('Approve Refund',
-                    style: TextStyle(color: Colors.white)),
+                : Text('Approve Refund', style: TextStyle(color: Colors.white)),
           ),
         ),
       ],
@@ -225,7 +217,7 @@ child: Text('Reject'),
 
       // 1. Update Refund Request
       final refundRef =
-          FirebaseFirestore.instance.collection('Refunds').doc(refund.id);
+          FirebaseFirestore.instance.collection('refunds').doc(refund.id);
       batch.update(refundRef, {
         'status': 'approved',
         'processingStatus': 'completed',
@@ -270,8 +262,8 @@ child: Text('Reject'),
           relatedId: refund.id);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-content: Text('Refund Processed Successfully')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Refund Processed Successfully')));
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Error: $e")));
@@ -294,20 +286,17 @@ content: Text('Refund Processed Successfully')));
                     items: [
                       DropdownMenuItem(
                           value: "Policy Violation",
-child: Text('Policy Violation')),
+                          child: Text('Policy Violation')),
                       DropdownMenuItem(
-                          value: "Already Used",
-child: Text('Ticket Used')),
-                      DropdownMenuItem(
-                          value: "Other",
-child: Text('Other')),
+                          value: "Already Used", child: Text('Ticket Used')),
+                      DropdownMenuItem(value: "Other", child: Text('Other')),
                     ],
                     onChanged: (v) {
                       // If using dropdown, state handling needed. Simple text field for now as per spec "Comment box".
                       // Spec says "Reason dropdown (mandatory)".
                       _rejectReasonController.text = v ?? "";
                     },
-hint: Text('Select Reason'),
+                    hint: Text('Select Reason'),
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -321,8 +310,7 @@ hint: Text('Select Reason'),
               ),
               actions: [
                 TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-child: Text('Cancel')),
+                    onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
                 ElevatedButton(
                     onPressed: () async {
                       if (_rejectReasonController.text.isEmpty) return;
@@ -341,7 +329,7 @@ child: Text('Cancel')),
     setState(() => _isLoading = true);
     try {
       await FirebaseFirestore.instance
-          .collection('Refunds')
+          .collection('refunds')
           .doc(refund.id)
           .update({
         'status': 'rejected',
