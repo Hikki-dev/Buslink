@@ -652,32 +652,34 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     const SizedBox(height: 16),
                     // Add to Favorites Button
                     if (_verifiedTickets.isNotEmpty)
-                      FutureBuilder<bool>(
-                        future:
-                            Provider.of<TripController>(context, listen: false)
-                                .isRouteFavorite(
-                          _verifiedTickets.first.tripData['fromCity'] ?? '',
-                          _verifiedTickets.first.tripData['toCity'] ?? '',
-                        ),
-                        builder: (context, snapshot) {
-                          return AnimatedFavoriteButton(
-                            isFavorite: snapshot.data ?? false,
-                            onToggle: () async {
-                              await Provider.of<TripController>(context,
-                                      listen: false)
-                                  .toggleRouteFavorite(
-                                _verifiedTickets.first.tripData['fromCity'] ??
-                                    '',
-                                _verifiedTickets.first.tripData['toCity'] ?? '',
-                                operatorName: _verifiedTickets
-                                    .first.tripData['operatorName'],
-                              );
-                              // Trigger rebuild
-                              (context as Element).markNeedsBuild();
-                            },
-                          );
-                        },
-                      ),
+                      StatefulBuilder(builder: (context, setInternalState) {
+                        return FutureBuilder<bool>(
+                          future: Provider.of<TripController>(context,
+                                  listen: false)
+                              .isRouteFavorite(
+                            _verifiedTickets.first.tripData['fromCity'] ?? '',
+                            _verifiedTickets.first.tripData['toCity'] ?? '',
+                          ),
+                          builder: (context, snapshot) {
+                            return AnimatedFavoriteButton(
+                              isFavorite: snapshot.data ?? false,
+                              onToggle: () async {
+                                await Provider.of<TripController>(context,
+                                        listen: false)
+                                    .toggleRouteFavorite(
+                                  _verifiedTickets.first.tripData['fromCity'] ??
+                                      '',
+                                  _verifiedTickets.first.tripData['toCity'] ??
+                                      '',
+                                  operatorName: _verifiedTickets
+                                      .first.tripData['operatorName'],
+                                );
+                                setInternalState(() {});
+                              },
+                            );
+                          },
+                        );
+                      }),
                     const SizedBox(height: 40),
                     Row(
                       children: [

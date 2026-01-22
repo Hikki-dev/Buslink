@@ -469,13 +469,33 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                 ],
               ),
               const SizedBox(height: 6),
-              if (data['passengerEmail'] != null ||
-                  data['passengerPhone'] != null)
-                Text(
-                  "${data['passengerEmail'] ?? ''} ${data['passengerPhone'] ?? ''}"
-                      .trim(),
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
+              () {
+                final displayEmail = data['passengerEmail'] ??
+                    (data['userData'] != null
+                        ? data['userData']['email']
+                        : null) ??
+                    '';
+                final displayPhone = data['passengerPhone'] ??
+                    (data['userData'] != null
+                        ? data['userData']['phone']
+                        : null) ??
+                    '';
+                final List<String> contactParts = [];
+                if (displayEmail.isNotEmpty && displayEmail != 'N/A') {
+                  contactParts.add(displayEmail);
+                }
+                if (displayPhone.isNotEmpty && displayPhone != 'N/A') {
+                  contactParts.add(displayPhone);
+                }
+
+                if (contactParts.isNotEmpty) {
+                  return Text(
+                    contactParts.join(" ").trim(),
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  );
+                }
+                return const SizedBox.shrink();
+              }(),
               const SizedBox(height: 6),
             ],
           ),

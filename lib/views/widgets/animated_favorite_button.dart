@@ -41,9 +41,22 @@ class _AnimatedFavoriteButtonState extends State<AnimatedFavoriteButton>
   }
 
   void _handleTap() {
-    if (!widget.isFavorite) {
-      _controller.forward(from: 0.0);
-    }
+    // Animate on every tap for feedback
+    _controller.forward(from: 0.0);
+
+    // Show Snackbar
+    final String message =
+        widget.isFavorite ? "Removed from favorites" : "Added to favorites";
+    ScaffoldMessenger.of(context).clearSnackBars(); // Show newest immediately
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        width: 250,
+      ),
+    );
+
     widget.onToggle();
   }
 
