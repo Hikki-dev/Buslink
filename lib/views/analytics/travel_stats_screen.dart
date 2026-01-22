@@ -99,7 +99,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
   }
 
   Map<String, dynamic> _calculateStats(List<QueryDocumentSnapshot> docs) {
-    int totalTrips = docs.length;
+    int completedTrips = 0;
     double totalSpent = 0;
     Map<String, int> citiesVisited = {};
     Map<int, int> monthlyTrips = {};
@@ -112,17 +112,23 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
 
     for (var doc in docs) {
       final data = doc.data() as Map<String, dynamic>;
+      final tripData = data['tripData'] as Map<String, dynamic>? ?? {};
 
       // --- Status Counting ---
       final rawStatus =
-          (data['status'] ?? 'scheduled').toString().toLowerCase();
-      final delay = (data['delayMinutes'] ?? 0) as int;
+          (data['status'] ?? 'confirmed').toString().toLowerCase();
+      final delay =
+          (data['delayMinutes'] ?? tripData['delayMinutes'] ?? 0) as int;
 
       DateTime? date;
       if (data['departureDateTime'] is Timestamp) {
         date = (data['departureDateTime'] as Timestamp).toDate();
+      } else if (tripData['departureDateTime'] is Timestamp) {
+        date = (tripData['departureDateTime'] as Timestamp).toDate();
       } else if (data['departureTime'] is Timestamp) {
         date = (data['departureTime'] as Timestamp).toDate();
+      } else if (tripData['departureTime'] is Timestamp) {
+        date = (tripData['departureTime'] as Timestamp).toDate();
       } else if (data['bookingTime'] is Timestamp) {
         date = (data['bookingTime'] as Timestamp).toDate();
       }
@@ -137,10 +143,13 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
 
         if (rawStatus == 'cancelled') {
           if (isFuture || isRecent) {
-            cancelled++; // Only count relevant cancellations
+            cancelled++;
           }
-        } else if (rawStatus == 'completed' || rawStatus == 'arrived') {
-          arrived++; // All history
+        } else if (rawStatus == 'completed' ||
+            rawStatus == 'arrived' ||
+            rawStatus == 'confirmed' && date.isBefore(now)) {
+          arrived++;
+          completedTrips++;
         } else if (rawStatus == 'delayed' || delay > 0) {
           if (isFuture) delayed++;
         } else {
@@ -148,17 +157,22 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
         }
       }
 
-      // --- Existing logic ---
       // Amount
-      final amt = (data['totalAmount'] ?? data['price'] ?? 0);
+      final amt =
+          (data['totalAmount'] ?? data['price'] ?? tripData['price'] ?? 0);
       totalSpent += (amt is num) ? amt.toDouble() : 0.0;
 
-      // City
-      final dest = data['destinationCity'] ??
+      // City Lookup (Nested in tripData usually)
+      final dest = tripData['destinationCity'] ??
+          tripData['toCity'] ??
+          data['destinationCity'] ??
           data['toCity'] ??
           data['destination'] ??
           'Unknown';
-      citiesVisited[dest] = (citiesVisited[dest] ?? 0) + 1;
+
+      if (dest != 'Unknown') {
+        citiesVisited[dest] = (citiesVisited[dest] ?? 0) + 1;
+      }
 
       // Date (Already parsed above)
       if (date != null && date.year == _focusedDate.year) {
@@ -174,10 +188,20 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
       favoriteDest = sorted.first.key;
     }
 
+    // Most active month
+    String mostActiveMonth = "N/A";
+    if (monthlyTrips.isNotEmpty) {
+      var sortedMonths = monthlyTrips.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      mostActiveMonth = DateFormat('MMMM')
+          .format(DateTime(_focusedDate.year, sortedMonths.first.key));
+    }
+
     return {
-      'totalTrips': totalTrips,
+      'totalTrips': completedTrips,
       'totalSpent': totalSpent,
       'favoriteDest': favoriteDest,
+      'mostActiveMonth': mostActiveMonth,
       'monthlyTrips': monthlyTrips,
       'year': _focusedDate.year,
       'Upcoming': upcoming,
@@ -327,6 +351,8 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
           children: [
             _insightRow(
                 Icons.place, 'Favorite Destination', stats['favoriteDest']),
+            _insightRow(Icons.calendar_month, 'Most Active Month',
+                stats['mostActiveMonth']),
             _insightRow(Icons.directions_bus, 'Total Trips Completed',
                 "${stats['totalTrips']}"),
           ],
@@ -382,6 +408,15 @@ class _SimpleScatterChart extends StatelessWidget {
                 );
               }),
             ),
+            // Trend Line
+            if (data.length > 1)
+              CustomPaint(
+                  size: Size(w, h),
+                  painter: _LinePainter(
+                      data: data,
+                      maxVal: maxVal,
+                      color: AppTheme.primaryColor)),
+
             // Scatter Points
             ...List.generate(12, (index) {
               final month = index + 1;
@@ -390,19 +425,15 @@ class _SimpleScatterChart extends StatelessWidget {
 
               // X position: distributed evenly
               final double x = (index / 11) * (w - 20) + 10;
-              // Y position: count / maxVal * height (inverted for Stack bottom alignment, but using bottom prop)
+              // Y position
               final double bottom = (count / maxVal) * (h - 20);
 
               return Positioned(
-                left: x - 6, // center the dot
+                left: x - 6,
                 bottom: bottom,
-                child: GestureDetector(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(
-                            "${DateFormat('MMMM').format(DateTime(year, month))}: $count trips"),
-                        duration: const Duration(seconds: 1)));
-                  },
+                child: Tooltip(
+                  message:
+                      "${DateFormat('MMMM').format(DateTime(year, month))}: $count",
                   child: Container(
                     width: 12,
                     height: 12,
@@ -439,4 +470,45 @@ class _SimpleScatterChart extends StatelessWidget {
       },
     );
   }
+}
+
+class _LinePainter extends CustomPainter {
+  final Map<int, int> data;
+  final int maxVal;
+  final Color color;
+
+  _LinePainter({required this.data, required this.maxVal, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.3)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    bool first = true;
+
+    final List<int> sortedMonths = data.keys.toList()..sort();
+
+    for (int month in sortedMonths) {
+      final double x = ((month - 1) / 11) * (size.width - 20) + 10;
+      final double y =
+          size.height - ((data[month]! / maxVal) * (size.height - 20));
+
+      if (first) {
+        path.moveTo(x, y);
+        first = false;
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
