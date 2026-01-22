@@ -269,43 +269,72 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: FutureBuilder<DocumentSnapshot?>(
+                  future: (refund.email == null ||
+                              refund.email!.isEmpty ||
+                              refund.passengerName == 'Guest') &&
+                          refund.userId.isNotEmpty &&
+                          refund.userId != 'guest'
+                      ? FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(refund.userId)
+                          .get()
+                      : Future<DocumentSnapshot?>.value(null),
+                  builder: (context, userSnap) {
+                    Map<String, dynamic>? userProfile;
+                    if (userSnap.hasData && userSnap.data!.exists) {
+                      userProfile =
+                          userSnap.data!.data() as Map<String, dynamic>?;
+                    }
+
+                    final String name =
+                        (refund.passengerName == 'Guest' && userProfile != null)
+                            ? (userProfile['displayName'] ??
+                                userProfile['name'] ??
+                                refund.passengerName)
+                            : refund.passengerName;
+
+                    String? email = refund.email;
+                    if (email == null || email.isEmpty) {
+                      email = refund.userData?['email']?.toString();
+                    }
+                    if ((email == null || email.isEmpty) &&
+                        userProfile != null) {
+                      email = userProfile['email'];
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                                DateFormat('MMM d, h:mm a')
+                                    .format(refund.createdAt),
+                                style: const TextStyle(fontSize: 12)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(name,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
+                        if (email != null && email.isNotEmpty && email != 'N/A')
+                          Text(email,
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey.shade600)),
+                        const SizedBox(height: 4),
                         Text(
-                            DateFormat('MMM d, h:mm a')
-                                .format(refund.createdAt),
-                            style: const TextStyle(fontSize: 12)),
+                            "${"Refund Amount"}: LKR ${refund.refundAmount.toStringAsFixed(2)}",
+                            style: const TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Text("${"Reason"}: ${_getDisplayReason(refund)}",
+                            style: const TextStyle(fontSize: 13)),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(refund.passengerName,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
-                    () {
-                      final displayEmail = refund.email ??
-                          refund.userData?['email']?.toString() ??
-                          '';
-                      if (displayEmail.isNotEmpty && displayEmail != 'N/A') {
-                        return Text(displayEmail,
-                            style: TextStyle(
-                                fontSize: 12, color: Colors.grey.shade600));
-                      }
-                      return const SizedBox.shrink();
-                    }(),
-                    const SizedBox(height: 4),
-                    Text(
-                        "${"Refund Amount"}: LKR ${refund.refundAmount.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Text("${"Reason"}: ${_getDisplayReason(refund)}",
-                        style: const TextStyle(fontSize: 13)),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),

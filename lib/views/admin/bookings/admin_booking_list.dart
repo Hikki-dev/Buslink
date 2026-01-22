@@ -427,112 +427,137 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          leading: CircleAvatar(
-            backgroundColor: statusColor.withValues(alpha: 0.1),
-            radius: 24,
-            child:
-                Icon(Icons.confirmation_number, color: statusColor, size: 24),
-          ),
-          title: Text(pName,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 6),
-              Row(
+      child: FutureBuilder<DocumentSnapshot?>(
+        future: (data['passengerEmail'] == null ||
+                    data['passengerEmail'].toString().isEmpty ||
+                    pName == 'Unknown User' ||
+                    pName == 'Guest') &&
+                data['userId'] != null &&
+                data['userId'] != 'guest'
+            ? FirebaseFirestore.instance
+                .collection('users')
+                .doc(data['userId'])
+                .get()
+            : Future<DocumentSnapshot?>.value(null),
+        builder: (context, userSnap) {
+          Map<String, dynamic>? userProfile;
+          if (userSnap.hasData && userSnap.data!.exists) {
+            userProfile = userSnap.data!.data() as Map<String, dynamic>?;
+          }
+
+          final String displayName =
+              (pName == 'Unknown User' || pName == 'Guest') &&
+                      userProfile != null
+                  ? (userProfile['displayName'] ?? userProfile['name'] ?? pName)
+                  : pName;
+
+          final String displayEmail = data['passengerEmail'] ??
+              (data['userData'] != null ? data['userData']['email'] : null) ??
+              userProfile?['email'] ??
+              '';
+          final String displayPhone = data['passengerPhone'] ??
+              (data['userData'] != null ? data['userData']['phone'] : null) ??
+              userProfile?['phoneNumber'] ??
+              userProfile?['phone'] ??
+              '';
+
+          final List<String> contactParts = [];
+          if (displayEmail.isNotEmpty && displayEmail != 'N/A') {
+            contactParts.add(displayEmail);
+          }
+          if (displayPhone.isNotEmpty && displayPhone != 'N/A') {
+            contactParts.add(displayPhone);
+          }
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              leading: CircleAvatar(
+                backgroundColor: statusColor.withValues(alpha: 0.1),
+                radius: 24,
+                child: Icon(Icons.confirmation_number,
+                    color: statusColor, size: 24),
+              ),
+              title: Text(displayName,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 18)),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.route, size: 16),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text("$fromCity ➔ $toCity",
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.route, size: 16),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text("$fromCity ➔ $toCity",
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w500)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                          departureDate != null
+                              ? DateFormat('MMM d, h:mm a')
+                                  .format(departureDate)
+                              : 'Date N/A',
+                          style: const TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  if (contactParts.isNotEmpty)
+                    Text(
+                      contactParts.join(" ").trim(),
+                      style:
+                          TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                    ),
+                  const SizedBox(height: 6),
+                ],
+              ),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("LKR ${data['totalAmount'] ?? data['price'] ?? 0}",
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: AppTheme.primaryColor)),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6)),
+                    child: Text(statusNorm.replaceAll('_', ' ').toUpperCase(),
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: statusColor,
+                            fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Icon(Icons.access_time, size: 16),
-                  const SizedBox(width: 6),
-                  Text(
-                      departureDate != null
-                          ? DateFormat('MMM d, h:mm a').format(departureDate)
-                          : 'Date N/A',
-                      style: const TextStyle(fontSize: 14)),
-                ],
-              ),
-              const SizedBox(height: 6),
-              () {
-                final displayEmail = data['passengerEmail'] ??
-                    (data['userData'] != null
-                        ? data['userData']['email']
-                        : null) ??
-                    '';
-                final displayPhone = data['passengerPhone'] ??
-                    (data['userData'] != null
-                        ? data['userData']['phone']
-                        : null) ??
-                    '';
-                final List<String> contactParts = [];
-                if (displayEmail.isNotEmpty && displayEmail != 'N/A') {
-                  contactParts.add(displayEmail);
-                }
-                if (displayPhone.isNotEmpty && displayPhone != 'N/A') {
-                  contactParts.add(displayPhone);
-                }
-
-                if (contactParts.isNotEmpty) {
-                  return Text(
-                    contactParts.join(" ").trim(),
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                  );
-                }
-                return const SizedBox.shrink();
-              }(),
-              const SizedBox(height: 6),
-            ],
-          ),
-          trailing: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("LKR ${data['totalAmount'] ?? data['price'] ?? 0}",
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15, // Reduced from 17 to fix overflow
-                      color: AppTheme.primaryColor)),
-              const SizedBox(height: 4), // Reduced from 8
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 2), // Reduced vertical
-                decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6)),
-                child: Text(statusNorm.replaceAll('_', ' ').toUpperCase(),
-                    style: TextStyle(
-                        fontSize: 10, // Reduced from 11
-                        color: statusColor,
-                        fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => BookingDetailsScreen(data: data, bookingId: id),
-              ),
-            );
-          },
-        ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        BookingDetailsScreen(data: data, bookingId: id),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }

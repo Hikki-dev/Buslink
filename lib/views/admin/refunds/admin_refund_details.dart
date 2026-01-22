@@ -116,40 +116,62 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                 const Text("Email", style: TextStyle()),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          refund.email ??
-                              (refund.userData != null
-                                  ? refund.userData!['email']?.toString()
-                                  : null) ??
-                              'N/A',
-                          textAlign: TextAlign.end,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ),
-                      if (refund.email != null && refund.email!.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.copy, size: 18),
-                          onPressed: () {
-                            Clipboard.setData(
-                                ClipboardData(text: refund.email!));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Email copied to clipboard'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                          tooltip: 'Copy email',
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ],
-                    ],
+                  child: FutureBuilder<DocumentSnapshot?>(
+                    future: (refund.email == null || refund.email!.isEmpty) &&
+                            refund.userId.isNotEmpty &&
+                            refund.userId != 'guest'
+                        ? FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(refund.userId)
+                            .get()
+                        : Future<DocumentSnapshot?>.value(null),
+                    builder: (context, userSnap) {
+                      String? email = refund.email;
+                      if (email == null || email.isEmpty) {
+                        email = refund.userData?['email']?.toString();
+                      }
+                      if ((email == null || email.isEmpty) &&
+                          userSnap.hasData &&
+                          userSnap.data!.exists) {
+                        email = (userSnap.data!.data()
+                            as Map<String, dynamic>)['email'];
+                      }
+
+                      final displayEmail =
+                          (email != null && email.isNotEmpty) ? email : 'N/A';
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              displayEmail,
+                              textAlign: TextAlign.end,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                          if (displayEmail != 'N/A') ...[
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(Icons.copy, size: 18),
+                              onPressed: () {
+                                Clipboard.setData(
+                                    ClipboardData(text: displayEmail));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Email copied to clipboard'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              tooltip: 'Copy email',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],
