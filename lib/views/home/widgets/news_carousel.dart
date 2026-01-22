@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../utils/app_theme.dart';
 
 class NewsCarousel extends StatelessWidget {
   const NewsCarousel({super.key});
