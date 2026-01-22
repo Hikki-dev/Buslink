@@ -681,12 +681,15 @@ class FirestoreService {
     }
   }
 
-  Future<void> removeFavorite(String userId, String tripId) async {
+  Future<void> removeFavorite(String userId, String routeId) async {
+    // Route ID format: "Colombo_Kandy"
+    // This is the document ID in favorite_routes collection
     await _db
         .collection('users')
         .doc(userId)
-        .collection('favorites')
-        .doc(tripId)
+        .collection(
+            'favorite_routes') // Changed from 'favorites' to match toggleFavorite
+        .doc(routeId)
         .delete();
   }
 

@@ -80,7 +80,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text('Trip Management',
+                                      Text('Management',
                                           style: GoogleFonts.outfit(
                                               fontSize: 34,
                                               height: 1.1,
