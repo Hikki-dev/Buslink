@@ -126,10 +126,10 @@ class _BusListScreenState extends State<BusListScreen> {
     if (_selectedFilters.isNotEmpty) {
       trips = trips.where((trip) {
         final timeOptions = [
-          "before_6_am",
-          "6_am_to_12_pm",
-          "12_pm_to_6_pm",
-          "after_6_pm"
+          "Before 6 AM",
+          "6 AM to 12 PM",
+          "12 PM to 6 PM",
+          "After 6 PM"
         ];
 
         final selectedTimes =
@@ -139,16 +139,16 @@ class _BusListScreenState extends State<BusListScreen> {
           bool timeMatch = false;
           final hour = trip.departureTime.hour;
           for (final filter in selectedTimes) {
-            if (filter == "before_6_am" && hour < 6) {
+            if (filter == "Before 6 AM" && hour < 6) {
               timeMatch = true;
             }
-            if (filter == "6_am_to_12_pm" && hour >= 6 && hour < 12) {
+            if (filter == "6 AM to 12 PM" && hour >= 6 && hour < 12) {
               timeMatch = true;
             }
-            if (filter == "12_pm_to_6_pm" && hour >= 12 && hour < 18) {
+            if (filter == "12 PM to 6 PM" && hour >= 12 && hour < 18) {
               timeMatch = true;
             }
-            if (filter == "after_6_pm" && hour >= 18) {
+            if (filter == "After 6 PM" && hour >= 18) {
               timeMatch = true;
             }
           }
@@ -298,7 +298,7 @@ class _BusListScreenState extends State<BusListScreen> {
           : null,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showMobileFilterModal(context),
-        label: Text("filters"),
+        label: Text("Filters"),
         icon: const Icon(Icons.tune),
         backgroundColor: AppTheme.primaryColor,
       ),
@@ -750,14 +750,14 @@ class _BusListScreenState extends State<BusListScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("$count ${"buses_found_suffix"}",
+              Text("$count ${"buses found"}",
                   style: TextStyle(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.onSurface)),
               if (Provider.of<TripController>(context).isBulkBooking)
                 Text(
-                  "${"showing_valid_options"} ${Provider.of<TripController>(context).bulkDates.length} ${"consecutive_days"}",
+                  "${"Showing valid options for"} ${Provider.of<TripController>(context).bulkDates.length} ${"consecutive days"}",
                   style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
@@ -776,9 +776,9 @@ class _BusListScreenState extends State<BusListScreen> {
               icon: const Icon(Icons.sort_rounded, size: 20),
               items: [
                 DropdownMenuItem(
-                    value: 'price_asc', child: Text("cheapest_first")),
+                    value: 'price_asc', child: Text("Cheapest First")),
                 DropdownMenuItem(
-                    value: 'time_asc', child: Text("earliest_first")),
+                    value: 'time_asc', child: Text("Earliest First")),
               ],
               onChanged: (v) => setState(() => _sortBy = v!),
             ),
@@ -801,15 +801,15 @@ class _BusListScreenState extends State<BusListScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("filters",
+          Text("Filters",
               style: const TextStyle(
                   fontFamily: 'Outfit',
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                   letterSpacing: 1.2)),
           const Divider(height: 32),
-          _filterSection("departure_time_filter",
-              ["before_6_am", "6_am_to_12_pm", "12_pm_to_6_pm", "after_6_pm"]),
+          _filterSection("Departure Time",
+              ["Before 6 AM", "6 AM to 12 PM", "12 PM to 6 PM", "After 6 PM"]),
         ],
       ),
     );
@@ -888,7 +888,7 @@ class _BusListScreenState extends State<BusListScreen> {
             Icon(Icons.directions_bus_outlined,
                 size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
-            Text("no_buses_found",
+            Text("No buses found",
                 style: TextStyle(
                     fontFamily: 'Outfit',
                     fontSize: 20,
@@ -1070,7 +1070,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                 color: Colors.blue.shade50,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Text("high_rated",
+              child: Text("Highly Rated",
                   style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 10,
@@ -1147,7 +1147,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
             child: Column(
               children: [
                 Text(
-                    "${duration.inHours}${"hrs"} ${duration.inMinutes.remainder(60)}${"mins"}",
+                    "${duration.inHours}${h} ${duration.inMinutes.remainder(60)}${m}",
                     style:
                         TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                 Row(
@@ -1222,7 +1222,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryColor)),
           const SizedBox(height: 4),
-          Text("per_person",
+          Text("per person",
               style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
           const SizedBox(height: 16),
           SizedBox(
@@ -1235,7 +1235,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                 if (diff <= 10) {
                   // Block booking
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("booking_closes_error"),
+                    content: Text("Booking closes 10 minutes before departure"),
                     backgroundColor: Colors.red,
                     duration: const Duration(seconds: 4),
                   ));
@@ -1278,7 +1278,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6))),
-              child: Text("select"),
+              child: Text("Select"),
             ),
           ),
           const SizedBox(height: 8),
