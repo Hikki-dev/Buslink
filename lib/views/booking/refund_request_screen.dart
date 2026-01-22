@@ -144,6 +144,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
         tripId: widget.trip.id,
         userId: widget.ticket.userId,
         passengerName: widget.ticket.passengerName,
+        passengerPhone: widget.ticket.passengerPhone, // Added
         email: widget.ticket.passengerEmail ??
             currentUser?.email, // FIXED: Include email
         reason: _selectedReason!,

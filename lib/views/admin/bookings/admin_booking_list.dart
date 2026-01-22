@@ -276,29 +276,44 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                             return const SizedBox.shrink();
                           }
 
-                          // Search (Email Only per user request)
+                          // Search (Email, Name, or Phone)
                           if (_searchController.text.isNotEmpty) {
                             final q =
                                 _searchController.text.toLowerCase().trim();
-                            // Checks passengerEmail (ticket) or user email (account)
-                            final passengerEmail =
-                                (data['passengerEmail'] ?? '')
-                                    .toString()
-                                    .toLowerCase();
-                            final userEmail =
-                                (data['email'] ?? '') // Sometimes duplicate
-                                    .toString()
-                                    .toLowerCase();
-                            final userDataEmail = (data['userData'] != null &&
+
+                            final pEmail = (data['passengerEmail'] ?? '')
+                                .toString()
+                                .toLowerCase();
+                            final uEmail =
+                                (data['email'] ?? '').toString().toLowerCase();
+                            final pName = (data['passengerName'] ??
+                                    data['userName'] ??
+                                    '')
+                                .toString()
+                                .toLowerCase();
+                            final pPhone = (data['passengerPhone'] ?? '')
+                                .toString()
+                                .toLowerCase();
+
+                            final udEmail = (data['userData'] != null &&
                                     data['userData']['email'] != null)
                                 ? data['userData']['email']
                                     .toString()
                                     .toLowerCase()
                                 : '';
+                            final udName = (data['userData'] != null &&
+                                    data['userData']['name'] != null)
+                                ? data['userData']['name']
+                                    .toString()
+                                    .toLowerCase()
+                                : '';
 
-                            if (!passengerEmail.contains(q) &&
-                                !userEmail.contains(q) &&
-                                !userDataEmail.contains(q)) {
+                            if (!pEmail.contains(q) &&
+                                !uEmail.contains(q) &&
+                                !udEmail.contains(q) &&
+                                !pName.contains(q) &&
+                                !udName.contains(q) &&
+                                !pPhone.contains(q)) {
                               return const SizedBox.shrink();
                             }
                           }
@@ -454,7 +469,14 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                 ],
               ),
               const SizedBox(height: 6),
-              // Removed Reference ID display as per user request
+              if (data['passengerEmail'] != null ||
+                  data['passengerPhone'] != null)
+                Text(
+                  "${data['passengerEmail'] ?? ''} ${data['passengerPhone'] ?? ''}"
+                      .trim(),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              const SizedBox(height: 6),
             ],
           ),
           trailing: Column(

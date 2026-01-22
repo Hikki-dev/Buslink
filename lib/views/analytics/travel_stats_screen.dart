@@ -277,7 +277,8 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
             decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle),
-            child: const Icon(Icons.wallet, color: Colors.white, size: 28),
+            child: const Icon(Icons.credit_card_rounded,
+                color: Colors.white, size: 28),
           )
         ],
       ),

@@ -152,21 +152,29 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
           docs = docs.where((d) {
             final data = d.data() as Map<String, dynamic>;
 
-            final passengerEmail =
-                (data['passengerEmail'] ?? '').toString().toLowerCase();
-            final email = (data['email'] ?? '').toString().toLowerCase();
-            final userEmail =
+            final pEmail = (data['passengerEmail'] ?? data['email'] ?? '')
+                .toString()
+                .toLowerCase();
+            final pName =
+                (data['passengerName'] ?? '').toString().toLowerCase();
+            final pPhone = (data['passengerPhone'] ?? data['phone'] ?? '')
+                .toString()
+                .toLowerCase();
+
+            final udEmail =
                 (data['userData'] != null && data['userData']['email'] != null)
                     ? data['userData']['email'].toString().toLowerCase()
                     : '';
-            final passengerName =
-                (data['passengerName'] ?? '').toString().toLowerCase();
+            final udName =
+                (data['userData'] != null && data['userData']['name'] != null)
+                    ? data['userData']['name'].toString().toLowerCase()
+                    : '';
 
-            // Match email fields OR passengerName
-            return email.contains(query) ||
-                userEmail.contains(query) ||
-                passengerEmail.contains(query) ||
-                passengerName.contains(query);
+            return pEmail.contains(query) ||
+                udEmail.contains(query) ||
+                pName.contains(query) ||
+                udName.contains(query) ||
+                pPhone.contains(query);
           }).toList();
         }
 
@@ -277,6 +285,10 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                     Text(refund.passengerName,
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16)),
+                    if (refund.email != null)
+                      Text(refund.email!,
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade600)),
                     const SizedBox(height: 4),
                     Text(
                         "${"Refund Amount"}: LKR ${refund.refundAmount.toStringAsFixed(2)}",

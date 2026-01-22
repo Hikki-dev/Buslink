@@ -23,6 +23,7 @@ class RefundRequest {
   final String? paymentIntentId;
   final String userId;
   final String passengerName;
+  final String? passengerPhone; // Added phone
   final String? email; // Added email field
   final DateTime requestedAt;
   final DateTime createdAt;
@@ -51,6 +52,7 @@ class RefundRequest {
     this.paymentIntentId,
     required this.userId,
     required this.passengerName,
+    this.passengerPhone,
     this.email,
     required this.requestedAt,
     required this.createdAt,
@@ -78,6 +80,7 @@ class RefundRequest {
       'paymentIntentId': paymentIntentId,
       'userId': userId,
       'passengerName': passengerName,
+      'passengerPhone': passengerPhone,
       'email': email,
       'requestedAt': Timestamp.fromDate(requestedAt),
       'createdAt': Timestamp.fromDate(createdAt),
@@ -108,7 +111,8 @@ class RefundRequest {
       paymentIntentId: map['paymentIntentId'],
       userId: map['userId'] ?? map['requestedBy'] ?? '',
       passengerName: map['passengerName'] ?? 'Unknown',
-      email: map['email'],
+      passengerPhone: map['passengerPhone'] ?? map['passengerMobile'],
+      email: map['email'] ?? map['passengerEmail'],
       requestedAt:
           (map['requestedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
