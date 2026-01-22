@@ -590,20 +590,129 @@ Future<DateTime?> showMonthYearPicker({
   required DateTime lastDate,
   bool monthOnly = false,
 }) async {
-  DateTime? picked = await showDatePicker(
+  // Show a dialog with month selection
+  return await showDialog<DateTime>(
     context: context,
-    initialDate: initialDate,
-    firstDate: firstDate,
-    lastDate: lastDate,
-    initialDatePickerMode: DatePickerMode.year,
-    helpText: 'Select Month',
-  );
+    builder: (BuildContext context) {
+      final months = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+      ];
 
-  // Return first day of the selected month
-  if (picked != null) {
-    return DateTime(picked.year, picked.month, 1);
-  }
-  return null;
+      int selectedMonth = initialDate.month;
+      int selectedYear = initialDate.year;
+
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Select Month'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Year selector
+                  DropdownButton<int>(
+                    value: selectedYear,
+                    isExpanded: true,
+                    items: List.generate(
+                      lastDate.year - firstDate.year + 1,
+                      (index) {
+                        final year = firstDate.year + index;
+                        return DropdownMenuItem(
+                          value: year,
+                          child: Text(year.toString(),
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                        );
+                      },
+                    ),
+                    onChanged: (year) {
+                      if (year != null) {
+                        setState(() => selectedYear = year);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  // Month grid
+                  SizedBox(
+                    height: 300,
+                    child: GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        childAspectRatio: 2.0,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                      ),
+                      itemCount: 12,
+                      itemBuilder: (context, index) {
+                        final month = index + 1;
+                        final isSelected = month == selectedMonth;
+
+                        return InkWell(
+                          onTap: () {
+                            setState(() => selectedMonth = month);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppTheme.primaryColor
+                                  : Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              months[index]
+                                  .substring(0, 3), // Show "Jan", "Feb", etc.
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    isSelected ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context)
+                      .pop(DateTime(selectedYear, selectedMonth, 1));
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
 }
 
 // Helper function for Year Picker

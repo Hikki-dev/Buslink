@@ -113,17 +113,17 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
   }
 
   Widget _buildRefundList() {
-    // IMPORTANT: When searching, fetch ALL results (no limit)
-    // Otherwise, use standard stream with limit
+    // IMPORTANT: When searching, fetch ALL results across all statuses
+    // Otherwise, filter by selected status
     final hasSearch = _searchController.text.trim().isNotEmpty;
 
     Query query = FirebaseFirestore.instance
         .collection('refunds')
-        .where('status', isEqualTo: _selectedStatus.name)
         .orderBy('createdAt', descending: true);
 
-    // Only apply limit when NOT searching
+    // Only filter by status when NOT searching
     if (!hasSearch) {
+      query = query.where('status', isEqualTo: _selectedStatus.name);
       query = query.limit(50); // Reasonable limit for non-search view
     }
 
