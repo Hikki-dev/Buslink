@@ -107,6 +107,51 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
           border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(
         children: [
+          // Email with copy icon
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Email", style: TextStyle()),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          refund.email ?? 'N/A',
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      if (refund.email != null && refund.email!.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.copy, size: 18),
+                          onPressed: () {
+                            Clipboard.setData(
+                                ClipboardData(text: refund.email!));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Email copied to clipboard'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          tooltip: 'Copy email',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
           _row("Trip Price", "LKR ${refund.tripPrice.toStringAsFixed(2)}"),
           _row('Cancellation Rule',
               "${(refund.refundPercentage * 100).toInt()}% Refund"),
