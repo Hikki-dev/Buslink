@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
 
+import '../../../utils/app_theme.dart'; // Added
 import '../../../../controllers/trip_controller.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +17,7 @@ class LateDeparturesView extends StatefulWidget {
 class _LateDeparturesViewState extends State<LateDeparturesView> {
   String _routeFilter = "";
   DateTime _selectedDate = DateTime.now();
+  DateTime _tempSelectedDate = DateTime.now(); // Temp variable for picker
   String _filterType = "Daily"; // Daily, Monthly, Yearly
 
   @override
@@ -245,37 +247,78 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
             ],
           ));
 
-      // 3. Date Picker
+      // 3. Date Picker (Dynamic based on filter type)
       final datePicker = InkWell(
         onTap: () async {
-          final picked = await showDatePicker(
+          DateTime? picked;
+
+          if (_filterType == 'Daily') {
+            picked = await showDatePicker(
               context: context,
-              initialDate: _selectedDate,
+              initialDate: _tempSelectedDate,
               firstDate: DateTime(2024),
-              lastDate: DateTime(2030));
+              lastDate: DateTime(2030),
+            );
+          } else if (_filterType == 'Monthly') {
+            // Month Picker
+            picked = await showMonthYearPicker(
+              context: context,
+              initialDate: _tempSelectedDate,
+              firstDate: DateTime(2024),
+              lastDate: DateTime(2030),
+              monthOnly: true,
+            );
+          } else {
+            // Year Picker
+            picked = await showYearPicker(
+              context: context,
+              initialDate: _tempSelectedDate,
+              firstDate: DateTime(2024),
+              lastDate: DateTime(2030),
+            );
+          }
+
           if (picked != null) {
-            setState(() => _selectedDate = picked);
+            setState(() => _tempSelectedDate = picked!);
           }
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 14), // Matches TextField height approx
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade400),
               borderRadius: BorderRadius.circular(12)),
           child: Row(
-            mainAxisSize: MainAxisSize.min, // Compact
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.calendar_today, size: 18),
               const SizedBox(width: 8),
               Text(
                   _filterType == 'Daily'
-                      ? DateFormat('MMM d, yyyy').format(_selectedDate)
+                      ? DateFormat('MMM d, yyyy').format(_tempSelectedDate)
                       : _filterType == 'Monthly'
-                          ? DateFormat('MMMM yyyy').format(_selectedDate)
-                          : DateFormat('yyyy').format(_selectedDate),
+                          ? DateFormat('MMMM yyyy').format(_tempSelectedDate)
+                          : DateFormat('yyyy').format(_tempSelectedDate),
                   style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
+          ),
+        ),
+      );
+
+      // 4. Search Button
+      final searchButton = ElevatedButton.icon(
+        onPressed: () {
+          setState(() {
+            _selectedDate = _tempSelectedDate; // Apply the temp date
+          });
+        },
+        icon: const Icon(Icons.search, size: 18),
+        label: const Text('Search'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       );
@@ -295,7 +338,9 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
                         children: [
                           filterChips,
                           const SizedBox(width: 16),
-                          datePicker
+                          datePicker,
+                          const SizedBox(width: 12),
+                          searchButton,
                         ],
                       ),
                     )
@@ -308,6 +353,8 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
                     filterChips,
                     const SizedBox(width: 16),
                     datePicker,
+                    const SizedBox(width: 12),
+                    searchButton,
                   ],
                 ),
         ),
@@ -533,4 +580,83 @@ class _PieChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// Helper function for Month Picker
+Future<DateTime?> showMonthYearPicker({
+  required BuildContext context,
+  required DateTime initialDate,
+  required DateTime firstDate,
+  required DateTime lastDate,
+  bool monthOnly = false,
+}) async {
+  DateTime? picked = await showDatePicker(
+    context: context,
+    initialDate: initialDate,
+    firstDate: firstDate,
+    lastDate: lastDate,
+    initialDatePickerMode: DatePickerMode.year,
+    helpText: 'Select Month',
+  );
+
+  // Return first day of the selected month
+  if (picked != null) {
+    return DateTime(picked.year, picked.month, 1);
+  }
+  return null;
+}
+
+// Helper function for Year Picker
+Future<DateTime?> showYearPicker({
+  required BuildContext context,
+  required DateTime initialDate,
+  required DateTime firstDate,
+  required DateTime lastDate,
+}) async {
+  // Show a simple dialog with year selection
+  return await showDialog<DateTime>(
+    context: context,
+    builder: (BuildContext context) {
+      final years = List<int>.generate(
+        lastDate.year - firstDate.year + 1,
+        (index) => firstDate.year + index,
+      );
+
+      return AlertDialog(
+        title: const Text('Select Year'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: years.length,
+            itemBuilder: (context, index) {
+              final year = years[index];
+              final isSelected = year == initialDate.year;
+
+              return ListTile(
+                title: Text(
+                  year.toString(),
+                  style: TextStyle(
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? AppTheme.primaryColor : null,
+                  ),
+                ),
+                selected: isSelected,
+                onTap: () {
+                  Navigator.of(context).pop(DateTime(year, 1, 1));
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      );
+    },
+  );
 }

@@ -50,6 +50,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
     );
     if (picked != null) {
       setState(() => _selectedDate = picked);
+      _fetchBookings(refresh: true);
     }
   }
 
@@ -68,32 +69,51 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
 
   Future<void> _fetchBookings({bool refresh = false}) async {
     if (_isLoading) return;
+
+    // Check if we have active filters (search, status, or date)
+    final hasFilters = _searchController.text.trim().isNotEmpty ||
+        _selectedStatus != null ||
+        _selectedDate != null;
+
     if (refresh) {
       _bookings = [];
       _lastDocument = null;
       _hasMore = true;
     }
-    if (!_hasMore) return;
+
+    // If filtering, fetch ALL at once (no pagination)
+    // If no filters, use normal pagination
+    if (!hasFilters && !_hasMore) return;
 
     setState(() => _isLoading = true);
 
     try {
       Query query = FirebaseFirestore.instance
           .collection('tickets')
-          .orderBy(FieldPath.documentId) // Stable Sort
-          .limit(_limit);
+          .orderBy(FieldPath.documentId); // Stable Sort
 
-      if (_lastDocument != null) {
-        query = query.startAfterDocument(_lastDocument!);
+      // Only apply pagination when NOT filtering
+      if (!hasFilters) {
+        query = query.limit(_limit);
+        if (_lastDocument != null) {
+          query = query.startAfterDocument(_lastDocument!);
+        }
       }
 
       final snap = await query.get();
-      if (snap.docs.length < _limit) {
-        _hasMore = false;
-      }
-      if (snap.docs.isNotEmpty) {
-        _lastDocument = snap.docs.last;
-        _bookings.addAll(snap.docs);
+
+      if (!hasFilters) {
+        if (snap.docs.length < _limit) {
+          _hasMore = false;
+        }
+        if (snap.docs.isNotEmpty) {
+          _lastDocument = snap.docs.last;
+          _bookings.addAll(snap.docs);
+        }
+      } else {
+        // When filtering, replace all bookings with filtered results
+        _bookings = snap.docs;
+        _hasMore = false; // No pagination when filtering
       }
     } catch (e) {
       debugPrint("Error fetching bookings: $e");
@@ -136,7 +156,10 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                         borderRadius: BorderRadius.circular(12)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
-                  onChanged: (val) => setState(() {}),
+                  onChanged: (val) {
+                    setState(() {});
+                    _fetchBookings(refresh: true); // Refetch with new search
+                  },
                 ),
                 const SizedBox(height: 12),
                 // Dropdowns Row
@@ -164,8 +187,10 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                                     style: const TextStyle(fontSize: 13)),
                               );
                             }).toList(),
-                            onChanged: (v) =>
-                                setState(() => _selectedStatus = v),
+                            onChanged: (v) {
+                              setState(() => _selectedStatus = v);
+                              _fetchBookings(refresh: true);
+                            },
                           ),
                         ),
                       ),

@@ -113,12 +113,22 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
   }
 
   Widget _buildRefundList() {
+    // IMPORTANT: When searching, fetch ALL results (no limit)
+    // Otherwise, use standard stream with limit
+    final hasSearch = _searchController.text.trim().isNotEmpty;
+
+    Query query = FirebaseFirestore.instance
+        .collection('refunds')
+        .where('status', isEqualTo: _selectedStatus.name)
+        .orderBy('createdAt', descending: true);
+
+    // Only apply limit when NOT searching
+    if (!hasSearch) {
+      query = query.limit(50); // Reasonable limit for non-search view
+    }
+
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('refunds') // Fixed casing to match rules
-          .where('status', isEqualTo: _selectedStatus.name)
-          .orderBy('createdAt', descending: true)
-          .snapshots(),
+      stream: query.snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -136,11 +146,8 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
 
         List<DocumentSnapshot> docs = snapshot.data!.docs;
 
-        if (_searchController.text.isNotEmpty) {
+        if (hasSearch) {
           final query = _searchController.text.trim().toLowerCase();
-
-          // ALLOW SEARCH BY NAME OR EMAIL
-          // if (!query.contains('@')) { ... } REMOVED
 
           docs = docs.where((d) {
             final data = d.data() as Map<String, dynamic>;
@@ -277,7 +284,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    Text("${"Reason"}: ${_formatReason(refund.reason)}",
+                    Text("${"Reason"}: ${_getDisplayReason(refund)}",
                         style: const TextStyle(fontSize: 13)),
                   ],
                 ),
@@ -311,5 +318,19 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
       buffer.write(i == 0 ? name[i].toUpperCase() : name[i]);
     }
     return buffer.toString().toUpperCase();
+  }
+
+  String _getDisplayReason(RefundRequest refund) {
+    // If the reason is "other" and they provided custom text, show that
+    if (refund.reason == RefundReason.other &&
+        refund.otherReasonText != null &&
+        refund.otherReasonText!.trim().isNotEmpty) {
+      // Capitalize first letter and preserve user punctuation
+      final text = refund.otherReasonText!.trim();
+      return text[0].toUpperCase() + text.substring(1);
+    }
+
+    // Otherwise, show the formatted enum name
+    return _formatReason(refund.reason);
   }
 }
