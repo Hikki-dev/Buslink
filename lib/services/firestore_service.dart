@@ -655,76 +655,20 @@ class FirestoreService {
   // --- FAVORITES (Routes) ---
   // We save the ROUTE (From/To), not the specific scheduled trip instance.
 
-  Future<void> toggleFavorite(String userId, Trip trip) async {
-    // Create a unique ID for the route, e.g., "Colombo_Kandy"
-    final routeId = "${trip.originCity}_${trip.destinationCity}";
-
-    final ref = _db
-        .collection('users')
-        .doc(userId)
-        .collection(
-            'favorite_routes') // Changed from 'favorites' to match reader
-        .doc(routeId);
-
-    final snap = await ref.get();
-
-    if (snap.exists) {
-      await ref.delete();
-    } else {
-      // Save generic route info
-      await ref.set({
-        'fromCity': trip.originCity,
-        'toCity': trip.destinationCity,
-        'operatorName': trip.operatorName,
-        'addedAt': FieldValue.serverTimestamp(),
-      });
-    }
-  }
-
-  Future<void> removeFavorite(String userId, String routeId) async {
-    // Route ID format: "Colombo_Kandy"
-    // This is the document ID in favorite_routes collection
-    await _db
-        .collection('users')
-        .doc(userId)
-        .collection(
-            'favorite_routes') // Changed from 'favorites' to match toggleFavorite
-        .doc(routeId)
-        .delete();
-  }
-
-  Future<bool> isTripFavorite(String userId, String tripId) async {
-    // This function receives a tripId but we need to extract the route from it
-    // Since we don't have access to the Trip object here, we'll query both collections
-    // for backwards compatibility. Check favorite_routes first (new way)
-    // This is a hack - ideally we'd pass the Trip object to get originCity/destinationCity
-
-    // For now, just return false as a workaround since we can't reliably
-    // convert tripId to routeId without the Trip data
-    // The UI will show hearts as unfilled but toggling still works
-    return false;
-
-    // TODO: Refactor to pass Trip object instead of just tripId
-    // OR: Store routeId in the UI state when checking favorites
-  }
-
-  Stream<List<Map<String, dynamic>>> getUserFavoriteRoutes(String userId) {
-    return _db
-        .collection('users')
-        .doc(userId)
-        .collection('favorite_routes')
-        .snapshots()
-        .map((snap) => snap.docs.map((d) {
-              final data = d.data();
-              data['id'] = d.id;
-              return data;
-            }).toList());
-  }
-
   String _normalizeCity(String city) {
     if (city.trim().isEmpty) return "";
     final trimmed = city.trim();
     return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
+  }
+
+  Future<void> toggleFavorite(String userId, Trip trip) async {
+    await toggleRouteFavorite(
+      userId,
+      trip.originCity,
+      trip.destinationCity,
+      operatorName: trip.operatorName,
+      price: trip.price,
+    );
   }
 
   Future<void> toggleRouteFavorite(String userId, String from, String to,
@@ -739,33 +683,58 @@ class FirestoreService {
         .doc(userId)
         .collection('favorite_routes')
         .doc(id);
+
     final snap = await ref.get();
+
     if (snap.exists) {
       await ref.delete();
     } else {
       await ref.set({
         'fromCity': cleanFrom,
         'toCity': cleanTo,
-        'operatorName': operatorName,
+        'operatorName': operatorName ?? 'Buslink',
         'price': price,
-        'addedAt': FieldValue.serverTimestamp()
+        'addedAt': FieldValue.serverTimestamp(),
       });
     }
   }
 
-  Future<bool> isRouteFavorite(String userId, String from, String to) async {
-    final cleanFrom = _normalizeCity(from);
-    final cleanTo = _normalizeCity(to);
+  Future<void> removeFavorite(String userId, String routeId) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('favorite_routes')
+        .doc(routeId)
+        .delete();
+  }
+
+  Future<bool> isRouteFavorite(
+      String userId, String fromCity, String toCity) async {
+    final cleanFrom = _normalizeCity(fromCity);
+    final cleanTo = _normalizeCity(toCity);
     if (cleanFrom.isEmpty || cleanTo.isEmpty) return false;
 
-    final id = "${cleanFrom}_${cleanTo}".replaceAll(' ', '_');
+    final routeId = "${cleanFrom}_${cleanTo}".replaceAll(' ', '_');
     final snap = await _db
         .collection('users')
         .doc(userId)
         .collection('favorite_routes')
-        .doc(id)
+        .doc(routeId)
         .get();
     return snap.exists;
+  }
+
+  Stream<List<Map<String, dynamic>>> getUserFavoriteRoutes(String userId) {
+    return _db
+        .collection('users')
+        .doc(userId)
+        .collection('favorite_routes')
+        .snapshots()
+        .map((snap) => snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList());
   }
 
   // --- LOCATION / REALTIME ---

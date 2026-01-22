@@ -27,6 +27,7 @@ import '../layout/notifications_screen.dart';
 import '../tracking/track_bus_screen.dart'; // Added
 import '../../data/destinations_data.dart';
 import 'widgets/news_carousel.dart';
+import '../widgets/animated_favorite_button.dart';
 
 // Mock Data for Popular Destinatinos
 // Updated Popular Destinations with High Quality Images
@@ -580,6 +581,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           duration: const Duration(milliseconds: 500),
                           curve: Curves.easeOut);
                     },
+                    onRemove: () async {
+                      if (fav['id'] != null) {
+                        await Provider.of<TripController>(context,
+                                listen: false)
+                            .removeFavorite(fav['id']);
+                      }
+                    },
                   );
                 },
               ),
@@ -596,12 +604,14 @@ class _HomeFavoriteCard extends StatelessWidget {
   final String to;
   final String operator;
   final VoidCallback onTap;
+  final VoidCallback onRemove;
 
   const _HomeFavoriteCard({
     required this.from,
     required this.to,
     required this.operator,
     required this.onTap,
+    required this.onRemove,
   });
 
   @override
@@ -632,14 +642,10 @@ class _HomeFavoriteCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.favorite,
-                      size: 16, color: AppTheme.primaryColor),
+                AnimatedFavoriteButton(
+                  isFavorite: true,
+                  size: 16,
+                  onToggle: onRemove,
                 ),
                 const Spacer(),
                 const Icon(Icons.arrow_outward_rounded,

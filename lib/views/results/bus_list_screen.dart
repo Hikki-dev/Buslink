@@ -24,6 +24,7 @@ import '../../services/firestore_service.dart';
 
 import 'package:rxdart/rxdart.dart'; // For Stream Merging
 import '../../services/location_service.dart'; // For Live Locations
+import '../widgets/animated_favorite_button.dart';
 
 part 'parts/clock_widget.dart';
 
@@ -1057,44 +1058,63 @@ class _BusTicketCardState extends State<_BusTicketCard> {
   }
 
   Widget _buildCardHeader(EnrichedTrip trip) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // Operator Info
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(4),
+    return FutureBuilder<bool>(
+        future: Provider.of<TripController>(context, listen: false)
+            .isRouteFavorite(trip.originCity, trip.destinationCity),
+        builder: (context, snapshot) {
+          final isFavorite = snapshot.data ?? false;
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Operator Info
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text("Highly Rated",
+                        style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                      trip.operatorName.isEmpty
+                          ? "BusLink Operator"
+                          : trip.operatorName,
+                      style: TextStyle(
+                          fontFamily: 'Outfit',
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface)),
+                  const SizedBox(height: 4),
+                  // Only Show Via
+                  if (trip.via.isNotEmpty)
+                    _detailChip(Icons.route, "${"via"} ${trip.via}"),
+                ],
               ),
-              child: Text("Highly Rated",
-                  style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue)),
-            ),
-            const SizedBox(height: 8),
-            Text(
-                trip.operatorName.isEmpty
-                    ? "BusLink Operator"
-                    : trip.operatorName,
-                style: TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface)),
-            const SizedBox(height: 4),
-            // Only Show Via
-            if (trip.via.isNotEmpty)
-              _detailChip(Icons.route, "${"via"} ${trip.via}"),
-          ],
-        ),
-      ],
-    );
+
+              // Animated Favorite Button
+              AnimatedFavoriteButton(
+                isFavorite: isFavorite,
+                onToggle: () async {
+                  await Provider.of<TripController>(context, listen: false)
+                      .toggleFavorite(trip);
+                  // Trigger rebuild to update local state
+                  setState(() {});
+                },
+              ),
+            ],
+          );
+        });
   }
 
   // Details Removed as requested

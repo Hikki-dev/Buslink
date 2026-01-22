@@ -12,6 +12,7 @@ import '../layout/desktop_navbar.dart';
 import '../layout/custom_app_bar.dart';
 
 import '../customer_main_screen.dart';
+import '../widgets/animated_favorite_button.dart';
 
 class FavoritesScreen extends StatelessWidget {
   final bool showBackButton;
@@ -311,16 +312,10 @@ class _FavoriteItemCard extends StatelessWidget {
           Positioned(
             top: 16,
             right: 16,
-            child: InkWell(
-              onTap: onRemove,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.favorite, color: Colors.red, size: 18),
-              ),
+            child: AnimatedFavoriteButton(
+              isFavorite: true,
+              size: 18,
+              onToggle: onRemove,
             ),
           )
         ],

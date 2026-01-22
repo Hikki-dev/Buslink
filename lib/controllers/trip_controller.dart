@@ -265,16 +265,17 @@ class TripController extends ChangeNotifier {
     await _firestoreService.toggleFavorite(uid, enrichedTrip.trip);
   }
 
-  Future<bool> isTripFavorite(String tripId) async {
+  Future<bool> isTripFavorite(EnrichedTrip trip) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return false;
-    return await _firestoreService.isTripFavorite(uid, tripId);
+    return await _firestoreService.isRouteFavorite(
+        uid, trip.originCity, trip.destinationCity);
   }
 
-  Future<void> removeFavorite(String tripId) async {
+  Future<void> removeFavorite(String routeId) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
-    await _firestoreService.removeFavorite(uid, tripId);
+    await _firestoreService.removeFavorite(uid, routeId);
   }
 
   // --- CITIES ---
