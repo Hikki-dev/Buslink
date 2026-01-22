@@ -20,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController(); // Added
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
+
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController(); // Added
   bool _isLogin = true;
@@ -61,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _bgTimer?.cancel();
     _nameController.dispose(); // Added
     _emailController.dispose();
-    _phoneController.dispose();
+
     _passwordController.dispose();
     _confirmPasswordController.dispose(); // Added
     super.dispose();
@@ -108,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
             context,
             email,
             password,
-            _phoneController.text.trim(),
+            null, // Phone number removed
             _nameController.text.trim() // Added displayName
             );
       }
@@ -358,7 +358,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildAnimatedForm(BuildContext context) {
     final theme = Theme.of(context);
-    // 
+    //
 
     return Form(
       key: _formKey,
@@ -696,7 +696,7 @@ class _IllustrationPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 
+    //
     return Container(
       decoration: const BoxDecoration(color: Color(0xFF0A0A0B)),
       child: Stack(

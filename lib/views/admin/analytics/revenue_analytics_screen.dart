@@ -238,7 +238,9 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
 
         // ALLOW ALL ROUTES (Even if Unknown)
         // This ensures the "Net Revenue" matches what is shown in the table.
-        routeRevenue[routeKey] = (routeRevenue[routeKey] ?? 0) + amount;
+        if (from != '?' && to != '?') {
+          routeRevenue[routeKey] = (routeRevenue[routeKey] ?? 0) + amount;
+        }
       }
     }
 

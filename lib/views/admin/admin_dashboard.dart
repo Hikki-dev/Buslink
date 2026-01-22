@@ -80,7 +80,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text('Route Management',
+                                      Text('Trip Management',
                                           style: GoogleFonts.outfit(
                                               fontSize: 34,
                                               height: 1.1,
@@ -149,7 +149,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                             MainAxisAlignment.spaceBetween,
                                         children: [
                                           Flexible(
-                                            child: Text('Route Management',
+                                            child: Text('Trip Management',
                                                 style: GoogleFonts.outfit(
                                                     fontSize: 34,
                                                     height: 1.1,
@@ -444,10 +444,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       icon: const Icon(Icons.alt_route),
       label: Text("Manage Routes"),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        side: BorderSide(color: Theme.of(context).dividerColor),
       ),
     );
   }
@@ -461,10 +462,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       icon: const Icon(Icons.monetization_on_outlined),
       label: Text("Refunds"),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        side: BorderSide(color: Theme.of(context).dividerColor),
       ),
     );
   }
@@ -478,10 +480,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       icon: const Icon(Icons.feedback_outlined),
       label: Text("App Feedback"),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        side: BorderSide(color: Theme.of(context).dividerColor),
       ),
     );
   }
@@ -495,10 +498,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       icon: const Icon(Icons.confirmation_number_outlined),
       label: Text("Bookings"),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        side: BorderSide(color: Theme.of(context).dividerColor),
       ),
     );
   }
@@ -512,10 +516,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       icon: const Icon(Icons.analytics_outlined),
       label: Text("Analytics"),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        side: BorderSide(color: Theme.of(context).dividerColor),
       ),
     );
   }
@@ -529,8 +534,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       icon: const Icon(Icons.alt_route),
       label: Text("Add Route"),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.black87,
-        foregroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.onSurface,
+        foregroundColor: Theme.of(context).colorScheme.surface,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
       ),
@@ -559,7 +564,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Find Routes',
+              Text('Find Trips',
                   style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -581,8 +586,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             controller.toCity ?? '',
                             controller.tripDate ?? DateTime.now()),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black87,
-                          foregroundColor: Colors.white,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.onSurface,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.surface,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
                           padding: const EdgeInsets.symmetric(
@@ -611,8 +618,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             controller.toCity ?? '',
                             controller.tripDate ?? DateTime.now()),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black87,
-                          foregroundColor: Colors.white,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.onSurface,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.surface,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -715,7 +724,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           final cities = Provider.of<TripController>(context, listen: false)
               .availableCities;
           if (textEditingValue.text == '') {
-            return const Iterable<String>.empty();
+            return cities;
           }
           return cities.where((String option) {
             return option
@@ -869,11 +878,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ] else ...[
             PopupMenuButton(
               itemBuilder: (context) => [
-                const PopupMenuItem(value: 'edit', child: Text("Edit Route")),
+                const PopupMenuItem(value: 'edit', child: Text("Edit Trip")),
                 const PopupMenuItem(value: 'SEATS', child: Text("View Seats")),
                 const PopupMenuItem(
                     value: 'delete',
-                    child: Text("Delete Bus",
+                    child: Text("Delete Trip",
                         style: TextStyle(color: Colors.red))),
               ],
               onSelected: (val) {
@@ -940,9 +949,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Delete Bus?"),
+        title: const Text("Delete Trip?"),
         content: const Text(
-            "Are you sure you want to delete this route? This action cannot be undone."),
+            "Are you sure you want to delete this trip? This action cannot be undone."),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
@@ -988,7 +997,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: isPrimary ? Colors.white : Colors.black87),
+                        color: isPrimary
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.onSurface),
                     textAlign: TextAlign.center),
               ],
             ),

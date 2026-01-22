@@ -206,6 +206,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           label: 'Favorites',
         ),
         const BottomNavigationBarItem(
+          key: Key('nav_profile'), // Key added for testing
           icon: Icon(Icons.person_outline),
           activeIcon: Icon(Icons.person),
           label: 'Profile',

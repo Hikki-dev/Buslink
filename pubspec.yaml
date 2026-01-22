@@ -57,7 +57,7 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
-  patrol: ^3.0.0
+  # patrol: ^4.0.0 (Removed to fix build)
   flutter_lints: ^6.0.0
   mockito: ^5.4.4
   build_runner: ^2.4.9

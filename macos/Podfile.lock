@@ -1214,6 +1214,9 @@ PODS:
     - Firebase/Functions (~> 12.6.0)
     - firebase_core
     - FlutterMacOS
+  - CocoaAsyncSocket (7.6.5)
+  - file_selector_macos (0.0.1):
+    - FlutterMacOS
   - Firebase/Auth (12.6.0):
     - Firebase/CoreOnly
     - FirebaseAuth (~> 12.6.0)
@@ -1228,6 +1231,9 @@ PODS:
   - Firebase/Messaging (12.6.0):
     - Firebase/CoreOnly
     - FirebaseMessaging (~> 12.6.0)
+  - Firebase/Storage (12.6.0):
+    - Firebase/CoreOnly
+    - FirebaseStorage (~> 12.6.0)
   - firebase_auth (6.1.3):
     - Firebase/Auth (~> 12.6.0)
     - Firebase/CoreOnly (~> 12.6.0)
@@ -1239,6 +1245,11 @@ PODS:
   - firebase_messaging (16.1.0):
     - Firebase/CoreOnly (~> 12.6.0)
     - Firebase/Messaging (~> 12.6.0)
+    - firebase_core
+    - FlutterMacOS
+  - firebase_storage (13.0.5):
+    - Firebase/CoreOnly (~> 12.6.0)
+    - Firebase/Storage (~> 12.6.0)
     - firebase_core
     - FlutterMacOS
   - FirebaseAppCheckInterop (12.6.0)
@@ -1304,7 +1315,19 @@ PODS:
     - nanopb (~> 3.30910.0)
   - FirebaseMessagingInterop (12.6.0)
   - FirebaseSharedSwift (12.6.0)
+  - FirebaseStorage (12.6.0):
+    - FirebaseAppCheckInterop (~> 12.6.0)
+    - FirebaseAuthInterop (~> 12.6.0)
+    - FirebaseCore (~> 12.6.0)
+    - FirebaseCoreExtension (~> 12.6.0)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GTMSessionFetcher/Core (< 6.0, >= 3.4)
+  - flutter_local_notifications (0.0.1):
+    - FlutterMacOS
   - FlutterMacOS (1.0.0)
+  - geolocator_apple (1.2.0):
+    - Flutter
+    - FlutterMacOS
   - google_sign_in_ios (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -1451,7 +1474,13 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
+  - package_info_plus (0.0.1):
+    - FlutterMacOS
   - path_provider_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - patrol (0.0.1):
+    - CocoaAsyncSocket (~> 7.6)
     - Flutter
     - FlutterMacOS
   - printing (1.0.0):
@@ -1469,13 +1498,19 @@ PODS:
 DEPENDENCIES:
   - cloud_firestore (from `Flutter/ephemeral/.symlinks/plugins/cloud_firestore/macos`)
   - cloud_functions (from `Flutter/ephemeral/.symlinks/plugins/cloud_functions/macos`)
+  - file_selector_macos (from `Flutter/ephemeral/.symlinks/plugins/file_selector_macos/macos`)
   - firebase_auth (from `Flutter/ephemeral/.symlinks/plugins/firebase_auth/macos`)
   - firebase_core (from `Flutter/ephemeral/.symlinks/plugins/firebase_core/macos`)
   - firebase_messaging (from `Flutter/ephemeral/.symlinks/plugins/firebase_messaging/macos`)
+  - firebase_storage (from `Flutter/ephemeral/.symlinks/plugins/firebase_storage/macos`)
+  - flutter_local_notifications (from `Flutter/ephemeral/.symlinks/plugins/flutter_local_notifications/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
+  - geolocator_apple (from `Flutter/ephemeral/.symlinks/plugins/geolocator_apple/darwin`)
   - google_sign_in_ios (from `Flutter/ephemeral/.symlinks/plugins/google_sign_in_ios/darwin`)
   - mobile_scanner (from `Flutter/ephemeral/.symlinks/plugins/mobile_scanner/darwin`)
+  - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
   - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
+  - patrol (from `Flutter/ephemeral/.symlinks/plugins/patrol/darwin`)
   - printing (from `Flutter/ephemeral/.symlinks/plugins/printing/macos`)
   - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sqflite_darwin (from `Flutter/ephemeral/.symlinks/plugins/sqflite_darwin/darwin`)
@@ -1487,6 +1522,7 @@ SPEC REPOS:
     - AppAuth
     - AppCheckCore
     - BoringSSL-GRPC
+    - CocoaAsyncSocket
     - Firebase
     - FirebaseAppCheckInterop
     - FirebaseAuth
@@ -1501,6 +1537,7 @@ SPEC REPOS:
     - FirebaseMessaging
     - FirebaseMessagingInterop
     - FirebaseSharedSwift
+    - FirebaseStorage
     - GoogleDataTransport
     - GoogleSignIn
     - GoogleUtilities
@@ -1517,20 +1554,32 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/cloud_firestore/macos
   cloud_functions:
     :path: Flutter/ephemeral/.symlinks/plugins/cloud_functions/macos
+  file_selector_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/file_selector_macos/macos
   firebase_auth:
     :path: Flutter/ephemeral/.symlinks/plugins/firebase_auth/macos
   firebase_core:
     :path: Flutter/ephemeral/.symlinks/plugins/firebase_core/macos
   firebase_messaging:
     :path: Flutter/ephemeral/.symlinks/plugins/firebase_messaging/macos
+  firebase_storage:
+    :path: Flutter/ephemeral/.symlinks/plugins/firebase_storage/macos
+  flutter_local_notifications:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_local_notifications/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
+  geolocator_apple:
+    :path: Flutter/ephemeral/.symlinks/plugins/geolocator_apple/darwin
   google_sign_in_ios:
     :path: Flutter/ephemeral/.symlinks/plugins/google_sign_in_ios/darwin
   mobile_scanner:
     :path: Flutter/ephemeral/.symlinks/plugins/mobile_scanner/darwin
+  package_info_plus:
+    :path: Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos
   path_provider_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
+  patrol:
+    :path: Flutter/ephemeral/.symlinks/plugins/patrol/darwin
   printing:
     :path: Flutter/ephemeral/.symlinks/plugins/printing/macos
   shared_preferences_foundation:
@@ -1547,10 +1596,13 @@ SPEC CHECKSUMS:
   BoringSSL-GRPC: dded2a44897e45f28f08ae87a55ee4bcd19bc508
   cloud_firestore: b00d4e35fb96f2790a1e762c342492b66c660f1b
   cloud_functions: 5cf7843385bc9a92e891a443bc5ea00449c0da5c
+  CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
+  file_selector_macos: 3e56eaea051180007b900eacb006686fd54da150
   Firebase: a451a7b61536298fd5cbfe3a746fd40443a50679
   firebase_auth: 2f960f34c77f30d59ea8e642aff2d7876265f244
   firebase_core: eef0a346c1d66aca6e79bdc43bfcb94dba45d0a8
   firebase_messaging: 82c7b2be027a07c1ddc2b30354ed09e047ae1af2
+  firebase_storage: 3e76b4482930c022c93d01cfbfe4282b7d462bd2
   FirebaseAppCheckInterop: e2178171b4145013c7c1a3cc464d1d446d3a1896
   FirebaseAuth: 613c463cb43545a7fd2cd99ade09b78ac472c544
   FirebaseAuthInterop: db06756ef028006d034b6004dc0c37c24f7828d4
@@ -1564,7 +1616,10 @@ SPEC CHECKSUMS:
   FirebaseMessaging: a61bc42dcab3f7a346d94bbb54dab2c9435b18b2
   FirebaseMessagingInterop: b18f87820d64e2fffe8e00a9d5f5c2efd430b554
   FirebaseSharedSwift: 79f27fff0addd15c3de19b87fba426f3cc2c964f
+  FirebaseStorage: 550349b1e8f7315834ea08308696e9469d77135d
+  flutter_local_notifications: 4ccab5b7a22835214a6672e3f9c5e8ae207dab36
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  geolocator_apple: 66b711889fd333205763b83c9dcf0a57a28c7afd
   google_sign_in_ios: 055d43c4754f2860a53decd5133b78d05615fffd
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleSignIn: c7f09cfbc85a1abf69187be091997c317cc33b77
@@ -1576,7 +1631,9 @@ SPEC CHECKSUMS:
   leveldb-library: cc8b8f8e013647a295ad3f8cd2ddf49a6f19be19
   mobile_scanner: 77265f3dc8d580810e91849d4a0811a90467ed5e
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
+  package_info_plus: 12f1c5c2cfe8727ca46cbd0b26677728972d9a5b
   path_provider_foundation: 0b743cbb62d8e47eab856f09262bb8c1ddcfe6ba
+  patrol: d49fcd015892f19189a4cec572f21f3c3358e761
   printing: 1dd6a1fce2209ec240698e2439a4adbb9b427637
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6

@@ -106,7 +106,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-//         title: Text('Booking Management'),
+        title: Text('Booking Management'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         elevation: 1,

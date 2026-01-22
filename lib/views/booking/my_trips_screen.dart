@@ -202,7 +202,7 @@ class _TripsList extends StatelessWidget {
         case TripFilter.cancelled:
           return status == 'cancelled';
         case TripFilter.delayed:
-          return status == 'delayed';
+          return status == 'delayed' || (tripData['delayMinutes'] ?? 0) > 0;
         case TripFilter.completed:
           // Completed if explicitly completed/arrived OR if date is in past (and not cancelled)
           if (status == 'cancelled' ||

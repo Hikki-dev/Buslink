@@ -41,7 +41,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: "Enter customer's login email",
+                hintText: "Enter name or email",
                 prefixIcon: const Icon(Icons.search),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -139,11 +139,8 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
         if (_searchController.text.isNotEmpty) {
           final query = _searchController.text.trim().toLowerCase();
 
-          // STRICT EMAIL SEARCH: Must contain '@' to be considered an email search
-          if (!query.contains('@')) {
-            return const Center(
-                child: Text('Please enter a valid email to search.'));
-          }
+          // ALLOW SEARCH BY NAME OR EMAIL
+          // if (!query.contains('@')) { ... } REMOVED
 
           docs = docs.where((d) {
             final data = d.data() as Map<String, dynamic>;
@@ -155,11 +152,14 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                 (data['userData'] != null && data['userData']['email'] != null)
                     ? data['userData']['email'].toString().toLowerCase()
                     : '';
+            final passengerName =
+                (data['passengerName'] ?? '').toString().toLowerCase();
 
-            // ONLY match email fields
+            // Match email fields OR passengerName
             return email.contains(query) ||
                 userEmail.contains(query) ||
-                passengerEmail.contains(query);
+                passengerEmail.contains(query) ||
+                passengerName.contains(query);
           }).toList();
         }
 
@@ -301,6 +301,15 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
   }
 
   String _formatReason(RefundReason r) {
-    return r.name.toUpperCase(); // Simplify for now
+    // Split camelCase into words and capitalize
+    final name = r.name;
+    final buffer = StringBuffer();
+    for (int i = 0; i < name.length; i++) {
+      if (i > 0 && name[i].toUpperCase() == name[i]) {
+        buffer.write(' ');
+      }
+      buffer.write(i == 0 ? name[i].toUpperCase() : name[i]);
+    }
+    return buffer.toString().toUpperCase();
   }
 }

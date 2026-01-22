@@ -110,7 +110,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                   title: Text("${route.originCity} ➝ ${route.destinationCity}",
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(
-                      "Via: ${route.via.isEmpty ? 'Direct' : route.via}\nDuration: ${_formatDuration(route.estimatedDurationMins)} • Stops: ${route.stops.length}"),
+                      "Via: ${route.via.isEmpty ? 'Direct' : route.via}\nDuration: ${_formatDuration(route.estimatedDurationMins)}"),
                   isThreeLine: true,
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,

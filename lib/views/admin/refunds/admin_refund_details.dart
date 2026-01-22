@@ -91,35 +91,6 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
               Text(refund.passengerName,
                   style: const TextStyle(
                       fontSize: 20, fontWeight: FontWeight.bold)),
-              Row(
-                children: [
-                  Flexible(
-                    child: SelectableText(
-                      "${"Ref"} : ${refund.ticketId}",
-                      style: const TextStyle(
-                          fontFamily: 'Inter', color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: refund.ticketId));
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Booking Reference Copied'),
-                        duration: const Duration(seconds: 1),
-                      ));
-                    },
-                    child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4)),
-                        child: const Icon(Icons.copy,
-                            size: 14, color: Colors.blue)),
-                  )
-                ],
-              ),
             ],
           ),
         )

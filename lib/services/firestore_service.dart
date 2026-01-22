@@ -701,9 +701,19 @@ class FirestoreService {
             }).toList());
   }
 
+  String _normalizeCity(String city) {
+    if (city.trim().isEmpty) return "";
+    final trimmed = city.trim();
+    return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
+  }
+
   Future<void> toggleRouteFavorite(String userId, String from, String to,
       {String? operatorName, double? price}) async {
-    final id = "${from}_$to".replaceAll(' ', '_');
+    final cleanFrom = _normalizeCity(from);
+    final cleanTo = _normalizeCity(to);
+    if (cleanFrom.isEmpty || cleanTo.isEmpty) return;
+
+    final id = "${cleanFrom}_${cleanTo}".replaceAll(' ', '_');
     final ref = _db
         .collection('users')
         .doc(userId)
@@ -714,8 +724,8 @@ class FirestoreService {
       await ref.delete();
     } else {
       await ref.set({
-        'fromCity': from,
-        'toCity': to,
+        'fromCity': cleanFrom,
+        'toCity': cleanTo,
         'operatorName': operatorName,
         'price': price,
         'addedAt': FieldValue.serverTimestamp()
@@ -724,7 +734,11 @@ class FirestoreService {
   }
 
   Future<bool> isRouteFavorite(String userId, String from, String to) async {
-    final id = "${from}_$to".replaceAll(' ', '_');
+    final cleanFrom = _normalizeCity(from);
+    final cleanTo = _normalizeCity(to);
+    if (cleanFrom.isEmpty || cleanTo.isEmpty) return false;
+
+    final id = "${cleanFrom}_${cleanTo}".replaceAll(' ', '_');
     final snap = await _db
         .collection('users')
         .doc(userId)

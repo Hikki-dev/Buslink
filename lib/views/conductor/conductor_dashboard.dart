@@ -125,6 +125,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
 
                     // 3. LOGOUT BUTTON
                     OutlinedButton.icon(
+                      key: const Key('conductor_logout_btn'),
                       onPressed: () async {
                         await Provider.of<AuthService>(context, listen: false)
                             .signOut();

@@ -2433,7 +2433,7 @@ class _PopularDestinationsGridState extends State<_PopularDestinationsGrid> {
                   children: [
                     Expanded(
                       child: Text(
-                        "popular_destinations",
+                        "Popular Destinations",
                         style: const TextStyle(
                           fontFamily: 'Outfit',
                           fontSize: 24, // Reduced font size

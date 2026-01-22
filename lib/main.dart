@@ -34,7 +34,7 @@ import 'package:rxdart/rxdart.dart';
 // GLOBAL STREAM CONTROLLER (As per FCM Guide)
 final _messageStreamController = BehaviorSubject<RemoteMessage>();
 
-void main() async {
+Future<void> main() async {
   debugPrint("🚀 APP STARTUP: Version with Safer Spinner Removal 🚀");
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();

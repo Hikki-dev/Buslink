@@ -227,8 +227,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SizedBox(height: 16),
                                 _infoRow(context, Icons.email_outlined, "Email",
                                     email),
-                                _infoRow(context, Icons.phone_outlined, "Phone",
-                                    phone),
                               ],
                             ),
                           ),

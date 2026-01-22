@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../utils/app_theme.dart';
 
-
 class TravelStatsScreen extends StatefulWidget {
   const TravelStatsScreen({super.key});
 
@@ -29,7 +28,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('travel_trends'),
+        title: Text('Travel Trends'),
         elevation: 1,
         backgroundColor: Theme.of(context).cardColor,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -59,30 +58,14 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
                 // NEW: Status Boxes
                 Row(
                   children: [
-                    _statusBox(
-                        context,
-                        'Upcoming',
-                        "${stats['Upcoming']}",
-                        Colors.blue,
-                        Icons.schedule),
-                    _statusBox(
-                        context,
-                        'delayed',
-                        "${stats['delayed']}",
-                        Colors.orange,
-                        Icons.timer_off),
-                    _statusBox(
-                        context,
-                        'arrived',
-                        "${stats['arrived']}",
-                        Colors.green,
-                        Icons.check_circle),
-                    _statusBox(
-                        context,
-                        'cancelled',
-                        "${stats['cancelled']}",
-                        Colors.red,
-                        Icons.cancel),
+                    _statusBox(context, 'Upcoming', "${stats['Upcoming']}",
+                        Colors.blue, Icons.schedule),
+                    _statusBox(context, 'Delayed', "${stats['delayed']}",
+                        Colors.orange, Icons.timer_off),
+                    _statusBox(context, 'Arrived', "${stats['arrived']}",
+                        Colors.green, Icons.check_circle),
+                    _statusBox(context, 'Cancelled', "${stats['cancelled']}",
+                        Colors.red, Icons.cancel),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -107,8 +90,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
         children: [
           const Icon(Icons.query_stats, size: 80),
           const SizedBox(height: 16),
-          Text('no_active_trips',
-              style: const TextStyle(fontSize: 18)),
+          Text('No Active Trips', style: const TextStyle(fontSize: 18)),
           const SizedBox(height: 8),
           const Text("Complete a trip to see your stats.", style: TextStyle()),
         ],
@@ -256,7 +238,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('total_spent',
+              Text('Total Spent',
                   style: const TextStyle(color: Colors.white70)),
               const SizedBox(height: 8),
               Text("LKR ${stats['totalSpent'].toStringAsFixed(0)}",
@@ -286,7 +268,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           initiallyExpanded: true,
-          title: Text('travel_trends',
+          title: Text('Travel Trends',
               style: const TextStyle(fontWeight: FontWeight.bold)),
           leading: const Icon(Icons.trending_up, color: AppTheme.primaryColor),
           children: [
@@ -339,17 +321,13 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           initiallyExpanded: true,
-          title: Text('insights',
+          title: Text('Insights',
               style: const TextStyle(fontWeight: FontWeight.bold)),
           leading: const Icon(Icons.lightbulb, color: Colors.amber),
           children: [
             _insightRow(
-                Icons.place,
-                'favorite_destination',
-                stats['favoriteDest']),
-            _insightRow(
-                Icons.directions_bus,
-                'total_trips_completed',
+                Icons.place, 'Favorite Destination', stats['favoriteDest']),
+            _insightRow(Icons.directions_bus, 'Total Trips Completed',
                 "${stats['totalTrips']}"),
           ],
         ),

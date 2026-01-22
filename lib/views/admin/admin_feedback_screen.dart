@@ -35,7 +35,7 @@ class _FeedbackBodyState extends State<_FeedbackBody> {
           padding: const EdgeInsets.all(16),
           child: TextField(
             decoration: InputDecoration(
-              hintText: "Search by Name",
+              hintText: "Search by Email",
               prefixIcon: const Icon(Icons.search),
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -65,14 +65,14 @@ class _FeedbackBodyState extends State<_FeedbackBody> {
 
               var docs = snapshot.data!.docs;
 
-              // Filter by Name
+              // Filter by Email
               if (_searchQuery.isNotEmpty) {
                 docs = docs.where((d) {
                   final data = d.data() as Map<String, dynamic>;
-                  final name = (data['userName'] ?? data['passengerName'] ?? '')
+                  final email = (data['userEmail'] ?? data['email'] ?? '')
                       .toString()
                       .toLowerCase();
-                  return name.contains(_searchQuery.toLowerCase());
+                  return email.contains(_searchQuery.toLowerCase());
                 }).toList();
               }
 

@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/trip_model.dart';
 
-
 class TripsStatsWidget extends StatelessWidget {
   final List<Ticket> allTickets;
   const TripsStatsWidget({super.key, required this.allTickets});
@@ -30,7 +29,7 @@ class TripsStatsWidget extends StatelessWidget {
         cancelled++;
       } else if (status == 'arrived' || status == 'completed') {
         arrived++;
-      } else if (status == 'delayed') {
+      } else if (status == 'delayed' || (t.tripData['delayMinutes'] ?? 0) > 0) {
         delayed++;
       }
 
@@ -48,29 +47,13 @@ class TripsStatsWidget extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildBox(
-              context,
-              "Upcoming",
-              "$upcoming",
-              Colors.blue),
+          _buildBox(context, "Upcoming", "$upcoming", Colors.blue),
           const SizedBox(width: 8),
-          _buildBox(
-              context,
-              "Delayed",
-              "$delayed",
-              Colors.orange),
+          _buildBox(context, "Delayed", "$delayed", Colors.orange),
           const SizedBox(width: 8),
-          _buildBox(
-              context,
-              "Arrived",
-              "$arrived",
-              Colors.green),
+          _buildBox(context, "Arrived", "$arrived", Colors.green),
           const SizedBox(width: 8),
-          _buildBox(
-              context,
-'Cancelled',
-              "$cancelled",
-              Colors.red),
+          _buildBox(context, 'Cancelled', "$cancelled", Colors.red),
         ],
       ),
     );
