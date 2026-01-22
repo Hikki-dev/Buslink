@@ -1147,7 +1147,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
             child: Column(
               children: [
                 Text(
-                    "${duration.inHours}${h} ${duration.inMinutes.remainder(60)}${m}",
+                    "${duration.inHours}h ${duration.inMinutes.remainder(60)}m",
                     style:
                         TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                 Row(
