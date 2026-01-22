@@ -146,8 +146,26 @@ class Trip {
       id: id,
       scheduleId: data['scheduleId'] ?? '',
       date: _parseDateTime(data['date']),
-      originCity: data['originCity'] ?? data['fromCity'] ?? '',
-      destinationCity: data['destinationCity'] ?? data['toCity'] ?? '',
+      originCity: _getString(data, [
+            'originCity',
+            'fromCity',
+            'from',
+            'origin',
+            'OriginCity',
+            'FromCity',
+            'source'
+          ]) ??
+          '',
+      destinationCity: _getString(data, [
+            'destinationCity',
+            'toCity',
+            'to',
+            'destination',
+            'DestinationCity',
+            'ToCity',
+            'dest'
+          ]) ??
+          '',
       departureDateTime:
           _parseDateTime(data['departureDateTime'] ?? data['departureTime']),
       arrivalDateTime:
@@ -162,6 +180,15 @@ class Trip {
       conductorId: data['conductorId'],
       via: data['via'] ?? 'Direct',
     );
+  }
+
+  static String? _getString(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      if (data[key] != null && data[key].toString().isNotEmpty) {
+        return data[key].toString();
+      }
+    }
+    return null;
   }
 
   static DateTime _parseDateTime(dynamic val) {
@@ -229,8 +256,11 @@ class Ticket {
       tripId: data['tripId'] ?? '',
       userId: data['userId'] ?? '',
       seatNumbers: List<int>.from(data['seatNumbers'] ?? []),
-      passengerName: data['userName'] ?? 'Guest',
-      passengerPhone: data['passengerPhone'] ?? 'N/A',
+      passengerName: Trip._getString(
+              data, ['userName', 'passengerName', 'name', 'user_name']) ??
+          'Guest',
+      passengerPhone:
+          Trip._getString(data, ['passengerPhone', 'phone', 'mobile']) ?? 'N/A',
       passengerEmail: data['passengerEmail'] ?? data['email'],
       bookingTime: _parseTicketDate(data['bookingTime']),
       totalAmount: (data['totalAmount'] ?? 0).toDouble(),

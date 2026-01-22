@@ -193,18 +193,46 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
         }
 
         // Routes
-        final tripData = data['tripData'] as Map<String, dynamic>?;
-        String from = '?';
-        String to = '?';
-
-        if (tripData != null) {
-          from = tripData['fromCity'] ?? data['fromCity'] ?? '?';
-          to = tripData['toCity'] ?? data['toCity'] ?? '?';
-        } else {
-          // Fallback to root level if tripData is missing
-          from = data['fromCity'] ?? '?';
-          to = data['toCity'] ?? '?';
+        // Helper closure since we are in a method
+        String getString(Map? m, List<String> keys) {
+          if (m == null) return '';
+          for (var k in keys) {
+            if (m[k] != null &&
+                m[k].toString().isNotEmpty &&
+                m[k].toString() != 'N/A') return m[k].toString();
+          }
+          return '';
         }
+
+        final tripData = data['tripData'] as Map<String, dynamic>?;
+
+        // Robust Lookup
+        final outputKeys = [
+          'fromCity',
+          'originCity',
+          'origin',
+          'from',
+          'FromCity',
+          'OriginCity',
+          'source'
+        ];
+        final destKeys = [
+          'toCity',
+          'destinationCity',
+          'destination',
+          'to',
+          'ToCity',
+          'DestinationCity',
+          'dest'
+        ];
+
+        from = getString(tripData, outputKeys);
+        if (from.isEmpty) from = getString(data, outputKeys);
+        if (from.isEmpty) from = '?';
+
+        to = getString(tripData, destKeys);
+        if (to.isEmpty) to = getString(data, destKeys);
+        if (to.isEmpty) to = '?';
 
         String routeKey = "$from - $to";
 

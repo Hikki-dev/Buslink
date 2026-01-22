@@ -10,7 +10,7 @@ import 'dart:math';
 import 'cache_service.dart';
 
 class FirestoreService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore get _db => FirebaseFirestore.instance;
   final String tripCollection = 'trips';
   final String ticketCollection = 'tickets';
   final String userCollection = 'users';

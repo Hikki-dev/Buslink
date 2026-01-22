@@ -327,15 +327,45 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
       statusColor = Colors.orange;
     if (statusNorm == 'refunded') statusColor = Colors.purple;
 
+    // Helper to find string from multiple keys
+    String getString(Map m, List<String> keys) {
+      for (var k in keys) {
+        if (m[k] != null &&
+            m[k].toString().isNotEmpty &&
+            m[k].toString() != 'N/A') return m[k].toString();
+      }
+      return '';
+    }
+
     final tripData = data['tripData'] as Map<String, dynamic>? ?? {};
-    final fromCity = tripData['fromCity'] ??
-        tripData['originCity'] ??
-        data['fromCity'] ??
-        'N/A';
-    final toCity = tripData['toCity'] ??
-        tripData['destinationCity'] ??
-        data['toCity'] ??
-        'N/A';
+
+    // Robust City Lookup
+    String fromCity = getString(tripData, [
+      'fromCity',
+      'originCity',
+      'origin',
+      'from',
+      'FromCity',
+      'OriginCity',
+      'source'
+    ]);
+    if (fromCity.isEmpty)
+      fromCity = getString(data, ['fromCity', 'originCity', 'origin', 'from']);
+    if (fromCity.isEmpty) fromCity = 'N/A';
+
+    String toCity = getString(tripData, [
+      'toCity',
+      'destinationCity',
+      'destination',
+      'to',
+      'ToCity',
+      'DestinationCity',
+      'dest'
+    ]);
+    if (toCity.isEmpty)
+      toCity =
+          getString(data, ['toCity', 'destinationCity', 'destination', 'to']);
+    if (toCity.isEmpty) toCity = 'N/A';
 
     // Parse date safely
     final timestamp = tripData['departureDateTime'] ??
@@ -348,6 +378,10 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
     } else if (timestamp is String) {
       departureDate = DateTime.tryParse(timestamp);
     }
+
+    String pName =
+        getString(data, ['passengerName', 'userName', 'name', 'user_name']);
+    if (pName.isEmpty) pName = 'Unknown User';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -364,8 +398,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
             child:
                 Icon(Icons.confirmation_number, color: statusColor, size: 24),
           ),
-          title: Text(
-              data['passengerName'] ?? data['userName'] ?? 'Unknown User',
+          title: Text(pName,
               style:
                   const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           subtitle: Column(

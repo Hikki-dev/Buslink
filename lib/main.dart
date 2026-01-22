@@ -68,14 +68,10 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
       final cachedProfile = CacheService().getUserProfile();
 
       if (cachedProfile != null && mounted) {
-        // OPTIMISTIC START: We found a user in cache!
-        // Show UI immediately while Firebase connects
-        setState(() {
-          _cachedRole = cachedProfile['role'];
-          _isInitialized = true; // Show UI!
-        });
-        removeWebSpinner();
-        debugPrint("🚀 OPTIMISTIC CROW: Booting as $_cachedRole");
+        // Log cache hit, but DO NOT render UI yet (Prevents [core/no-app] crash)
+        _cachedRole = cachedProfile['role'];
+        debugPrint(
+            "🚀 CACHE HIT: Found role $_cachedRole (Waiting for Firebase)");
       }
     } catch (e) {
       debugPrint("Cache init error: $e");
