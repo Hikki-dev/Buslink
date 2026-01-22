@@ -4,8 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../../utils/app_theme.dart';
 import '../refunds/admin_refund_list.dart'; // Import for navigation
-import '../../../../utils/language_provider.dart';
-import 'package:provider/provider.dart';
 
 class BookingDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -36,7 +34,7 @@ class BookingDetailsScreen extends StatelessWidget {
 
     // Removed unused tripId
     final busNumber = tripData['busNumber'] ?? 'N/A';
-    final status = (data['status'] ?? 'unknown').toString().toUpperCase();
+    final status = (data['status'] ?? 'Unknown').toString().toUpperCase();
     final paymentStatus = (data['paymentStatus'] ?? 'Paid')
         .toString()
         .toUpperCase(); // Infer paid
@@ -241,9 +239,7 @@ class BookingDetailsScreen extends StatelessWidget {
         children: [
           Expanded(
             flex: 4,
-            child: Text(
-                Provider.of<LanguageProvider>(context)
-                    .translate(label.toLowerCase().replaceAll(' ', '_')),
+            child: Text(label,
                 style:
                     const TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
           ),

@@ -7,6 +7,7 @@ import '../../services/firestore_service.dart';
 import '../../services/sms_service.dart'; // Added for SMS
 
 import 'payment_screen.dart';
+import 'bulk_confirmation_screen.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
@@ -248,10 +249,18 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                 ),
                               );
                             } else {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const PaymentScreen()));
+                              if (controller.isBulkBooking) {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => BulkConfirmationScreen(
+                                            trip: widget.trip)));
+                              } else {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => const PaymentScreen()));
+                              }
                             }
                           }
                         },

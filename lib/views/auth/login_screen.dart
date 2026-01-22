@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
-import '../../utils/language_provider.dart';
+//  // Removed
 
 // import 'phone_login_screen.dart';
 
@@ -202,8 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Row(
                             children: [
                               const _ThemeSwitcher(),
-                              const SizedBox(width: 12),
-                              const _LanguageSwitcher(),
+                              // Language Switcher Removed
                             ],
                           ),
                         ),
@@ -305,8 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _ThemeSwitcher(),
-                          const SizedBox(width: 12),
-                          _LanguageSwitcher(),
+                          // Language Switcher Removed
                         ],
                       ),
                     ),
@@ -360,7 +358,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildAnimatedForm(BuildContext context) {
     final theme = Theme.of(context);
-    final lp = Provider.of<LanguageProvider>(context);
+    // 
 
     return Form(
       key: _formKey,
@@ -369,7 +367,7 @@ class _LoginScreenState extends State<LoginScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            lp.translate('welcome'),
+            "Welcome!",
             style: const TextStyle(
               fontFamily: 'Outfit',
               fontSize: 36,
@@ -378,7 +376,9 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            lp.translate(_isLogin ? 'login_subtitle' : 'signup_subtitle'),
+            _isLogin
+                ? "Log in to BusLink to continue."
+                : "Join us and start your journey today.",
             style: theme.textTheme.bodyMedium?.copyWith(
               color: Colors.grey.shade500,
               fontSize: 16,
@@ -392,7 +392,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _googleSignIn,
                   iconUrl:
                       'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png',
-                  label: lp.translate('google_login'),
+                  label: "Continue with Google",
                 ),
               ),
               const SizedBox(width: 12),
@@ -405,7 +405,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Expanded(child: Divider(color: Color(0xFF1E1E22))),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(lp.translate('or_separator'),
+                child: Text("OR",
                     style: TextStyle(
                         color: Colors.grey.shade700,
                         fontSize: 14,
@@ -435,8 +435,8 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
           _buildPremiumTextField(
             controller: _emailController,
-            label: lp.translate('email'),
-            hint: lp.translate('email_hint'),
+            label: "Email",
+            hint: "Your email address",
             icon: Icons.email_outlined,
             theme: theme,
             validator: (v) {
@@ -451,26 +451,13 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           if (!_isLogin) ...[
             const SizedBox(height: 24),
-            _buildPremiumTextField(
-              controller: _phoneController,
-              label: 'Phone Number',
-              hint: '07XXXXXXXX',
-              icon: Icons.phone_rounded,
-              theme: theme,
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Phone number is required';
-                if (!RegExp(r"^\d{10}$").hasMatch(v.replaceAll(' ', ''))) {
-                  return 'Enter a valid 10-digit phone number';
-                }
-                return null;
-              },
-            ),
+            // Phone Number Removed
           ],
           const SizedBox(height: 24),
           _buildPremiumTextField(
             controller: _passwordController,
-            label: lp.translate('password'),
-            hint: lp.translate('password_hint'),
+            label: "Password",
+            hint: "Your password",
             icon: Icons.lock_outline_rounded,
             theme: theme,
             isPassword: true,
@@ -519,7 +506,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   textStyle: const TextStyle(
                       fontSize: 13, decoration: TextDecoration.underline),
                 ),
-                child: Text(lp.translate('forgot_password')),
+                child: Text("Forgot Password?"),
               ),
             ),
           const SizedBox(height: 32),
@@ -545,7 +532,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           valueColor: AlwaysStoppedAnimation(Colors.white)),
                     )
                   : Text(
-                      lp.translate(_isLogin ? 'login_button' : 'signup_button'),
+                      _isLogin ? "Log In" : "Sign Up",
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold),
                     ),
@@ -559,13 +546,16 @@ class _LoginScreenState extends State<LoginScreen> {
             spacing: 4, // Horizontal spacing
             runSpacing: 4, // Vertical spacing if it wraps
             children: [
-              Text(lp.translate(_isLogin ? 'no_account' : 'have_account'),
+              Text(
+                  _isLogin
+                      ? "Don't have an account?"
+                      : "Already have an account?",
                   style: theme.textTheme.bodyMedium
                       ?.copyWith(color: Colors.grey.shade600, fontSize: 16)),
               GestureDetector(
                 onTap: () => setState(() => _isLogin = !_isLogin),
                 child: Text(
-                  lp.translate(_isLogin ? 'signup_button' : 'login_button'),
+                  _isLogin ? "Sign Up" : "Login",
                   style: const TextStyle(
                     color: Colors.grey,
                     fontWeight: FontWeight.bold,
@@ -696,109 +686,7 @@ class _SocialButton extends StatelessWidget {
   }
 }
 
-class _LanguageSwitcher extends StatelessWidget {
-  const _LanguageSwitcher();
-
-  @override
-  Widget build(BuildContext context) {
-    final lp = Provider.of<LanguageProvider>(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return InkWell(
-      onTap: () {
-        final RenderBox button = context.findRenderObject() as RenderBox;
-        final RenderBox overlay =
-            Overlay.of(context).context.findRenderObject() as RenderBox;
-        final RelativeRect position = RelativeRect.fromRect(
-          Rect.fromPoints(
-            button.localToGlobal(Offset.zero, ancestor: overlay),
-            button.localToGlobal(button.size.bottomRight(Offset.zero),
-                ancestor: overlay),
-          ),
-          Offset.zero & overlay.size,
-        );
-        showMenu(
-          context: context,
-          position: position,
-          color: isDark ? const Color(0xFF1E1E22) : Colors.white,
-          elevation: 8,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          items: [
-            PopupMenuItem(
-              value: 'en',
-              child: Text(
-                "🇺🇸 English",
-                style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            PopupMenuItem(
-              value: 'si',
-              child: Text(
-                "🇱🇰 Sinhala",
-                style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            PopupMenuItem(
-              value: 'ta',
-              child: Text(
-                "🇱🇰 Tamil",
-                style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ],
-        ).then((value) {
-          if (value != null) {
-            debugPrint('🌍 Language changed to: $value');
-            lp.setLanguage(value);
-          }
-        });
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F0F12) : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isDark ? const Color(0xFF1E1E22) : Colors.grey.shade300,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              lp.currentLanguageName,
-              style: TextStyle(
-                color: isDark ? Colors.grey.shade400 : Colors.black87,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.keyboard_arrow_down,
-              color: isDark ? Colors.grey.shade600 : Colors.black54,
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// Language Switcher Class Removed
 
 class _IllustrationPanel extends StatelessWidget {
   final String bgImage;
@@ -808,7 +696,7 @@ class _IllustrationPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lp = Provider.of<LanguageProvider>(context);
+    // 
     return Container(
       decoration: const BoxDecoration(color: Color(0xFF0A0A0B)),
       child: Stack(
@@ -854,7 +742,7 @@ class _IllustrationPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    lp.translate('travel_comfort'),
+                    'Travel with\nComfort & Style',
                     textAlign: TextAlign.right,
                     style: const TextStyle(
                         fontFamily: 'Outfit',
@@ -865,7 +753,7 @@ class _IllustrationPanel extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    lp.translate('travel_description'),
+                    'Join thousands of satisfied travelers who trust\nBusLink for their daily commutes.',
                     textAlign: TextAlign.right,
                     style: const TextStyle(
                         fontFamily: 'Inter',

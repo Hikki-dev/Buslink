@@ -4,16 +4,14 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../controllers/trip_controller.dart';
-import '../../models/trip_view_model.dart'; // EnrichedTrip
+import '../../models/trip_view_model.dart';
 import '../../models/trip_model.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
-import '../../utils/location_permission_helper.dart'; // Added Import
+import '../../utils/location_permission_helper.dart';
 
-// import '../layout/conductor_navbar.dart';
-// import '../admin/layout/admin_bottom_nav.dart';
 import '../admin/admin_dashboard.dart';
-import '../../utils/language_provider.dart';
+
 import 'conductor_trip_management_screen.dart';
 import '../booking/bus_layout_widget.dart';
 import 'package:intl/intl.dart';
@@ -30,7 +28,6 @@ class ConductorDashboard extends StatefulWidget {
 
 class _ConductorDashboardState extends State<ConductorDashboard> {
   final TextEditingController _ticketIdController = TextEditingController();
-  // final TextEditingController _busNumberController = TextEditingController(); // Unused
 
   @override
   void initState() {
@@ -48,15 +45,11 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
   @override
   void dispose() {
     _ticketIdController.dispose();
-    // _busNumberController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // get user from provider if needed
-    // final user = Provider.of<AuthService>(context).currentUser;
-
     return LayoutBuilder(builder: (context, constraints) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -69,8 +62,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  Provider.of<LanguageProvider>(context)
-                      .translate('conductor_dashboard_title'),
+                  "Conductor Dashboard",
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       fontWeight: FontWeight.bold,
@@ -90,11 +82,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 return IconButton(
                   icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode,
                       color: Theme.of(context).colorScheme.onSurface),
-                  tooltip: isDark
-                      ? Provider.of<LanguageProvider>(context)
-                          .translate('light_mode')
-                      : Provider.of<LanguageProvider>(context)
-                          .translate('dark_mode_tooltip'),
+                  tooltip: isDark ? "Light Mode" : "Dark Mode",
                   onPressed: () {
                     themeController
                         .setTheme(isDark ? ThemeMode.light : ThemeMode.dark);
@@ -102,40 +90,10 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 );
               },
             ),
-            // 2. Language Selector
-            Consumer<LanguageProvider>(
-              builder: (context, languageProvider, _) {
-                return PopupMenuButton<String>(
-                  icon: Icon(Icons.language,
-                      color: Theme.of(context).colorScheme.onSurface),
-                  tooltip: Provider.of<LanguageProvider>(context)
-                      .translate('change_language'),
-                  onSelected: (String code) {
-                    languageProvider.setLanguage(code);
-                  },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'en',
-                      child: Text('English'),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'si',
-                      child: Text('සිංහල (Sinhala)'),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'ta',
-                      child: Text('தமிழ் (Tamil)'),
-                    ),
-                  ],
-                );
-              },
-            ),
             const SizedBox(width: 8),
           ],
         ),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        // REMOVED BOTTOM NAV BAR as requested
         body: Column(
           children: [
             Expanded(
@@ -179,9 +137,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                         }
                       },
                       icon: const Icon(Icons.logout, color: Colors.red),
-                      label: Text(
-                          Provider.of<LanguageProvider>(context)
-                              .translate('log_out'),
+                      label: const Text("Log Out",
                           style: TextStyle(
                               fontFamily: 'Outfit',
                               fontWeight: FontWeight.bold,
@@ -231,18 +187,14 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             child: const Icon(Icons.search, size: 64, color: Colors.blue),
           ),
           const SizedBox(height: 24),
-          Text(
-              Provider.of<LanguageProvider>(context)
-                  .translate('find_trip_title'),
+          Text("Find Trip",
               style: TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
-          Text(
-              Provider.of<LanguageProvider>(context)
-                  .translate('manage_routes_desc'),
+          Text("Manage your routes and passengers",
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontFamily: 'Inter',
@@ -257,11 +209,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                     context: context, builder: (_) => const FindTripDialog());
               },
               icon: const Icon(Icons.search),
-              label: Text(
-                  Provider.of<LanguageProvider>(context)
-                      .translate('search_trips_button'),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16)),
+              label: const Text("Search Trips",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
@@ -275,8 +224,6 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
     );
   }
 
-  // ...
-
   Widget _buildAdminBanner() {
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
@@ -288,11 +235,10 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            Provider.of<LanguageProvider>(context)
-                .translate('admin_preview_mode'),
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.black87),
+          const Text(
+            "Admin Preview Mode",
+            style:
+                TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
           ),
           TextButton(
             onPressed: () {
@@ -301,9 +247,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   MaterialPageRoute(builder: (_) => const AdminDashboard()),
                   (route) => false);
             },
-            child: Text(
-                Provider.of<LanguageProvider>(context).translate('exit'),
-                style: const TextStyle(color: Colors.black87)),
+            child: const Text("Exit", style: TextStyle(color: Colors.black87)),
           )
         ],
       ),
@@ -338,18 +282,14 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 size: 64, color: AppTheme.primaryColor),
           ),
           const SizedBox(height: 24),
-          Text(
-              Provider.of<LanguageProvider>(context)
-                  .translate('scan_ticket_title'),
+          Text("Scan Ticket",
               style: TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
-          Text(
-              Provider.of<LanguageProvider>(context)
-                  .translate('scan_ticket_desc'),
+          Text("Scan a passenger ticket to verify boarding",
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontFamily: 'Inter',
@@ -363,8 +303,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   style:
                       TextStyle(color: Theme.of(context).colorScheme.onSurface),
                   decoration: InputDecoration(
-                    labelText: Provider.of<LanguageProvider>(context)
-                        .translate('manual_ticket_id'),
+                    labelText: "Manual Ticket ID",
                     hintText: "e.g. TICKET-1234",
                     prefixIcon: const Icon(Icons.keyboard),
                     border: OutlineInputBorder(
@@ -398,8 +337,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                     }
                   },
                   icon: const Icon(Icons.camera_alt),
-                  label: Text(Provider.of<LanguageProvider>(context)
-                      .translate('use_camera')),
+                  label: const Text("Use Camera"),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     side: BorderSide(color: AppTheme.primaryColor),
@@ -411,8 +349,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 child: ElevatedButton.icon(
                   onPressed: () => _verifyTicket(_ticketIdController.text),
                   icon: const Icon(Icons.check),
-                  label: Text(Provider.of<LanguageProvider>(context)
-                      .translate('verify_button')),
+                  label: const Text("Verify"),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,
@@ -426,13 +363,10 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
     );
   }
 
-  // Removed unused _buildMyTripsList and _buildTripCard
-
   void _verifyTicket(String ticketId) async {
     if (ticketId.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(Provider.of<LanguageProvider>(context, listen: false)
-              .translate('please_enter_ticket_id'))));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter a ticket ID")));
       return;
     }
     final controller = Provider.of<TripController>(context, listen: false);
@@ -474,18 +408,14 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
         }
 
         if (arrivalTime != null) {
-          // Access allowed only up to 12 hours AFTER departure (or 4h after arrival)
-          // Using strict 12h from departure as the primary "Time Passed" rule per user Constraint.
           final depTime = ticket.tripData['departureTime'] is Timestamp
               ? (ticket.tripData['departureTime'] as Timestamp).toDate()
-              : DateTime.now(); // Fallback
+              : DateTime.now();
 
           if (now.difference(depTime).inHours > 12) {
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(
-                      Provider.of<LanguageProvider>(context, listen: false)
-                          .translate('access_denied_12h')),
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("Access Denied: Trip expired >12h ago"),
                   backgroundColor: Colors.red));
             }
             return;
@@ -499,8 +429,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-                "${Provider.of<LanguageProvider>(context, listen: false).translate('invalid_ticket_id')}: $ticketId"),
+            content: Text("Invalid Ticket ID: $ticketId"),
             backgroundColor: Colors.red));
       }
     }
@@ -529,8 +458,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                         color: Colors.green, size: 48),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                      "${Provider.of<LanguageProvider>(context).translate('verified_code')}: ${ticket.shortId ?? 'N/A'}",
+                  Text("Verified Code: ${ticket.shortId ?? 'N/A'}",
                       style: const TextStyle(
                           fontFamily: 'Outfit',
                           fontSize: 24,
@@ -539,29 +467,17 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   const SizedBox(height: 24),
                   const Divider(),
                   const SizedBox(height: 16),
+                  _ticketDetailRow("Passenger", ticket.passengerName),
+                  _ticketDetailRow("Seats", ticket.seatNumbers.join(", ")),
                   _ticketDetailRow(
-                      Provider.of<LanguageProvider>(context)
-                          .translate('passenger'),
-                      ticket.passengerName),
+                      "Bus No", ticket.tripData['busNumber'] ?? 'N/A'),
                   _ticketDetailRow(
-                      Provider.of<LanguageProvider>(context).translate('seats'),
-                      ticket.seatNumbers.join(", ")),
+                      "Origin", ticket.tripData['fromCity'] ?? 'N/A'),
                   _ticketDetailRow(
-                      Provider.of<LanguageProvider>(context)
-                          .translate('bus_no'),
-                      ticket.tripData['busNumber'] ?? 'N/A'),
-                  _ticketDetailRow(
-                      Provider.of<LanguageProvider>(context)
-                          .translate('origin'),
-                      ticket.tripData['fromCity'] ?? 'N/A'),
-                  _ticketDetailRow(
-                      Provider.of<LanguageProvider>(context)
-                          .translate('destination'),
-                      ticket.tripData['toCity'] ?? 'N/A'),
+                      "Destination", ticket.tripData['toCity'] ?? 'N/A'),
 
                   const SizedBox(height: 16),
-                  Text(
-                      "${Provider.of<LanguageProvider>(context).translate('seat_location')}:",
+                  const Text("Seat Location:",
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
 
@@ -574,8 +490,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                         totalSeats: 40,
                         highlightedSeats: ticket.seatNumbers,
                         isReadOnly: true,
-                        isDark:
-                            false, // Dialog is usually light or adaptive, but hardcoding false for now to match white background
+                        isDark: false,
                       ),
                     ),
                   ),
@@ -589,8 +504,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16)),
-                      child: Text(Provider.of<LanguageProvider>(context)
-                          .translate('approve_boarding')),
+                      child: const Text("Approve Boarding"),
                     ),
                   )
                 ],
@@ -645,11 +559,6 @@ class _FindTripDialogState extends State<FindTripDialog> {
     });
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   Future<void> _search() async {
     if (_selectedFromCity == null || _selectedToCity == null) return;
     setState(() {
@@ -660,49 +569,30 @@ class _FindTripDialogState extends State<FindTripDialog> {
 
     try {
       final controller = Provider.of<TripController>(context, listen: false);
-      // We use the same search logic as Home
       final trips = await controller.service
           .searchTrips(_selectedFromCity!, _selectedToCity!, _selectedDate);
       final enriched = await controller.enrichTrips(trips);
 
-      // Filter out trips that started > 4 hours ago to declutter (unless active)
-      // User requested not to see 5AM trips at 10AM.
       final now = DateTime.now();
       final filtered = enriched.where((t) {
-        // Access Control Logic - Robust & Dynamic
-
-        // 1. If it's a future trip (tomorrow), allow it (Planning).
         if (t.departureTime.day > now.day) return true;
         if (t.departureTime.year > now.year ||
             t.departureTime.month > now.month) {
           return true;
         }
 
-        // 2. SAME DAY LOGIC
         final diffHours = now.difference(t.departureTime).inHours;
-
-        // If trip is ACTIVE (Departed/OnWay/Delayed), show it regardless of time (within reason, say 24h)
-        // This ensures a delayed bus driven at 3 PM (scheduled 5 AM) is still visible IF status was updated.
-        // However, if status is still 'Scheduled' at 3 PM for a 5 AM bus, it's likely a stale/missed record.
 
         if (t.status == 'departed' ||
             t.status == 'on_way' ||
             t.status == 'delayed') {
-          // Keep active trips visible for up to 18 hours to allow for very long journeys
           return diffHours < 18;
         }
 
-        // 3. If Scheduled/Completed/Cancelled
         if (t.status == 'completed' || t.status == 'cancelled') {
-          // Hide immediately or after short buffer
           return false;
         }
 
-        // 4. If Scheduled but time passed
-        // User Request: "1.51 PM and its showing me 5AM trips... show me the current ones only"
-        // Implicitly: Hide trips scheduled more than X hours ago if they haven't started.
-        // Let's set a strict window: Hide trips scheduled > 4 hours ago if they are still 'scheduled'.
-        // (Assuming a bus won't start 4 hours late without status update to 'Delayed')
         if (diffHours > 3) {
           return false;
         }
@@ -734,11 +624,9 @@ class _FindTripDialogState extends State<FindTripDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(
-                          Provider.of<LanguageProvider>(context)
-                              .translate('find_trip_title'),
-                          style: const TextStyle(
+                    const Expanded(
+                      child: Text("Find Trip",
+                          style: TextStyle(
                               fontFamily: 'Outfit',
                               fontSize: 20,
                               fontWeight: FontWeight.bold),
@@ -768,12 +656,10 @@ class _FindTripDialogState extends State<FindTripDialog> {
                               .toList(),
                           onChanged: (v) =>
                               setState(() => _selectedFromCity = v),
-                          decoration: InputDecoration(
-                              labelText: Provider.of<LanguageProvider>(context)
-                                  .translate('origin'),
-                              border: const OutlineInputBorder(),
-                              prefixIcon:
-                                  const Icon(Icons.location_on_outlined)),
+                          decoration: const InputDecoration(
+                              labelText: "Origin",
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.location_on_outlined)),
                         ),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
@@ -784,11 +670,10 @@ class _FindTripDialogState extends State<FindTripDialog> {
                                   DropdownMenuItem(value: c, child: Text(c)))
                               .toList(),
                           onChanged: (v) => setState(() => _selectedToCity = v),
-                          decoration: InputDecoration(
-                              labelText: Provider.of<LanguageProvider>(context)
-                                  .translate('destination'),
-                              border: const OutlineInputBorder(),
-                              prefixIcon: const Icon(Icons.flag_outlined)),
+                          decoration: const InputDecoration(
+                              labelText: "Destination",
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.flag_outlined)),
                         ),
                       ],
                     );
@@ -802,143 +687,92 @@ class _FindTripDialogState extends State<FindTripDialog> {
                           firstDate:
                               DateTime.now().subtract(const Duration(days: 1)),
                           lastDate:
-                              DateTime.now().add(const Duration(days: 60)));
-                      if (d != null) setState(() => _selectedDate = d);
+                              DateTime.now().add(const Duration(days: 30)));
+                      if (d != null) {
+                        setState(() => _selectedDate = d);
+                      }
                     },
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                          labelText: Provider.of<LanguageProvider>(context)
-                              .translate('select_date'),
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.calendar_today)),
-                      child:
-                          Text(DateFormat('yyyy-MM-dd').format(_selectedDate)),
-                    ),
+                    child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(4)),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today, size: 16),
+                            const SizedBox(width: 8),
+                            Text(DateFormat('yyyy-MM-dd').format(_selectedDate))
+                          ],
+                        )),
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
-                    height: 50,
+                    width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _search,
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: Colors.white),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              Provider.of<LanguageProvider>(context)
-                                  .translate('search_trips_button'),
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
-                    ),
+                        onPressed: _search,
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16)),
+                        child: _isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2)
+                            : const Text("Search")),
                   )
                 ] else ...[
-                  // --- RESULTS LIST ---
-                  Text(
-                      "${Provider.of<LanguageProvider>(context).translate('results_for')} ${DateFormat('MMM d').format(_selectedDate)}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.grey)),
-                  const SizedBox(height: 12),
+                  // --- RESULTS ---
                   if (_isLoading)
-                    Center(
-                        child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const CircularProgressIndicator(
-                            color: AppTheme.primaryColor),
-                        const SizedBox(height: 16),
-                        Text(
-                            Provider.of<LanguageProvider>(context)
-                                .translate('searching_trips_loading'),
-                            style: const TextStyle(
-                                fontFamily: 'Inter', color: Colors.grey))
-                      ],
-                    ))
+                    const Center(child: CircularProgressIndicator())
                   else if (_results.isEmpty)
                     Center(
-                        child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Text(Provider.of<LanguageProvider>(context)
-                          .translate('no_trips_found_today')),
-                    ))
-                  else
-                    SizedBox(
-                      height: 300,
+                      child: Column(
+                        children: [
+                          const Icon(Icons.bus_alert,
+                              size: 48, color: Colors.grey),
+                          const SizedBox(height: 12),
+                          const Text("No active trips found."),
+                          const SizedBox(height: 12),
+                          TextButton(
+                              onPressed: () =>
+                                  setState(() => _hasSearched = false),
+                              child: const Text("Search Again"))
+                        ],
+                      ),
+                    )
+                  else ...[
+                    // LIST
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 400),
                       child: ListView.separated(
+                        shrinkWrap: true,
                         itemCount: _results.length,
                         separatorBuilder: (_, __) => const Divider(),
                         itemBuilder: (context, index) {
-                          final trip = _results[index];
+                          final t = _results[index];
                           return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                    color: Colors.blue.withValues(alpha: 0.1),
-                                    shape: BoxShape.circle),
-                                child: const Icon(Icons.directions_bus,
-                                    color: Colors.blue)),
-                            title: Text("${trip.fromCity} - ${trip.toCity}",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
+                            title: Text("${t.fromCity} -> ${t.toCity}"),
                             subtitle: Text(
-                                "${DateFormat('hh:mm a').format(trip.departureTime)} • Bus ${trip.busNumber}"),
+                                "${DateFormat('HH:mm').format(t.departureTime)} • ${t.status}"),
                             trailing:
                                 const Icon(Icons.arrow_forward_ios, size: 16),
                             onTap: () {
-                              // Access Control check
-                              final now = DateTime.now();
-
-                              // Fallback if arrivalTime is suspect (same as departure usually means missing duration)
-                              DateTime effectiveArrival = trip.arrivalTime;
-                              if (trip.arrivalTime
-                                      .difference(trip.departureTime)
-                                      .inMinutes <
-                                  30) {
-                                // Assert at least 4 hours if data invalid
-                                effectiveArrival = trip.departureTime
-                                    .add(const Duration(hours: 4));
-                              }
-
-                              // Allow up to 4 hours after optimized arrival time
-                              final accessLimit = effectiveArrival
-                                  .add(const Duration(hours: 4));
-
-                              if (now.isAfter(accessLimit) ||
-                                  trip.status == 'cancelled') {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text(
-                                            Provider.of<LanguageProvider>(
-                                                    context,
-                                                    listen: false)
-                                                .translate(
-                                                    'access_denied_expired')),
-                                        backgroundColor: Colors.red));
-                                return;
-                              }
-
-                              Navigator.pop(context);
-                              // Provider.of<TripController>(context, listen: false).setConductorTrip(trip);
-                              Navigator.push(
+                              // Navigate to management
+                              Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
                                       builder: (_) =>
                                           ConductorTripManagementScreen(
-                                              trip: trip)));
+                                              trip: t)));
                             },
                           );
                         },
                       ),
                     ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                      onPressed: () => setState(() {
-                            _hasSearched = false;
-                            _results = [];
-                          }),
-                      child: Text(Provider.of<LanguageProvider>(context)
-                          .translate('search_again')))
+                    const SizedBox(height: 12),
+                    TextButton(
+                        onPressed: () => setState(() => _hasSearched = false),
+                        child: const Text("Back to Search"))
+                  ]
                 ]
               ],
             )));

@@ -18,7 +18,7 @@ class RefundStatusScreen extends StatelessWidget {
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('refunds')
+            .collection('Refunds')
             .doc(refundId)
             .snapshots(),
         builder: (context, snapshot) {

@@ -14,8 +14,7 @@ class BulkCalendarDialog extends StatefulWidget {
 
 class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
   late List<DateTime> _selectedDates;
-  int _seats = 1;
-  final int _maxSeats = 40; // Requested cap
+  // _seats removed
 
   @override
   void initState() {
@@ -76,64 +75,7 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // INTEGRATED PASSENGER COUNTER IN HEADER
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.people_alt_outlined,
-                            color: Colors.white, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          "$_seats Passengers",
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          height: 24,
-                          child: VerticalDivider(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 24, // total width including padding
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () {
-                            if (_seats > 1) setState(() => _seats--);
-                          },
-                          borderRadius: BorderRadius.circular(20),
-                          child: const Padding(
-                            padding: EdgeInsets.all(4),
-                            child: Icon(Icons.remove,
-                                color: Colors.white, size: 20),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        InkWell(
-                          onTap: () {
-                            // Requested limit: 40
-                            if (_seats < _maxSeats) setState(() => _seats++);
-                          },
-                          borderRadius: BorderRadius.circular(20),
-                          child: const Padding(
-                            padding: EdgeInsets.all(4),
-                            child:
-                                Icon(Icons.add, color: Colors.white, size: 20),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
+                  // INTEGRATED PASSENGER COUNTER REMOVED
                 ],
               ),
             ),
@@ -195,7 +137,7 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
                   const SizedBox(width: 8),
                   TextButton(
                     onPressed: () => Navigator.pop(
-                        context, {'dates': _selectedDates, 'seats': _seats}),
+                        context, {'dates': _selectedDates, 'SEATS': 1}),
                     child: Text(
                       "OK",
                       style: TextStyle(

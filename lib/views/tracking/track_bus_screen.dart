@@ -5,8 +5,8 @@ import 'package:latlong2/latlong.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_theme.dart';
 import '../../services/location_service.dart';
-import 'package:provider/provider.dart'; // Added
-import '../../utils/language_provider.dart'; // Added
+ // Added
+ // Added
 
 class TrackBusScreen extends StatefulWidget {
   final Trip trip;
@@ -52,7 +52,7 @@ class _TrackBusScreenState extends State<TrackBusScreen> {
       body: StreamBuilder<LatLng?>(
         stream: LocationService().getBusLocationStream(widget.trip.id),
         builder: (context, snapshot) {
-          final lp = Provider.of<LanguageProvider>(context); // Get Provider
+           // Get Provider
           if (snapshot.hasData && snapshot.data != null) {
             _currentBusPos = snapshot.data!;
             // Auto-center ONLY once when we first get a signal
@@ -154,8 +154,8 @@ class _TrackBusScreenState extends State<TrackBusScreen> {
                           children: [
                             Text(
                                 _currentBusPos != null
-                                    ? lp.translate('signal_active')
-                                    : lp.translate('waiting_signal'),
+                                    ? "signal_active"
+                                    : "waiting_signal",
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -163,8 +163,8 @@ class _TrackBusScreenState extends State<TrackBusScreen> {
                                     fontWeight: FontWeight.bold)),
                             Text(
                                 _currentBusPos != null
-                                    ? lp.translate('bus_moving')
-                                    : lp.translate('bus_no_update'),
+                                    ? "bus_moving"
+                                    : "bus_no_update",
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -188,9 +188,7 @@ class _TrackBusScreenState extends State<TrackBusScreen> {
             _mapController.move(_currentBusPos!, 16.0);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(
-                    Provider.of<LanguageProvider>(context, listen: false)
-                        .translate('waiting_signal'))));
+                content: Text('waiting_signal')));
           }
         },
         label: const Text("Recenter"),

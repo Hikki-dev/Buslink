@@ -95,85 +95,65 @@ class _FeedbackBodyState extends State<_FeedbackBody> {
 
                   return Card(
                     elevation: 2,
+                    margin: const EdgeInsets.only(bottom: 12),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor:
-                            AppTheme.primaryColor.withValues(alpha: 0.1),
-                        child: const Icon(Icons.person,
-                            color: AppTheme.primaryColor),
-                      ),
-                      title: Text(name,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(5, (i) {
-                          // Parse rating safely
-                          double r = double.tryParse(rating) ?? 0;
-                          return Icon(
-                            i < r ? Icons.star : Icons.star_border,
-                            color: Colors.amber,
-                            size: 16,
-                          );
-                        }),
-                      ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                    child: Theme(
+                      data: Theme.of(context)
+                          .copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        leading: CircleAvatar(
+                          backgroundColor:
+                              AppTheme.primaryColor.withValues(alpha: 0.1),
+                          child: Text(
+                              name.isNotEmpty ? name[0].toUpperCase() : '?',
+                              style: const TextStyle(
+                                  color: AppTheme.primaryColor)),
+                        ),
+                        title: Text(name,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(
+                          date != null
+                              ? DateFormat('MMM d, yyyy').format(date)
+                              : 'Unknown Date',
+                          style: TextStyle(
+                              color: Colors.grey.shade600, fontSize: 12),
+                        ),
                         children: [
-                          if (date != null)
-                            Text(DateFormat('MMM d').format(date),
-                                style: const TextStyle(
-                                    fontSize: 10, color: Colors.grey)),
-                          const Icon(Icons.arrow_forward_ios,
-                              size: 12, color: Colors.grey),
-                        ],
-                      ),
-                      onTap: () {
-                        // Show Details Dialog
-                        showDialog(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title: Text("$name's Feedback"),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                const Divider(),
                                 Row(
                                   children: [
-                                    const Icon(Icons.star,
+                                    const Text("Rating: ",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    Icon(Icons.star,
                                         color: Colors.amber, size: 20),
-                                    const SizedBox(width: 8),
-                                    Text("Rating: $rating/5",
+                                    Text(" $rating/5",
                                         style: const TextStyle(
                                             fontWeight: FontWeight.bold)),
                                   ],
                                 ),
-                                const SizedBox(height: 16),
-                                const Text("Comment:",
+                                const SizedBox(height: 8),
+                                const Text("Feedback:",
                                     style:
                                         TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 8),
-                                Text(comment.isEmpty
-                                    ? "No comment provided."
-                                    : comment),
-                                const SizedBox(height: 16),
-                                if (date != null)
-                                  Text(
-                                      "Submitted on: ${DateFormat('MMM d, y h:mm a').format(date)}",
-                                      style: const TextStyle(
-                                          color: Colors.grey, fontSize: 12)),
+                                const SizedBox(height: 4),
+                                Text(
+                                    comment.isEmpty
+                                        ? "No comment provided."
+                                        : comment,
+                                    style: const TextStyle(fontSize: 15)),
                               ],
                             ),
-                            actions: [
-                              TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text("Close"))
-                            ],
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     ),
                   );
                 },

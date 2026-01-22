@@ -513,7 +513,14 @@ class TripController extends ChangeNotifier {
   // Helper for admin screen dropdowns
   List<RouteModel> availableRoutes = [];
   Future<void> fetchAvailableRoutes() async {
-    // For now, no-op or simple fetch stub
+    try {
+      final stream = _firestoreService.getRoutesStream();
+      // Take the first emission
+      availableRoutes = await stream.first;
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error fetching routes: $e");
+    }
   }
 
   // --- LEGACY STUBS for SeatSelectionScreen ---

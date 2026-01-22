@@ -5,8 +5,7 @@ import '../booking/my_trips_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../profile/profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
-import '../../utils/language_provider.dart';
+
 
 class MobileBottomNav extends StatelessWidget {
   final int selectedIndex;
@@ -46,44 +45,38 @@ class MobileBottomNav extends StatelessWidget {
           fontSize: 12,
         ),
         items: user == null
-            ? [
+            ? const [
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.home_outlined),
-                  activeIcon: const Icon(Icons.home),
-                  label: Provider.of<LanguageProvider>(context)
-                      .translate('nav_home'),
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home),
+                  label: "Home",
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.login),
-                  activeIcon: const Icon(Icons.login),
-                  label: Provider.of<LanguageProvider>(context)
-                      .translate('nav_login'),
+                  icon: Icon(Icons.login),
+                  activeIcon: Icon(Icons.login),
+                  label: "Login",
                 ),
               ]
-            : [
+            : const [
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.home_outlined),
-                  activeIcon: const Icon(Icons.home),
-                  label: Provider.of<LanguageProvider>(context)
-                      .translate('nav_home'),
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home),
+                  label: "Home",
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.confirmation_number_outlined),
-                  activeIcon: const Icon(Icons.confirmation_number),
-                  label: Provider.of<LanguageProvider>(context)
-                      .translate('nav_my_trips'),
+                  icon: Icon(Icons.confirmation_number_outlined),
+                  activeIcon: Icon(Icons.confirmation_number),
+                  label: "My Trips",
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.favorite_border),
-                  activeIcon: const Icon(Icons.favorite),
-                  label: Provider.of<LanguageProvider>(context)
-                      .translate('nav_favorites'),
+                  icon: Icon(Icons.favorite_border),
+                  activeIcon: Icon(Icons.favorite),
+                  label: "Favourites",
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.person_outline),
-                  activeIcon: const Icon(Icons.person),
-                  label: Provider.of<LanguageProvider>(context)
-                      .translate('nav_profile'),
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: "Profile",
                 ),
               ],
       ),

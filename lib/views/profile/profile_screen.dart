@@ -6,12 +6,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/app_theme.dart';
-import '../../utils/language_provider.dart';
+//  // Removed
 import 'support_screen.dart';
 import 'feedback_dialog.dart';
 import '../layout/desktop_navbar.dart';
 import '../favorites/favorites_screen.dart';
-import '../settings/language_selection_screen.dart';
+// import '../settings/language_selection_screen.dart'; // Removed
 
 // import '../layout/mobile_navbar.dart';
 import '../layout/custom_app_bar.dart';
@@ -48,13 +48,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Provider.of<FirestoreService>(context, listen: false);
     final themeController = Provider.of<ThemeController>(context);
     final user = Provider.of<User?>(context);
-    final lp = Provider.of<LanguageProvider>(context);
+    //  // Removed
 
     if (user == null) {
-      return Center(
+      return const Center(
         child: Text(
-          lp.translate('no_account'),
-          style: const TextStyle(fontFamily: 'Inter', color: Colors.grey),
+          "No account logged in",
+          style: TextStyle(fontFamily: 'Inter', color: Colors.grey),
         ),
       );
     }
@@ -225,10 +225,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SizedBox(height: 24),
                                 const Divider(),
                                 const SizedBox(height: 16),
-                                _infoRow(context, Icons.email_outlined,
-                                    lp.translate('email'), email),
-                                _infoRow(context, Icons.phone_outlined,
-                                    lp.translate('phone_label'), phone),
+                                _infoRow(context, Icons.email_outlined, "Email",
+                                    email),
+                                _infoRow(context, Icons.phone_outlined, "Phone",
+                                    phone),
                               ],
                             ),
                           ),
@@ -258,7 +258,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     value: themeController.themeMode ==
                                         ThemeMode.dark,
                                     title: Text(
-                                      lp.translate('dark_mode'),
+                                      themeController.themeMode ==
+                                              ThemeMode.dark
+                                          ? "Light Mode"
+                                          : "Dark Mode",
                                       style: const TextStyle(
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.w600),
@@ -283,9 +286,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           Icons.notifications_outlined,
                                           color: Colors.blue),
                                     ),
-                                    title: Text(
-                                      lp.translate('notifications'),
-                                      style: const TextStyle(
+                                    title: const Text(
+                                      "Notifications",
+                                      style: TextStyle(
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.w600),
                                     ),
@@ -299,35 +302,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                   const NotificationSettingsScreen()));
                                     },
                                   ),
+                                  // Language Selector REMOVED
                                   const Divider(height: 1),
-                                  ListTile(
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Colors.green.withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.language,
-                                          color: Colors.green),
-                                    ),
-                                    title: Text(
-                                      lp.translate('language'),
-                                      style: const TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                    trailing: Text(lp.currentLanguageName,
-                                        style: const TextStyle(
-                                            color: Colors.grey)),
-                                    onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const LanguageSelectionScreen()));
-                                    },
-                                  ),
                                 ],
                               ),
                             ),
@@ -411,9 +387,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       child: const Icon(Icons.support_agent,
                                           color: Colors.orange),
                                     ),
-                                    title: Text(
-                                      lp.translate('help_support'),
-                                      style: const TextStyle(
+                                    title: const Text(
+                                      "Help & Support",
+                                      style: TextStyle(
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.w600),
                                     ),
@@ -464,10 +440,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       child: const Icon(Icons.logout,
                                           color: Colors.red),
                                     ),
-// Add import at top (handled by multi-change if possible or usually add to top first)
-                                    title: Text(
-                                      lp.translate('log_out'),
-                                      style: const TextStyle(
+                                    title: const Text(
+                                      "Log Out",
+                                      style: TextStyle(
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.w600,
                                           color: Colors.red),
@@ -513,7 +488,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 40),
                           Text(
-                            "${lp.translate('version')} 1.0.0",
+                            "Version 1.0.0",
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 color: Colors.grey.shade400,
@@ -607,7 +582,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       TaskSnapshot snapshot;
 
       // Use putData for BOTH Web and Mobile to avoid File path issues on Android
-      // (content:// URIs vs file:// paths)
       snapshot = await storageRef.putData(
           bytes,
           SettableMetadata(

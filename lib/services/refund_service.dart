@@ -88,11 +88,33 @@ class RefundService {
       userName = request.passengerName.split(' ').first;
     }
 
+    // Fetch Trip Details for formatted message
+    String tripDescription = request.tripId;
+    try {
+      final tripDoc = await _db.collection('trips').doc(request.tripId).get();
+      if (tripDoc.exists) {
+        final data = tripDoc.data();
+        if (data != null) {
+          final from = data['originCity'] ?? data['fromCity'] ?? '';
+          final to = data['destinationCity'] ?? data['toCity'] ?? '';
+          final via = data['via'] ?? '';
+          if (from.isNotEmpty && to.isNotEmpty) {
+            tripDescription = "$from - $to";
+            if (via.isNotEmpty && via != 'Direct') {
+              tripDescription += " Via $via";
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Fallback
+    }
+
     await import_notification_service.NotificationService.sendNotificationToUser(
         userId: request.userId,
         title: 'Refund Request Received',
         body:
-            'Hello $userName, we received your refund request for trip to ${request.tripId}. We will review it shortly.',
+            'Hello $userName, we received your refund request for trip $tripDescription. We will review it shortly.',
         type: 'refundStatus',
         relatedId: request.id);
 
@@ -101,7 +123,7 @@ class RefundService {
         id: request.id.hashCode,
         title: 'Refund Request Received',
         body:
-            'Hello $userName, we received your refund request for trip to ${request.tripId}.',
+            'Hello $userName, we received your refund request for trip $tripDescription.',
         payload: request.id);
   }
 }

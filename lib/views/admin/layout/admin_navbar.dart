@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-// import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_theme.dart';
-import '../../../utils/language_provider.dart';
 
 import '../../conductor/conductor_dashboard.dart';
 import '../admin_dashboard.dart';
@@ -92,8 +90,7 @@ class AdminNavBar extends StatelessWidget {
                   if (MediaQuery.of(context).size.width > 800) ...[
                     _navLink(
                         context,
-                        Provider.of<LanguageProvider>(context)
-                            .translate('admin_dashboard'),
+                        "Dashboard",
                         0,
                         () => Navigator.pushReplacement(
                             context,
@@ -101,8 +98,7 @@ class AdminNavBar extends StatelessWidget {
                                 builder: (_) => const AdminDashboard()))),
                     _navLink(
                         context,
-                        Provider.of<LanguageProvider>(context)
-                            .translate('user_view'),
+                        "User View",
                         1,
                         () => Navigator.push(
                             context,
@@ -111,8 +107,7 @@ class AdminNavBar extends StatelessWidget {
                                     isAdminView: true, initialIndex: 0)))),
                     _navLink(
                         context,
-                        Provider.of<LanguageProvider>(context)
-                            .translate('conductor_view'),
+                        "Conductor View",
                         2,
                         () => Navigator.push(
                             context,
@@ -121,8 +116,7 @@ class AdminNavBar extends StatelessWidget {
                                     isAdminView: true)))),
                     _navLink(
                         context,
-                        Provider.of<LanguageProvider>(context)
-                            .translate('roles'),
+                        "Roles",
                         3, // Index 3
                         () => Navigator.push(
                             context,
@@ -165,56 +159,19 @@ class AdminNavBar extends StatelessWidget {
                         }
                       },
                       itemBuilder: (context) {
-                        final lp = Provider.of<LanguageProvider>(context,
-                            listen: false);
                         return [
-                          PopupMenuItem(
-                              value: 'Dashboard',
-                              child: Text(lp.translate('admin_dashboard'))),
-                          PopupMenuItem(
-                              value: 'User View',
-                              child: Text(lp.translate('user_view'))),
-                          PopupMenuItem(
+                          const PopupMenuItem(
+                              value: 'Dashboard', child: Text("Dashboard")),
+                          const PopupMenuItem(
+                              value: 'User View', child: Text("User View")),
+                          const PopupMenuItem(
                               value: 'Conductor View',
-                              child: Text(lp.translate('conductor_view'))),
-                          PopupMenuItem(
-                              value: 'Roles',
-                              child: Text(lp.translate('roles'))),
+                              child: Text("Conductor View")),
+                          const PopupMenuItem(
+                              value: 'Roles', child: Text("Roles")),
                         ];
                       },
                     ),
-                  ],
-
-                  if (MediaQuery.of(context).size.width > 800) ...[
-                    const SizedBox(width: 16),
-                    // Language Selector (Desktop)
-                    Consumer<LanguageProvider>(
-                      builder: (context, languageProvider, _) {
-                        return PopupMenuButton<String>(
-                          icon: const Icon(Icons.language, color: Colors.grey),
-                          tooltip: "Change Language",
-                          onSelected: (String code) {
-                            languageProvider.setLanguage(code);
-                          },
-                          itemBuilder: (BuildContext context) =>
-                              <PopupMenuEntry<String>>[
-                            const PopupMenuItem<String>(
-                              value: 'en',
-                              child: Text('English'),
-                            ),
-                            const PopupMenuItem<String>(
-                              value: 'si',
-                              child: Text('සිංහල (Sinhala)'),
-                            ),
-                            const PopupMenuItem<String>(
-                              value: 'ta',
-                              child: Text('தமிழ் (Tamil)'),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
                   ],
 
                   // User Profile / Logout

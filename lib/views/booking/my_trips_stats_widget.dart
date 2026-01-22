@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
+
 import '../../models/trip_model.dart';
-import '../../utils/language_provider.dart';
+
 
 class TripsStatsWidget extends StatelessWidget {
   final List<Ticket> allTickets;
@@ -50,26 +50,25 @@ class TripsStatsWidget extends StatelessWidget {
         children: [
           _buildBox(
               context,
-              Provider.of<LanguageProvider>(context).translate('upcoming'),
+              "Upcoming",
               "$upcoming",
               Colors.blue),
           const SizedBox(width: 8),
           _buildBox(
               context,
-              Provider.of<LanguageProvider>(context).translate('stat_delayed'),
+              "Delayed",
               "$delayed",
               Colors.orange),
           const SizedBox(width: 8),
           _buildBox(
               context,
-              Provider.of<LanguageProvider>(context).translate('stat_arrived'),
+              "Arrived",
               "$arrived",
               Colors.green),
           const SizedBox(width: 8),
           _buildBox(
               context,
-              Provider.of<LanguageProvider>(context)
-                  .translate('stat_cancelled'),
+'Cancelled',
               "$cancelled",
               Colors.red),
         ],

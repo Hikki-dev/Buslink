@@ -11,6 +11,8 @@ import '../../models/trip_view_model.dart'; // Import EnrichedTrip
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latlng;
 import '../booking/seat_selection_screen.dart';
+import '../booking/bulk_confirmation_screen.dart';
+import '../booking/bulk_quantity_dialog.dart';
 import '../../utils/app_theme.dart';
 import '../layout/desktop_navbar.dart';
 import 'dart:convert';
@@ -19,11 +21,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../layout/app_footer.dart';
 // import '../../services/auth_service.dart'; // Unused
 import '../../services/firestore_service.dart';
-import '../booking/bulk_confirmation_screen.dart';
-import '../booking/bulk_quantity_dialog.dart';
+
 import 'package:rxdart/rxdart.dart'; // For Stream Merging
 import '../../services/location_service.dart'; // For Live Locations
-import '../../utils/language_provider.dart';
+
 
 part 'parts/clock_widget.dart';
 
@@ -167,7 +168,7 @@ class _BusListScreenState extends State<BusListScreen> {
     }
 
     // Get translations
-    // final lp = Provider.of<LanguageProvider>(context); // Already provided? No, context is sufficient later.
+    //  // Already provided? No, context is sufficient later.
     // Actually we need to pass lp down or use Consumer.
     // Since this is build method, we can access provider.
 
@@ -270,11 +271,11 @@ class _BusListScreenState extends State<BusListScreen> {
 
   Widget _buildMobileLayout(BuildContext context, List<EnrichedTrip> trips,
       TripController controller) {
-    final lp = Provider.of<LanguageProvider>(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            '${lp.translate(controller.fromCity?.toLowerCase().replaceAll(' ', '_') ?? "")} ➔ ${lp.translate(controller.toCity?.toLowerCase().replaceAll(' ', '_') ?? "")}',
+            '${(controller.fromCity ?? "").toLowerCase()} -> ${(controller.toCity ?? "").toLowerCase()}',
             style: const TextStyle(
                 fontFamily: 'Outfit',
                 fontWeight: FontWeight.bold,
@@ -299,7 +300,7 @@ class _BusListScreenState extends State<BusListScreen> {
           : null,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showMobileFilterModal(context),
-        label: Text(lp.translate('filters')),
+        label: Text("filters"),
         icon: const Icon(Icons.tune),
         backgroundColor: AppTheme.primaryColor,
       ),
@@ -323,7 +324,7 @@ class _BusListScreenState extends State<BusListScreen> {
     // Determine which city's weather is being shown
     final weatherCity = controller.toCity ?? controller.fromCity ?? "Colombo";
     final weatherCityKey = weatherCity.toLowerCase().replaceAll(' ', '_');
-    final lp = Provider.of<LanguageProvider>(context);
+    
 
     // ... (Weather UI same but translation for headers?)
     // No specific headers yet mostly dynamic data.
@@ -356,7 +357,7 @@ class _BusListScreenState extends State<BusListScreen> {
                                     fontFamily: 'Outfit',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18)),
-                            Text(lp.translate(weatherCityKey),
+                            Text(weatherCityKey,
                                 style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
@@ -400,7 +401,7 @@ class _BusListScreenState extends State<BusListScreen> {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
                                     color: Colors.black)),
-                            Text(lp.translate(weatherCityKey),
+                            Text(weatherCityKey,
                                 style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
@@ -502,7 +503,7 @@ class _BusListScreenState extends State<BusListScreen> {
                                     const Icon(Icons.map,
                                         size: 16, color: AppTheme.primaryColor),
                                     const SizedBox(width: 8),
-                                    Text(lp.translate('live_route_preview'),
+                                    Text("live_route_preview",
                                         style: const TextStyle(
                                             fontFamily: 'Outfit',
                                             fontSize: 12,
@@ -524,7 +525,7 @@ class _BusListScreenState extends State<BusListScreen> {
                               }
                             },
                             icon: const Icon(Icons.map, size: 16),
-                            label: Text(lp.translate('open_google_maps')),
+                            label: Text("open_google_maps"),
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
                                 foregroundColor: Colors.black,
@@ -664,7 +665,7 @@ class _BusListScreenState extends State<BusListScreen> {
                 //     color: Colors.white,
                 //     borderRadius: BorderRadius.circular(4)
                 //   ),
-                //   child: Text("Bus", style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold)),
+                Text("Bus", style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold)),
                 // )
               ],
             ),
@@ -736,7 +737,7 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _buildResultsHeader(int count) {
-    final lp = Provider.of<LanguageProvider>(context);
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
@@ -752,14 +753,14 @@ class _BusListScreenState extends State<BusListScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("$count ${lp.translate('buses_found_suffix')}",
+              Text("$count ${"buses_found_suffix"}",
                   style: TextStyle(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.onSurface)),
               if (Provider.of<TripController>(context).isBulkBooking)
                 Text(
-                  "${lp.translate('showing_valid_options')} ${Provider.of<TripController>(context).bulkDates.length} ${lp.translate('consecutive_days')}",
+                  "${"showing_valid_options"} ${Provider.of<TripController>(context).bulkDates.length} ${"consecutive_days"}",
                   style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
@@ -779,10 +780,10 @@ class _BusListScreenState extends State<BusListScreen> {
               items: [
                 DropdownMenuItem(
                     value: 'price_asc',
-                    child: Text(lp.translate('cheapest_first'))),
+                    child: Text("cheapest_first")),
                 DropdownMenuItem(
                     value: 'time_asc',
-                    child: Text(lp.translate('earliest_first'))),
+                    child: Text("earliest_first")),
               ],
               onChanged: (v) => setState(() => _sortBy = v!),
             ),
@@ -793,7 +794,7 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _buildFilters(BuildContext context) {
-    final lp = Provider.of<LanguageProvider>(context);
+    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -806,14 +807,14 @@ class _BusListScreenState extends State<BusListScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(lp.translate('filters'),
+          Text("filters",
               style: const TextStyle(
                   fontFamily: 'Outfit',
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                   letterSpacing: 1.2)),
           const Divider(height: 32),
-          _filterSection(lp.translate('departure_time_filter'),
+          _filterSection("departure_time_filter",
               ["before_6_am", "6_am_to_12_pm", "12_pm_to_6_pm", "after_6_pm"]),
         ],
       ),
@@ -821,7 +822,7 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _filterSection(String title, List<String> options) {
-    final lp = Provider.of<LanguageProvider>(context);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -858,7 +859,7 @@ class _BusListScreenState extends State<BusListScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(lp.translate(opt),
+                  Text(opt,
                       style: TextStyle(
                           fontFamily: 'Inter',
                           color: Theme.of(context).colorScheme.onSurface,
@@ -886,7 +887,7 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _buildEmptyState() {
-    final lp = Provider.of<LanguageProvider>(context);
+    
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 60),
@@ -895,7 +896,7 @@ class _BusListScreenState extends State<BusListScreen> {
             Icon(Icons.directions_bus_outlined,
                 size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
-            Text(lp.translate('no_buses_found'),
+            Text("no_buses_found",
                 style: TextStyle(
                     fontFamily: 'Outfit',
                     fontSize: 20,
@@ -1064,7 +1065,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
   }
 
   Widget _buildCardHeader(EnrichedTrip trip) {
-    final lp = Provider.of<LanguageProvider>(context);
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1078,7 +1079,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                 color: Colors.blue.shade50,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Text(lp.translate('high_rated'),
+              child: Text("high_rated",
                   style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 10,
@@ -1098,7 +1099,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
             const SizedBox(height: 4),
             // Only Show Via
             if (trip.via.isNotEmpty)
-              _detailChip(Icons.route, "${lp.translate('via')} ${trip.via}"),
+              _detailChip(Icons.route, "${"via"} ${trip.via}"),
           ],
         ),
       ],
@@ -1135,7 +1136,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
   }
 
   Widget _buildTimeline(EnrichedTrip trip, Duration duration) {
-    final lp = Provider.of<LanguageProvider>(context);
+    
     return Row(
       children: [
         Column(
@@ -1145,7 +1146,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                     fontFamily: 'Outfit',
                     fontWeight: FontWeight.bold,
                     fontSize: 20)),
-            Text(lp.translate(trip.fromCity.toLowerCase().replaceAll(' ', '_')),
+            Text(trip.fromCity.toLowerCase().replaceAll(' ', '_'),
                 style: const TextStyle(
                     fontFamily: 'Inter', fontSize: 12, color: Colors.grey)),
           ],
@@ -1156,7 +1157,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
             child: Column(
               children: [
                 Text(
-                    "${duration.inHours}${lp.translate('hrs')} ${duration.inMinutes.remainder(60)}${lp.translate('mins')}",
+                    "${duration.inHours}${"hrs"} ${duration.inMinutes.remainder(60)}${"mins"}",
                     style:
                         TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                 Row(
@@ -1177,7 +1178,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                     fontFamily: 'Outfit',
                     fontWeight: FontWeight.bold,
                     fontSize: 20)),
-            Text(lp.translate(trip.toCity.toLowerCase().replaceAll(' ', '_')),
+            Text(trip.toCity.toLowerCase().replaceAll(' ', '_'),
                 style: const TextStyle(
                     fontFamily: 'Inter', fontSize: 12, color: Colors.grey)),
           ],
@@ -1192,12 +1193,12 @@ class _BusTicketCardState extends State<_BusTicketCard> {
 
   Widget _buildBookButton(EnrichedTrip trip, BuildContext context,
       TripController controller, bool isMobile, String priceLabel) {
-    final lp = Provider.of<LanguageProvider>(context);
+    
 
     // Filter Logic to translate "Days" if bulk
     String displayPrice = priceLabel;
     if (controller.isBulkBooking) {
-      displayPrice = priceLabel.replaceAll('Days', lp.translate('days'));
+      displayPrice = priceLabel.replaceAll('Days', "days");
     }
 
     return Container(
@@ -1233,7 +1234,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryColor)),
           const SizedBox(height: 4),
-          Text(lp.translate('per_person'),
+          Text("per_person",
               style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
           const SizedBox(height: 16),
           SizedBox(
@@ -1246,12 +1247,12 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                 if (diff <= 10) {
                   // Block booking
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(lp.translate('booking_closes_error')),
+                    content: Text("booking_closes_error"),
                     backgroundColor: Colors.red,
                     duration: const Duration(seconds: 4),
                   ));
                 } else if (controller.isBulkBooking) {
-                  // Show Quantity Selection Dialog
+                  // Bulk Booking: Show Quantity Dialog
                   showDialog(
                     context: context,
                     builder: (context) => BulkQuantityDialog(
@@ -1264,6 +1265,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                         controller.selectedSeats =
                             List.generate(qty, (index) => "-1");
                         controller.selectedTrip = trip;
+                        controller.setBulkPassengers(qty);
 
                         Navigator.push(
                           context,
@@ -1288,13 +1290,13 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6))),
-              child: Text(lp.translate('select')),
+              child: Text("select"),
             ),
           ),
           const SizedBox(height: 8),
           Center(
             child: Text(
-                "${trip.totalSeats - trip.bookedSeats.length} ${lp.translate('seats_left_suffix')}",
+                "${trip.totalSeats - trip.bookedSeats.length} ${"seats_left_suffix"}",
                 style: TextStyle(fontSize: 11, color: Colors.green.shade700)),
           )
         ],

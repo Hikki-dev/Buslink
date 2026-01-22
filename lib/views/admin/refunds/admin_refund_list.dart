@@ -3,8 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../../models/refund_model.dart';
 import '../../../utils/app_theme.dart';
-import '../../../../utils/language_provider.dart';
-import 'package:provider/provider.dart';
+
 import 'admin_refund_details.dart';
 
 class AdminRefundListScreen extends StatefulWidget {
@@ -28,8 +27,8 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(Provider.of<LanguageProvider>(context)
-            .translate('refund_management_title')),
+        title: const Text('Refund Management',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1,
@@ -68,23 +67,14 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           children: [
-                            _buildFilterItemMobile(
-                                RefundStatus.pending,
-                                Icons.hourglass_top,
-                                Provider.of<LanguageProvider>(context)
-                                    .translate('status_pending')),
+                            _buildFilterItemMobile(RefundStatus.pending,
+                                Icons.hourglass_top, 'Pending'),
                             const SizedBox(width: 8),
-                            _buildFilterItemMobile(
-                                RefundStatus.approved,
-                                Icons.check_circle_outline,
-                                Provider.of<LanguageProvider>(context)
-                                    .translate('status_approved')),
+                            _buildFilterItemMobile(RefundStatus.approved,
+                                Icons.check_circle_outline, 'Approved'),
                             const SizedBox(width: 8),
-                            _buildFilterItemMobile(
-                                RefundStatus.rejected,
-                                Icons.cancel_outlined,
-                                Provider.of<LanguageProvider>(context)
-                                    .translate('status_rejected')),
+                            _buildFilterItemMobile(RefundStatus.rejected,
+                                Icons.cancel_outlined, 'Rejected'),
                           ],
                         ),
                       ),
@@ -101,21 +91,12 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                         child: Column(
                           children: [
                             const SizedBox(height: 20),
-                            _buildFilterItem(
-                                RefundStatus.pending,
-                                Icons.hourglass_top,
-                                Provider.of<LanguageProvider>(context)
-                                    .translate('status_pending')),
-                            _buildFilterItem(
-                                RefundStatus.approved,
-                                Icons.check_circle_outline,
-                                Provider.of<LanguageProvider>(context)
-                                    .translate('status_approved')),
-                            _buildFilterItem(
-                                RefundStatus.rejected,
-                                Icons.cancel_outlined,
-                                Provider.of<LanguageProvider>(context)
-                                    .translate('status_rejected')),
+                            _buildFilterItem(RefundStatus.pending,
+                                Icons.hourglass_top, 'Pending'),
+                            _buildFilterItem(RefundStatus.approved,
+                                Icons.check_circle_outline, 'Approved'),
+                            _buildFilterItem(RefundStatus.rejected,
+                                Icons.cancel_outlined, 'Rejected'),
                           ],
                         ),
                       ),
@@ -133,16 +114,8 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
 
   Widget _buildRefundList() {
     return StreamBuilder<QuerySnapshot>(
-      // Note: We might want to remove 'where' clause if we want to search ALL refunds
-      // But user asked for search bar "at the top of each view (Pending, Approved)",
-      // which implies searching WITHIN the status view.
-      // So we keep the stream filtering by status.
-      // However, if the user wants to search for a specific person regardless of status,
-      // the current design force them to switch tabs.
-      // User said: "Refund is working... best to have a search bar at the top of each view... so it is easy to search and view a specific person."
-      // I will keep the status filter as primary, and search filters the result list.
       stream: FirebaseFirestore.instance
-          .collection('refunds')
+          .collection('refunds') // Fixed casing to match rules
           .where('status', isEqualTo: _selectedStatus.name)
           .orderBy('createdAt', descending: true)
           .snapshots(),
@@ -158,24 +131,23 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(
-              child: Text(Provider.of<LanguageProvider>(context)
-                  .translate('no_refunds_status')));
+          return const Center(child: Text('No refunds found'));
         }
 
         List<DocumentSnapshot> docs = snapshot.data!.docs;
 
-        // FILTER: By Email (if available in refund data)
-        // Wait, 'refunds' collection might not have 'email'.
-        // RefundRequest model usually has 'userId', 'ticketId'.
-        // Let's check RefundModel in a moment.
-        // Assuming it has data map.
         if (_searchController.text.isNotEmpty) {
-          final query = _searchController.text.toLowerCase().trim();
+          final query = _searchController.text.trim().toLowerCase();
+
+          // STRICT EMAIL SEARCH: Must contain '@' to be considered an email search
+          if (!query.contains('@')) {
+            return const Center(
+                child: Text('Please enter a valid email to search.'));
+          }
+
           docs = docs.where((d) {
             final data = d.data() as Map<String, dynamic>;
 
-            // Search Priority: Email fields only
             final passengerEmail =
                 (data['passengerEmail'] ?? '').toString().toLowerCase();
             final email = (data['email'] ?? '').toString().toLowerCase();
@@ -184,6 +156,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                     ? data['userData']['email'].toString().toLowerCase()
                     : '';
 
+            // ONLY match email fields
             return email.contains(query) ||
                 userEmail.contains(query) ||
                 passengerEmail.contains(query);
@@ -191,9 +164,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
         }
 
         if (docs.isEmpty) {
-          return Center(
-              child: Text(Provider.of<LanguageProvider>(context)
-                  .translate('no_refunds_search')));
+          return const Center(child: Text('No refunds match your search'));
         }
 
         return ListView.builder(
@@ -301,13 +272,12 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                             fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 4),
                     Text(
-                        "${Provider.of<LanguageProvider>(context).translate('refund_amount_prefix')}: LKR ${refund.refundAmount.toStringAsFixed(2)}",
+                        "${"Refund Amount"}: LKR ${refund.refundAmount.toStringAsFixed(2)}",
                         style: const TextStyle(
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    Text(
-                        "${Provider.of<LanguageProvider>(context).translate('reason_prefix')}: ${_formatReason(refund.reason)}",
+                    Text("${"Reason"}: ${_formatReason(refund.reason)}",
                         style: const TextStyle(fontSize: 13)),
                   ],
                 ),

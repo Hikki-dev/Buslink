@@ -1,22 +1,17 @@
 import 'package:flutter/material.dart';
-// import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
-import '../../utils/language_provider.dart'; // Added Import
 import '../support/support_screen.dart';
-
 import '../auth/login_screen.dart';
 import '../customer_main_screen.dart';
-// import 'notifications_screen.dart'; // Old relative import
-import 'notifications_screen.dart'; // Consolidated Import
-import '../settings/account_settings_screen.dart'; // Added Import for Settings
+import 'notifications_screen.dart';
+import '../settings/account_settings_screen.dart';
 
 class DesktopNavBar extends StatelessWidget {
   final int selectedIndex;
   final bool isAdminView;
-  // If null, it means we are not on the main tab view (e.g. booking flow)
   final Function(int)? onTap;
 
   const DesktopNavBar(
@@ -28,7 +23,6 @@ class DesktopNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context, listen: false);
-
     final user = authService.currentUser;
 
     return Material(
@@ -68,71 +62,21 @@ class DesktopNavBar extends StatelessWidget {
             const Spacer(),
 
             // Nav Items
-            Consumer<LanguageProvider>(builder: (context, langProvider, child) {
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _navItem(context, langProvider.translate('nav_home'), 0),
-                  if (user != null) ...[
-                    _navItem(
-                        context, langProvider.translate('nav_my_trips'), 1),
-                    _navItem(
-                        context, langProvider.translate('nav_favorites'), 2),
-                    _navItem(context, langProvider.translate('nav_profile'), 3),
-                  ],
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _navItem(context, "Home", 0),
+                if (user != null) ...[
+                  _navItem(context, "My Trips", 1),
+                  _navItem(context, "Favourites", 2),
+                  _navItem(context, "Profile", 3),
                 ],
-              );
-            }),
+              ],
+            ),
 
             const SizedBox(width: 40),
 
-            // Language Selector
-            Consumer<LanguageProvider>(builder: (context, langProvider, _) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 20),
-                child: PopupMenuButton<String>(
-                  tooltip: langProvider.translate('language'),
-                  offset: const Offset(0, 40),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.language,
-                          size: 20, color: AppTheme.primaryColor),
-                      const SizedBox(width: 6),
-                      Text(
-                        langProvider.currentLanguage.toUpperCase(),
-                        style: const TextStyle(
-                          fontFamily: 'Outfit',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const Icon(Icons.keyboard_arrow_down, size: 16),
-                    ],
-                  ),
-                  onSelected: (lang) {
-                    langProvider.setLanguage(lang);
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'en',
-                      child: Text("English"),
-                    ),
-                    const PopupMenuItem(
-                      value: 'si',
-                      child: Text("Sinhala"),
-                    ),
-                    const PopupMenuItem(
-                      value: 'ta',
-                      child: Text("Tamil"),
-                    ),
-                  ],
-                ),
-              );
-            }),
-
-            // Notification Icon (Use StreamBuilder to listen to Auth State if needed, but 'user' variable is already from Provider)
+            // Notification Icon
             if (user != null) ...[
               Padding(
                 padding: const EdgeInsets.only(right: 20),
@@ -141,7 +85,6 @@ class DesktopNavBar extends StatelessWidget {
                       color: AppTheme.primaryColor),
                   tooltip: 'Notifications',
                   onPressed: () {
-                    // Navigate to Notifications Screen
                     Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -162,29 +105,24 @@ class DesktopNavBar extends StatelessWidget {
                   final userData =
                       snapshot.data?.data() as Map<String, dynamic>?;
 
-                  // Priority: Firestore Name -> Auth Name -> Email -> 'Traveler'
                   String displayName = userData?['displayName'] ??
                       user.displayName ??
                       user.email?.split('@').first ??
                       'Traveler';
 
-                  // Logic for "Hi, [Name]" - Shorten if too long
+                  // Logic for "Hi, [Name]"
                   final rawFirst = displayName.split(' ').first;
                   final firstName = rawFirst.length > 12
                       ? "${rawFirst.substring(0, 10)}..."
                       : rawFirst;
 
-                  // Admin badge logic if needed (optional)
+                  // Admin badge logic
                   final bool isAdmin = userData?['role'] == 'admin';
 
                   return Consumer<ThemeController>(
                     builder: (context, themeController, _) {
                       final isDark =
                           Theme.of(context).brightness == Brightness.dark;
-
-                      // Access LangProvider for Dropdown translations
-                      final langProvider =
-                          Provider.of<LanguageProvider>(context);
 
                       return PopupMenuButton<String>(
                         offset: const Offset(0, 50),
@@ -207,8 +145,7 @@ class DesktopNavBar extends StatelessWidget {
                                   size: 20,
                                   color: Theme.of(context).colorScheme.primary),
                               const SizedBox(width: 8),
-                              Text(
-                                  "${langProvider.translate('welcome_back')}, $firstName",
+                              Text("Welcome back, $firstName",
                                   style: TextStyle(
                                       fontFamily: 'Outfit',
                                       fontWeight: FontWeight.bold,
@@ -224,11 +161,9 @@ class DesktopNavBar extends StatelessWidget {
                         ),
                         itemBuilder: (BuildContext context) {
                           return [
-                            // Header
                             PopupMenuItem(
-                              enabled: true, // Make clickable
+                              enabled: true,
                               onTap: () {
-                                // Navigate to Profile
                                 if (onTap != null) {
                                   onTap!(3);
                                 } else {
@@ -244,7 +179,7 @@ class DesktopNavBar extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(displayName, // Full Name here
+                                  Text(displayName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -285,8 +220,6 @@ class DesktopNavBar extends StatelessWidget {
                               ),
                             ),
                             const PopupMenuDivider(),
-
-                            // Profile
                             PopupMenuItem(
                               value: 'profile',
                               child: Row(
@@ -298,7 +231,7 @@ class DesktopNavBar extends StatelessWidget {
                                           .onSurface
                                           .withValues(alpha: 0.7)),
                                   const SizedBox(width: 12),
-                                  Text(langProvider.translate('nav_profile'),
+                                  Text("Profile",
                                       style: TextStyle(
                                         fontFamily: 'Inter',
                                         color: Theme.of(context)
@@ -308,8 +241,6 @@ class DesktopNavBar extends StatelessWidget {
                                 ],
                               ),
                             ),
-
-                            // Favourites
                             PopupMenuItem(
                               value: 'favorites',
                               child: Row(
@@ -321,7 +252,7 @@ class DesktopNavBar extends StatelessWidget {
                                           .onSurface
                                           .withValues(alpha: 0.7)),
                                   const SizedBox(width: 12),
-                                  Text(langProvider.translate('nav_favorites'),
+                                  Text("Favourites",
                                       style: TextStyle(
                                         fontFamily: 'Inter',
                                         color: Theme.of(context)
@@ -331,8 +262,6 @@ class DesktopNavBar extends StatelessWidget {
                                 ],
                               ),
                             ),
-
-                            // Settings
                             PopupMenuItem(
                               value: 'settings',
                               child: Row(
@@ -344,7 +273,7 @@ class DesktopNavBar extends StatelessWidget {
                                           .onSurface
                                           .withValues(alpha: 0.7)),
                                   const SizedBox(width: 12),
-                                  Text("Settings", // Missing Translation Key
+                                  Text("Settings",
                                       style: TextStyle(
                                         fontFamily: 'Inter',
                                         color: Theme.of(context)
@@ -354,10 +283,7 @@ class DesktopNavBar extends StatelessWidget {
                                 ],
                               ),
                             ),
-
                             const PopupMenuDivider(),
-
-                            // Theme Toggle
                             PopupMenuItem(
                               value: 'theme',
                               child: Row(
@@ -372,10 +298,7 @@ class DesktopNavBar extends StatelessWidget {
                                           .onSurface
                                           .withValues(alpha: 0.7)),
                                   const SizedBox(width: 12),
-                                  Text(
-                                      isDark
-                                          ? "Light Mode"
-                                          : langProvider.translate('dark_mode'),
+                                  Text(isDark ? "Light Mode" : "Dark Mode",
                                       style: TextStyle(
                                         fontFamily: 'Inter',
                                         color: Theme.of(context)
@@ -385,10 +308,7 @@ class DesktopNavBar extends StatelessWidget {
                                 ],
                               ),
                             ),
-
                             const PopupMenuDivider(),
-
-                            // Logout
                             PopupMenuItem(
                               value: 'logout',
                               child: Row(
@@ -396,7 +316,7 @@ class DesktopNavBar extends StatelessWidget {
                                   Icon(Icons.logout,
                                       size: 20, color: Colors.red.shade400),
                                   const SizedBox(width: 12),
-                                  Text(langProvider.translate('log_out'),
+                                  Text("Log Out",
                                       style: TextStyle(
                                           fontFamily: 'Inter',
                                           color: Colors.red.shade400,
@@ -479,17 +399,14 @@ class DesktopNavBar extends StatelessWidget {
                         Border.all(color: AppTheme.primaryColor, width: 1.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Consumer<LanguageProvider>(
-                      builder: (context, langProvider, child) {
-                    return Text(
-                      langProvider.translate('help_support'),
-                      style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: AppTheme.primaryColor),
-                    );
-                  }),
+                  child: const Text(
+                    "Support",
+                    style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: AppTheme.primaryColor),
+                  ),
                 ),
               ),
             ),
@@ -508,24 +425,20 @@ class DesktopNavBar extends StatelessWidget {
                 },
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
-                  child: Consumer<LanguageProvider>(
-                      builder: (context, langProvider, child) {
-                    return Row(
-                      children: [
-                        Icon(Icons.logout,
-                            size: 18, color: Colors.red.shade700),
-                        const SizedBox(width: 6),
-                        Text(
-                          langProvider.translate('log_out'),
-                          style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: Colors.red.shade700),
-                        ),
-                      ],
-                    );
-                  }),
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout, size: 18, color: Colors.red.shade700),
+                      const SizedBox(width: 6),
+                      Text(
+                        "Log Out",
+                        style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: Colors.red.shade700),
+                      ),
+                    ],
+                  ),
                 ),
               )
             else
@@ -540,24 +453,20 @@ class DesktopNavBar extends StatelessWidget {
                 },
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
-                  child: Consumer<LanguageProvider>(
-                      builder: (context, langProvider, child) {
-                    return Row(
-                      children: [
-                        Icon(Icons.login,
-                            size: 18, color: AppTheme.primaryColor),
-                        const SizedBox(width: 6),
-                        Text(
-                          langProvider.translate('nav_login'),
-                          style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: AppTheme.primaryColor),
-                        ),
-                      ],
-                    );
-                  }),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.login, size: 18, color: AppTheme.primaryColor),
+                      SizedBox(width: 6),
+                      Text(
+                        "Login",
+                        style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: AppTheme.primaryColor),
+                      ),
+                    ],
+                  ),
                 ),
               ),
           ],
@@ -571,7 +480,7 @@ class DesktopNavBar extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color textColor = isActive
         ? AppTheme.primaryColor
-        : (isDark ? Colors.white : Colors.black); // Force Black in Light Mode
+        : (isDark ? Colors.white : Colors.black);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -580,7 +489,6 @@ class DesktopNavBar extends StatelessWidget {
           if (onTap != null) {
             onTap!(index);
           } else {
-            // ... existing nav logic ...
             Widget page;
             page = CustomerMainScreen(
                 initialIndex: index, isAdminView: isAdminView);
@@ -594,7 +502,7 @@ class DesktopNavBar extends StatelessWidget {
             label,
             style: TextStyle(
               fontFamily: 'Outfit',
-              fontWeight: FontWeight.bold, // Always Bold as requested
+              fontWeight: FontWeight.bold,
               fontSize: 16,
               color: textColor,
             ),

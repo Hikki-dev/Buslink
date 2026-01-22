@@ -1,17 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart'; // Added
-// import 'package:google_fonts/google_fonts.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
-import '../../models/trip_view_model.dart'; // EnrichedTrip
+import '../../models/trip_view_model.dart';
 import '../../models/trip_model.dart' show TripStatus;
-import '../../services/location_service.dart'; // Added
-import '../../utils/location_permission_helper.dart'; // Added Import
+import '../../services/location_service.dart';
+import '../../utils/location_permission_helper.dart';
 
 import '../booking/seat_selection_screen.dart';
-import '../../utils/language_provider.dart';
 
 class ConductorTripManagementScreen extends StatefulWidget {
   final EnrichedTrip trip;
@@ -34,24 +32,18 @@ class _ConductorTripManagementScreenState
   }
 
   Future<void> _initLocationTracking() async {
-    // 1. Permission Check using Helper
-    // This will handle the "Ask Again" logic and "Why" dialog.
     final hasPermission =
         await LocationPermissionHelper.checkAndRequestPermission(context);
 
     if (!hasPermission) {
-      // Cannot track, user denied even after explanation
       return;
     }
 
-    // 2. Start Timer
-    // We poll every 15s. The LocationService handles the "Moved enough?" logic.
     setState(() => _isTracking = true);
 
     _locationTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
       if (!mounted) return;
       try {
-        // High accuracy is fine because we throttle writes
         Position position = await Geolocator.getCurrentPosition(
             locationSettings:
                 const LocationSettings(accuracy: LocationAccuracy.high));
@@ -78,10 +70,6 @@ class _ConductorTripManagementScreenState
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
 
-    // If trip status updates, we want to reflect it.
-    // Not used here, fetched in stream builder
-    // final currentTrip = widget.trip;
-
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -90,52 +78,20 @@ class _ConductorTripManagementScreenState
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-                Provider.of<LanguageProvider>(context)
-                    .translate('update_status_title'),
+            Text("Update Status",
                 style: TextStyle(
                     fontFamily: 'Outfit',
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black)),
             if (_isTracking)
-              Text(
-                  "• ${Provider.of<LanguageProvider>(context).translate('live_tracking_active')}",
-                  style: const TextStyle(fontSize: 12, color: Colors.green))
+              const Text("• Live Tracking Active",
+                  style: TextStyle(fontSize: 12, color: Colors.green))
           ],
         ),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor ??
             Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: BackButton(color: isDark ? Colors.white : Colors.black),
-        actions: [
-          // Language Selector
-          Consumer<LanguageProvider>(
-            builder: (context, languageProvider, _) {
-              return PopupMenuButton<String>(
-                icon: Icon(Icons.language,
-                    color: isDark ? Colors.white : Colors.black),
-                tooltip: "Change Language",
-                onSelected: (String code) {
-                  languageProvider.setLanguage(code);
-                },
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'en',
-                    child: Text('English'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'si',
-                    child: Text('සිංහල (Sinhala)'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'ta',
-                    child: Text('தமிழ் (Tamil)'),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
       ),
       body: StreamBuilder<EnrichedTrip?>(
         stream: controller.getTripRealtimeStream(widget.trip.id),
@@ -164,7 +120,7 @@ class _ConductorTripManagementScreenState
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                              "${Provider.of<LanguageProvider>(context).translate('trip_label')} T${currentTrip.id.substring(0, 4).toUpperCase()}",
+                              "TRIP T${currentTrip.id.substring(0, 4).toUpperCase()}",
                               style: TextStyle(
                                   fontFamily: 'Inter',
                                   color: isDark
@@ -220,9 +176,7 @@ class _ConductorTripManagementScreenState
                 const SizedBox(height: 32),
 
                 // CASHPAYMENT SECTION
-                Text(
-                    Provider.of<LanguageProvider>(context)
-                        .translate('cash_ticketing_title'),
+                Text("Cash Ticketing",
                     style: TextStyle(
                         fontFamily: 'Outfit',
                         fontSize: 18,
@@ -235,10 +189,8 @@ class _ConductorTripManagementScreenState
                     onPressed: () => _showCashBookingDialog(
                         context, controller, currentTrip),
                     icon: const Icon(Icons.attach_money),
-                    label: Text(
-                        Provider.of<LanguageProvider>(context)
-                            .translate('issue_cash_ticket'),
-                        style: const TextStyle(
+                    label: const Text("Issue Cash Ticket",
+                        style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -254,9 +206,7 @@ class _ConductorTripManagementScreenState
 
                 const SizedBox(height: 40),
 
-                Text(
-                    Provider.of<LanguageProvider>(context)
-                        .translate('update_trip_status_section'),
+                Text("Update Trip Status",
                     style: TextStyle(
                         fontFamily: 'Outfit',
                         fontSize: 18,
@@ -269,8 +219,7 @@ class _ConductorTripManagementScreenState
                     context,
                     controller,
                     currentTrip,
-                    Provider.of<LanguageProvider>(context)
-                        .translate('departed'),
+                    "Departed",
                     TripStatus.departed,
                     Colors.green.shade600,
                     Icons.departure_board),
@@ -279,7 +228,7 @@ class _ConductorTripManagementScreenState
                     context,
                     controller,
                     currentTrip,
-                    Provider.of<LanguageProvider>(context).translate('on_way'),
+                    "On Way",
                     TripStatus.onWay,
                     Colors.blue.shade600,
                     Icons.directions_bus_filled),
@@ -288,7 +237,7 @@ class _ConductorTripManagementScreenState
                     context,
                     controller,
                     currentTrip,
-                    Provider.of<LanguageProvider>(context).translate('arrived'),
+                    "Arrived",
                     TripStatus.arrived,
                     Colors.green.shade800,
                     Icons.check_circle),
@@ -297,7 +246,7 @@ class _ConductorTripManagementScreenState
                     context,
                     controller,
                     currentTrip,
-                    Provider.of<LanguageProvider>(context).translate('delayed'),
+                    "Delayed",
                     TripStatus.delayed,
                     Colors.red.shade600,
                     Icons.warning_amber_rounded,
@@ -306,7 +255,7 @@ class _ConductorTripManagementScreenState
                 const SizedBox(height: 40),
                 Center(
                   child: Text(
-                    "${Provider.of<LanguageProvider>(context).translate('current_status_label')}: ${_getTranslatedStatus(context, currentTrip.status)}",
+                    "Current Status: ${_getStatusLabel(currentTrip.status)}",
                     style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
@@ -402,9 +351,6 @@ class _ConductorTripManagementScreenState
                     content: Text(
                         "Trip marked as $label. Passengers notified (Push)."),
                     backgroundColor: Colors.green));
-
-                // Dialog removed for efficiency & privacy (SMS disabled)
-                // bool? notify = await showDialog... <- Removed
               }
             } catch (e) {
               if (context.mounted) {
@@ -450,21 +396,20 @@ class _ConductorTripManagementScreenState
     );
   }
 
-  String _getTranslatedStatus(BuildContext context, String status) {
+  String _getStatusLabel(String status) {
     final s = status.toLowerCase();
-    final lang = Provider.of<LanguageProvider>(context);
-    if (s == 'departed') return lang.translate('departed');
+    if (s == 'departed') return "Departed";
     if (s == 'onway' ||
         s == 'on_way' ||
         s == 'inprogress' ||
         s == 'in_progress') {
-      return lang.translate('on_way');
+      return "On Way";
     }
-    if (s == 'arrived') return lang.translate('arrived');
-    if (s == 'delayed') return lang.translate('delayed');
-    if (s == 'scheduled') return lang.translate('scheduled');
-    if (s == 'cancelled') return lang.translate('cancelled');
-    if (s == 'completed') return lang.translate('stat_completed');
+    if (s == 'arrived') return "Arrived";
+    if (s == 'delayed') return "Delayed";
+    if (s == 'scheduled') return "Scheduled";
+    if (s == 'cancelled') return "Cancelled";
+    if (s == 'completed') return "Completed";
     return status.toUpperCase();
   }
 }

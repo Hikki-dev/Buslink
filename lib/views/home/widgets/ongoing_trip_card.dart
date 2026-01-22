@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../models/trip_view_model.dart';
 import '../../../utils/app_theme.dart';
-import 'package:provider/provider.dart';
-import '../../../utils/language_provider.dart';
 
 class OngoingTripCard extends StatelessWidget {
   final EnrichedTrip trip;
@@ -22,12 +20,11 @@ class OngoingTripCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final lp = Provider.of<LanguageProvider>(context);
 
     return Container(
       margin:
           margin ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      padding: const EdgeInsets.all(16), // Reduced from 24
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E2129) : Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -50,16 +47,16 @@ class OngoingTripCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      lp.translate('upcoming_trip'),
+                      "Upcoming Trip",
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 fontFamily: 'Outfit',
                                 fontWeight: FontWeight.w800,
-                                fontSize: 20, // Reduced from 22
+                                fontSize: 20,
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
                     ),
-                    const SizedBox(height: 4), // Reduced from 6
+                    const SizedBox(height: 4),
                     // NEW: Dynamic ETA Display
                     Builder(builder: (context) {
                       final now = DateTime.now();
@@ -70,29 +67,28 @@ class OngoingTripCard extends StatelessWidget {
                           s == 'on way' ||
                           s == 'delayed';
 
-                      // Only show if active and in future (or slightly late)
                       if (isLive && diff.inMinutes > 0) {
                         String timeStr = "";
                         if (diff.inHours > 0) {
                           timeStr =
-                              "${diff.inHours} ${lp.translate('hrs')} ${diff.inMinutes % 60} ${lp.translate('mins')}";
+                              "${diff.inHours} hrs ${diff.inMinutes % 60} mins";
                         } else {
-                          timeStr = "${diff.inMinutes} ${lp.translate('mins')}";
+                          timeStr = "${diff.inMinutes} mins";
                         }
 
                         return Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2), // Reduced
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.red.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            "${lp.translate('arriving_in')} $timeStr",
+                            "Arriving in $timeStr",
                             style: TextStyle(
                               fontFamily: 'Outfit',
                               fontWeight: FontWeight.bold,
-                              fontSize: 12, // Reduced form 14
+                              fontSize: 12,
                               color: Colors.red.shade700,
                             ),
                           ),
@@ -104,10 +100,10 @@ class OngoingTripCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _buildStatusBadge(context, trip.status, lp), // Passed context
+              _buildStatusBadge(context, trip),
             ],
           ),
-          const SizedBox(height: 12), // Reduced from 16
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -119,16 +115,16 @@ class OngoingTripCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontFamily: 'Outfit',
                           fontWeight: FontWeight.w600,
-                          fontSize: 16, // Reduced from 18
+                          fontSize: 16,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "${lp.translate('bus_no')}: ${trip.busNumber}",
+                    "Bus No: ${trip.busNumber}",
                     style: TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 13, // Reduced from 14
+                      fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -137,21 +133,21 @@ class OngoingTripCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12), // Reduced from 16
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: _buildLocationInfo(
-                    context, lp.translate('origin'), trip.fromCity, isDark),
+                    context, "Origin", trip.fromCity, isDark),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0), // Reduced
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4.0),
                 child: Icon(Icons.arrow_right_alt),
               ),
               Expanded(
                 child: _buildLocationInfo(
-                    context, lp.translate('destination'), trip.toCity, isDark,
+                    context, "Destination", trip.toCity, isDark,
                     alignRight: true),
               ),
             ],
@@ -163,16 +159,14 @@ class OngoingTripCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(lp.translate('seats'),
+                  Text("Seats",
                       style: TextStyle(
-                          fontSize: 11, // Reduced
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? Colors.white
-                              : Colors.black)), // Strict Black
+                          color: isDark ? Colors.white : Colors.black)),
                   Text("$seatCount",
                       style: TextStyle(
-                          fontSize: 16, // Reduced
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Theme.of(context).colorScheme.onSurface)),
                 ],
@@ -180,24 +174,24 @@ class OngoingTripCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(lp.translate('price_paid'),
+                  Text("Price Paid",
                       style: TextStyle(
-                          fontSize: 11, // Reduced
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: isDark
                               ? Colors.white
                               : Theme.of(context).colorScheme.onSurface)),
                   Text("LKR ${paidAmount.toStringAsFixed(0)}",
                       style: TextStyle(
-                          fontSize: 16, // Reduced
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.primaryColor)),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 24), // Increased for better separation
-          _buildTrackingBar(trip.status, isDark, lp),
+          const SizedBox(height: 24),
+          _buildTrackingBar(trip.status, isDark),
         ],
       ),
     );
@@ -216,7 +210,7 @@ class OngoingTripCard extends StatelessWidget {
             fontFamily: 'Outfit',
             fontSize: 12,
             letterSpacing: 1.0,
-            color: Theme.of(context).colorScheme.onSurface, // Theme
+            color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -227,18 +221,18 @@ class OngoingTripCard extends StatelessWidget {
             fontFamily: 'Outfit',
             fontSize: 22,
             fontWeight: FontWeight.w800,
-            color: Theme.of(context).colorScheme.onSurface, // Theme
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStatusBadge(
-      BuildContext context, String status, LanguageProvider lp) {
+  Widget _buildStatusBadge(BuildContext context, EnrichedTrip trip) {
     Color bg;
     Color text;
     String label;
+    final status = trip.status;
 
     switch (status.toLowerCase()) {
       case 'departed':
@@ -246,46 +240,42 @@ class OngoingTripCard extends StatelessWidget {
       case 'on way':
         bg = Colors.green.withValues(alpha: 0.1);
         text = Colors.green;
-        label = lp.translate('active');
+        label = "Active";
         break;
       case 'delayed':
         bg = Colors.orange.withValues(alpha: 0.1);
         text = Colors.orange;
-        label = lp.translate('delayed');
+        // Format Delay
+        final mins = trip.trip.delayMinutes;
+        if (mins > 0) {
+          final h = mins ~/ 60;
+          final m = mins % 60;
+          if (h > 0) {
+            label = "$h h $m m Delayed";
+          } else {
+            label = "$mins m Delayed";
+          }
+        } else {
+          label = "Delayed";
+        }
         break;
       case 'cancelled':
         bg = Colors.red.withValues(alpha: 0.1);
         text = Colors.red;
-        label = lp.translate('cancelled');
+        label = "Cancelled";
         break;
       case 'arrived':
       case 'completed':
         bg = Colors.blue.withValues(alpha: 0.1);
         text = Colors.blue;
-        label = lp.translate('stat_completed'); // 'Completed'
+        label = "Completed";
         break;
       default:
         bg = Colors.grey.withValues(alpha: 0.1);
         text = Colors.grey;
-        label = lp.translate('scheduled');
+        label = "Scheduled";
     }
 
-    // Since _buildStatusBadge is a method, we cannot access 'lp' directly unless passed or fetched.
-    // Fetching here for labels.
-    // However, this method is called inside build where we can pass translated strings or just fetch context.
-    // Wait, this method doesn't have context.
-    // I need to add context to arguments or just use a helper.
-    // But it's inside the class, so 'context' is NOT available unless passed.
-    // Wait, StatelessWidget methods don't have 'context' unless passed.
-    // I should modify the call site or use Provider in build and pass the result.
-    // Actually, simply using context inside build and passing the label is best.
-    // But this logic is inside the method.
-    // I will refactor: move logic to build or pass context.
-    // Let's pass `lp` to this method.
-    // But `multi_replace` makes it hard to change signature and call sites simultaneously if I don't see them all.
-    // Call site is line 104: `_buildStatusBadge(trip.status),`
-    // I will update call site to `_buildStatusBadge(context, trip.status)` and method to `_buildStatusBadge(BuildContext context, String status)`.
-    // Then use `Provider.of` inside.
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -300,7 +290,7 @@ class OngoingTripCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTrackingBar(String status, bool isDark, LanguageProvider lp) {
+  Widget _buildTrackingBar(String status, bool isDark) {
     // Logic: Cumulative progress
     final s = status.toLowerCase();
 
@@ -317,7 +307,7 @@ class OngoingTripCard extends StatelessWidget {
       children: [
         Expanded(
           child: _buildTrackStep(
-            lp.translate('departed'),
+            "Departed",
             isDeparted,
             Colors.green,
             Icons.directions_bus,
@@ -327,7 +317,7 @@ class OngoingTripCard extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: _buildTrackStep(
-            lp.translate('on_way'),
+            "On Way",
             isOnWay,
             Colors.blue,
             Icons.map,
@@ -337,7 +327,7 @@ class OngoingTripCard extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: _buildTrackStep(
-            lp.translate('arrived'),
+            "Arrived",
             isArrived,
             Colors.orange,
             Icons.check_circle,
@@ -373,7 +363,7 @@ class OngoingTripCard extends StatelessWidget {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.symmetric(vertical: 8), // Reduced from 12
+      padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(12),

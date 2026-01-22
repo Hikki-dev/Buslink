@@ -10,7 +10,7 @@ import 'profile/profile_screen.dart';
 import '../controllers/trip_controller.dart';
 import 'layout/notifications_screen.dart'; // Added Import
 import '../services/notification_service.dart'; // Added for Permission Dialog
-import '../services/auth_service.dart'; // Added for Logout
+// Added for Logout
 
 class CustomerMainScreen extends StatefulWidget {
   final bool isAdminView;
@@ -257,42 +257,53 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
+                        Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Icon(Icons.admin_panel_settings,
+                                    size: 20, color: Colors.black87),
                               ),
-                              child: const Icon(Icons.admin_panel_settings,
-                                  size: 20, color: Colors.black87),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              "Admin Preview Mode",
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: Colors.black87,
+                              const SizedBox(width: 8),
+                              const Flexible(
+                                child: Text(
+                                  "Admin Preview", // Shortened
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13, // Reduced size
+                                    color: Colors.black87,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         TextButton.icon(
-                          onPressed: () async {
-                            await Provider.of<AuthService>(context,
-                                    listen: false)
-                                .signOut();
-                            if (context.mounted) {
-                              Navigator.pushNamedAndRemoveUntil(
-                                  context, '/login', (route) => false);
+                          onPressed: () {
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            } else {
+                              // Fallback if somehow it's the root (shouldn't happen in preview mode)
+                              // But if it does, maybe redirect to admin dashboard?
+                              // For now, pop is the primary goal.
+                              Navigator.of(context)
+                                  .pushReplacementNamed('/admin-dashboard');
                             }
                           },
-                          icon: const Icon(Icons.logout,
-                              size: 18, color: Colors.black87),
-                          label: const Text("Exit",
+                          icon: const Icon(
+                              Icons
+                                  .exit_to_app, // Changed Icon to meaningful "Exit" from preview
+                              size: 18,
+                              color: Colors.black87),
+                          label: const Text("Exit Preview",
                               style: TextStyle(
                                   fontFamily: 'Inter',
                                   fontWeight: FontWeight.bold,

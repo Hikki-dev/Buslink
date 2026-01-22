@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // Added for kDebugMode
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:provider/provider.dart';
@@ -20,8 +19,6 @@ import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
 import 'services/trip_reminder_service.dart'; // Added Import
-import 'utils/language_provider.dart';
-import 'utils/translations.dart';
 import 'utils/app_theme.dart';
 import 'views/admin/admin_dashboard.dart';
 
@@ -233,103 +230,73 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
         ),
         ChangeNotifierProvider(create: (_) => TripController()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
-        ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
       child: Consumer<ThemeController>(
         builder: (context, themeController, child) {
-          return Consumer<LanguageProvider>(
-            builder: (context, languageProvider, _) {
-              return MaterialApp(
-                // ... props ...
-                locale: Locale(languageProvider.currentLanguage),
-                supportedLocales: const [
-                  Locale('en'),
-                  Locale('si'),
-                  Locale('ta')
-                ],
-                localizationsDelegates: const [
-                  GlobalMaterialLocalizations.delegate,
-                  GlobalWidgetsLocalizations.delegate,
-                  GlobalCupertinoLocalizations.delegate,
-                ],
-                navigatorKey: _AppBootstrapperState.navigatorKey,
-                title: 'BusLink',
-                theme: AppTheme.lightTheme,
-                darkTheme: AppTheme.darkTheme,
-                themeMode: themeController.themeMode,
-                routes: {
-                  '/': (context) => const AuthWrapper(),
-                  '/login': (context) => const LoginScreen(),
-                },
-                onGenerateRoute: (settings) {
-                  if (settings.name?.startsWith('/payment_success') ?? false) {
-                    return MaterialPageRoute(
-                        settings: settings,
-                        builder: (_) => const PaymentSuccessScreen());
-                  }
-                  return null;
-                },
-                debugShowCheckedModeBanner: false,
-                builder: (context, child) {
-                  // 1. LOADING SCREEN (Only if NOT Initialized)
-                  if (!_isInitialized) {
-                    return Scaffold(
-                      backgroundColor: Theme.of(context)
-                          .scaffoldBackgroundColor, // Theme aware
-                      body: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // 1. BRAND LOGO
-                            Icon(Icons.directions_bus,
-                                size: 80,
-                                color: Theme.of(context).primaryColor),
-                            const SizedBox(height: 16),
-                            // 2. BRAND NAME
-                            Text(
-                              "BusLink",
-                              style: TextStyle(
-                                fontFamily: 'Outfit',
-                                fontSize: 32,
-                                fontWeight: FontWeight.w900,
-                                color: Theme.of(context).primaryColor,
-                                letterSpacing: -1.0,
-                              ),
-                            ),
-                            const SizedBox(height: 40),
-                            // 3. MINIMALIST LOADER
-                            SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                            ),
-                          ],
+          return MaterialApp(
+            // ... props ...
+            navigatorKey: _AppBootstrapperState.navigatorKey,
+            title: 'BusLink',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeController.themeMode,
+            routes: {
+              '/': (context) => const AuthWrapper(),
+              '/login': (context) => const LoginScreen(),
+              '/admin-dashboard': (context) => const AdminDashboard(),
+            },
+            onGenerateRoute: (settings) {
+              if (settings.name?.startsWith('/payment_success') ?? false) {
+                return MaterialPageRoute(
+                    settings: settings,
+                    builder: (_) => const PaymentSuccessScreen());
+              }
+              return null;
+            },
+            debugShowCheckedModeBanner: false,
+            builder: (context, child) {
+              // 1. LOADING SCREEN (Only if NOT Initialized)
+              if (!_isInitialized) {
+                return Scaffold(
+                  backgroundColor:
+                      Theme.of(context).scaffoldBackgroundColor, // Theme aware
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // 1. BRAND LOGO
+                        Icon(Icons.directions_bus,
+                            size: 80, color: Theme.of(context).primaryColor),
+                        const SizedBox(height: 16),
+                        // 2. BRAND NAME
+                        Text(
+                          "BusLink",
+                          style: TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            color: Theme.of(context).primaryColor,
+                            letterSpacing: -1.0,
+                          ),
                         ),
-                      ),
-                    );
-                  }
+                        const SizedBox(height: 40),
+                        // 3. MINIMALIST LOADER
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
 
-                  // 2. OPTIMISTIC / REAL CHILD
-                  // If we are optimized/booted, we show 'child'.
-                  // BUT 'child' is the Navigator, which routes to '/'.
-                  // '/' is AuthWrapper.
-                  // AuthWrapper relies on StreamProvider<User?>.
-                  // If Firebase is connecting, Stream<User?> is Empty or Null.
-                  // So AuthWrapper sees null user -> renders CustomerMainScreen.
-                  // If cachedRole was Admin, we want AdminScreen!
-
-                  // WE NEED to inject the Cached Role into AuthWrapper or handle it here?
-                  // Easier: Pass cachedRole to AuthWrapper via Provider or a wrapping widget?
-                  // OR: Handle Optimistic Overlay here?
-
-                  // Let's modify AuthWrapper to use CacheService as fallback!
-
-                  return child!;
-                },
-              );
+              // 2. OPTIMISTIC / REAL CHILD
+              return child!;
             },
           );
         },
@@ -470,12 +437,8 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 16),
-                  Text(
-                      Translations.translate(
-                          'loading_profile',
-                          Provider.of<LanguageProvider>(context)
-                              .currentLanguage),
-                      style: const TextStyle(color: Colors.grey, fontSize: 18))
+                  const Text("Loading Profile...",
+                      style: TextStyle(color: Colors.grey, fontSize: 18))
                 ],
               ),
             ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../utils/app_theme.dart';
-import '../../utils/language_provider.dart';
+//
 import '../../controllers/trip_controller.dart';
 import '../../services/auth_service.dart';
 // import '../results/bus_list_screen.dart';
@@ -47,7 +47,8 @@ class FavoritesScreen extends StatelessWidget {
             //    isDesktop ? null : const MobileBottomNav(selectedIndex: 2),
             // Use theme background
             appBar: CustomAppBar(
-              hideActions: isDesktop,
+              hideActions:
+                  !isDesktop, // Hide actions on mobile to prevent title truncation
               automaticallyImplyLeading: showBackButton && !isDesktop,
               leading: showBackButton && !isDesktop
                   ? BackButton(
@@ -102,7 +103,8 @@ class FavoritesScreen extends StatelessWidget {
                         );
                       }
 
-                      final favorites = snapshot.data!;
+                      final favorites =
+                          snapshot.data!.where((f) => f['id'] != null).toList();
 
                       return SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
@@ -115,7 +117,8 @@ class FavoritesScreen extends StatelessWidget {
                               return SizedBox(
                                 width: isDesktop
                                     ? 450
-                                    : 600, // Increased width for better layout
+                                    : MediaQuery.of(context).size.width -
+                                        48, // Responsive width
                                 child: _FavoriteItemCard(
                                   from: fav['fromCity'] ?? 'Unknown',
                                   to: fav['toCity'] ?? 'Unknown',
@@ -203,7 +206,7 @@ class _FavoriteItemCard extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // mainAxisAlignment: MainAxisAlignment.spaceBetween, // Removed
               children: [
                 // Route
                 Row(
@@ -252,6 +255,7 @@ class _FavoriteItemCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16), // Added spacing
 
                 // Operator & Price
                 Row(
@@ -281,6 +285,7 @@ class _FavoriteItemCard extends StatelessWidget {
                             color: AppTheme.primaryColor))
                   ],
                 ),
+                const SizedBox(height: 16), // Added spacing
 
                 // Button
                 SizedBox(
@@ -293,10 +298,8 @@ class _FavoriteItemCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         elevation: 0),
-                    child: Text(
-                        Provider.of<LanguageProvider>(context)
-                            .translate('book_again'),
-                        style: const TextStyle(
+                    child: Text("BOOK AGAIN",
+                        style: TextStyle(
                             fontFamily: 'Outfit',
                             fontWeight: FontWeight.bold,
                             color: Colors.white)),

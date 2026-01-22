@@ -62,7 +62,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
 
   Future<void> _checkExistingRefund() async {
     final q = await FirebaseFirestore.instance
-        .collection('refunds')
+        .collection('Refunds')
         .where('ticketId', isEqualTo: widget.ticket.ticketId)
         .limit(1)
         .get();
@@ -110,7 +110,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
 
       // 1. Strict Duplicate Check (Moved inside try-catch with timeout)
       final existingQuery = await FirebaseFirestore.instance
-          .collection('refunds')
+          .collection('Refunds')
           .where('ticketId', isEqualTo: widget.ticket.ticketId)
           .limit(1)
           .get()
@@ -135,7 +135,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
       final fee = calc['cancellationFee']!;
 
       // Generate ID first
-      final newDocRef = FirebaseFirestore.instance.collection('refunds').doc();
+      final newDocRef = FirebaseFirestore.instance.collection('Refunds').doc();
 
       final refundReq = RefundRequest(
         id: newDocRef.id,

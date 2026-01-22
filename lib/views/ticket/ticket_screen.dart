@@ -18,7 +18,7 @@ import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/notification_service.dart'; // Added
 import '../tracking/track_bus_screen.dart'; // Added
-import '../../utils/language_provider.dart'; // Added
+ // Added
 
 // import '../home/home_screen.dart'; // Unused
 
@@ -38,7 +38,7 @@ class _TicketScreenState extends State<TicketScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
-    final lp = Provider.of<LanguageProvider>(context); // Added
+     // Added
     // final authService = Provider.of<AuthService>(context, listen: false); // Unused
     // final user = authService.currentUser; // Unused
     final Trip? trip = widget.tripArg ?? controller.selectedTrip?.trip;
@@ -75,8 +75,8 @@ class _TicketScreenState extends State<TicketScreen> {
         ),
         title: Text(
             isBulk
-                ? "${lp.translate('bulk_booking')} (${tickets.length})"
-                : lp.translate('route'),
+                ? "${"Bulk Booking"} (${tickets.length})"
+                : "Route",
             style: TextStyle(
                 fontFamily: 'Outfit',
                 color: Theme.of(context).colorScheme.onSurface,
@@ -87,7 +87,7 @@ class _TicketScreenState extends State<TicketScreen> {
             icon: Icon(Icons.chat_bubble_outline,
                 color: Theme.of(context).colorScheme.onSurface),
             onPressed: () => _showFeedbackDialog(context),
-            tooltip: lp.translate('app_feedback'),
+            tooltip: "App Feedback",
           ),
           IconButton(
             icon: Icon(Icons.download_rounded,
@@ -105,8 +105,8 @@ class _TicketScreenState extends State<TicketScreen> {
             children: [
               Text(
                   isBulk
-                      ? "${lp.translate('bundle')} (${tickets.length})"
-                      : lp.translate('e_ticket'),
+                      ? "${"Bundle"} (${tickets.length})"
+                      : "E-Ticket",
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       letterSpacing: 2,
@@ -142,8 +142,8 @@ class _TicketScreenState extends State<TicketScreen> {
                   onPressed: () => _downloadPdf(context, trip, tickets),
                   icon: const Icon(Icons.picture_as_pdf),
                   label: Text(isBulk
-                      ? lp.translate('download_consolidated_pdf')
-                      : lp.translate('download_pdf')),
+                      ? "Download Consolidated PDF"
+                      : "Download PDF"),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,
@@ -168,7 +168,7 @@ class _TicketScreenState extends State<TicketScreen> {
   }
 
   Widget _buildTicketCard(BuildContext context, Trip trip, Ticket ticket) {
-    final lp = Provider.of<LanguageProvider>(context); // Added
+     // Added
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 400),
@@ -195,7 +195,7 @@ class _TicketScreenState extends State<TicketScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(lp.translate('boarding_pass'),
+                Text("Boarding Pass",
                     style: TextStyle(
                         fontFamily: 'Outfit',
                         color: Colors.white,
@@ -207,7 +207,7 @@ class _TicketScreenState extends State<TicketScreen> {
                   decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4)),
-                  child: Text(lp.translate('confirmed').toUpperCase(),
+                  child: Text("Confirmed".toUpperCase(),
                       style: TextStyle(
                           fontFamily: 'Inter',
                           color: Colors.white,
@@ -229,7 +229,7 @@ class _TicketScreenState extends State<TicketScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(lp.translate('from'),
+                        Text("FROM",
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
@@ -237,8 +237,8 @@ class _TicketScreenState extends State<TicketScreen> {
                                     .colorScheme
                                     .onSurfaceVariant)),
                         Text(
-                            lp.translate(
-                                trip.fromCity.toLowerCase()), // Translated City
+                            
+                                trip.fromCity.toLowerCase(), // Translated City
                             style: const TextStyle(
                                 fontFamily: 'Outfit',
                                 fontSize: 24,
@@ -274,7 +274,7 @@ class _TicketScreenState extends State<TicketScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(lp.translate('to'),
+                        Text("TO",
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
@@ -282,8 +282,8 @@ class _TicketScreenState extends State<TicketScreen> {
                                     .colorScheme
                                     .onSurfaceVariant)),
                         Text(
-                            lp.translate(
-                                trip.toCity.toLowerCase()), // Translated City
+                            
+                                trip.toCity.toLowerCase(), // Translated City
                             style: const TextStyle(
                                 fontFamily: 'Outfit',
                                 fontSize: 24,
@@ -298,12 +298,12 @@ class _TicketScreenState extends State<TicketScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _infoCol(lp.translate('travel_dates'),
+                    _infoCol("TRAVEL DATES",
                         DateFormat('MMM d').format(trip.departureTime)),
-                    _infoCol(lp.translate('time'),
+                    _infoCol("TIME",
                         DateFormat('hh:mm a').format(trip.departureTime)),
                     _infoCol(
-                        lp.translate('seats'), "${ticket.seatNumbers.length}"),
+                        "SEATS", "${ticket.seatNumbers.length}"),
                   ],
                 ),
 
@@ -333,7 +333,7 @@ class _TicketScreenState extends State<TicketScreen> {
                 const SizedBox(height: 16),
                 const SizedBox(height: 16),
                 Text(
-                  lp.translate('show_qr_code'),
+                  "Show QR Code",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontFamily: 'Outfit',
@@ -343,17 +343,7 @@ class _TicketScreenState extends State<TicketScreen> {
                       height: 1.2),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  "CODE: ${ticket.shortId}",
-                  style: const TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors
-                        .black, // Scanner needs high contrast, keep black or adaptive?
-                    // QR is usually black on white. Keep text black for now if background is white card.
-                  ),
-                ),
+                // Code Removed
                 const SizedBox(height: 24),
 
                 // TRACK BUS BUTTON (New Feature)
@@ -370,7 +360,7 @@ class _TicketScreenState extends State<TicketScreen> {
                                 builder: (_) => TrackBusScreen(trip: trip)));
                       },
                       icon: const Icon(Icons.gps_fixed, color: Colors.blue),
-                      label: Text(lp.translate('track_bus_live'),
+                      label: Text("Track Bus Live",
                           style: TextStyle(
                               fontFamily: 'Outfit',
                               fontWeight: FontWeight.bold,
@@ -391,7 +381,7 @@ class _TicketScreenState extends State<TicketScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(lp.translate('passenger'),
+                        Text("PASSENGER",
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
@@ -407,7 +397,7 @@ class _TicketScreenState extends State<TicketScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(lp.translate('total_price'),
+                        Text("TOTAL PRICE",
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
@@ -485,7 +475,7 @@ class _TicketScreenState extends State<TicketScreen> {
 
   Future<void> _downloadPdf(
       BuildContext context, Trip trip, List<Ticket> tickets) async {
-    final lp = Provider.of<LanguageProvider>(context, listen: false);
+    
     final doc = pw.Document();
     final isBulk = tickets.length > 1;
     // Use the first ticket for common details
@@ -684,7 +674,7 @@ class _TicketScreenState extends State<TicketScreen> {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content:
-                      Text("${lp.translate('saved_to_downloads')}: $fileName"),
+                      Text("${"Saved to Downloads"}: $fileName"),
                   backgroundColor: Colors.green,
                   action: SnackBarAction(
                     label: "OPEN",
@@ -713,7 +703,7 @@ class _TicketScreenState extends State<TicketScreen> {
           // Permission denied
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(lp.translate('permission_denied')),
+                content: Text("Permission Denied"),
                 backgroundColor: Colors.red));
           }
         }
@@ -725,7 +715,7 @@ class _TicketScreenState extends State<TicketScreen> {
       debugPrint("PDF Error: $e");
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(lp.translate('error_saving_pdf'))));
+            SnackBar(content: Text("Error saving PDF")));
       }
     }
   }

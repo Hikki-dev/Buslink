@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../utils/app_theme.dart';
-import '../../../../utils/language_provider.dart';
-import 'package:provider/provider.dart';
+
+
 import 'late_departures_screen.dart';
 import 'revenue_analytics_screen.dart';
 
@@ -16,7 +16,7 @@ class AdminAnalyticsDashboard extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-              Provider.of<LanguageProvider>(context).translate('analytics_hub'),
+              "Analytics Hub",
               style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
           elevation: 0,
           backgroundColor: Theme.of(context).cardColor,
@@ -26,12 +26,8 @@ class AdminAnalyticsDashboard extends StatelessWidget {
             unselectedLabelColor: Colors.grey,
             indicatorColor: AppTheme.primaryColor,
             tabs: [
-              Tab(
-                  text: Provider.of<LanguageProvider>(context)
-                      .translate('tab_revenue')),
-              Tab(
-                  text: Provider.of<LanguageProvider>(context)
-                      .translate('tab_late_departures')),
+              Tab(text: 'Revenue'),
+              Tab(text: 'Late Departures'),
             ],
           ),
         ),

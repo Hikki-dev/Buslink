@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../../utils/app_theme.dart';
-import '../../../../utils/language_provider.dart';
-import 'package:provider/provider.dart';
+
 import 'booking_details_screen.dart';
 
 class AdminBookingListScreen extends StatefulWidget {
@@ -21,7 +20,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
 
   // Status Options
   final List<String> _statusOptions = [
-    'confirmed',
+    'Confirmed',
     'cancelled',
     'completed',
     'refund_requested',
@@ -107,8 +106,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(Provider.of<LanguageProvider>(context)
-            .translate('booking_management_title')),
+//         title: Text('Booking Management'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         elevation: 1,
@@ -154,16 +152,15 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: _selectedStatus,
-                            hint: Text(Provider.of<LanguageProvider>(context)
-                                .translate('filter_status_hint')),
+                            hint: const Text('Filter Status'),
                             isExpanded: true,
                             items: _statusOptions.map((s) {
+                              // Beautify status
+                              String label =
+                                  s.replaceAll('_', ' ').toUpperCase();
                               return DropdownMenuItem(
                                 value: s,
-                                child: Text(
-                                    Provider.of<LanguageProvider>(context)
-                                        .translate('status_$s')
-                                        .toUpperCase(),
+                                child: Text(label,
                                     style: const TextStyle(fontSize: 13)),
                               );
                             }).toList(),
@@ -192,8 +189,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                                   _selectedDate != null
                                       ? DateFormat('yyyy-MM-dd')
                                           .format(_selectedDate!)
-                                      : Provider.of<LanguageProvider>(context)
-                                          .translate('travel_date_hint'),
+                                      : 'Travel Date',
                                   style: TextStyle(
                                       color: _selectedDate != null
                                           ? Theme.of(context)
@@ -221,9 +217,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
             child: _isLoading && _bookings.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : _bookings.isEmpty
-                    ? Center(
-                        child: Text(Provider.of<LanguageProvider>(context)
-                            .translate('no_bookings_found')))
+                    ? Center(child: Text('no_bookings_found'))
                     : ListView.builder(
                         padding: const EdgeInsets.all(8),
                         itemCount: _bookings.length + 1,
@@ -251,7 +245,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
 
                           // --- FILTERING (Client Side) ---
                           // Status
-                          final status = (data['status'] ?? 'confirmed');
+                          final status = (data['status'] ?? 'Confirmed');
                           if (_selectedStatus != null &&
                               status != _selectedStatus) {
                             return const SizedBox.shrink();
@@ -284,16 +278,31 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                             }
                           }
 
-                          // Date Filter
+                          // Date Filter (Departure Date)
                           if (_selectedDate != null) {
-                            if (data['bookingTime'] != null) {
-                              final bt =
-                                  (data['bookingTime'] as Timestamp).toDate();
-                              if (bt.year != _selectedDate!.year ||
-                                  bt.month != _selectedDate!.month ||
-                                  bt.day != _selectedDate!.day) {
+                            final tripData =
+                                data['tripData'] as Map<String, dynamic>? ?? {};
+                            final timestamp = tripData['departureDateTime'] ??
+                                tripData['departureTime'] ??
+                                data['departureTime'];
+
+                            DateTime? departureDate;
+                            if (timestamp is Timestamp) {
+                              departureDate = timestamp.toDate();
+                            } else if (timestamp is String) {
+                              departureDate = DateTime.tryParse(timestamp);
+                            }
+
+                            if (departureDate != null) {
+                              if (departureDate.year != _selectedDate!.year ||
+                                  departureDate.month != _selectedDate!.month ||
+                                  departureDate.day != _selectedDate!.day) {
                                 return const SizedBox.shrink();
                               }
+                            } else {
+                              // If no date found, maybe exclude or keep?
+                              // Safe to exclude if filtering by date.
+                              return const SizedBox.shrink();
                             }
                           }
 
@@ -308,12 +317,12 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
 
   Widget _buildBookingTile(Map<String, dynamic> data, String id) {
     // Helper to build tile and keep build method clean
-    final status = (data['status'] ?? 'unknown').toString().toLowerCase();
+    final status = (data['status'] ?? 'Unknown').toString().toLowerCase();
     Color statusColor = Colors.grey;
-    if (status == 'confirmed') statusColor = Colors.green;
+    if (status == 'Confirmed') statusColor = Colors.green;
     if (status == 'cancelled') statusColor = Colors.red;
     if (status == 'completed') statusColor = Colors.blue;
-    if (status == 'refund_requested') statusColor = Colors.orange;
+    if (status == 'Refund Requested') statusColor = Colors.orange;
     if (status == 'refunded') statusColor = Colors.purple;
 
     final tripData = data['tripData'] as Map<String, dynamic>? ?? {};

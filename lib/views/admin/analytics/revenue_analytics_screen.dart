@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../../utils/app_theme.dart';
-import '../../../../utils/language_provider.dart';
-import 'package:provider/provider.dart';
 
 class RevenueAnalyticsScreen extends StatefulWidget {
   const RevenueAnalyticsScreen({super.key});
@@ -36,8 +34,7 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
               ),
               TextButton(
                   onPressed: _pickDateRange,
-                  child: Text(Provider.of<LanguageProvider>(context)
-                      .translate('refine_date'))),
+                  child: const Text('Refine Date')), // Fixed Text
               // Quick Select
               PopupMenuButton<String>(
                 icon: const Icon(Icons.tune),
@@ -60,19 +57,13 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
                     _endDate = end;
                   });
                 },
-                itemBuilder: (context) => [
+                itemBuilder: (context) => const [
                   PopupMenuItem(
-                      value: '7',
-                      child: Text(Provider.of<LanguageProvider>(context)
-                          .translate('last_7_days'))),
+                      value: '7', child: Text('Last 7 Days')), // Fixed Text
                   PopupMenuItem(
-                      value: '30',
-                      child: Text(Provider.of<LanguageProvider>(context)
-                          .translate('last_30_days'))),
+                      value: '30', child: Text('Last 30 Days')), // Fixed Text
                   PopupMenuItem(
-                      value: 'month',
-                      child: Text(Provider.of<LanguageProvider>(context)
-                          .translate('this_month'))),
+                      value: 'month', child: Text('This Month')), // Fixed Text
                 ],
               )
             ],
@@ -85,8 +76,13 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('tickets')
-                .where('status', isEqualTo: 'confirmed')
-                .snapshots(),
+                .where('status', whereIn: [
+              'Confirmed',
+              'COMPLETED',
+              'ARRIVED',
+              'DELAYED',
+              'ON_TIME' // Add any other active statuses
+            ]).snapshots(),
             builder: (context, ticketSnap) {
               if (!ticketSnap.hasData) {
                 return const Center(child: CircularProgressIndicator());
@@ -95,16 +91,17 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
               // NESTED STREAM FOR REFUNDS
               return StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
-                    .collection('refunds')
+                    .collection('refunds') // Fixed casing
                     .where('status', isEqualTo: 'approved')
                     .snapshots(),
                 builder: (context, refundSnap) {
-                  if (!refundSnap.hasData) {
-                    return const SizedBox(); // Wait for both
+                  // Allow building even if refunds are loading or empty
+                  final tickets = ticketSnap.data!.docs;
+                  List<QueryDocumentSnapshot> refunds = [];
+                  if (refundSnap.hasData) {
+                    refunds = refundSnap.data!.docs;
                   }
 
-                  final tickets = ticketSnap.data!.docs;
-                  final refunds = refundSnap.data!.docs;
                   final stats = _calculateNetRevenue(tickets, refunds);
 
                   return SingleChildScrollView(
@@ -114,19 +111,15 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
                       children: [
                         _buildKPIs(stats),
                         const SizedBox(height: 32),
-                        Text(
-                            Provider.of<LanguageProvider>(context)
-                                .translate('net_revenue_over_time'),
-                            style: const TextStyle(
+                        const Text('Net Revenue Over Time', // Fixed
+                            style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
                         _buildScatterChart(
                             stats['daily'] as Map<String, double>),
                         const SizedBox(height: 32),
-                        Text(
-                            Provider.of<LanguageProvider>(context)
-                                .translate('top_routes_revenue'),
-                            style: const TextStyle(
+                        const Text('Top Routes by Net Revenue', // Fixed
+                            style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
                         _buildRouteTable(
@@ -195,12 +188,24 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
 
         // Routes
         final tripData = data['tripData'] as Map<String, dynamic>?;
-        String routeKey = "Unknown";
+        String from = '?';
+        String to = '?';
+
         if (tripData != null) {
-          routeKey =
-              "${tripData['fromCity'] ?? '?'} - ${tripData['toCity'] ?? '?'}";
+          from = tripData['fromCity'] ?? data['fromCity'] ?? '?';
+          to = tripData['toCity'] ?? data['toCity'] ?? '?';
+        } else {
+          // Fallback to root level if tripData is missing
+          from = data['fromCity'] ?? '?';
+          to = data['toCity'] ?? '?';
         }
-        routeRevenue[routeKey] = (routeRevenue[routeKey] ?? 0) + amount;
+
+        String routeKey = "$from - $to";
+
+        // FILTER UNKNOWN ROUTES
+        if (!routeKey.contains('Unknown') && !routeKey.contains('?')) {
+          routeRevenue[routeKey] = (routeRevenue[routeKey] ?? 0) + amount;
+        }
       }
     }
 
@@ -227,10 +232,6 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
         if (docDateStr == todayStr) {
           todayRevenue -= refundAmount;
         }
-
-        // Note: Connecting refund to route requires tripId lookup or storing route in refund.
-        // We will skip route deduction for simplicity unless refund has route info,
-        // to avoid "Unknown" negative spikes.
       }
     }
 
@@ -255,15 +256,13 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
       children: [
         Expanded(
             child: _kpiCard(
-                Provider.of<LanguageProvider>(context)
-                    .translate('revenue_30_days'),
+                'Net Revenue (30d)', // Fixed
                 "LKR ${(stats['total'] as double).toStringAsFixed(0)}",
                 Colors.green)),
         const SizedBox(width: 16),
         Expanded(
             child: _kpiCard(
-                Provider.of<LanguageProvider>(context)
-                    .translate('revenue_today'),
+                'Net Revenue (Today)', // Fixed
                 "LKR ${(stats['today'] as double).toStringAsFixed(0)}",
                 Colors.blue)),
       ],
@@ -302,9 +301,8 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
       return Container(
           height: 200,
           color: Colors.grey.withValues(alpha: 0.1),
-          child: Center(
-              child: Text(Provider.of<LanguageProvider>(context)
-                  .translate('no_data'))));
+          child: const Center(
+              child: Text('No revenue data for this period'))); // Fixed
     }
     final keys = daily.keys.toList()..sort();
     final maxVal = daily.values.isNotEmpty
@@ -349,7 +347,9 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
                   10;
 
               // Y Position: Relative to max value
-              final double y = yBottom + (val / maxVal) * (plotH - 20);
+              // Avoid division by zero if maxVal is 0
+              final double y =
+                  yBottom + ((maxVal > 0 ? val / maxVal : 0) * (plotH - 20));
 
               return Positioned(
                 bottom: y,
@@ -405,11 +405,9 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
 
   Widget _buildRouteTable(Map<String, double> routes) {
     if (routes.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-            child: Text(Provider.of<LanguageProvider>(context)
-                .translate('no_route_data'))),
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Center(child: Text('No route data available')), // Fixed
       );
     }
     return Card(

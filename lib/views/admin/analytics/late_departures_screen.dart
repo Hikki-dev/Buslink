@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
-import '../../../utils/language_provider.dart';
+
 import '../../../../controllers/trip_controller.dart';
 import 'package:provider/provider.dart';
 
@@ -54,7 +54,7 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
         final allTrips = docs.map((d) {
           final data = d.data() as Map<String, dynamic>;
           return {
-            'route':
+            'Route':
                 "${data['originCity'] ?? '?'} - ${data['destinationCity'] ?? '?'}",
             'delay': (data['delayMinutes'] ?? 0).toInt(),
             'date': (data['departureDateTime'] as Timestamp?)?.toDate() ??
@@ -68,7 +68,7 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
         final filteredTrips = _routeFilter.isEmpty
             ? allTrips
             : allTrips
-                .where((t) => (t['route'] as String)
+                .where((t) => (t['Route'] as String)
                     .toLowerCase()
                     .contains(_routeFilter.toLowerCase()))
                 .toList();
@@ -90,11 +90,8 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
               const SizedBox(height: 32),
 
               // --- PIE CHART ---
-              Text(
-                  Provider.of<LanguageProvider>(context)
-                      .translate('punctuality_overview'),
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('Punctuality Overview',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 24),
               SizedBox(
                 height: 250,
@@ -104,11 +101,8 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
               const SizedBox(height: 32),
 
               // --- RECENT LATE TRIPS ---
-              Text(
-                  Provider.of<LanguageProvider>(context)
-                      .translate('high_delay_trips'),
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('High Delay Trips',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               _buildLateTripsList(stats['lateTrips']),
             ],
@@ -131,7 +125,8 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
     List<Map<String, dynamic>> lateList = [];
 
     for (var t in trips) {
-      if (t['delay'] > 15) {
+      if (t['delay'] > 5) {
+        // Changed to 5 mins
         late++;
         lateList.add(t);
       } else {
@@ -438,7 +433,7 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
               painter: _PieChartPainter(
                 onTimePct: onTimePct,
                 latePct: latePct,
-                onTimeColor: Colors.green,
+                onTimeColor: Colors.blue, // Changed to Blue
                 lateColor: Colors.red,
               ),
             ),
@@ -448,7 +443,9 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _legendItem(Colors.green, "On Time",
+              _legendItem(
+                  Colors.blue,
+                  "On Time", // Changed to Blue
                   "${(onTimePct * 100).toStringAsFixed(1)}%"),
               const SizedBox(height: 16),
               _legendItem(
@@ -481,7 +478,7 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
             leading: const CircleAvatar(
                 backgroundColor: Colors.redAccent,
                 child: Icon(Icons.timer_off, color: Colors.white, size: 20)),
-            title: Text(t['route'],
+            title: Text(t['Route'],
                 style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(DateFormat('MMM d, hh:mm a').format(t['date'])),
             trailing: Text("+${t['delay']} min",
@@ -517,7 +514,7 @@ class _PieChartPainter extends CustomPainter {
     final paint = Paint()..style = PaintingStyle.fill;
 
     // Draw OnTime Arc
-    paint.color = onTimeColor;
+    paint.color = Colors.blue; // Force Blue for OnTime
     final onTimeAngle = 2 * pi * onTimePct;
     canvas.drawArc(Rect.fromCircle(center: center, radius: radius), -pi / 2,
         onTimeAngle, true, paint);
@@ -525,6 +522,7 @@ class _PieChartPainter extends CustomPainter {
     // Draw Late Arc
     paint.color = lateColor;
     final lateAngle = 2 * pi * latePct;
+    // Start late arc where onTime ended
     canvas.drawArc(Rect.fromCircle(center: center, radius: radius),
         -pi / 2 + onTimeAngle, lateAngle, true, paint);
 

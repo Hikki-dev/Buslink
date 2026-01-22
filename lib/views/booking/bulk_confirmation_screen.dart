@@ -7,8 +7,8 @@ import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
 import 'payment_screen.dart';
-import '../../utils/translations.dart';
-import '../../utils/language_provider.dart';
+
+
 
 class BulkConfirmationScreen extends StatefulWidget {
   final EnrichedTrip trip;
@@ -74,12 +74,12 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
     final tripCtrl = Provider.of<TripController>(context);
     final total = tripCtrl.calculateBulkTotal(widget.trip.price);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final languageCode = Provider.of<LanguageProvider>(context).currentLanguage;
+//     
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            Translations.translate('bulk_booking_summary', languageCode),
+            'bulk_booking_summary',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
@@ -91,16 +91,16 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
             // 1. Bus Details Card
             _buildDetailCard(
               context,
-              title: Translations.translate('selected_route', languageCode),
+              title: 'selected_route',
               content: Column(
                 children: [
-                  _buildRow(Translations.translate('operator', languageCode),
+                  _buildRow('operator',
                       widget.trip.operatorName),
                   const SizedBox(height: 8),
-                  _buildRow(Translations.translate('route', languageCode),
+                  _buildRow('Route',
                       "${widget.trip.fromCity} - ${widget.trip.toCity}"),
                   const SizedBox(height: 8),
-                  _buildRow(Translations.translate('time', languageCode),
+                  _buildRow('TIME',
                       DateFormat('hh:mm a').format(widget.trip.departureTime)),
                 ],
               ),
@@ -112,7 +112,7 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
             _buildDetailCard(
               context,
               title:
-                  "${Translations.translate('travel_dates', languageCode)} (${tripCtrl.bulkDates.length} ${Translations.translate('days', languageCode)})",
+                  "${'TRAVEL DATES'} (${tripCtrl.bulkDates.length} ${'days'})",
               content: Column(
                 children: tripCtrl.bulkDates.map((date) {
                   return Padding(
@@ -138,23 +138,23 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
             // 3. Price Breakdown
             _buildDetailCard(
               context,
-              title: Translations.translate('price_breakdown', languageCode),
+              title: 'price_breakdown',
               content: Column(
                 children: [
                   _buildRow(
-                      Translations.translate('price_per_ticket', languageCode),
+                      'price_per_ticket',
                       "LKR ${widget.trip.price.toStringAsFixed(2)}"),
                   const SizedBox(height: 8),
-                  _buildRow(Translations.translate('passengers', languageCode),
+                  _buildRow('passengers',
                       "${tripCtrl.seatsPerTrip}"),
                   const SizedBox(height: 8),
-                  _buildRow(Translations.translate('total_days', languageCode),
+                  _buildRow('total_days',
                       "${tripCtrl.bulkDates.length}"),
                   const Divider(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(Translations.translate('total_amount', languageCode),
+                      Text('total_amount',
                           style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold)),
                       Text(
@@ -197,7 +197,7 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
                     height: 24,
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2))
-                : Text(Translations.translate('proceed_payment', languageCode),
+                : Text('proceed_payment',
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold)),
           ),

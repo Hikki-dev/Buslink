@@ -4,8 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../utils/app_theme.dart';
-import '../../utils/translations.dart';
-import '../../utils/language_provider.dart';
+
 
 class TravelStatsScreen extends StatefulWidget {
   const TravelStatsScreen({super.key});
@@ -21,7 +20,8 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
-    final languageCode = Provider.of<LanguageProvider>(context).currentLanguage;
+    // Hardcoded language code to English
+    const languageCode = 'en';
 
     if (user == null) {
       return const Scaffold(body: Center(child: Text("Please login")));
@@ -29,8 +29,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(Translations.translate('travel_trends',
-            languageCode)), // "Travel Stats" -> "Travel Trends" (closest match or add new key? used 'travel_trends' in file)
+        title: Text('travel_trends'),
         elevation: 1,
         backgroundColor: Theme.of(context).cardColor,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -62,25 +61,25 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
                   children: [
                     _statusBox(
                         context,
-                        Translations.translate('upcoming', languageCode),
-                        "${stats['upcoming']}",
+                        'Upcoming',
+                        "${stats['Upcoming']}",
                         Colors.blue,
                         Icons.schedule),
                     _statusBox(
                         context,
-                        Translations.translate('delayed', languageCode),
+                        'delayed',
                         "${stats['delayed']}",
                         Colors.orange,
                         Icons.timer_off),
                     _statusBox(
                         context,
-                        Translations.translate('arrived', languageCode),
+                        'arrived',
                         "${stats['arrived']}",
                         Colors.green,
                         Icons.check_circle),
                     _statusBox(
                         context,
-                        Translations.translate('cancelled', languageCode),
+                        'cancelled',
                         "${stats['cancelled']}",
                         Colors.red,
                         Icons.cancel),
@@ -108,9 +107,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
         children: [
           const Icon(Icons.query_stats, size: 80),
           const SizedBox(height: 16),
-          Text(
-              Translations.translate('no_active_trips',
-                  lang), // Reusing 'no_active_trips' roughly fits or 'No travel history'
+          Text('no_active_trips',
               style: const TextStyle(fontSize: 18)),
           const SizedBox(height: 8),
           const Text("Complete a trip to see your stats.", style: TextStyle()),
@@ -201,7 +198,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
       'favoriteDest': favoriteDest,
       'monthlyTrips': monthlyTrips,
       'year': _focusedDate.year,
-      'upcoming': upcoming,
+      'Upcoming': upcoming,
       'delayed': delayed,
       'arrived': arrived,
       'cancelled': cancelled
@@ -259,7 +256,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(Translations.translate('total_spent', lang),
+              Text('total_spent',
                   style: const TextStyle(color: Colors.white70)),
               const SizedBox(height: 8),
               Text("LKR ${stats['totalSpent'].toStringAsFixed(0)}",
@@ -289,7 +286,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           initiallyExpanded: true,
-          title: Text(Translations.translate('travel_trends', lang),
+          title: Text('travel_trends',
               style: const TextStyle(fontWeight: FontWeight.bold)),
           leading: const Icon(Icons.trending_up, color: AppTheme.primaryColor),
           children: [
@@ -342,17 +339,17 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           initiallyExpanded: true,
-          title: Text(Translations.translate('insights', lang),
+          title: Text('insights',
               style: const TextStyle(fontWeight: FontWeight.bold)),
           leading: const Icon(Icons.lightbulb, color: Colors.amber),
           children: [
             _insightRow(
                 Icons.place,
-                Translations.translate('favorite_destination', lang),
+                'favorite_destination',
                 stats['favoriteDest']),
             _insightRow(
                 Icons.directions_bus,
-                Translations.translate('total_trips_completed', lang),
+                'total_trips_completed',
                 "${stats['totalTrips']}"),
           ],
         ),

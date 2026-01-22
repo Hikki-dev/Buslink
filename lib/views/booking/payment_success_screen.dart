@@ -18,7 +18,7 @@ import 'dart:io'; // Added
 import 'package:open_filex/open_filex.dart'; // Added
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../utils/language_provider.dart'; // Added
+ // Added
 
 // import '../../views/home/home_screen.dart'; // Unused
 import '../customer_main_screen.dart';
@@ -153,7 +153,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                 ticket.tripData['toCity'] = tMap['toCity'];
                 ticket.tripData['busNumber'] = tMap['busNumber'];
                 ticket.tripData['platformNumber'] = tMap['platformNumber'];
-                ticket.tripData['departureTime'] = tMap['departureTime'];
+                ticket.tripData['departureTime'] =
+                    tMap['departureTime'] ?? tMap['departureDateTime'];
+                ticket.tripData['departureDateTime'] =
+                    tMap['departureDateTime'];
                 ticket.tripData['operatorName'] = tMap['operatorName'];
               }
             } catch (e) {
@@ -263,10 +266,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                           // List of Tickets
                           ...tickets.map((t) {
                             final tData = t.tripData;
-                            final tripDate = tData['departureTime'] is Timestamp
-                                ? (tData['departureTime'] as Timestamp).toDate()
-                                : DateTime.tryParse(
-                                        tData['departureTime'].toString()) ??
+                            final tripDateVal = tData['departureDateTime'] ??
+                                tData['departureTime'];
+                            final tripDate = tripDateVal is Timestamp
+                                ? tripDateVal.toDate()
+                                : DateTime.tryParse(tripDateVal.toString()) ??
                                     DateTime.now();
                             return pw.Padding(
                                 padding: const pw.EdgeInsets.only(bottom: 8),
@@ -300,10 +304,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       for (final ticket in tickets) {
         // Construct Trip from Ticket Data (Snapshot)
         final tData = ticket.tripData;
-        final tripDate = tData['departureTime'] is Timestamp
-            ? (tData['departureTime'] as Timestamp).toDate()
-            : DateTime.tryParse(tData['departureTime'].toString()) ??
-                DateTime.now();
+        final tripDateVal =
+            tData['departureDateTime'] ?? tData['departureTime'];
+        final tripDate = tripDateVal is Timestamp
+            ? tripDateVal.toDate()
+            : DateTime.tryParse(tripDateVal.toString()) ?? DateTime.now();
 
         final fromCity = tData['fromCity'] ?? tData['originCity'] ?? '';
         final toCity = tData['toCity'] ?? tData['destinationCity'] ?? '';
@@ -404,7 +409,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         );
       }
 
-      final lp = Provider.of<LanguageProvider>(context, listen: false);
+      
       final bytes = await doc.save();
       final fileName = 'buslink_tickets.pdf';
 
@@ -428,7 +433,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content:
-                      Text("${lp.translate('saved_to_downloads')}: $fileName"),
+                      Text("${"Saved to Downloads"}: $fileName"),
                   backgroundColor: Colors.green,
                   action: SnackBarAction(
                     label: "OPEN",
@@ -454,7 +459,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(lp.translate('permission_denied')),
+                content: Text("Permission Denied"),
                 backgroundColor: Colors.red));
           }
         }
@@ -466,10 +471,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       debugPrint("Error generating/sharing PDF: $e");
       debugPrint(stackTrace.toString());
       if (mounted) {
-        final lp = Provider.of<LanguageProvider>(context, listen: false);
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("${lp.translate('error_saving_pdf')}: $e"),
+            content: Text("${"Error saving PDF"}: $e"),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),
@@ -481,7 +486,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lp = Provider.of<LanguageProvider>(context);
+    
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -640,8 +645,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                           icon: const Icon(Icons.picture_as_pdf),
                           label: Text(
                               _verifiedTickets.length > 1
-                                  ? lp.translate('download_consolidated_pdf')
-                                  : lp.translate('download_pdf'),
+                                  ? "Download Consolidated PDF"
+                                  : "Download PDF",
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 16)),
                         ),
@@ -785,11 +790,12 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     // Extract date for display
     // Extract date for display
     final tData = ticket.tripData;
+    final tripDateVal = tData['departureDateTime'] ?? tData['departureTime'];
     DateTime tripDate;
-    if (tData['departureTime'] is Timestamp) {
-      tripDate = (tData['departureTime'] as Timestamp).toDate();
-    } else if (tData['departureTime'] is String) {
-      tripDate = DateTime.tryParse(tData['departureTime']) ?? DateTime.now();
+    if (tripDateVal is Timestamp) {
+      tripDate = tripDateVal.toDate();
+    } else if (tripDateVal is String) {
+      tripDate = DateTime.tryParse(tripDateVal) ?? DateTime.now();
     } else {
       tripDate = DateTime.now();
     }

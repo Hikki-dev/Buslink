@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/app_theme.dart';
 import '../../services/notification_service.dart';
 import '../../models/notification_model.dart';
-import '../../utils/language_provider.dart';
+// 
 import 'package:intl/intl.dart';
 
 class NotificationsScreen extends StatelessWidget {
@@ -27,8 +27,7 @@ class NotificationsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            Provider.of<LanguageProvider>(context).translate('notifications'),
+        title: Text("Notifications",
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
@@ -58,9 +57,7 @@ class NotificationsScreen extends StatelessWidget {
                   Icon(Icons.notifications_off_outlined,
                       size: 60, color: Colors.grey.withValues(alpha: 0.5)),
                   const SizedBox(height: 16),
-                  Text(
-                      Provider.of<LanguageProvider>(context)
-                          .translate('no_notifications'),
+                  Text("No notifications",
                       style:
                           TextStyle(color: Colors.grey.withValues(alpha: 0.8))),
                 ],
@@ -68,7 +65,28 @@ class NotificationsScreen extends StatelessWidget {
             );
           }
 
-          final notifications = snapshot.data!;
+          // FILTER: Only show Important Notifications (Delayed, Cancelled, Refunded)
+          final notifications = snapshot.data!.where((n) {
+            return n.type == NotificationType.cancellation ||
+                n.type == NotificationType.delay ||
+                n.type == NotificationType.refundStatus;
+          }).toList();
+
+          if (notifications.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_outline,
+                      size: 60, color: Colors.grey.withValues(alpha: 0.5)),
+                  const SizedBox(height: 16),
+                  Text("No important alerts",
+                      style:
+                          TextStyle(color: Colors.grey.withValues(alpha: 0.8))),
+                ],
+              ),
+            );
+          }
 
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -88,7 +106,7 @@ class NotificationsScreen extends StatelessWidget {
     // Determine Color and Icon based on Type + Title (Accessibility Enrichment)
     IconData icon = Icons.notifications;
     Color color = AppTheme.primaryColor;
-    String statusText = "Info";
+    String statusText = "INFO";
 
     switch (notif.type) {
       case NotificationType.tripStatus:
@@ -96,15 +114,15 @@ class NotificationsScreen extends StatelessWidget {
             notif.title.contains("On Way")) {
           icon = Icons.directions_bus;
           color = Colors.blue;
-          statusText = "on_way";
+          statusText = "ON WAY";
         } else if (notif.title.contains("Arrived")) {
           icon = Icons.check_circle;
           color = Colors.green;
-          statusText = "arrived";
+          statusText = "ARRIVED";
         } else {
           icon = Icons.schedule;
           color = Colors.orange;
-          statusText = "scheduled";
+          statusText = "SCHEDULED";
         }
         break;
       case NotificationType.refundStatus:
@@ -112,43 +130,38 @@ class NotificationsScreen extends StatelessWidget {
             notif.body.toLowerCase().contains("refunded")) {
           icon = Icons.monetization_on;
           color = Colors.green;
-          statusText = "refunded";
+          statusText = "REFUNDED";
         } else if (notif.title.toLowerCase().contains("rejected")) {
           icon = Icons.error_outline;
           color = Colors.red;
-          statusText = "rejected";
+          statusText = "REJECTED";
         } else {
           icon = Icons.refresh;
           color = Colors.orange;
-          statusText = "processing";
+          statusText = "PROCESSING";
         }
         break;
       case NotificationType.cancellation:
         icon = Icons.cancel;
         color = Colors.red;
-        statusText = "cancelled";
+        statusText = "CANCELLED";
         break;
       case NotificationType.delay:
         icon = Icons.timer_off;
         color = Colors.redAccent;
-        statusText = "delayed";
+        statusText = "DELAYED";
         break;
       case NotificationType.general:
         icon = Icons.notifications;
         color = AppTheme.primaryColor;
-        statusText = "new";
+        statusText = "NEW";
         break;
       case NotificationType.booking:
         icon = Icons.confirmation_number;
         color = Colors.green;
-        statusText = "confirmed";
+        statusText = "CONFIRMED";
         break;
     }
-
-    // Translate Status
-    final lp = Provider.of<LanguageProvider>(context);
-    final translatedStatus =
-        lp.translate(statusText.toLowerCase().replaceAll(' ', '_'));
 
     // Override info if read
     if (notif.isRead) {
@@ -255,7 +268,7 @@ class NotificationsScreen extends StatelessWidget {
                               decoration: BoxDecoration(
                                   color: color.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4)),
-                              child: Text(translatedStatus.toUpperCase(),
+                              child: Text(statusText,
                                   style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 10,

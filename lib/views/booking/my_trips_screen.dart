@@ -1,7 +1,6 @@
 // lib/views/booking/my_trips_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,14 +8,12 @@ import '../../models/trip_model.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
 import '../ticket/ticket_screen.dart';
-// import '../results/bus_list_screen.dart'; (Removed)
 import '../layout/desktop_navbar.dart';
-// import '../layout/mobile_navbar.dart';
 import '../layout/custom_app_bar.dart';
 import '../analytics/travel_stats_screen.dart';
 import 'refund_request_screen.dart';
-import '../../utils/language_provider.dart';
-// import 'my_trips_stats_widget.dart';
+
+enum TripFilter { upcoming, completed, cancelled, delayed }
 
 class MyTripsScreen extends StatelessWidget {
   final bool showBackButton;
@@ -38,19 +35,12 @@ class MyTripsScreen extends StatelessWidget {
     return StreamBuilder<List<Ticket>>(
         stream: controller.getUserTickets(),
         builder: (context, snapshot) {
-          // Handle Loading/Error explicitly if needed, but for scaffold structure we might want to return Scaffold even if loading.
-          // Let's keep Scaffold structure.
           final isLoading = snapshot.connectionState == ConnectionState.waiting;
           final hasError = snapshot.hasError;
           final allTickets = snapshot.data ?? [];
 
-          // Stats Calculation
-          if (!isLoading && !hasError) {
-            // Logic moved to TravelStatsScreen
-          }
-
           return DefaultTabController(
-            length: 2,
+            length: 4, // Changed to 4 Tabs
             child: Column(
               children: [
                 if (isDesktop)
@@ -76,9 +66,7 @@ class MyTripsScreen extends StatelessWidget {
                                 }
                               })
                           : null,
-                      title: Text(
-                          Provider.of<LanguageProvider>(context)
-                              .translate('my_trips_title'),
+                      title: Text("My Trips",
                           style: TextStyle(
                               fontFamily: 'Outfit',
                               color: Theme.of(context).colorScheme.onSurface,
@@ -97,18 +85,17 @@ class MyTripsScreen extends StatelessWidget {
                         )
                       ],
                       bottom: TabBar(
+                        isScrollable: true, // Scrollable for 4 tabs
                         labelColor: AppTheme.primaryColor,
                         unselectedLabelColor: Colors.grey,
                         indicatorColor: AppTheme.primaryColor,
-                        labelStyle: TextStyle(
+                        labelStyle: const TextStyle(
                             fontFamily: 'Outfit', fontWeight: FontWeight.bold),
-                        tabs: [
-                          Tab(
-                              text: Provider.of<LanguageProvider>(context)
-                                  .translate('tab_upcoming')),
-                          Tab(
-                              text: Provider.of<LanguageProvider>(context)
-                                  .translate('tab_history')),
+                        tabs: const [
+                          Tab(text: "UPCOMING"),
+                          Tab(text: "COMPLETED"),
+                          Tab(text: "CANCELLED"),
+                          Tab(text: "DELAYED"),
                         ],
                       ),
                     ),
@@ -136,16 +123,22 @@ class MyTripsScreen extends StatelessWidget {
                                       Expanded(
                                         child: TabBarView(
                                           children: [
-                                            // Upcoming Tab
                                             _TripsList(
                                                 allTickets: allTickets,
                                                 userId: user.uid,
-                                                isHistory: false),
-                                            // History Tab
+                                                filter: TripFilter.upcoming),
                                             _TripsList(
                                                 allTickets: allTickets,
                                                 userId: user.uid,
-                                                isHistory: true),
+                                                filter: TripFilter.completed),
+                                            _TripsList(
+                                                allTickets: allTickets,
+                                                userId: user.uid,
+                                                filter: TripFilter.cancelled),
+                                            _TripsList(
+                                                allTickets: allTickets,
+                                                userId: user.uid,
+                                                filter: TripFilter.delayed),
                                           ],
                                         ),
                                       ),
@@ -166,9 +159,7 @@ class MyTripsScreen extends StatelessWidget {
         children: [
           Icon(Icons.lock_clock, size: 64, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          Text(
-              Provider.of<LanguageProvider>(context)
-                  .translate('sign_in_view_trips'),
+          const Text("Please sign in to view your trips",
               style: TextStyle(
                   fontFamily: 'Inter', fontSize: 16, color: Colors.grey)),
         ],
@@ -180,75 +171,91 @@ class MyTripsScreen extends StatelessWidget {
 class _TripsList extends StatelessWidget {
   final List<Ticket> allTickets;
   final String userId;
-  final bool isHistory;
+  final TripFilter filter;
 
   const _TripsList(
-      {required this.allTickets,
-      required this.userId,
-      required this.isHistory});
+      {required this.allTickets, required this.userId, required this.filter});
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime
-        .now(); // Used in cutoff calculation below, so it IS used. Wait, user error?
-    // User error says 'now' is not used?
-    // Line 199: final cutoff = now.subtract(const Duration(hours: 12));
-    // It IS used. Maybe there was another 'now' somewhere?
-    // Let's re-read the error: "The value of the local variable 'now' isn't used. startLine: 53"
-    // The previous view_file started at 101. I need to check line 53.
+    final now = DateTime.now();
+    // 12 hour buffer for "Current" trips to appear in Upcoming/Active?
+    // Actually, sticking to simple logic:
+    // Upcoming: Date > Now OR Status = Scheduled
+    // Completed: Date < Now OR Status = Completed/Arrived
+    // Cancelled: Status = Cancelled
+    // Delayed: Status = Delayed
 
-    // Helper to parse date consistently
-    DateTime getTripDate(Map<String, dynamic> data, DateTime bookingTime) {
-      dynamic dep = data['departureDateTime'] ??
-          data['departureTime']; // Check departureDateTime first!
-      if (dep is Timestamp) return dep.toDate();
-      if (dep is DateTime) return dep;
-      if (dep is String) {
-        return DateTime.tryParse(dep) ??
-            bookingTime; // Handle strings just in case
-      }
-      return bookingTime;
-    }
-
-    // --- Filter List for Display (Respecting isHistory) ---
-    final cutoff = now.subtract(const Duration(hours: 12));
     var tickets = allTickets.where((ticket) {
-      DateTime tripDate = getTripDate(ticket.tripData, ticket.bookingTime);
-
-      final statusLower = ticket.status.toLowerCase();
-
-      if (statusLower == 'refunded') return false;
-
-      if (statusLower == 'cancelled') {
-        if (!isHistory) return false;
+      final tripData = ticket.tripData;
+      // Prefer tripData status if available, else ticket status
+      String status =
+          (tripData['status'] ?? ticket.status).toString().toLowerCase();
+      // Parse Date
+      DateTime tripDate = ticket.bookingTime; // Default
+      dynamic dep = tripData['departureDateTime'] ?? tripData['departureTime'];
+      if (dep is Timestamp) {
+        tripDate = dep.toDate();
       }
 
-      if (isHistory) {
-        if (statusLower == 'cancelled') return true;
-        return tripDate.isBefore(cutoff);
-      } else {
-        return tripDate.isAfter(cutoff);
+      switch (filter) {
+        case TripFilter.cancelled:
+          return status == 'cancelled';
+        case TripFilter.delayed:
+          return status == 'delayed';
+        case TripFilter.completed:
+          // Exclude cancelled/delayed from completed view?
+          if (status == 'cancelled' ||
+              status == 'delayed' ||
+              status == 'refunded') {
+            return false;
+          }
+          return status == 'completed' ||
+              status == 'arrived' ||
+              tripDate.isBefore(now);
+        case TripFilter.upcoming:
+          if (status == 'cancelled' ||
+              status == 'delayed' ||
+              status == 'refunded' ||
+              status == 'completed' ||
+              status == 'arrived') {
+            return false;
+          }
+          return tripDate.isAfter(now) ||
+              status == 'scheduled' ||
+              status == 'Confirmed';
       }
     }).toList();
 
     // Sort
     tickets.sort((a, b) {
-      final dateA = getTripDate(a.tripData, a.bookingTime);
-      final dateB = getTripDate(b.tripData, b.bookingTime);
-      if (isHistory) {
-        return dateB.compareTo(dateA);
+      DateTime dateA = a.bookingTime;
+      DateTime dateB = b.bookingTime;
+      // ... better parsing ...
+      dynamic depA =
+          a.tripData['departureDateTime'] ?? a.tripData['departureTime'];
+      if (depA is Timestamp) {
+        dateA = depA.toDate();
+      }
+      dynamic depB =
+          b.tripData['departureDateTime'] ?? b.tripData['departureTime'];
+      if (depB is Timestamp) {
+        dateB = depB.toDate();
+      }
+
+      if (filter == TripFilter.upcoming) {
+        return dateA.compareTo(dateB); // Ascending
       } else {
-        return dateA.compareTo(dateB);
+        return dateB.compareTo(dateA); // Descending (History most recent first)
       }
     });
 
-    // --- GROUPING LOGIC ---
+    // Grouping
     final List<dynamic> displayItems = [];
     final Map<String, List<Ticket>> bundles = {};
 
     for (var t in tickets) {
       String? groupId;
-
       if (t.tripData['batchId'] != null) {
         groupId = t.tripData['batchId'];
       } else if (t.paymentIntentId != null && t.paymentIntentId!.isNotEmpty) {
@@ -258,30 +265,42 @@ class _TripsList extends StatelessWidget {
       if (groupId != null) {
         bundles.putIfAbsent(groupId, () => []).add(t);
       } else {
-        // No group, treat as single
         displayItems.add(t);
       }
     }
 
-    // Add bundles to display items
     for (var entry in bundles.entries) {
       if (entry.value.length > 1) {
-        displayItems.add(entry.value); // Add List<Ticket>
+        displayItems.add(entry.value);
       } else {
-        displayItems.add(entry.value.first); // Single ticket from group
+        displayItems.add(entry.value.first);
       }
     }
 
-    // Re-sort display items by date of first ticket
     displayItems.sort((a, b) {
+      // Re-sort grouped items
       Ticket tA = (a is List) ? (a as List<Ticket>).first : (a as Ticket);
       Ticket tB = (b is List) ? (b as List<Ticket>).first : (b as Ticket);
 
-      final dateA = getTripDate(tA.tripData, tA.bookingTime);
-      final dateB = getTripDate(tB.tripData, tB.bookingTime);
+      DateTime dateA = tA.bookingTime;
+      dynamic depA =
+          tA.tripData['departureDateTime'] ?? tA.tripData['departureTime'];
+      if (depA is Timestamp) {
+        dateA = depA.toDate();
+      }
 
-      if (isHistory) return dateB.compareTo(dateA);
-      return dateA.compareTo(dateB);
+      DateTime dateB = tB.bookingTime;
+      dynamic depB =
+          tB.tripData['departureDateTime'] ?? tB.tripData['departureTime'];
+      if (depB is Timestamp) {
+        dateB = depB.toDate();
+      }
+
+      if (filter == TripFilter.upcoming) {
+        return dateA.compareTo(dateB);
+      } else {
+        return dateB.compareTo(dateA);
+      }
     });
 
     return displayItems.isEmpty
@@ -289,15 +308,13 @@ class _TripsList extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(isHistory ? Icons.history : Icons.directions_bus_outlined,
+                Icon(Icons.directions_bus_outlined,
                     size: 64, color: Colors.grey.shade300),
                 const SizedBox(height: 16),
                 Text(
-                    isHistory
-                        ? Provider.of<LanguageProvider>(context)
-                            .translate('no_past_trips')
-                        : Provider.of<LanguageProvider>(context)
-                            .translate('no_upcoming_trips'),
+                    filter == TripFilter.upcoming
+                        ? "No upcoming trips"
+                        : "No trips found",
                     style: const TextStyle(
                         fontFamily: 'Inter', fontSize: 18, color: Colors.grey)),
               ],
@@ -311,21 +328,21 @@ class _TripsList extends StatelessWidget {
               itemCount: displayItems.length,
               separatorBuilder: (_, __) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
-                // Not History (Upcoming) OR History (Unified logic as Stats Removed)
                 final item = displayItems[index];
                 if (item is List<Ticket>) {
                   return _BulkBoardingPassCard(tickets: item);
                 } else {
                   return _BoardingPassCard(
                     ticket: item as Ticket,
-                    shouldListen: !isHistory,
+                    shouldListen: filter == TripFilter.upcoming ||
+                        filter == TripFilter.delayed,
                   );
                 }
               },
             ),
           );
   }
-} // End _TripsList
+}
 
 class _BoardingPassCard extends StatelessWidget {
   final Ticket ticket;
@@ -344,7 +361,6 @@ class _BoardingPassCard extends StatelessWidget {
             return _buildCardContent(context, snapshot.data);
           });
     } else {
-      // Static render for history
       return _buildCardContent(context, null);
     }
   }
@@ -357,46 +373,51 @@ class _BoardingPassCard extends StatelessWidget {
     if (snapshot != null && snapshot.exists) {
       final data = snapshot.data() as Map<String, dynamic>;
       tripData = data;
-      // Determine Status from live data
+      // Determine Status
       final rawStatus = data['status'] ?? 'scheduled';
       final delayMin = data['delayMinutes'] ?? 0;
-      final lp = Provider.of<LanguageProvider>(context);
 
       if (rawStatus == 'delayed') {
-        statusStr = "${lp.translate('delayed').toUpperCase()} (+${delayMin}m)";
+        statusStr = "DELAYED (+${delayMin}m)";
         statusColor = Colors.red;
       } else if (rawStatus == 'started' || rawStatus == 'departed') {
-        statusStr = lp.translate('on_way').toUpperCase();
+        statusStr = "ON WAY";
         statusColor = Colors.blue;
       } else if (rawStatus == 'completed' || rawStatus == 'arrived') {
-        statusStr = lp.translate('arrived').toUpperCase();
+        statusStr = "ARRIVED";
         statusColor = Colors.green;
       } else if (rawStatus == 'onTime' || rawStatus == 'scheduled') {
-        statusStr = lp.translate('scheduled').toUpperCase();
-        // Note: 'status_on_time' key exists but 'scheduled' is cleaner for default
+        statusStr = "SCHEDULED";
         statusColor = Colors.green;
       } else if (rawStatus == 'cancelled') {
-        statusStr = lp.translate('cancelled').toUpperCase();
+        statusStr = "CANCELLED";
         statusColor = Colors.red.shade900;
       }
     } else {
-      // Fallback/Static Status (basic)
-      statusStr = Provider.of<LanguageProvider>(context)
-          .translate('tab_history')
-          .toUpperCase();
+      // Fallback checks
+      final rawStatus =
+          (tripData['status'] ?? ticket.status).toString().toLowerCase();
+      if (rawStatus == 'Confirmed') {
+        statusStr = "CONFIRMED";
+      } else if (rawStatus == 'cancelled') {
+        statusStr = "CANCELLED";
+        statusColor = Colors.red.shade900;
+      } else if (rawStatus == 'delayed') {
+        statusStr = "DELAYED";
+        statusColor = Colors.red;
+      } else if (rawStatus == 'completed' || rawStatus == 'arrived') {
+        statusStr = "COMPLETED";
+        statusColor = Colors.green;
+      } else {
+        statusStr = "SCHEDULED";
+        statusColor = Colors.green;
+      }
     }
 
-    // Common UI Logic
-    final fromCity = tripData['fromCity'] ??
-        tripData['originCity'] ??
-        ticket.tripData['fromCity'] ??
-        ticket.tripData['originCity'] ??
-        'Unknown';
-    final toCity = tripData['toCity'] ??
-        tripData['destinationCity'] ??
-        ticket.tripData['toCity'] ??
-        ticket.tripData['destinationCity'] ??
-        'Unknown';
+    final fromCity =
+        tripData['fromCity'] ?? tripData['originCity'] ?? 'Unknown';
+    final toCity =
+        tripData['toCity'] ?? tripData['destinationCity'] ?? 'Unknown';
     final seatsCount = ticket.seatNumbers.length;
 
     DateTime depTime = ticket.bookingTime;
@@ -427,7 +448,6 @@ class _BoardingPassCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Top Part
           Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -435,28 +455,8 @@ class _BoardingPassCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        _buildStatusBadge(statusStr, statusColor),
-                        // Show DELAYED badge explicitly next to Arrived if applicable
-                        if ((statusStr == "ARRIVED" ||
-                                statusStr == "COMPLETED") &&
-                            (tripData['delayMinutes'] ?? 0) > 0) ...[
-                          const SizedBox(width: 8),
-                          _buildStatusBadge(
-                              "DELAYED (+${tripData['delayMinutes']}m)",
-                              Colors.red),
-                        ]
-                      ],
-                    ),
-                    // Ref ID Removed
-                    // Text(
-                    //     "Ref: ${ticket.ticketId.substring(0, 8).toUpperCase()}",
-                    //     style: TextStyle(
-                    //         fontFamily: 'Inter',
-                    //         fontSize: 12,
-                    //         fontWeight: FontWeight.bold,
-                    //         color: subTextColor)),
+                    _buildStatusBadge(statusStr, statusColor),
+                    // No Ref ID needed
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -466,9 +466,7 @@ class _BoardingPassCard extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                            Provider.of<LanguageProvider>(context)
-                                .translate('from'),
+                        Text("FROM",
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
@@ -497,10 +495,10 @@ class _BoardingPassCard extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 4.0),
                             child: Text(
                               "Via ${tripData['via']}",
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
-                                color: subTextColor,
+                                color: Colors.grey,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -510,9 +508,7 @@ class _BoardingPassCard extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                            Provider.of<LanguageProvider>(context)
-                                .translate('to'),
+                        Text("TO",
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 10,
@@ -546,7 +542,6 @@ class _BoardingPassCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
                     Text("LKR ${ticket.totalAmount.toStringAsFixed(0)}",
                         style: const TextStyle(
                             fontFamily: 'Outfit',
@@ -559,144 +554,83 @@ class _BoardingPassCard extends StatelessWidget {
             ),
           ),
 
-          // Dotted Line (Optimized)
-          Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: SizedBox(
-                  height: 1,
-                  width: double.infinity,
-                  child: CustomPaint(
-                    painter: DashedLinePainter(
-                      color:
-                          isDark ? Colors.grey.shade800 : Colors.grey.shade300,
-                      dashWidth: 6,
-                      dashSpace: 4,
-                    ),
-                  ),
+          // Dotted Line
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: SizedBox(
+              height: 1,
+              child: CustomPaint(
+                painter: DashedLinePainter(
+                  color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
                 ),
               ),
-              Positioned(
-                  left: -10,
-                  top: -10,
-                  child: CircleAvatar(
-                      radius: 10,
-                      backgroundColor:
-                          Theme.of(context).scaffoldBackgroundColor)),
-              Positioned(
-                  right: -10,
-                  top: -10,
-                  child: CircleAvatar(
-                      radius: 10,
-                      backgroundColor:
-                          Theme.of(context).scaffoldBackgroundColor)),
-            ],
+            ),
           ),
 
           Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-            child: Builder(builder: (context) {
-              // DYNAMIC BUTTON LOGIC
-              bool allowRefund = false;
-              if (shouldListen &&
-                  statusStr != 'CANCELLED' &&
-                  statusStr != 'ARRIVED' &&
-                  statusStr != 'COMPLETED' &&
-                  statusStr != 'REFUNDED' &&
-                  statusStr != 'HISTORY') {
-                allowRefund = true;
-              }
-
-              return Row(
-                children: [
+            child: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => TicketScreen(
+                                    ticketArg: ticket,
+                                    tripArg: Trip.fromMap(
+                                        tripData, ticket.tripId))));
+                      },
+                      style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                      child: Text("view ticket".toUpperCase(),
+                          style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: textColor)),
+                    ),
+                  ),
+                ),
+                // Refund Button (Visible if not Cancelled/Completed/Refunded)
+                // Date check removed to allow refunds on "Active" trips even if technically past departure (testing/edge cases)
+                if (statusStr != 'CANCELLED' &&
+                    statusStr != 'COMPLETED' &&
+                    statusStr != 'ARRIVED' &&
+                    statusStr != 'REFUNDED') ...[
+                  const SizedBox(width: 12),
                   Expanded(
                     child: SizedBox(
                       height: 48,
-                      child: OutlinedButton(
+                      child: ElevatedButton(
                         onPressed: () {
-                          try {
-                            final trip =
-                                Trip.fromMap(ticket.tripData, ticket.tripId);
-                            Navigator.push(
+                          Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => TicketScreen(
-                                    ticketArg: ticket, tripArg: trip),
-                              ),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text("Error opening ticket: $e")),
-                            );
-                          }
+                                  builder: (_) => RefundRequestScreen(
+                                      ticket: ticket,
+                                      trip: Trip.fromMap(
+                                          tripData, ticket.tripId))));
                         },
-                        style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            side: BorderSide(
-                                color: isDark
-                                    ? Colors.grey.shade700
-                                    : Colors.grey.shade300),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade400,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12))),
-                        child: Text(
-                            Provider.of<LanguageProvider>(context)
-                                .translate('view_ticket'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        child: const Text("Refund",
                             style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: textColor)),
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ),
-                  ),
-                  if (allowRefund) ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            try {
-                              final trip =
-                                  Trip.fromMap(tripData, ticket.tripId);
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => RefundRequestScreen(
-                                          ticket: ticket, trip: trip)));
-                            } catch (e) {
-                              debugPrint("Error nav to refund: $e");
-                            }
-                          },
-                          icon: const Icon(Icons.undo,
-                              size: 18, color: Colors.white),
-                          label: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                                Provider.of<LanguageProvider>(context)
-                                    .translate('refund_btn'),
-                                style: const TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: Colors.white)),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red.shade400,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12))),
-                        ),
-                      ),
-                    ),
-                  ]
-                ],
-              );
-            }),
+                  )
+                ]
+              ],
+            ),
           ),
         ],
       ),

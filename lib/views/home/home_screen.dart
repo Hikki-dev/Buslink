@@ -15,7 +15,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/trip_model.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
-import '../../utils/language_provider.dart';
+//  // Removed
 import 'bulk_calendar_dialog.dart';
 import '../results/bus_list_screen.dart';
 import '../auth/login_screen.dart';
@@ -174,8 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // if (_isRoundTrip && _selectedReturnDate == null) {
     //   ScaffoldMessenger.of(context).showSnackBar(
     //     const SnackBar(
-    //         content: Text(
-    //             'Please select a Return Date for Round Trip booking.')), // Professional Error
+    //         content: Text('Please select a Return Date for Round Trip booking.')), // Professional Error
     //   );
     //   return;
     // }
@@ -217,16 +216,19 @@ class _HomeScreenState extends State<HomeScreen> {
           _bulkDates = dates..sort();
           if (_bulkDates.isNotEmpty) {
             _selectedDate = _bulkDates.first;
+          } else if (_isBulkBooking) {
+            // Fallback for "0 Days" issue if picker returns empty but we want at least one day
+            _bulkDates = [_selectedDate];
           }
         });
 
-        // Update Helper Text/Logic (Optional, UI reads _bulkDates)
-
-        // Update Helper Text/Logic (Optional, UI reads _bulkDates)
+        // Sync with Controller
+        Provider.of<TripController>(context, listen: false).bulkDates =
+            _bulkDates;
 
         // Update Controller Seats (Synced)
-        if (result['seats'] != null) {
-          final int pCount = result['seats'] as int;
+        if (result['SEATS'] != null) {
+          final int pCount = result['SEATS'] as int;
           Provider.of<TripController>(context, listen: false)
               .setBulkPassengers(pCount);
           // Also set isBulkBooking true if not already
@@ -389,17 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
 
                         // Language Switcher (Globe Icon)
-                        Consumer<LanguageProvider>(
-                          builder: (context, languageProvider, child) {
-                            return IconButton(
-                              icon: const Icon(Icons.language),
-                              tooltip: 'Switch Language',
-                              onPressed: () {
-                                languageProvider.toggleLanguage();
-                              },
-                            );
-                          },
-                        ),
+                        // Language Switcher Removed
 
                         // Theme Switcher
                         Consumer<ThemeController>(
@@ -551,7 +543,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Padding(
               padding: EdgeInsets.symmetric(
                   horizontal: isDesktop ? 0 : 24, vertical: 16),
-              child: Text("Your Bookmarked Routes",
+              child: Text("Your Favorites",
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       fontSize: 20,
@@ -559,7 +551,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Theme.of(context).colorScheme.onSurface)),
             ),
             SizedBox(
-              height: 180, // Height for the card
+              height: 150, // Height for the card (Squashed)
               child: ListView.separated(
                 padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : 24),
                 scrollDirection: Axis.horizontal,
@@ -613,8 +605,8 @@ class _HomeFavoriteCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        width: 280,
-        padding: const EdgeInsets.all(16),
+        width: 220, // Reduced width
+        padding: const EdgeInsets.all(12), // Reduced padding
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E2225) : Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -1183,7 +1175,7 @@ class LiveJourneyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lang = Provider.of<LanguageProvider>(context);
+//
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
@@ -1227,7 +1219,7 @@ class LiveJourneyCard extends StatelessWidget {
                           color: Colors.greenAccent, size: 10),
                       const SizedBox(width: 8),
                       Text(
-                        lang.translate('journey_live'),
+                        'Live Journey',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -1248,7 +1240,7 @@ class LiveJourneyCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              lang.translate('your_bus_is_here'),
+              'Your bus is here',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 22,
@@ -1274,7 +1266,7 @@ class LiveJourneyCard extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  lang.translate('track_now').toUpperCase(),
+                  'TRACK NOW'.toUpperCase(),
                   style: const TextStyle(
                     color: Color(0xFF2563EB),
                     fontWeight: FontWeight.w900,
@@ -1401,7 +1393,6 @@ class _HeroSectionState extends State<_HeroSection> {
     try {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       final user = FirebaseAuth.instance.currentUser;
-      final lp = Provider.of<LanguageProvider>(context);
 
       return SizedBox(
         child: Stack(
@@ -1491,16 +1482,16 @@ class _HeroSectionState extends State<_HeroSection> {
                           }
 
                           // 4. Fallback if somehow still empty (Should catch all)
-                          if (name.isEmpty) name = lp.translate('friend');
+                          if (name.isEmpty) name = "friend";
 
                           String greeting = "Hi";
                           final hour = DateTime.now().hour;
                           if (hour < 12) {
-                            greeting = lp.translate('good_morning');
+                            greeting = "Good Morning";
                           } else if (hour < 17) {
-                            greeting = lp.translate('good_afternoon');
+                            greeting = "Good Afternoon";
                           } else {
-                            greeting = lp.translate('good_evening');
+                            greeting = "Good Evening";
                           }
 
                           return Text(
@@ -1527,7 +1518,7 @@ class _HeroSectionState extends State<_HeroSection> {
                     else
                       // Fallback if NOT logged in (User requested no "Traveler")
                       Text(
-                        lp.translate('welcome'),
+                        "Welcome",
                         style: TextStyle(
                           fontFamily: 'Outfit',
                           fontSize: 56,
@@ -1545,7 +1536,7 @@ class _HeroSectionState extends State<_HeroSection> {
                       ),
                     const SizedBox(height: 12),
                     Text(
-                      lp.translate('brand_tagline'),
+                      "Book your journey in seconds.",
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontFamily:
@@ -1580,7 +1571,6 @@ class _HeroSectionState extends State<_HeroSection> {
   // New "Card Style" Desktop Search
   // New "Card Style" Desktop Search
   Widget _buildDesktopSearchCard(bool isDark) {
-    final lp = Provider.of<LanguageProvider>(context);
     return _AnimateFadeInUp(
       delay: const Duration(milliseconds: 200),
       child: Material(
@@ -1626,7 +1616,7 @@ class _HeroSectionState extends State<_HeroSection> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      lp.translate('bulk_booking'),
+                      "Bulk Booking",
                       style: TextStyle(
                         color: isDark
                             ? Colors.white
@@ -1651,7 +1641,7 @@ class _HeroSectionState extends State<_HeroSection> {
                         controller: widget.originController,
                         focusNode: widget.originFocusNode,
                         icon: Icons.my_location, // Target Icon
-                        hint: lp.translate('where_from'),
+                        hint: "Where from?",
                         isDark: isDark,
                       ),
                     ),
@@ -1667,7 +1657,7 @@ class _HeroSectionState extends State<_HeroSection> {
                         controller: widget.destinationController,
                         focusNode: widget.destinationFocusNode,
                         icon: Icons.location_on, // Pin Icon
-                        hint: lp.translate('where_to'),
+                        hint: "Where to?",
                         isDark: isDark,
                       ),
                     ),
@@ -1692,7 +1682,7 @@ class _HeroSectionState extends State<_HeroSection> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  lp.translate('departure_date'),
+                                  "Departure Date",
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: isDark
@@ -1765,7 +1755,7 @@ class _HeroSectionState extends State<_HeroSection> {
                             const Icon(Icons.search, size: 20),
                             const SizedBox(width: 8),
                             Text(
-                              lp.translate('search'), // concise
+                              "Search", // concise
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w900,
@@ -1813,8 +1803,7 @@ class _HeroSectionState extends State<_HeroSection> {
                   optionsBuilder: (TextEditingValue textEditingValue) {
                     final tripCtrl =
                         Provider.of<TripController>(context, listen: false);
-                    final lp =
-                        Provider.of<LanguageProvider>(context, listen: false);
+                    // final lp removed
                     final cities = tripCtrl.availableCities;
 
                     if (textEditingValue.text.isEmpty) {
@@ -1828,7 +1817,7 @@ class _HeroSectionState extends State<_HeroSection> {
 
                       // 2. Check Translated Match
                       final cityKey = option.toLowerCase().replaceAll(' ', '_');
-                      final translated = lp.translate(cityKey);
+                      final translated = cityKey;
                       return translated.toLowerCase().contains(query);
                     });
                   },
@@ -1851,10 +1840,7 @@ class _HeroSectionState extends State<_HeroSection> {
                               // Translate city name
                               final cityKey =
                                   option.toLowerCase().replaceAll(' ', '_');
-                              final translatedOption =
-                                  Provider.of<LanguageProvider>(context,
-                                          listen: false)
-                                      .translate(cityKey);
+                              final translatedOption = cityKey;
 
                               return ListTile(
                                 title: Text(translatedOption,
@@ -1911,7 +1897,6 @@ class _HeroSectionState extends State<_HeroSection> {
   }
 
   Widget _buildMobileSearch(bool isDark) {
-    final lp = Provider.of<LanguageProvider>(context);
     return _AnimateFadeInUp(
       delay: const Duration(milliseconds: 200),
       child: Material(
@@ -1934,8 +1919,8 @@ class _HeroSectionState extends State<_HeroSection> {
               _buildSearchInput(
                 controller: widget.originController,
                 icon: Icons.my_location,
-                label: lp.translate('origin'),
-                hint: lp.translate('where_from'),
+                label: "Origin",
+                hint: "Where from?",
                 focusNode: widget.originFocusNode,
                 isLast: false,
                 isDark: isDark,
@@ -1944,8 +1929,8 @@ class _HeroSectionState extends State<_HeroSection> {
               _buildSearchInput(
                 controller: widget.destinationController,
                 icon: Icons.navigation,
-                label: lp.translate('destination'),
-                hint: lp.translate('where_to'),
+                label: "Destination",
+                hint: "Where to?",
                 focusNode: widget.destinationFocusNode,
                 isLast: false,
                 isDark: isDark,
@@ -1967,7 +1952,7 @@ class _HeroSectionState extends State<_HeroSection> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(lp.translate('departure_date'),
+                          Text("Departure Date",
                               style: TextStyle(
                                   fontSize: 12,
                                   color: isDark
@@ -2018,7 +2003,7 @@ class _HeroSectionState extends State<_HeroSection> {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        lp.translate('bulk_booking'),
+                        "Bulk Booking",
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w600,
@@ -2062,8 +2047,8 @@ class _HeroSectionState extends State<_HeroSection> {
                                   widget.destinationController.text
                                       .toLowerCase()
                                       .trim())
-                          ? lp.translate('select_different_cities')
-                          : lp.translate('search_mobile'),
+                          ? "select_different_cities"
+                          : "search_mobile",
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
@@ -2113,8 +2098,7 @@ class _HeroSectionState extends State<_HeroSection> {
                   optionsBuilder: (TextEditingValue textEditingValue) {
                     final tripCtrl =
                         Provider.of<TripController>(context, listen: false);
-                    final lp =
-                        Provider.of<LanguageProvider>(context, listen: false);
+                    // final lp removed
                     final cities = tripCtrl.availableCities;
 
                     if (textEditingValue.text.isEmpty) {
@@ -2128,7 +2112,7 @@ class _HeroSectionState extends State<_HeroSection> {
 
                       // 2. Check Translated Match
                       final cityKey = option.toLowerCase().replaceAll(' ', '_');
-                      final translated = lp.translate(cityKey);
+                      final translated = cityKey;
                       return translated.toLowerCase().contains(query);
                     });
                   },
@@ -2178,10 +2162,7 @@ class _HeroSectionState extends State<_HeroSection> {
                               final String option = options.elementAt(index);
                               final cityKey =
                                   option.toLowerCase().replaceAll(' ', '_');
-                              final translatedOption =
-                                  Provider.of<LanguageProvider>(context,
-                                          listen: false)
-                                      .translate(cityKey);
+                              final translatedOption = cityKey;
 
                               return InkWell(
                                 onTap: () {
@@ -2222,7 +2203,6 @@ class _FeaturesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lp = Provider.of<LanguageProvider>(context);
     return _AnimateFadeInUp(
       delay: const Duration(milliseconds: 400),
       child: Center(
@@ -2236,29 +2216,33 @@ class _FeaturesSection extends StatelessWidget {
                       Expanded(
                         child: _FeatureItem(
                           icon: Icons.bolt,
-                          title: lp.translate('fast_booking'),
-                          description: lp.translate('fast_booking_desc'),
+                          title: "Instant Booking",
+                          description:
+                              "Book your tickets in seconds with our streamlined process.",
                         ),
                       ),
                       Expanded(
                         child: _FeatureItem(
                           icon: Icons.shield_outlined,
-                          title: lp.translate('secure_payments'),
-                          description: lp.translate('secure_payments_desc'),
+                          title: "Secure Payments",
+                          description:
+                              "Your transactions are protected with bank-grade security.",
                         ),
                       ),
                       Expanded(
                         child: _FeatureItem(
                           icon: Icons.location_on_outlined,
-                          title: lp.translate('live_tracking'),
-                          description: lp.translate('live_tracking_desc'),
+                          title: "Live Tracking",
+                          description:
+                              "Track your bus in real-time and share your trip status.",
                         ),
                       ),
                       Expanded(
                         child: _FeatureItem(
                           icon: Icons.support_agent,
-                          title: lp.translate('support_24_7'),
-                          description: lp.translate('support_desc'),
+                          title: "24/7 Support",
+                          description:
+                              "We are here to help you anytime, anywhere, round the clock.",
                         ),
                       ),
                     ],
@@ -2423,8 +2407,6 @@ class _PopularDestinationsGridState extends State<_PopularDestinationsGrid> {
 
   @override
   Widget build(BuildContext context) {
-    final lp = Provider.of<LanguageProvider>(context);
-
     // If we have few items, don't auto-scroll excessively
     if (widget.destinations.length < 4) {
       _autoScroll = false;
@@ -2445,7 +2427,7 @@ class _PopularDestinationsGridState extends State<_PopularDestinationsGrid> {
                   children: [
                     Expanded(
                       child: Text(
-                        lp.translate('popular_destinations'),
+                        "popular_destinations",
                         style: const TextStyle(
                           fontFamily: 'Outfit',
                           fontSize: 24, // Reduced font size
@@ -2541,7 +2523,6 @@ class _DestinationCardState extends State<_DestinationCard> {
 
   @override
   Widget build(BuildContext context) {
-    final lp = Provider.of<LanguageProvider>(context);
     // Derive keys from city name (e.g. "Colombo" -> "colombo", "colombo_desc")
     final cityKey = widget.city.toLowerCase().replaceAll(' ', '_');
     final descKey = "${cityKey}_desc";
@@ -2625,9 +2606,7 @@ class _DestinationCardState extends State<_DestinationCard> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      lp.translate(cityKey) == cityKey
-                          ? widget.city
-                          : lp.translate(cityKey),
+                      cityKey == cityKey ? widget.city : cityKey,
                       style: const TextStyle(
                         fontFamily: 'Outfit',
                         fontSize: 24,
@@ -2659,9 +2638,7 @@ class _DestinationCardState extends State<_DestinationCard> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            lp.translate(descKey) == descKey
-                                ? widget.description
-                                : lp.translate(descKey),
+                            descKey == descKey ? widget.description : descKey,
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
