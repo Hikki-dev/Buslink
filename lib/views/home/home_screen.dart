@@ -2054,7 +2054,7 @@ class _HeroSectionState extends State<_HeroSection> {
                                       .toLowerCase()
                                       .trim())
                           ? "select_different_cities"
-                          : "search_mobile",
+                          : "Search Buses",
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                 ),

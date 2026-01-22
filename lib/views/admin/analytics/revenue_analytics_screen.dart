@@ -208,10 +208,9 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
 
         String routeKey = "$from - $to";
 
-        // FILTER UNKNOWN ROUTES
-        if (!routeKey.contains('Unknown') && !routeKey.contains('?')) {
-          routeRevenue[routeKey] = (routeRevenue[routeKey] ?? 0) + amount;
-        }
+        // ALLOW ALL ROUTES (Even if Unknown)
+        // This ensures the "Net Revenue" matches what is shown in the table.
+        routeRevenue[routeKey] = (routeRevenue[routeKey] ?? 0) + amount;
       }
     }
 

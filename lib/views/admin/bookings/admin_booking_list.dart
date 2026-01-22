@@ -317,13 +317,15 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
 
   Widget _buildBookingTile(Map<String, dynamic> data, String id) {
     // Helper to build tile and keep build method clean
-    final status = (data['status'] ?? 'Unknown').toString().toLowerCase();
+    // Normalize status to lowercase for comparison
+    final statusNorm = (data['status'] ?? 'Unknown').toString().toLowerCase();
     Color statusColor = Colors.grey;
-    if (status == 'Confirmed') statusColor = Colors.green;
-    if (status == 'cancelled') statusColor = Colors.red;
-    if (status == 'completed') statusColor = Colors.blue;
-    if (status == 'Refund Requested') statusColor = Colors.orange;
-    if (status == 'refunded') statusColor = Colors.purple;
+    if (statusNorm == 'confirmed') statusColor = Colors.green;
+    if (statusNorm == 'cancelled') statusColor = Colors.red;
+    if (statusNorm == 'completed') statusColor = Colors.blue;
+    if (statusNorm == 'refund_requested' || statusNorm == 'refund requested')
+      statusColor = Colors.orange;
+    if (statusNorm == 'refunded') statusColor = Colors.purple;
 
     final tripData = data['tripData'] as Map<String, dynamic>? ?? {};
     final fromCity = tripData['fromCity'] ??
@@ -414,7 +416,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                 decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6)),
-                child: Text(status.toUpperCase(),
+                child: Text(statusNorm.replaceAll('_', ' ').toUpperCase(),
                     style: TextStyle(
                         fontSize: 10, // Reduced from 11
                         color: statusColor,
