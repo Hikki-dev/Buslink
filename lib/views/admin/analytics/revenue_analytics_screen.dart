@@ -226,11 +226,11 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
           'dest'
         ];
 
-        from = getString(tripData, outputKeys);
+        String from = getString(tripData, outputKeys);
         if (from.isEmpty) from = getString(data, outputKeys);
         if (from.isEmpty) from = '?';
 
-        to = getString(tripData, destKeys);
+        String to = getString(tripData, destKeys);
         if (to.isEmpty) to = getString(data, destKeys);
         if (to.isEmpty) to = '?';
 
