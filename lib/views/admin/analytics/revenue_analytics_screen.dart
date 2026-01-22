@@ -305,9 +305,19 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
               child: Text('No revenue data for this period'))); // Fixed
     }
     final keys = daily.keys.toList()..sort();
-    final maxVal = daily.values.isNotEmpty
+    double maxVal = daily.values.isNotEmpty
         ? daily.values.reduce((a, b) => a > b ? a : b)
         : 1.0;
+    double minVal = daily.values.isNotEmpty
+        ? daily.values.reduce((a, b) => a < b ? a : b)
+        : 0.0;
+
+    // Normalize Range
+    if (maxVal < 0) maxVal = 0; // If all are negative, max is 0 (baseline)
+    if (minVal > 0) minVal = 0; // If all positive, min is 0 (baseline)
+
+    double range = maxVal - minVal;
+    if (range == 0) range = 1000; // Prevent div/0
 
     return SizedBox(
       height: 250,
@@ -320,20 +330,22 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
         final double plotW = w - xStart;
         final double plotH = h - yBottom;
 
+        // Calculate zero line position (ratio from bottom)
+        // val = min + (ratio * range)  => ratio = (val - min) / range
+        // zeroRatio = (0 - min) / range
+        double zeroRatio = (0 - minVal) / range;
+        double zeroY = yBottom + (zeroRatio * plotH);
+
         return Stack(
           children: [
-            // Grid Lines
-            Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(5, (index) {
-                return Container(
-                  height: 1,
-                  color: Colors.grey.withValues(alpha: 0.1),
-                );
-              }),
+            // Zero Line (if visible)
+            Positioned(
+              bottom: zeroY,
+              left: xStart,
+              right: 0,
+              child: Container(
+                  height: 2, color: Colors.grey.withValues(alpha: 0.3)),
             ),
-
-            // Text("Revenue Scatter", style: TextStyle(color: Colors.grey)),
 
             // Dots
             ...List.generate(keys.length, (index) {
@@ -346,10 +358,9 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
                       (plotW - 20) +
                   10;
 
-              // Y Position: Relative to max value
-              // Avoid division by zero if maxVal is 0
-              final double y =
-                  yBottom + ((maxVal > 0 ? val / maxVal : 0) * (plotH - 20));
+              // Y Position: Relative to Range
+              final double ratio = (val - minVal) / range;
+              final double y = yBottom + (ratio * plotH);
 
               return Positioned(
                 bottom: y,
@@ -360,12 +371,13 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor,
+                      color: val >= 0 ? AppTheme.primaryColor : Colors.red,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          color: (val >= 0 ? AppTheme.primaryColor : Colors.red)
+                              .withValues(alpha: 0.3),
                           blurRadius: 6,
                           spreadRadius: 2,
                         )
@@ -376,7 +388,7 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
               );
             }),
 
-            // X Axis Labels (Sampled to avoid overcrowding)
+            // X Axis Labels (Sampled)
             Positioned(
               bottom: 0,
               left: xStart,

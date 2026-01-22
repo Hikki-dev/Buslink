@@ -694,7 +694,11 @@ class FirestoreService {
         .doc(userId)
         .collection('favorite_routes')
         .snapshots()
-        .map((snap) => snap.docs.map((d) => d.data()).toList());
+        .map((snap) => snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList());
   }
 
   Future<void> toggleRouteFavorite(String userId, String from, String to,

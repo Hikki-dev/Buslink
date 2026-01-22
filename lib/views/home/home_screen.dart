@@ -26,6 +26,7 @@ import '../layout/app_footer.dart';
 import '../layout/notifications_screen.dart';
 import '../tracking/track_bus_screen.dart'; // Added
 import '../../data/destinations_data.dart';
+import 'widgets/news_carousel.dart';
 
 // Mock Data for Popular Destinatinos
 // Updated Popular Destinations with High Quality Images
@@ -434,6 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 8),
                       ],
                     ),
+
                   SliverToBoxAdapter(
                     child: _HeroSection(
                       isDesktop: isDesktop,
@@ -459,6 +461,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       isAdminView: widget.isAdminView,
                     ),
                   ),
+
+                  // NEWS CAROUSEL SECTION
+                  const NewsCarousel(),
+
                   // --- ONGOING TRIPS & FAVORITES SECTION ---
                   StreamBuilder<User?>(
                       stream: FirebaseAuth.instance.authStateChanges(),

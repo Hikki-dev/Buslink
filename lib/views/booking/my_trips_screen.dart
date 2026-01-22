@@ -204,7 +204,7 @@ class _TripsList extends StatelessWidget {
         case TripFilter.delayed:
           return status == 'delayed';
         case TripFilter.completed:
-          // Exclude cancelled/delayed from completed view?
+          // Completed if explicitly completed/arrived OR if date is in past (and not cancelled)
           if (status == 'cancelled' ||
               status == 'delayed' ||
               status == 'refunded') {
@@ -221,9 +221,9 @@ class _TripsList extends StatelessWidget {
               status == 'arrived') {
             return false;
           }
-          return tripDate.isAfter(now) ||
-              status == 'scheduled' ||
-              status == 'Confirmed';
+          // Strict Future Check for active scheduled trips
+          // If status is 'scheduled' but date is past, accept it as 'completed' (missed), so FALSE here.
+          return tripDate.isAfter(now);
       }
     }).toList();
 
