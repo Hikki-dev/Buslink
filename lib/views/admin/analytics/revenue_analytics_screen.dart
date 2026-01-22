@@ -81,7 +81,13 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
               'COMPLETED',
               'ARRIVED',
               'DELAYED',
-              'ON_TIME' // Add any other active statuses
+              'ON_TIME',
+              'confirmed', // Lowercase fallback
+              'completed',
+              'arrived',
+              'delayed',
+              'onTime',
+              'on_time'
             ]).snapshots(),
             builder: (context, ticketSnap) {
               if (!ticketSnap.hasData) {
@@ -447,10 +453,10 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
                             fontSize: 16, fontWeight: FontWeight.w500)),
                   ),
                   Text("LKR ${e.value.toStringAsFixed(0)}",
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87)),
+                          color: Theme.of(context).textTheme.bodyLarge?.color)),
                 ],
               ),
             );

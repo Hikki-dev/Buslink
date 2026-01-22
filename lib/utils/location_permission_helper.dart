@@ -20,12 +20,14 @@ class LocationPermissionHelper {
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
-      // Show rationale BEFORE requesting if we want, or request then explain.
-      // The user wants "ensure it pops once again if the conductor chose not to allow location"
-      // So we generally Ask. safely.
+      if (context.mounted) {
+        // Show "Modern" Pre-Prompt
+        final bool userAgreed = await _showModernPermissionHeader(context);
+        if (!userAgreed) {
+          return false; // User declined our custom prompt
+        }
+      }
 
-      // We can show a pre-dialog here if we want to explain WHY before system dialog
-      // For now, let's request it.
       permission = await Geolocator.requestPermission();
 
       if (permission == LocationPermission.denied) {
@@ -126,5 +128,93 @@ class LocationPermissionHelper {
         ],
       ),
     );
+  }
+
+  static Future<bool> _showModernPermissionHeader(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: Theme.of(ctx).cardColor,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            contentPadding: EdgeInsets.zero,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header Image/Icon
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(ctx).primaryColor.withValues(alpha: 0.1),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: Icon(Icons.location_on_rounded,
+                      size: 64, color: Theme.of(ctx).primaryColor),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Text(
+                        "Location Access Required",
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(ctx).textTheme.bodyLarge?.color),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "BusLink needs your location to track trips and provide real-time updates to passengers. Please approve access to continue.",
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(ctx).textTheme.bodyMedium?.color),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text("Decline"),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(ctx).primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text("Approve",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            ),
+          ),
+        ) ??
+        false;
   }
 }

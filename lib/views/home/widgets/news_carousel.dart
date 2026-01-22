@@ -9,22 +9,22 @@ class NewsCarousel extends StatelessWidget {
     // Mock Promo Data
     final List<Map<String, dynamic>> news = [
       {
-        "title": "Welcome to BusLink! 🚍",
-        "subtitle": "Book your first trip now and get 10% off with code NEW10.",
+        "title": "Track Your Bus Live",
+        "subtitle": "See exactly where your bus is right now.",
         "color": Colors.blue.shade800,
-        "icon": Icons.celebration,
+        "icon": Icons.gps_fixed,
       },
       {
-        "title": "New Route: Colombo to Jaffna",
-        "subtitle": "Luxury semi-sleeper buses added. Check 'Upcoming'.",
+        "title": "Need Help?",
+        "subtitle": "Contact our 24/7 support team for assistance.",
+        "color": Colors.orange.shade800,
+        "icon": Icons.support_agent,
+      },
+      {
+        "title": "Manage Bookings",
+        "subtitle": "View or cancel your upcoming trips easily.",
         "color": Colors.purple.shade700,
-        "icon": Icons.map,
-      },
-      {
-        "title": "Safety First",
-        "subtitle": "All buses are sanitized before departure.",
-        "color": Colors.green.shade700,
-        "icon": Icons.health_and_safety,
+        "icon": Icons.confirmation_number,
       },
     ];
 
