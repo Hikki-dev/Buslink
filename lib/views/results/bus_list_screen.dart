@@ -25,7 +25,6 @@ import '../../services/firestore_service.dart';
 import 'package:rxdart/rxdart.dart'; // For Stream Merging
 import '../../services/location_service.dart'; // For Live Locations
 
-
 part 'parts/clock_widget.dart';
 
 class BusListScreen extends StatefulWidget {
@@ -271,7 +270,6 @@ class _BusListScreenState extends State<BusListScreen> {
 
   Widget _buildMobileLayout(BuildContext context, List<EnrichedTrip> trips,
       TripController controller) {
-    
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -324,7 +322,6 @@ class _BusListScreenState extends State<BusListScreen> {
     // Determine which city's weather is being shown
     final weatherCity = controller.toCity ?? controller.fromCity ?? "Colombo";
     final weatherCityKey = weatherCity.toLowerCase().replaceAll(' ', '_');
-    
 
     // ... (Weather UI same but translation for headers?)
     // No specific headers yet mostly dynamic data.
@@ -525,7 +522,7 @@ class _BusListScreenState extends State<BusListScreen> {
                               }
                             },
                             icon: const Icon(Icons.map, size: 16),
-                            label: Text("open_google_maps"),
+                            label: const Text("Open in Google Maps"),
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
                                 foregroundColor: Colors.black,
@@ -665,7 +662,8 @@ class _BusListScreenState extends State<BusListScreen> {
                 //     color: Colors.white,
                 //     borderRadius: BorderRadius.circular(4)
                 //   ),
-                Text("Bus", style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold)),
+                Text("Bus",
+                    style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold)),
                 // )
               ],
             ),
@@ -737,7 +735,6 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _buildResultsHeader(int count) {
-    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
@@ -779,11 +776,9 @@ class _BusListScreenState extends State<BusListScreen> {
               icon: const Icon(Icons.sort_rounded, size: 20),
               items: [
                 DropdownMenuItem(
-                    value: 'price_asc',
-                    child: Text("cheapest_first")),
+                    value: 'price_asc', child: Text("cheapest_first")),
                 DropdownMenuItem(
-                    value: 'time_asc',
-                    child: Text("earliest_first")),
+                    value: 'time_asc', child: Text("earliest_first")),
               ],
               onChanged: (v) => setState(() => _sortBy = v!),
             ),
@@ -794,7 +789,6 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _buildFilters(BuildContext context) {
-    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -822,7 +816,6 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _filterSection(String title, List<String> options) {
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -887,7 +880,6 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 
   Widget _buildEmptyState() {
-    
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 60),
@@ -1065,7 +1057,6 @@ class _BusTicketCardState extends State<_BusTicketCard> {
   }
 
   Widget _buildCardHeader(EnrichedTrip trip) {
-    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1136,7 +1127,6 @@ class _BusTicketCardState extends State<_BusTicketCard> {
   }
 
   Widget _buildTimeline(EnrichedTrip trip, Duration duration) {
-    
     return Row(
       children: [
         Column(
@@ -1193,8 +1183,6 @@ class _BusTicketCardState extends State<_BusTicketCard> {
 
   Widget _buildBookButton(EnrichedTrip trip, BuildContext context,
       TripController controller, bool isMobile, String priceLabel) {
-    
-
     // Filter Logic to translate "Days" if bulk
     String displayPrice = priceLabel;
     if (controller.isBulkBooking) {
@@ -1296,7 +1284,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
           const SizedBox(height: 8),
           Center(
             child: Text(
-                "${trip.totalSeats - trip.bookedSeats.length} ${"seats_left_suffix"}",
+                "${trip.totalSeats - trip.bookedSeats.length} seats left",
                 style: TextStyle(fontSize: 11, color: Colors.green.shade700)),
           )
         ],

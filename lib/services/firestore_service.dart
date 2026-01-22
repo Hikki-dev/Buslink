@@ -652,20 +652,32 @@ class FirestoreService {
         .map((snap) => snap.docs.map((d) => Ticket.fromFirestore(d)).toList());
   }
 
-  // --- FAVORITES ---
-  final String favoritesCollection = 'favorites';
+  // --- FAVORITES (Routes) ---
+  // We save the ROUTE (From/To), not the specific scheduled trip instance.
 
   Future<void> toggleFavorite(String userId, Trip trip) async {
+    // Create a unique ID for the route, e.g., "Colombo_Kandy"
+    final routeId = "${trip.originCity}_${trip.destinationCity}";
+
     final ref = _db
         .collection('users')
         .doc(userId)
-        .collection('favorites')
-        .doc(trip.id);
+        .collection(
+            'favorite_routes') // Changed from 'favorites' to match reader
+        .doc(routeId);
+
     final snap = await ref.get();
+
     if (snap.exists) {
       await ref.delete();
     } else {
-      await ref.set(trip.toJson());
+      // Save generic route info
+      await ref.set({
+        'fromCity': trip.originCity,
+        'toCity': trip.destinationCity,
+        'operatorName': trip.operatorName,
+        'addedAt': FieldValue.serverTimestamp(),
+      });
     }
   }
 
