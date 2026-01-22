@@ -48,7 +48,7 @@ class FavoritesScreen extends StatelessWidget {
             // Use theme background
             appBar: CustomAppBar(
               hideActions:
-                  !isDesktop, // Hide actions on mobile to prevent title truncation
+                  isDesktop, // Hide actions on Desktop (they are in Navbar), show on Mobile
               automaticallyImplyLeading: showBackButton && !isDesktop,
               leading: showBackButton && !isDesktop
                   ? BackButton(

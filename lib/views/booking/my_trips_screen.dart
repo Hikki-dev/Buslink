@@ -602,7 +602,8 @@ class _BoardingPassCard extends StatelessWidget {
                 if (statusStr != 'CANCELLED' &&
                     statusStr != 'COMPLETED' &&
                     statusStr != 'ARRIVED' &&
-                    statusStr != 'REFUNDED') ...[
+                    statusStr != 'REFUNDED' &&
+                    depTime.isAfter(DateTime.now())) ...[
                   const SizedBox(width: 12),
                   Expanded(
                     child: SizedBox(

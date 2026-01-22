@@ -98,10 +98,7 @@ class NotificationService {
         await _firebaseMessaging.getNotificationSettings();
 
     // Android 13+ Local Notification Permission
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<
-            fln.AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
+    // We do NOT request it here immediately. We wait for user to click "Allow".
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
@@ -109,8 +106,9 @@ class NotificationService {
         print('User already granted permission (Loop Prevention)');
       }
       return;
-    } else {
-      if (kDebugMode) print('User declined or has not accepted permission');
+    } else if (settings.authorizationStatus == AuthorizationStatus.denied) {
+      // If denied, maybe show rationale? But for now, respect decision or show custom dialog if we really want to push.
+      // User complained "asking them 2wice".
     }
 
     if (context.mounted) {
