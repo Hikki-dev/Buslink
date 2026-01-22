@@ -121,7 +121,11 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                     children: [
                       Flexible(
                         child: Text(
-                          refund.email ?? 'N/A',
+                          refund.email ??
+                              (refund.userData != null
+                                  ? refund.userData!['email']?.toString()
+                                  : null) ??
+                              'N/A',
                           textAlign: TextAlign.end,
                           style: const TextStyle(fontSize: 16),
                         ),

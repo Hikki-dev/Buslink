@@ -285,8 +285,12 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                     Text(refund.passengerName,
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16)),
-                    if (refund.email != null)
-                      Text(refund.email!,
+                    if (refund.email != null ||
+                        refund.userData?['email'] != null)
+                      Text(
+                          refund.email ??
+                              refund.userData?['email']?.toString() ??
+                              '',
                           style: TextStyle(
                               fontSize: 12, color: Colors.grey.shade600)),
                     const SizedBox(height: 4),

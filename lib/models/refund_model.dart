@@ -25,6 +25,7 @@ class RefundRequest {
   final String passengerName;
   final String? passengerPhone; // Added phone
   final String? email; // Added email field
+  final Map<String, dynamic>? userData; // Added userData metadata
   final DateTime requestedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -54,6 +55,7 @@ class RefundRequest {
     required this.passengerName,
     this.passengerPhone,
     this.email,
+    this.userData,
     required this.requestedAt,
     required this.createdAt,
     required this.updatedAt,
@@ -82,6 +84,7 @@ class RefundRequest {
       'passengerName': passengerName,
       'passengerPhone': passengerPhone,
       'email': email,
+      'userData': userData,
       'requestedAt': Timestamp.fromDate(requestedAt),
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
@@ -113,6 +116,7 @@ class RefundRequest {
       passengerName: map['passengerName'] ?? 'Unknown',
       passengerPhone: map['passengerPhone'] ?? map['passengerMobile'],
       email: map['email'] ?? map['passengerEmail'],
+      userData: map['userData'],
       requestedAt:
           (map['requestedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),

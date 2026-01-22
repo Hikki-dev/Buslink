@@ -232,6 +232,7 @@ class Ticket {
   final String? paymentIntentId;
   final String? passengerEmail;
   final String? fcmToken; // Added to allow push without User read access
+  final Map<String, dynamic>? userData; // Added userData metadata
 
   Ticket({
     required this.ticketId,
@@ -248,6 +249,7 @@ class Ticket {
     this.shortId,
     this.paymentIntentId,
     this.fcmToken,
+    this.userData,
   });
 
   factory Ticket.fromMap(Map<String, dynamic> data, String id) {
@@ -269,6 +271,7 @@ class Ticket {
       shortId: data['shortId'],
       paymentIntentId: data['paymentIntentId'],
       fcmToken: data['fcmToken'],
+      userData: data['userData'],
     );
   }
 
@@ -299,6 +302,7 @@ class Ticket {
       'shortId': shortId,
       'paymentIntentId': paymentIntentId,
       'fcmToken': fcmToken,
+      'userData': userData,
     };
   }
 }

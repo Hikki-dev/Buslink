@@ -134,6 +134,32 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
       final refundAmt = calc['refundAmount']!;
       final fee = calc['cancellationFee']!;
 
+      // 2. Resolve Robust User Data (Profile > Ticket > Auth)
+      Map<String, dynamic> resolvedUserData = widget.ticket.userData ?? {};
+      try {
+        final profileDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.ticket.userId)
+            .get();
+        if (profileDoc.exists) {
+          resolvedUserData = profileDoc.data()!;
+        }
+      } catch (e) {
+        debugPrint("Warning: Could not fetch profile for refund: $e");
+      }
+
+      final String pName = resolvedUserData['displayName'] ??
+          resolvedUserData['name'] ??
+          widget.ticket.passengerName;
+      final String pEmail = resolvedUserData['email'] ??
+          widget.ticket.passengerEmail ??
+          currentUser?.email ??
+          '';
+      final String pPhone = resolvedUserData['phoneNumber'] ??
+          resolvedUserData['phone'] ??
+          widget.ticket.passengerPhone ??
+          'N/A';
+
       // Generate ID first
       final newDocRef = FirebaseFirestore.instance.collection('refunds').doc();
 
@@ -143,10 +169,14 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
         bookingId: widget.ticket.ticketId,
         tripId: widget.trip.id,
         userId: widget.ticket.userId,
-        passengerName: widget.ticket.passengerName,
-        passengerPhone: widget.ticket.passengerPhone, // Added
-        email: widget.ticket.passengerEmail ??
-            currentUser?.email, // FIXED: Include email
+        passengerName: pName,
+        passengerPhone: pPhone,
+        email: pEmail,
+        userData: {
+          'name': pName,
+          'email': pEmail,
+          'phone': pPhone,
+        },
         reason: _selectedReason!,
         otherReasonText: _otherReasonController.text.trim(),
         status: RefundStatus.pending,
@@ -158,7 +188,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
         updatedAt: DateTime.now(),
         requestedAt: DateTime.now(),
         amountRequested: refundAmt,
-        paymentIntentId: widget.ticket.paymentIntentId, // Ensure this is passed
+        paymentIntentId: widget.ticket.paymentIntentId,
       );
 
       // Add timeout to creation as well

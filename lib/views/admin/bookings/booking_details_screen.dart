@@ -18,6 +18,10 @@ class BookingDetailsScreen extends StatelessWidget {
     // Extract data safely
     final tripData = data['tripData'] as Map<String, dynamic>? ?? {};
     final passengerName = data['passengerName'] ?? data['userName'] ?? 'N/A';
+    final userEmail = data['passengerEmail'] ??
+        data['userEmail'] ??
+        data['email'] ??
+        (data['userData'] != null ? data['userData']['email'] : null);
     // Removed unused passengerId
 
     final fromCity = tripData['fromCity'] ??
@@ -139,8 +143,8 @@ class BookingDetailsScreen extends StatelessWidget {
               icon: Icons.person,
               children: [
                 _buildInfoRow(context, "Name", passengerName),
-                if (data['userEmail'] != null)
-                  _buildCopyRow(context, "Email", data['userEmail']),
+                if (userEmail != null)
+                  _buildCopyRow(context, "Email", userEmail),
               ],
             ),
             const SizedBox(height: 12),
