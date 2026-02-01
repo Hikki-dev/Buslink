@@ -117,7 +117,10 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: FutureBuilder<DocumentSnapshot?>(
-                    future: (refund.email == null || refund.email!.isEmpty) &&
+                    future: (refund.email == null ||
+                                refund.email!.isEmpty ||
+                                refund.email == 'N/A' ||
+                                refund.email == 'null') &&
                             refund.userId.isNotEmpty &&
                             refund.userId != 'guest'
                         ? FirebaseFirestore.instance
@@ -127,18 +130,28 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                         : Future<DocumentSnapshot?>.value(null),
                     builder: (context, userSnap) {
                       String? email = refund.email;
-                      if (email == null || email.isEmpty) {
+                      if (email == null ||
+                          email.isEmpty ||
+                          email == 'N/A' ||
+                          email == 'null') {
                         email = refund.userData?['email']?.toString();
                       }
-                      if ((email == null || email.isEmpty) &&
+                      if ((email == null ||
+                              email.isEmpty ||
+                              email == 'N/A' ||
+                              email == 'null') &&
                           userSnap.hasData &&
                           userSnap.data!.exists) {
                         email = (userSnap.data!.data()
                             as Map<String, dynamic>)['email'];
                       }
 
-                      final displayEmail =
-                          (email != null && email.isNotEmpty) ? email : 'N/A';
+                      final displayEmail = (email != null &&
+                              email.isNotEmpty &&
+                              email != 'N/A' &&
+                              email != 'null')
+                          ? email
+                          : 'N/A';
 
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.end,

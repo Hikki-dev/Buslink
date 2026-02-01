@@ -38,6 +38,8 @@ Future<void> main() async {
   debugPrint("🚀 APP STARTUP: Version with Safer Spinner Removal 🚀");
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
+  const isTesting = bool.fromEnvironment('IS_TESTING');
+  debugPrint("🧪 IS_TESTING environment variable: $isTesting");
   runApp(const AppBootstrapper());
 }
 
@@ -113,9 +115,16 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
           InitializationSettings(
         android: initializationSettingsAndroid,
         iOS: initializationSettingsDarwin,
+        macOS: initializationSettingsDarwin,
       );
 
-      await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      if (!const bool.fromEnvironment('IS_TESTING')) {
+        await _flutterLocalNotificationsPlugin
+            .initialize(initializationSettings);
+      } else {
+        debugPrint(
+            "⏭️ Skipping FlutterLocalNotificationsPlugin.initialize() due to IS_TESTING=true");
+      }
 
       // Create High Importance Channel (Android)
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -206,21 +215,56 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
   Widget build(BuildContext context) {
     removeWebSpinner();
 
+    // 1. BLOCKING LOAD (Wait for Firebase/Env/Auth)
+    // This ensures MultiProvider is built only AFTER _authService is initialized.
+    // This fixes the race condition where StreamProvider was getting an empty stream.
+    if (!_isInitialized) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.directions_bus,
+                    size: 80, color: Color(0xFFE53935)),
+                const SizedBox(height: 16),
+                const Text(
+                  "BusLink",
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFE53935),
+                    letterSpacing: -1.0,
+                  ),
+                ),
+                const SizedBox(height: 40),
+                const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Color(0xFFE53935),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // 2. INITIALIZED: Render App with Providers
     return MultiProvider(
       providers: [
-        Provider<AuthService>(
-            create: (_) =>
-                _authService ??
-                AuthService()), // Fallback if _authService not set yet
+        Provider<AuthService>(create: (_) => _authService!), // Safe now
         Provider<FirestoreService>(create: (_) => FirestoreService()),
         StreamProvider<User?>(
           create: (context) {
-            // If authService isn't ready, we might return null stream?
-            // But we initialized it in _initialize() at step 2.
-            // If Optimistic, _authService might be null for a few ms until _initialize hits step 2.
-            // We should be careful.
-            if (_authService == null) return const Stream.empty();
-            return context.read<AuthService>().user;
+            // Safe to access user stream
+            return _authService!.user;
           },
           initialData: null,
         ),
@@ -250,50 +294,6 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
               return null;
             },
             debugShowCheckedModeBanner: false,
-            builder: (context, child) {
-              // 1. LOADING SCREEN (Only if NOT Initialized)
-              if (!_isInitialized) {
-                return Scaffold(
-                  backgroundColor:
-                      Theme.of(context).scaffoldBackgroundColor, // Theme aware
-                  body: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // 1. BRAND LOGO
-                        Icon(Icons.directions_bus,
-                            size: 80, color: Theme.of(context).primaryColor),
-                        const SizedBox(height: 16),
-                        // 2. BRAND NAME
-                        Text(
-                          "BusLink",
-                          style: TextStyle(
-                            fontFamily: 'Outfit',
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                            color: Theme.of(context).primaryColor,
-                            letterSpacing: -1.0,
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        // 3. MINIMALIST LOADER
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              // 2. OPTIMISTIC / REAL CHILD
-              return child!;
-            },
           );
         },
       ),
@@ -489,16 +489,16 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
         removeWebSpinner();
 
         // 4. Request Permissions (Android 13+ / iOS)
-        // We do this after profile load to ensure context is valid and user is "in".
-        // Use a slight delay to avoid conflicts with build? No, executed in builder but it's okay?
-        // Better to use microtask or just call it.
-        // NOTE: showDialog cannot be called during build. We need a PostFrameCallback.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          NotificationService.requestPermissionWithDialog(context);
-        });
+        if (!const bool.fromEnvironment('IS_TESTING')) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            NotificationService.requestPermissionWithDialog(context);
+          });
+        }
 
         // Save FCM Token
-        NotificationService.saveTokenToUser(widget.user.uid);
+        if (!const bool.fromEnvironment('IS_TESTING')) {
+          NotificationService.saveTokenToUser(widget.user.uid);
+        }
 
         switch (role) {
           case 'admin':

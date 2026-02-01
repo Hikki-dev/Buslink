@@ -727,7 +727,8 @@ class _AdminScreenState extends State<AdminScreen> {
           if (textEditingValue.text == '') {
             return const Iterable<String>.empty();
           }
-          final controller = Provider.of<TripController>(context);
+          final controller =
+              Provider.of<TripController>(context, listen: false);
           final cities = controller.availableCities.isNotEmpty
               ? controller.availableCities
               : kSriLankanCities;

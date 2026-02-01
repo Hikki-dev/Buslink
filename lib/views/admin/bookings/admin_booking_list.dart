@@ -20,7 +20,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
 
   // Status Options
   final List<String> _statusOptions = [
-    'Confirmed',
+    'confirmed',
     'cancelled',
     'completed',
     'refund_requested',
@@ -270,9 +270,11 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
 
                           // --- FILTERING (Client Side) ---
                           // Status
-                          final status = (data['status'] ?? 'Confirmed');
+                          final status = (data['status'] ?? 'confirmed')
+                              .toString()
+                              .toLowerCase();
                           if (_selectedStatus != null &&
-                              status != _selectedStatus) {
+                              status != _selectedStatus!.toLowerCase()) {
                             return const SizedBox.shrink();
                           }
 
@@ -363,8 +365,9 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
     if (statusNorm == 'confirmed') statusColor = Colors.green;
     if (statusNorm == 'cancelled') statusColor = Colors.red;
     if (statusNorm == 'completed') statusColor = Colors.blue;
-    if (statusNorm == 'refund_requested' || statusNorm == 'refund requested')
+    if (statusNorm == 'refund_requested' || statusNorm == 'refund requested') {
       statusColor = Colors.orange;
+    }
     if (statusNorm == 'refunded') statusColor = Colors.purple;
 
     // Helper to find string from multiple keys
@@ -372,7 +375,9 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
       for (var k in keys) {
         if (m[k] != null &&
             m[k].toString().isNotEmpty &&
-            m[k].toString() != 'N/A') return m[k].toString();
+            m[k].toString() != 'N/A') {
+          return m[k].toString();
+        }
       }
       return '';
     }
@@ -389,8 +394,9 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
       'OriginCity',
       'source'
     ]);
-    if (fromCity.isEmpty)
+    if (fromCity.isEmpty) {
       fromCity = getString(data, ['fromCity', 'originCity', 'origin', 'from']);
+    }
     if (fromCity.isEmpty) fromCity = 'N/A';
 
     String toCity = getString(tripData, [
@@ -402,9 +408,10 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
       'DestinationCity',
       'dest'
     ]);
-    if (toCity.isEmpty)
+    if (toCity.isEmpty) {
       toCity =
           getString(data, ['toCity', 'destinationCity', 'destination', 'to']);
+    }
     if (toCity.isEmpty) toCity = 'N/A';
 
     // Parse date safely
@@ -430,8 +437,11 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
       child: FutureBuilder<DocumentSnapshot?>(
         future: (data['passengerEmail'] == null ||
                     data['passengerEmail'].toString().isEmpty ||
+                    data['passengerEmail'].toString() == 'N/A' ||
+                    data['passengerEmail'].toString() == 'null' ||
                     pName == 'Unknown User' ||
-                    pName == 'Guest') &&
+                    pName == 'Guest' ||
+                    pName == 'N/A') &&
                 data['userId'] != null &&
                 data['userId'] != 'guest'
             ? FirebaseFirestore.instance
@@ -446,15 +456,22 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
           }
 
           final String displayName =
-              (pName == 'Unknown User' || pName == 'Guest') &&
+              (pName == 'Unknown User' || pName == 'Guest' || pName == 'N/A') &&
                       userProfile != null
                   ? (userProfile['displayName'] ?? userProfile['name'] ?? pName)
                   : pName;
 
-          final String displayEmail = data['passengerEmail'] ??
-              (data['userData'] != null ? data['userData']['email'] : null) ??
-              userProfile?['email'] ??
-              '';
+          String emailVal = data['passengerEmail']?.toString() ?? '';
+          if (emailVal.isEmpty || emailVal == 'N/A' || emailVal == 'null') {
+            emailVal = (data['userData'] != null
+                    ? data['userData']['email']?.toString()
+                    : null) ??
+                '';
+          }
+          if (emailVal.isEmpty || emailVal == 'N/A' || emailVal == 'null') {
+            emailVal = userProfile?['email']?.toString() ?? '';
+          }
+          final String displayEmail = emailVal;
           final String displayPhone = data['passengerPhone'] ??
               (data['userData'] != null ? data['userData']['phone'] : null) ??
               userProfile?['phoneNumber'] ??

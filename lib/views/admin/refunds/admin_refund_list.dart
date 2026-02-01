@@ -119,12 +119,11 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
 
     Query query = FirebaseFirestore.instance
         .collection('refunds')
+        .where('status', isEqualTo: _selectedStatus.name)
         .orderBy('createdAt', descending: true);
 
-    // Only filter by status when NOT searching
     if (!hasSearch) {
-      query = query.where('status', isEqualTo: _selectedStatus.name);
-      query = query.limit(50); // Reasonable limit for non-search view
+      query = query.limit(50);
     }
 
     return StreamBuilder<QuerySnapshot>(
@@ -155,20 +154,28 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
             final pEmail = (data['passengerEmail'] ?? data['email'] ?? '')
                 .toString()
                 .toLowerCase();
-            final pName =
-                (data['passengerName'] ?? '').toString().toLowerCase();
-            final pPhone = (data['passengerPhone'] ?? data['phone'] ?? '')
+            final udEmail = (data['userData'] != null
+                    ? (data['userData']['email'] ??
+                        data['userData']['passengerEmail'] ??
+                        '')
+                    : '')
                 .toString()
                 .toLowerCase();
 
-            final udEmail =
-                (data['userData'] != null && data['userData']['email'] != null)
-                    ? data['userData']['email'].toString().toLowerCase()
-                    : '';
-            final udName =
-                (data['userData'] != null && data['userData']['name'] != null)
-                    ? data['userData']['name'].toString().toLowerCase()
-                    : '';
+            final pName = (data['passengerName'] ?? data['name'] ?? '')
+                .toString()
+                .toLowerCase();
+            final udName = (data['userData'] != null
+                    ? (data['userData']['name'] ??
+                        data['userData']['displayName'] ??
+                        '')
+                    : '')
+                .toString()
+                .toLowerCase();
+
+            final pPhone = (data['passengerPhone'] ?? data['phone'] ?? '')
+                .toString()
+                .toLowerCase();
 
             return pEmail.contains(query) ||
                 udEmail.contains(query) ||
@@ -272,7 +279,11 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                 child: FutureBuilder<DocumentSnapshot?>(
                   future: (refund.email == null ||
                               refund.email!.isEmpty ||
-                              refund.passengerName == 'Guest') &&
+                              refund.email == 'N/A' ||
+                              refund.email == 'null' ||
+                              refund.passengerName == 'Guest' ||
+                              refund.passengerName == 'Unknown User' ||
+                              refund.passengerName == 'N/A') &&
                           refund.userId.isNotEmpty &&
                           refund.userId != 'guest'
                       ? FirebaseFirestore.instance
@@ -287,18 +298,26 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                           userSnap.data!.data() as Map<String, dynamic>?;
                     }
 
-                    final String name =
-                        (refund.passengerName == 'Guest' && userProfile != null)
-                            ? (userProfile['displayName'] ??
-                                userProfile['name'] ??
-                                refund.passengerName)
-                            : refund.passengerName;
+                    final String name = (refund.passengerName == 'Guest' ||
+                                refund.passengerName == 'Unknown User' ||
+                                refund.passengerName == 'N/A') &&
+                            userProfile != null
+                        ? (userProfile['displayName'] ??
+                            userProfile['name'] ??
+                            refund.passengerName)
+                        : refund.passengerName;
 
                     String? email = refund.email;
-                    if (email == null || email.isEmpty) {
+                    if (email == null ||
+                        email.isEmpty ||
+                        email == 'N/A' ||
+                        email == 'null') {
                       email = refund.userData?['email']?.toString();
                     }
-                    if ((email == null || email.isEmpty) &&
+                    if ((email == null ||
+                            email.isEmpty ||
+                            email == 'N/A' ||
+                            email == 'null') &&
                         userProfile != null) {
                       email = userProfile['email'];
                     }

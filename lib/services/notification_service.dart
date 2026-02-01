@@ -40,24 +40,34 @@ class NotificationService {
   static Future<String?> _getAccessToken() async {
     try {
       // 1. Load Base64 String from .env
-      final base64String = (dotenv.env['FIREBASE_SERVICE_ACCOUNT_BASE64'] ?? '')
-          .replaceAll(RegExp(r'\s+'), ''); // Sanitize newlines/spaces
+      final base64StringRaw =
+          dotenv.env['FIREBASE_SERVICE_ACCOUNT_BASE64'] ?? '';
+      final base64String = base64StringRaw
+          .replaceAll('\\n', '') // Remove literal \n
+          .replaceAll(RegExp(r'[\r\n\s\t]'), ''); // Remove all whitespace
+
       if (base64String.isEmpty) {
-        debugPrint(
-            "Push Warning: FIREBASE_SERVICE_ACCOUNT_BASE64 missing. Push will fail, but In-App will work.");
+        debugPrint("Push Warning: FIREBASE_SERVICE_ACCOUNT_BASE64 is empty.");
         return null;
       }
 
       // 2. Decode Base64 -> String -> Map
-      final jsonString = utf8.decode(base64.decode(base64String));
-      final serviceAccountMap = json.decode(jsonString);
+      try {
+        final decodedBytes = base64.decode(base64String);
+        final jsonString = utf8.decode(decodedBytes);
+        final serviceAccountMap = json.decode(jsonString);
 
-      final accountCredentials =
-          ServiceAccountCredentials.fromJson(serviceAccountMap);
-      final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
-      final client = await clientViaServiceAccount(accountCredentials, scopes);
-      final credentials = client.credentials;
-      return credentials.accessToken.data;
+        final accountCredentials =
+            ServiceAccountCredentials.fromJson(serviceAccountMap);
+        final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+        final client =
+            await clientViaServiceAccount(accountCredentials, scopes);
+        final credentials = client.credentials;
+        return credentials.accessToken.data;
+      } catch (e) {
+        debugPrint("Error decoding service account: $e");
+        return null;
+      }
     } catch (e) {
       debugPrint("Error getting access token (Env Load): $e");
       return null;
@@ -65,6 +75,11 @@ class NotificationService {
   }
 
   static Future<void> initialize() async {
+    if (const bool.fromEnvironment('IS_TESTING')) {
+      debugPrint(
+          "⏭️ Skipping NotificationService.initialize() due to IS_TESTING=true");
+      return;
+    }
     // 0. Initialize Local Notifications
     const fln.AndroidInitializationSettings initializationSettingsAndroid =
         fln.AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -94,6 +109,7 @@ class NotificationService {
 
   /// UX-Friendly Permission Request
   static Future<void> requestPermissionWithDialog(BuildContext context) async {
+    if (const bool.fromEnvironment('IS_TESTING')) return;
     NotificationSettings settings =
         await _firebaseMessaging.getNotificationSettings();
 
@@ -138,6 +154,7 @@ class NotificationService {
           ),
           actions: [
             TextButton(
+              key: const Key('permission_later_btn'),
               onPressed: () => Navigator.pop(ctx),
               child: const Text("Later"),
             ),
@@ -155,6 +172,7 @@ class NotificationService {
   }
 
   static Future<void> _triggerSystemRequest() async {
+    if (const bool.fromEnvironment('IS_TESTING')) return;
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
@@ -511,6 +529,7 @@ class NotificationService {
   /// Saves the FCM token to the user's Firestore profile
   static Future<void> saveTokenToUser(String userId) async {
     try {
+      if (const bool.fromEnvironment('IS_TESTING')) return;
       String? token;
 
       if (kIsWeb) {

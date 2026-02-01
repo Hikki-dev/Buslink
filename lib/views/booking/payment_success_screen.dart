@@ -136,7 +136,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       if (allSuccess && tickets.isNotEmpty) {
         // Identify tickets needing repair
         final ticketsToRepair = tickets.where((t) =>
-            t.tripData['fromCity'] == null || t.tripData['toCity'] == null);
+            (t.tripData['originCity'] ?? t.tripData['fromCity']) == null ||
+            (t.tripData['destinationCity'] ?? t.tripData['toCity']) == null);
 
         if (ticketsToRepair.isNotEmpty) {
           debugPrint(
@@ -150,8 +151,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
 
               if (tripDoc.exists) {
                 final tMap = tripDoc.data()!;
-                ticket.tripData['fromCity'] = tMap['fromCity'];
-                ticket.tripData['toCity'] = tMap['toCity'];
+                ticket.tripData['originCity'] =
+                    tMap['originCity'] ?? tMap['fromCity'];
+                ticket.tripData['destinationCity'] =
+                    tMap['destinationCity'] ?? tMap['toCity'];
                 ticket.tripData['busNumber'] = tMap['busNumber'];
                 ticket.tripData['platformNumber'] = tMap['platformNumber'];
                 ticket.tripData['departureTime'] =
@@ -186,7 +189,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
             userId: ticket.userId,
             title: "Booking Confirmed",
             body:
-                "Your trip to ${ticket.tripData['toCity'] ?? 'Destination'} is confirmed!",
+                "Your trip to ${ticket.tripData['destinationCity'] ?? ticket.tripData['toCity'] ?? 'Destination'} is confirmed!",
             type: "booking",
             relatedId: ticket.ticketId,
           );
@@ -283,7 +286,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                                   pw.Expanded(
                                       flex: 3,
                                       child: pw.Text(
-                                          "${tData['fromCity']} -> ${tData['toCity']}")),
+                                          "${tData['originCity'] ?? tData['fromCity']} -> ${tData['destinationCity'] ?? tData['toCity']}")),
                                   pw.Expanded(
                                       flex: 2,
                                       child: pw.Text(
@@ -657,8 +660,13 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                           future: Provider.of<TripController>(context,
                                   listen: false)
                               .isRouteFavorite(
-                            _verifiedTickets.first.tripData['fromCity'] ?? '',
-                            _verifiedTickets.first.tripData['toCity'] ?? '',
+                            _verifiedTickets.first.tripData['originCity'] ??
+                                _verifiedTickets.first.tripData['fromCity'] ??
+                                '',
+                            _verifiedTickets
+                                    .first.tripData['destinationCity'] ??
+                                _verifiedTickets.first.tripData['toCity'] ??
+                                '',
                           ),
                           builder: (context, snapshot) {
                             return AnimatedFavoriteButton(
@@ -667,9 +675,15 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                                 await Provider.of<TripController>(context,
                                         listen: false)
                                     .toggleRouteFavorite(
-                                  _verifiedTickets.first.tripData['fromCity'] ??
+                                  _verifiedTickets
+                                          .first.tripData['originCity'] ??
+                                      _verifiedTickets
+                                          .first.tripData['fromCity'] ??
                                       '',
-                                  _verifiedTickets.first.tripData['toCity'] ??
+                                  _verifiedTickets
+                                          .first.tripData['destinationCity'] ??
+                                      _verifiedTickets
+                                          .first.tripData['toCity'] ??
                                       '',
                                   operatorName: _verifiedTickets
                                       .first.tripData['operatorName'],

@@ -1214,7 +1214,6 @@ PODS:
     - Firebase/Functions (~> 12.6.0)
     - firebase_core
     - FlutterMacOS
-  - CocoaAsyncSocket (7.6.5)
   - file_selector_macos (0.0.1):
     - FlutterMacOS
   - Firebase/Auth (12.6.0):
@@ -1479,10 +1478,6 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - patrol (0.0.1):
-    - CocoaAsyncSocket (~> 7.6)
-    - Flutter
-    - FlutterMacOS
   - printing (1.0.0):
     - FlutterMacOS
   - PromisesObjC (2.4.0)
@@ -1510,7 +1505,6 @@ DEPENDENCIES:
   - mobile_scanner (from `Flutter/ephemeral/.symlinks/plugins/mobile_scanner/darwin`)
   - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
   - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
-  - patrol (from `Flutter/ephemeral/.symlinks/plugins/patrol/darwin`)
   - printing (from `Flutter/ephemeral/.symlinks/plugins/printing/macos`)
   - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sqflite_darwin (from `Flutter/ephemeral/.symlinks/plugins/sqflite_darwin/darwin`)
@@ -1522,7 +1516,6 @@ SPEC REPOS:
     - AppAuth
     - AppCheckCore
     - BoringSSL-GRPC
-    - CocoaAsyncSocket
     - Firebase
     - FirebaseAppCheckInterop
     - FirebaseAuth
@@ -1578,8 +1571,6 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos
   path_provider_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
-  patrol:
-    :path: Flutter/ephemeral/.symlinks/plugins/patrol/darwin
   printing:
     :path: Flutter/ephemeral/.symlinks/plugins/printing/macos
   shared_preferences_foundation:
@@ -1596,7 +1587,6 @@ SPEC CHECKSUMS:
   BoringSSL-GRPC: dded2a44897e45f28f08ae87a55ee4bcd19bc508
   cloud_firestore: b00d4e35fb96f2790a1e762c342492b66c660f1b
   cloud_functions: 5cf7843385bc9a92e891a443bc5ea00449c0da5c
-  CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   file_selector_macos: 3e56eaea051180007b900eacb006686fd54da150
   Firebase: a451a7b61536298fd5cbfe3a746fd40443a50679
   firebase_auth: 2f960f34c77f30d59ea8e642aff2d7876265f244
@@ -1633,7 +1623,6 @@ SPEC CHECKSUMS:
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   package_info_plus: 12f1c5c2cfe8727ca46cbd0b26677728972d9a5b
   path_provider_foundation: 0b743cbb62d8e47eab856f09262bb8c1ddcfe6ba
-  patrol: d49fcd015892f19189a4cec572f21f3c3358e761
   printing: 1dd6a1fce2209ec240698e2439a4adbb9b427637
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6

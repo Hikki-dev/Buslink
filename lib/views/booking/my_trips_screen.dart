@@ -535,7 +535,7 @@ class _BoardingPassCard extends StatelessWidget {
                         children: [
                           _infoBadge(
                               Icons.calendar_today,
-                              DateFormat('MMM d').format(depTime),
+                              DateFormat('MMM d, h:mm a').format(depTime),
                               subTextColor),
                           _infoBadge(
                               Icons.chair, "$seatsCount Seats", subTextColor),

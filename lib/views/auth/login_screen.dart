@@ -434,6 +434,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 24),
           ],
           _buildPremiumTextField(
+            fieldKey: const Key('login_email_field'),
             controller: _emailController,
             label: "Email",
             hint: "Your email address",
@@ -455,6 +456,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
           const SizedBox(height: 24),
           _buildPremiumTextField(
+            fieldKey: const Key('login_password_field'),
             controller: _passwordController,
             label: "Password",
             hint: "Your password",
@@ -513,6 +515,7 @@ class _LoginScreenState extends State<LoginScreen> {
           SizedBox(
             height: 54,
             child: ElevatedButton(
+              key: const Key('login_button'),
               onPressed: _isLoading ? null : _submitAuthForm,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF16161A),
@@ -582,6 +585,7 @@ class _LoginScreenState extends State<LoginScreen> {
     VoidCallback? onVisibilityToggle,
     String? Function(String?)? validator,
     VoidCallback? onFieldSubmitted, // NEW: Callback for Submit
+    Key? fieldKey,
   }) {
     final isDark = theme.brightness == Brightness.dark;
     return Column(
@@ -604,6 +608,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 color: isDark ? const Color(0xFF1E1E22) : Colors.grey.shade200),
           ),
           child: TextFormField(
+            key: fieldKey,
             controller: controller,
             obscureText: isPassword ? !isPasswordVisible : false,
             style: TextStyle(

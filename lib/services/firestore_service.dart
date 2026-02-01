@@ -728,7 +728,7 @@ class FirestoreService {
     final cleanTo = _normalizeCity(to);
     if (cleanFrom.isEmpty || cleanTo.isEmpty) return;
 
-    final id = "${cleanFrom}_${cleanTo}".replaceAll(' ', '_');
+    final id = "${cleanFrom}_$cleanTo".replaceAll(' ', '_');
     final ref = _db
         .collection('users')
         .doc(userId)
@@ -765,7 +765,7 @@ class FirestoreService {
     final cleanTo = _normalizeCity(toCity);
     if (cleanFrom.isEmpty || cleanTo.isEmpty) return false;
 
-    final routeId = "${cleanFrom}_${cleanTo}".replaceAll(' ', '_');
+    final routeId = "${cleanFrom}_$cleanTo".replaceAll(' ', '_');
     final snap = await _db
         .collection('users')
         .doc(userId)

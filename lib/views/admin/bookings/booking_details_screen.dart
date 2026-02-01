@@ -75,8 +75,11 @@ class BookingDetailsScreen extends StatelessWidget {
     return FutureBuilder<DocumentSnapshot?>(
         future: (userEmail == null ||
                     userEmail.toString().isEmpty ||
+                    userEmail.toString() == 'N/A' ||
+                    userEmail.toString() == 'null' ||
                     passengerName == 'Unknown User' ||
-                    passengerName == 'Guest') &&
+                    passengerName == 'Guest' ||
+                    passengerName == 'N/A') &&
                 data['userId'] != null &&
                 data['userId'] != 'guest'
             ? FirebaseFirestore.instance
@@ -90,17 +93,25 @@ class BookingDetailsScreen extends StatelessWidget {
             userProfile = userSnap.data!.data() as Map<String, dynamic>?;
           }
 
-          final String resolvedName =
-              (passengerName == 'Unknown User' || passengerName == 'Guest') &&
-                      userProfile != null
-                  ? (userProfile['displayName'] ??
-                      userProfile['name'] ??
-                      passengerName)
-                  : passengerName;
+          final String resolvedName = (passengerName == 'Unknown User' ||
+                      passengerName == 'Guest' ||
+                      passengerName == 'N/A') &&
+                  userProfile != null
+              ? (userProfile['displayName'] ??
+                  userProfile['name'] ??
+                  passengerName)
+              : passengerName;
 
-          final String finalEmail = (userEmail == null || userEmail.isEmpty)
-              ? (userProfile?['email'] ?? 'N/A')
-              : userEmail;
+          String? emailVal = userEmail?.toString();
+          if (emailVal == null ||
+              emailVal.isEmpty ||
+              emailVal == 'N/A' ||
+              emailVal == 'null') {
+            emailVal = userProfile?['email']?.toString();
+          }
+
+          final String finalEmail =
+              (emailVal == null || emailVal.isEmpty) ? 'N/A' : emailVal;
 
           return Scaffold(
             appBar: AppBar(

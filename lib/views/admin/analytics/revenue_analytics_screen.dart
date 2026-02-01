@@ -199,7 +199,9 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
           for (var k in keys) {
             if (m[k] != null &&
                 m[k].toString().isNotEmpty &&
-                m[k].toString() != 'N/A') return m[k].toString();
+                m[k].toString() != 'N/A') {
+              return m[k].toString();
+            }
           }
           return '';
         }

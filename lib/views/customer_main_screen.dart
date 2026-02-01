@@ -42,7 +42,9 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
       context.read<TripController>().initializePersistence();
       _setupNotificationListener();
       // Ask for Notification Permissions with Friendly Dialog
-      NotificationService.requestPermissionWithDialog(context);
+      if (!const bool.fromEnvironment('IS_TESTING')) {
+        NotificationService.requestPermissionWithDialog(context);
+      }
     });
   }
 

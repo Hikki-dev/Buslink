@@ -38,6 +38,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
   }
 
   void _startCamera() async {
+    if (const bool.fromEnvironment('IS_TESTING')) return;
     // 1. Give user feedback immediately
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
