@@ -7,7 +7,9 @@ import '../support/support_screen.dart';
 import '../auth/login_screen.dart';
 import '../customer_main_screen.dart';
 import 'notifications_screen.dart';
-import '../settings/account_settings_screen.dart';
+import 'package:buslink/views/widgets/language_selector.dart';
+import 'package:buslink/views/settings/account_settings_screen.dart';
+import 'package:buslink/l10n/app_localizations.dart';
 
 class DesktopNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -65,16 +67,23 @@ class DesktopNavBar extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _navItem(context, "Home", 0),
+                _navItem(context, AppLocalizations.of(context)!.navHome, 0),
                 if (user != null) ...[
-                  _navItem(context, "My Trips", 1),
-                  _navItem(context, "Favourites", 2),
-                  _navItem(context, "Profile", 3),
+                  _navItem(
+                      context, AppLocalizations.of(context)!.navMyTrips, 1),
+                  _navItem(
+                      context, AppLocalizations.of(context)!.navFavorites, 2),
+                  _navItem(
+                      context, AppLocalizations.of(context)!.navProfile, 3),
                 ],
               ],
             ),
 
             const SizedBox(width: 40),
+
+            // Language Selector
+            const LanguageSelector(),
+            const SizedBox(width: 20),
 
             // Notification Icon
             if (user != null) ...[
@@ -399,9 +408,9 @@ class DesktopNavBar extends StatelessWidget {
                         Border.all(color: AppTheme.primaryColor, width: 1.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    "Support",
-                    style: TextStyle(
+                  child: Text(
+                    AppLocalizations.of(context)!.navSupport,
+                    style: const TextStyle(
                         fontFamily: 'Inter',
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -430,7 +439,7 @@ class DesktopNavBar extends StatelessWidget {
                       Icon(Icons.logout, size: 18, color: Colors.red.shade700),
                       const SizedBox(width: 6),
                       Text(
-                        "Log Out",
+                        AppLocalizations.of(context)!.navLogout,
                         style: TextStyle(
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w600,
@@ -453,12 +462,13 @@ class DesktopNavBar extends StatelessWidget {
                 },
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.login, size: 18, color: AppTheme.primaryColor),
-                      SizedBox(width: 6),
+                      const Icon(Icons.login,
+                          size: 18, color: AppTheme.primaryColor),
+                      const SizedBox(width: 6),
                       Text(
-                        "Login",
+                        AppLocalizations.of(context)!.navLogin,
                         style: TextStyle(
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w600,

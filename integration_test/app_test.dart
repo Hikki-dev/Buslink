@@ -16,41 +16,41 @@ void main() {
       try {
         await tester.pumpAndSettle(duration ?? const Duration(seconds: 2));
       } catch (e) {
-        print('⚠️ pumpAndSettle timed out (safe warning), continuing...');
+        debugPrint('⚠️ pumpAndSettle timed out (safe warning), continuing...');
         // Force a single pump to clear any pending microtasks if possible
         await tester.pump();
       }
     }
 
-    print('🚀 TEST STARTING');
+    debugPrint('🚀 TEST STARTING');
     await initializeDateFormatting();
     await tester.pumpWidget(const app.AppBootstrapper());
-    print('🚀 APP STARTED (Pumped)');
+    debugPrint('🚀 APP STARTED (Pumped)');
     await pumpAndSettleSafe(null);
 
     // --- 0. CHECK & CLEAR EXISTING SESSION ---
-    print('🚀 [0/3] Checking for existing session...');
+    debugPrint('🚀 [0/3] Checking for existing session...');
 
     // Allow substantial time for AppBootstrapper and Firebase Init
     await pumpAndSettleSafe(const Duration(seconds: 5));
 
     // --- HANDLE PERMISSION DIALOG (Web/Mobile) ---
     if (find.byKey(const Key('permission_later_btn')).evaluate().isNotEmpty) {
-      print('⚠️ Found Permission Dialog. Dismissing...');
+      debugPrint('⚠️ Found Permission Dialog. Dismissing...');
       await tester.tap(find.byKey(const Key('permission_later_btn')));
       await pumpAndSettleSafe(null);
     }
 
     // If we are NOT on the Login Screen, we must logout
     if (find.byKey(const Key('login_email_field')).evaluate().isEmpty) {
-      print(
+      debugPrint(
           '⚠️ Not on Login Screen. Attempting to determine session and logout...');
 
       // 1. Try ADMIN Logout
       // Check for Admin specific widget (Trip Management) OR Admin Profile Key
       if (find.text('Trip Management').evaluate().isNotEmpty ||
           find.byKey(const Key('admin_profile_menu')).evaluate().isNotEmpty) {
-        print('   -> Detected Admin Session');
+        debugPrint('   -> Detected Admin Session');
         final adminProfileKey = find.byKey(const Key('admin_profile_menu'));
         if (adminProfileKey.evaluate().isNotEmpty) {
           await tester.tap(adminProfileKey);
@@ -69,7 +69,7 @@ void main() {
               .evaluate()
               .isNotEmpty ||
           find.text('Scanning').evaluate().isNotEmpty) {
-        print('   -> Detected Conductor Session');
+        debugPrint('   -> Detected Conductor Session');
         // Might be on dashboard or scanning
         if (find
             .byKey(const Key('conductor_logout_btn'))
@@ -87,7 +87,7 @@ void main() {
 
       // 3. Try USER Logout (Default Fallback)
       else {
-        print('   -> Detected User (or Unknown) Session');
+        debugPrint('   -> Detected User (or Unknown) Session');
         // Assuming we are on Home or similar. Need to go to Profile.
         // User Navbar has Icons.person_outline
         final profileIcon = find.byIcon(Icons.person_outline);
@@ -106,25 +106,25 @@ void main() {
             await tester.tap(logoutBtn);
             await pumpAndSettleSafe(const Duration(seconds: 2));
           } else {
-            print(
+            debugPrint(
                 "❌ Could not find Log Out button on presumed Profile screen.");
           }
         } else {
-          print("❌ Could not find Profile Icon to logout.");
+          debugPrint("❌ Could not find Profile Icon to logout.");
         }
       }
 
       // Final Setup Check
       await pumpAndSettleSafe(const Duration(seconds: 5));
     } else {
-      print('✅ Already on Login Screen');
+      debugPrint('✅ Already on Login Screen');
     }
 
     // Safety Pump
     await pumpAndSettleSafe(const Duration(seconds: 2));
 
     // --- 1. ADMIN LOGIN ---
-    print('🚀 [1/3] Starting Admin Login...');
+    debugPrint('🚀 [1/3] Starting Admin Login...');
 
     // Ensure we are on Login Screen
     expect(find.byKey(const Key('login_email_field')), findsOneWidget,
@@ -141,7 +141,7 @@ void main() {
     // Verify Admin Dashboard (Desktop says "Management", Mobile says "Trip Management")
     expect(find.textContaining('Management'), findsOneWidget);
     expect(find.textContaining('Management'), findsOneWidget);
-    print('✅ Admin Login Verified');
+    debugPrint('✅ Admin Login Verified');
     await binding.takeScreenshot('admin_dashboard');
 
     // --- HANDLE PERMISSION DIALOG (After Login) ---
@@ -150,7 +150,7 @@ void main() {
     while (
         find.byKey(const Key('permission_later_btn')).evaluate().isNotEmpty &&
             adminDialogAttempts < 5) {
-      print(
+      debugPrint(
           '⚠️ Found Permission Dialog (Admin - Attempt ${adminDialogAttempts + 1}). Dismissing...');
       await tester.tap(find.byKey(const Key('permission_later_btn')).last,
           warnIfMissed: false);
@@ -159,15 +159,15 @@ void main() {
     }
 
     // Admin Logout
-    print('🚀 [1/3] Logging out Admin...');
+    debugPrint('🚀 [1/3] Logging out Admin...');
     await tester.tap(find.byKey(const Key('admin_profile_menu')));
     await pumpAndSettleSafe(null);
     await tester.tap(find.text('Logout'));
     await pumpAndSettleSafe(null);
-    print('✅ Admin Logout Complete');
+    debugPrint('✅ Admin Logout Complete');
 
     // --- 2. CONDUCTOR LOGIN ---
-    print('🚀 [2/3] Starting Conductor Login...');
+    debugPrint('🚀 [2/3] Starting Conductor Login...');
 
     await tester.enterText(
         find.byKey(const Key('login_email_field')), 'conductor@buslink.com');
@@ -180,7 +180,7 @@ void main() {
     // Verify Conductor Dashboard
     expect(find.text('Conductor Dashboard'), findsOneWidget);
     expect(find.text('Conductor Dashboard'), findsOneWidget);
-    print('✅ Conductor Login Verified');
+    debugPrint('✅ Conductor Login Verified');
     await binding.takeScreenshot('conductor_dashboard');
 
     // --- HANDLE PERMISSION DIALOG (Conductor) ---
@@ -194,7 +194,7 @@ void main() {
             conductorDialogAttempts < 5) {
       // 1. Handle Location Dialog (Decline)
       if (find.text('Decline').evaluate().isNotEmpty) {
-        print('⚠️ Found Location Dialog (Conductor). Dismissing...');
+        debugPrint('⚠️ Found Location Dialog (Conductor). Dismissing...');
         await tester.tap(find.text('Decline').last);
         await pumpAndSettleSafe(const Duration(seconds: 1));
       }
@@ -203,7 +203,7 @@ void main() {
       if (find.byKey(const Key('permission_later_btn')).evaluate().isNotEmpty) {
         final int count =
             find.byKey(const Key('permission_later_btn')).evaluate().length;
-        print(
+        debugPrint(
             '⚠️ Found Notification Dialog (Conductor). Count: $count. Dismissing...');
         final target = find.byKey(const Key('permission_later_btn')).last;
         await tester.ensureVisible(target);
@@ -214,21 +214,21 @@ void main() {
     }
 
     // Conductor Logout
-    print('🚀 [2/3] Logging out Conductor...');
+    debugPrint('🚀 [2/3] Logging out Conductor...');
     await tester.ensureVisible(find.byKey(const Key('conductor_logout_btn')));
     await tester.tap(find.byKey(const Key('conductor_logout_btn')));
     await pumpAndSettleSafe(null);
-    print('✅ Conductor Logout Complete');
+    debugPrint('✅ Conductor Logout Complete');
 
     // --- 3. USER LOGIN ---
-    print('🚀 [3/3] Starting User Login...');
+    debugPrint('🚀 [3/3] Starting User Login...');
 
     // Wait for Logout to complete and Login screen to appear
     await pumpAndSettleSafe(const Duration(seconds: 4));
 
     // Check if we are actually on the login screen
     if (find.byKey(const Key('login_email_field')).evaluate().isEmpty) {
-      print(
+      debugPrint(
           "⚠️ Login Screen NOT FOUND after Conductor Logout. Dumping widget tree...");
       // In a real scenario we might dump the tree, but here we just wait longer or fail gracefully
       await pumpAndSettleSafe(const Duration(seconds: 5));
@@ -245,7 +245,7 @@ void main() {
 
     // Verify User Dashboard (Home Screen)
     expect(find.text('BusLink'), findsAtLeastNWidgets(1));
-    print('✅ User Login Verified');
+    debugPrint('✅ User Login Verified');
     await binding.takeScreenshot('user_dashboard');
 
     // --- HANDLE PERMISSION DIALOG (User) ---
@@ -255,7 +255,7 @@ void main() {
     while (
         find.byKey(const Key('permission_later_btn')).evaluate().isNotEmpty &&
             userDialogAttempts < 5) {
-      print(
+      debugPrint(
           '⚠️ Found Permission Dialog (User - Attempt ${userDialogAttempts + 1}). Dismissing...');
       await tester.tap(find.byKey(const Key('permission_later_btn')),
           warnIfMissed: false);
@@ -264,7 +264,7 @@ void main() {
     }
 
     // User Logout
-    print('🚀 [3/3] Logging out User...');
+    debugPrint('🚀 [3/3] Logging out User...');
     await tester.tap(find.byIcon(Icons.person_outline));
     await pumpAndSettleSafe(null);
 
@@ -276,11 +276,11 @@ void main() {
     await tester.tap(find.text('Log Out'));
     await pumpAndSettleSafe(const Duration(seconds: 2));
 
-    print('✅ User Logout Complete');
+    debugPrint('✅ User Logout Complete');
 
     // Final Screenshot
     await binding.takeScreenshot('final_state');
 
-    print('🎉 ALL TESTS PASSED!');
+    debugPrint('🎉 ALL TESTS PASSED!');
   });
 }

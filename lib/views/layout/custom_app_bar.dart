@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// 
+//
 import 'notifications_screen.dart';
+import '../widgets/language_selector.dart';
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
@@ -82,7 +83,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
 
               // Language Selector
-              // Language Selector Removed
+              const LanguageSelector(),
+              const SizedBox(width: 8),
 
               // Profile Dropdown (Middle)
               if (user != null)

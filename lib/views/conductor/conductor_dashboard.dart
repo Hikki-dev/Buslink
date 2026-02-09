@@ -16,6 +16,8 @@ import 'conductor_trip_management_screen.dart';
 import '../booking/bus_layout_widget.dart';
 import 'package:intl/intl.dart';
 import '../../views/auth/login_screen.dart';
+import 'package:buslink/l10n/app_localizations.dart';
+import 'package:buslink/views/widgets/language_selector.dart';
 import 'qr_scan_screen.dart';
 
 class ConductorDashboard extends StatefulWidget {
@@ -62,7 +64,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  "Conductor Dashboard",
+                  AppLocalizations.of(context)!.conductorDashboard,
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       fontWeight: FontWeight.bold,
@@ -75,7 +77,11 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           actions: [
-            // 1. Theme Selector
+            // 1. Language Selector
+            const LanguageSelector(),
+            const SizedBox(width: 8),
+
+            // 2. Theme Selector
             Consumer<ThemeController>(
               builder: (context, themeController, _) {
                 final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -138,8 +144,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                         }
                       },
                       icon: const Icon(Icons.logout, color: Colors.red),
-                      label: const Text("Log Out",
-                          style: TextStyle(
+                      label: Text(AppLocalizations.of(context)!.logout,
+                          style: const TextStyle(
                               fontFamily: 'Outfit',
                               fontWeight: FontWeight.bold,
                               color: Colors.red)),
@@ -188,14 +194,14 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             child: const Icon(Icons.search, size: 64, color: Colors.blue),
           ),
           const SizedBox(height: 24),
-          Text("Find Trip",
+          Text(AppLocalizations.of(context)!.findTrips,
               style: TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
-          Text("Manage your routes and passengers",
+          Text(AppLocalizations.of(context)!.manageSubtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontFamily: 'Inter',
@@ -210,8 +216,9 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                     context: context, builder: (_) => const FindTripDialog());
               },
               icon: const Icon(Icons.search),
-              label: const Text("Search Trips",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              label: Text(AppLocalizations.of(context)!.searchTrips,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
@@ -283,14 +290,14 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 size: 64, color: AppTheme.primaryColor),
           ),
           const SizedBox(height: 24),
-          Text("Scan Ticket",
+          Text(AppLocalizations.of(context)!.scanTicket,
               style: TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
-          Text("Scan a passenger ticket to verify boarding",
+          Text(AppLocalizations.of(context)!.scanTicketSubtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontFamily: 'Inter',
@@ -304,7 +311,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   style:
                       TextStyle(color: Theme.of(context).colorScheme.onSurface),
                   decoration: InputDecoration(
-                    labelText: "Manual Ticket ID",
+                    labelText: AppLocalizations.of(context)!.manualTicketId,
                     hintText: "e.g. TICKET-1234",
                     prefixIcon: const Icon(Icons.keyboard),
                     border: OutlineInputBorder(
@@ -338,7 +345,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                     }
                   },
                   icon: const Icon(Icons.camera_alt),
-                  label: const Text("Use Camera"),
+                  label: Text(AppLocalizations.of(context)!.useCamera),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     side: BorderSide(color: AppTheme.primaryColor),
@@ -350,7 +357,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                 child: ElevatedButton.icon(
                   onPressed: () => _verifyTicket(_ticketIdController.text),
                   icon: const Icon(Icons.check),
-                  label: const Text("Verify"),
+                  label: Text(AppLocalizations.of(context)!.verify),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,

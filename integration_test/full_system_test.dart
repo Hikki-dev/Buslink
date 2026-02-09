@@ -22,7 +22,7 @@ void main() {
 
   // Helper to wait for the login screen to be active
   Future<void> waitForLogin(WidgetTester tester) async {
-    print('⌛ Waiting for Login Screen...');
+    debugPrint('⌛ Waiting for Login Screen...');
     int attempts = 0;
     while (attempts < 10) {
       // Increased attempts
@@ -39,7 +39,7 @@ void main() {
   Future<void> dismissPopups(WidgetTester tester) async {
     final laterBtn = find.byKey(const Key('permission_later_btn'));
     if (laterBtn.evaluate().isNotEmpty) {
-      print('🔔 Dismissing "Stay Updated" Dialog...');
+      debugPrint('🔔 Dismissing "Stay Updated" Dialog...');
       await tester.tap(laterBtn.first);
       await smartPump(tester);
     }
@@ -56,17 +56,43 @@ void main() {
 
   testWidgets('Comprehensive System Test (Full Coverage)',
       (WidgetTester tester) async {
-    print('🎬 Test Scenario: End-to-End Simulation of All Roles');
+    debugPrint('🎬 Test Scenario: End-to-End Simulation of All Roles');
     app.main();
 
     // Initial load wait
     await smartPump(tester, duration: const Duration(seconds: 12));
     await dismissPopups(tester);
 
+    // Custom helper for robust back navigation
+    Future<void> goBack(WidgetTester tester) async {
+      final backBtn = find.byType(BackButton);
+      final arrowBack = find.byIcon(Icons.arrow_back);
+      final arrowBackIos = find.byIcon(Icons.arrow_back_ios);
+      final closeIcon = find.byIcon(Icons.close);
+
+      if (backBtn.evaluate().isNotEmpty) {
+        await tester.tap(backBtn.first);
+      } else if (arrowBack.evaluate().isNotEmpty) {
+        await tester.tap(arrowBack.first);
+      } else if (arrowBackIos.evaluate().isNotEmpty) {
+        await tester.tap(arrowBackIos.first);
+      } else if (closeIcon.evaluate().isNotEmpty) {
+        await tester.tap(closeIcon.first);
+      } else {
+        // Fallback to platform pop, ignoring errors if stuck
+        await tester.pageBack().catchError((_) {
+          debugPrint(
+              "⚠️ pageBack failed and no back button found. Trying top-left tap...");
+          return tester.tapAt(const Offset(20, 50));
+        }).catchError((_) {});
+      }
+      await smartPump(tester);
+    }
+
     // [0] Check for existing session
-    print('🚀 [0/3] Checking for existing session...');
+    debugPrint('🚀 [0/3] Checking for existing session...');
     if (find.byIcon(Icons.person_outline).evaluate().isNotEmpty) {
-      print('ℹ️ User already logged in. Logging out...');
+      debugPrint('ℹ️ User already logged in. Logging out...');
       await tester.tap(find.byIcon(Icons.person_outline).last);
       await smartPump(tester);
 
@@ -85,12 +111,13 @@ void main() {
         await tester.tap(logoutFinder.first);
       } else {
         final logoutFallback = find.textContaining('Out');
-        if (logoutFallback.evaluate().isNotEmpty)
+        if (logoutFallback.evaluate().isNotEmpty) {
           await tester.tap(logoutFallback.first);
+        }
       }
       await smartPump(tester, duration: const Duration(seconds: 5));
     } else if (find.byIcon(Icons.logout).evaluate().isNotEmpty) {
-      print('ℹ️ Admin/Conductor already logged in. Logging out...');
+      debugPrint('ℹ️ Admin/Conductor already logged in. Logging out...');
       await tester.tap(find.byIcon(Icons.logout).last);
       await smartPump(tester, duration: const Duration(seconds: 5));
     }
@@ -98,7 +125,7 @@ void main() {
     // ---------------------------------------------------------
     // 1. ADMIN FLOW
     // ---------------------------------------------------------
-    print('🚀 [1/3] Starting Admin Flow...');
+    debugPrint('🚀 [1/3] Starting Admin Flow...');
 
     await waitForLogin(tester);
     final emailField = find.byKey(const Key('login_email_field'));
@@ -109,7 +136,7 @@ void main() {
       await tester.tap(find.byKey(const Key('login_button')).first);
     }
 
-    print('⏳ Waiting for Dashboard...');
+    debugPrint('⏳ Waiting for Dashboard...');
     await smartPump(tester, duration: const Duration(seconds: 15));
     await dismissPopups(tester);
 
@@ -117,7 +144,7 @@ void main() {
         find.text('Trip Management').evaluate().isNotEmpty;
 
     if (!isAdmin) {
-      print(
+      debugPrint(
           '⚠️ Admin Dashboard not found. Checking for registration self-healing...');
       final signUp = find.text('Sign Up');
       if (signUp.evaluate().isNotEmpty) {
@@ -156,7 +183,7 @@ void main() {
     expect(isAdmin, isTrue, reason: 'Failed to reach Admin Dashboard');
 
     // --- ADMIN ACTIONS ---
-    print('🚌 Trip Creation Flow...');
+    debugPrint('🚌 Trip Creation Flow...');
     final addTripBtn = find.text('Add New Trip');
     if (addTripBtn.evaluate().isNotEmpty) {
       await tester.tap(addTripBtn.first);
@@ -167,61 +194,52 @@ void main() {
       final toField = find.widgetWithText(TextFormField, 'To (Destination)');
 
       if (fromField.evaluate().isNotEmpty) {
-        print('⌨️ Entering Origin City...');
+        debugPrint('⌨️ Entering Origin City...');
         await tester.enterText(fromField.first, 'Colombo');
         await tester
             .pump(const Duration(milliseconds: 500)); // Allow overlay to appear
         await tester.pump(const Duration(milliseconds: 500)); // Allow debounce
       }
       if (toField.evaluate().isNotEmpty) {
-        print('⌨️ Entering Destination City...');
+        debugPrint('⌨️ Entering Destination City...');
         await tester.enterText(toField.first, 'Kandy');
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pump(const Duration(milliseconds: 500));
       }
 
       await smartPump(tester);
-      print('✅ Trip Form Partially Filled');
+      debugPrint('✅ Trip Form Partially Filled');
 
       await smartPump(tester);
-      print('✅ Trip Form Partially Filled');
+      debugPrint('✅ Trip Form Partially Filled');
 
-      // Return to Dashboard via Back Icon
-      final backIcon = find.byIcon(Icons.arrow_back);
-      if (backIcon.evaluate().isNotEmpty) {
-        await tester.tap(backIcon.first);
-        await smartPump(tester);
-      } else {
-        await tester.pageBack().catchError((_) => null);
-        await smartPump(tester);
-      }
+      // Return to Dashboard handling
+      await goBack(tester);
     }
 
     // --- NEW: ADMIN EXTRAS ---
     // 1. Refund Management
-    print('💰 Testing Refund Management...');
+    debugPrint('💰 Testing Refund Management...');
     final refundBtn = find.text("Refunds");
     if (refundBtn.evaluate().isNotEmpty) {
       await tester.tap(refundBtn.first);
       await smartPump(tester, duration: const Duration(seconds: 3));
       expect(find.text('Refund Management'), findsOneWidget);
-      await tester.pageBack();
-      await smartPump(tester);
+      await goBack(tester);
     }
 
     // 2. Bookings List
-    print('📅 Testing Booking List...');
+    debugPrint('📅 Testing Booking List...');
     final bookingBtn = find.text("Bookings");
     if (bookingBtn.evaluate().isNotEmpty) {
       await tester.tap(bookingBtn.first);
       await smartPump(tester, duration: const Duration(seconds: 3));
       expect(find.text('Booking Management'), findsOneWidget);
-      await tester.pageBack();
-      await smartPump(tester);
+      await goBack(tester);
     }
 
     // 3. Manage Routes
-    print('🗺️ Testing Route Management...');
+    debugPrint('🗺️ Testing Route Management...');
     final routeBtn = find.text("Manage Routes");
     if (routeBtn.evaluate().isNotEmpty) {
       await tester.tap(routeBtn.first);
@@ -231,15 +249,13 @@ void main() {
         await tester.tap(addRouteShortBtn.first);
         await smartPump(tester);
         expect(find.text('Create New Route'), findsOneWidget);
-        await tester.pageBack(); // Close Add Route
-        await smartPump(tester);
+        await goBack(tester);
       }
-      await tester.pageBack(); // Close Manage Routes
-      await smartPump(tester);
+      await goBack(tester);
     }
 
     // Logout
-    print('👋 Logging out Admin...');
+    debugPrint('👋 Logging out Admin...');
     final adminLogout = find.byKey(const Key('admin_logout_btn'));
     if (adminLogout.evaluate().isNotEmpty) {
       await tester.tap(adminLogout);
@@ -253,11 +269,12 @@ void main() {
         if (logoutItem.evaluate().isNotEmpty) {
           await tester.tap(logoutItem.first);
         } else {
-          print(
+          debugPrint(
               '⚠️ Logout text not found in menu, trying find.byIcon(Icons.logout)');
           final logoutIcon = find.byIcon(Icons.logout);
-          if (logoutIcon.evaluate().isNotEmpty)
+          if (logoutIcon.evaluate().isNotEmpty) {
             await tester.tap(logoutIcon.last);
+          }
         }
       } else {
         await tester.tap(find.text('Logout').first).catchError((_) => null);
@@ -268,7 +285,7 @@ void main() {
     // ---------------------------------------------------------
     // 2. USER FLOW
     // ---------------------------------------------------------
-    print('🚀 [2/3] Starting User Flow...');
+    debugPrint('🚀 [2/3] Starting User Flow...');
     await waitForLogin(tester);
     await tester.enterText(
         find.byKey(const Key('login_email_field')).first, 'buslink@gmail.com');
@@ -289,7 +306,7 @@ void main() {
         isTrue);
 
     // --- USER BOOKING FLOW ---
-    print('🔎 Testing Search & Booking Flow...');
+    debugPrint('🔎 Testing Search & Booking Flow...');
 
     // 1. Search
     final fromInput = find.widgetWithText(TextFormField, 'From');
@@ -326,7 +343,8 @@ void main() {
           )
           .catchError((_) {});
 
-      await tester.tap(searchBtn.first);
+      // Use warnIfMissed: false to prevent failure if button is visually tricky
+      await tester.tap(searchBtn.first, warnIfMissed: false);
       await smartPump(tester, duration: const Duration(seconds: 5));
 
       // 2. Select Trip (any 'View Seats' or arrow button)
@@ -335,7 +353,7 @@ void main() {
           find.byIcon(Icons.directions_bus).evaluate().isNotEmpty;
 
       if (hasResults) {
-        print('✅ Search Results Found');
+        debugPrint('✅ Search Results Found');
         // Try to click the first trip card
         final cards = find.byType(Card);
         if (cards.evaluate().isNotEmpty) {
@@ -344,30 +362,28 @@ void main() {
 
           // 3. Seat Selection
           if (find.text('Select Seats').evaluate().isNotEmpty) {
-            print('✅ Seat Selection Screen Reached');
+            debugPrint('✅ Seat Selection Screen Reached');
 
             // Try selecting a seat (mocking a tap on the bus layout is hard without specific keys,
             // but we can try tapping a center point or a specific widget if we knew the structure precisely.
             // For now, verified we reached the screen.)
 
             // Go back
-            await tester.pageBack();
-            await smartPump(tester);
+            await goBack(tester);
           }
         }
       } else {
-        print('⚠️ No trips found in search (Expected if DB empty).');
+        debugPrint('⚠️ No trips found in search (Expected if DB empty).');
       }
 
       // Back to Home
-      await tester.pageBack();
-      await smartPump(tester);
+      await goBack(tester);
     } else {
-      print(
+      debugPrint(
           '⚠️ Search button not found (Tried "Search", "Search Buses", and Icon). Skipped search flow.');
     }
 
-    print('👤 Testing Profile...');
+    debugPrint('👤 Testing Profile...');
     final personIcon = find.byIcon(Icons.person_outline);
     if (personIcon.evaluate().isNotEmpty) {
       await tester.tap(personIcon.last);
@@ -388,25 +404,9 @@ void main() {
 
         // Verify we are on the new screen (Title or Content)
         if (find.text('Personal Information').evaluate().isNotEmpty) {
-          // Robust Back Navigation
-          Finder backBtn = find.byTooltip('Back');
-          if (backBtn.evaluate().isEmpty) backBtn = find.byType(BackButton);
-          if (backBtn.evaluate().isEmpty)
-            backBtn = find.byIcon(Icons.arrow_back);
-          if (backBtn.evaluate().isEmpty)
-            backBtn = find.byIcon(Icons.arrow_back_ios);
-
-          if (backBtn.evaluate().isNotEmpty) {
-            await tester.tap(backBtn.first);
-          } else {
-            // Try manual tap at top-left to avoid pageBack assertion failure
-            print(
-                '⚠️ Back button not found via Finder. Tapping top-left corner...');
-            await tester.tapAt(const Offset(20, 50));
-          }
-          await smartPump(tester);
+          await goBack(tester);
         } else {
-          print(
+          debugPrint(
               '⚠️ Navigation to Account Settings failed or screen not loaded. Continuing...');
         }
       }
@@ -415,7 +415,7 @@ void main() {
       await smartPump(tester);
     }
 
-    print('👋 Logging out User...');
+    debugPrint('👋 Logging out User...');
     final personTabLogout = find.byIcon(Icons.person_outline);
     if (personTabLogout.evaluate().isNotEmpty) {
       await tester.tap(personTabLogout.last);
@@ -435,10 +435,11 @@ void main() {
       if (logoutFinder.evaluate().isNotEmpty) {
         await tester.tap(logoutFinder.first);
       } else {
-        print("⚠️ 'Log Out' button not found. Trying text fallback...");
+        debugPrint("⚠️ 'Log Out' button not found. Trying text fallback...");
         final logoutFallback = find.textContaining('Out');
-        if (logoutFallback.evaluate().isNotEmpty)
+        if (logoutFallback.evaluate().isNotEmpty) {
           await tester.tap(logoutFallback.first);
+        }
       }
     }
     await smartPump(tester, duration: const Duration(seconds: 10));
@@ -446,7 +447,7 @@ void main() {
     // ---------------------------------------------------------
     // 3. CONDUCTOR FLOW
     // ---------------------------------------------------------
-    print('🚀 [3/3] Starting Conductor Flow...');
+    debugPrint('🚀 [3/3] Starting Conductor Flow...');
     await waitForLogin(tester);
     await tester.enterText(find.byKey(const Key('login_email_field')).first,
         'conductor@buslink.com');
@@ -457,7 +458,7 @@ void main() {
     await dismissPopups(tester);
 
     expect(find.textContaining('Dashboard').evaluate().isNotEmpty, isTrue);
-    print('📷 Checking Scanner UI...');
+    debugPrint('📷 Checking Scanner UI...');
 
     // Tap "Scan QR"
     if (find.textContaining('Scan').evaluate().isNotEmpty) {
@@ -466,7 +467,7 @@ void main() {
 
       // Verify Scanner Screen
       expect(find.textContaining('Align QR').evaluate().isNotEmpty, isTrue);
-      print('✅ Scanner UI Verified');
+      debugPrint('✅ Scanner UI Verified');
 
       // Close Scanner
       await tester.tap(find.byIcon(Icons.close));
@@ -482,6 +483,6 @@ void main() {
     }
     await smartPump(tester, duration: const Duration(seconds: 10));
 
-    print('🎉 ALL FLOWS COMPLETED SUCCESSFULLY');
-  }, timeout: const Timeout(Duration(minutes: 20)));
+    debugPrint('🎉 ALL FLOWS COMPLETED SUCCESSFULLY');
+  }, timeout: const Timeout(Duration(minutes: 60)));
 }

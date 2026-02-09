@@ -6,6 +6,8 @@ import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../utils/app_theme.dart';
+import '../../providers/language_provider.dart';
+import 'package:buslink/l10n/app_localizations.dart';
 
 import '../customer_main_screen.dart';
 import 'admin_screen.dart';
@@ -80,7 +82,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text('Management',
+                                      Text(
+                                          AppLocalizations.of(context)!
+                                              .management,
                                           style: GoogleFonts.outfit(
                                               fontSize: 34,
                                               height: 1.1,
@@ -88,7 +92,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                               color: AppTheme.primaryColor)),
                                       const SizedBox(height: 8),
                                       Text(
-                                          'Manage your routes, trips, and bookings.',
+                                          AppLocalizations.of(context)!
+                                              .manageSubtitle,
                                           style: GoogleFonts.inter(
                                               color: Theme.of(context)
                                                           .brightness ==
@@ -131,6 +136,52 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                                           ? Colors.white
                                                           : Colors.black87),
                                                   tooltip: "Toggle Theme",
+                                                );
+                                              },
+                                            ),
+                                            Consumer<LanguageProvider>(
+                                              builder: (context,
+                                                  languageProvider, _) {
+                                                // Check for null localizations (safety)
+                                                final localizations =
+                                                    AppLocalizations.of(
+                                                        context);
+                                                return PopupMenuButton<String>(
+                                                  icon: Icon(Icons.language,
+                                                      color: Theme.of(context)
+                                                                  .brightness ==
+                                                              Brightness.dark
+                                                          ? Colors.white
+                                                          : Colors.black87),
+                                                  tooltip: localizations
+                                                          ?.selectLanguage ??
+                                                      'Select Language',
+                                                  onSelected: (String code) {
+                                                    languageProvider
+                                                        .changeLanguage(code);
+                                                  },
+                                                  itemBuilder: (BuildContext
+                                                          context) =>
+                                                      <PopupMenuEntry<String>>[
+                                                    PopupMenuItem<String>(
+                                                      value: 'en',
+                                                      child: Text(localizations
+                                                              ?.english ??
+                                                          'English'),
+                                                    ),
+                                                    PopupMenuItem<String>(
+                                                      value: 'si',
+                                                      child: Text(localizations
+                                                              ?.sinhala ??
+                                                          'Sinhala'),
+                                                    ),
+                                                    PopupMenuItem<String>(
+                                                      value: 'ta',
+                                                      child: Text(localizations
+                                                              ?.tamil ??
+                                                          'Tamil'),
+                                                    ),
+                                                  ],
                                                 );
                                               },
                                             ),
@@ -185,7 +236,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                          'Manage your routes, trips, and bookings.',
+                                          AppLocalizations.of(context)!
+                                              .manageSubtitle,
                                           style: TextStyle(
                                               fontFamily: 'Inter',
                                               color: Theme.of(context)
@@ -206,7 +258,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           _buildMobileActionCard(
                                               context,
                                               Icons.add_circle_outline,
-                                              'Add New Trip',
+                                              AppLocalizations.of(context)!
+                                                  .addTrip,
                                               () => Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
@@ -218,7 +271,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           _buildMobileActionCard(
                                               context,
                                               Icons.alt_route,
-                                              'Add Route',
+                                              AppLocalizations.of(context)!
+                                                  .addRoute,
                                               () => Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
@@ -233,7 +287,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           _buildMobileActionCard(
                                               context,
                                               Icons.map_outlined,
-                                              'Manage Routes',
+                                              AppLocalizations.of(context)!
+                                                  .manageRoutes,
                                               () => Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
@@ -244,7 +299,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                               context,
                                               Icons
                                                   .confirmation_number_outlined,
-                                              'Bookings',
+                                              AppLocalizations.of(context)!
+                                                  .bookings,
                                               () => Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
@@ -333,14 +389,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           size: 64,
                                           color: Colors.grey.shade300),
                                       const SizedBox(height: 16),
-                                      Text('No Routes Found',
+                                      Text(
+                                          AppLocalizations.of(context)!
+                                              .noRoutesFound,
                                           style: TextStyle(
                                               fontFamily: 'Inter',
                                               fontSize: 16,
                                               color: Colors.grey
                                                   .withValues(alpha: 0.2))),
                                       const SizedBox(height: 8),
-                                      Text('Adjust filters to see results',
+                                      Text(
+                                          AppLocalizations.of(context)!
+                                              .adjustFilters,
                                           style: TextStyle(
                                               fontFamily: 'Inter',
                                               fontSize: 14,
@@ -373,7 +433,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           });
                                         },
                                         icon: const Icon(Icons.preview),
-                                        label: const Text('Preview App'),
+                                        label: Text(
+                                            AppLocalizations.of(context)!
+                                                .previewApp),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.white,
                                           foregroundColor: Colors.black,
@@ -425,7 +487,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             MaterialPageRoute(builder: (_) => const AdminScreen(trip: null)));
       },
       icon: const Icon(Icons.add),
-      label: Text("Add New Trip"),
+      label: Text(AppLocalizations.of(context)!.addTrip),
       style: ElevatedButton.styleFrom(
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
@@ -442,7 +504,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             MaterialPageRoute(builder: (_) => const RouteManagementScreen()));
       },
       icon: const Icon(Icons.alt_route),
-      label: Text("Manage Routes"),
+      label: Text(AppLocalizations.of(context)!.manageRoutes),
       style: ElevatedButton.styleFrom(
         backgroundColor: Theme.of(context).cardColor,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -460,7 +522,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             MaterialPageRoute(builder: (_) => const AdminRefundListScreen()));
       },
       icon: const Icon(Icons.monetization_on_outlined),
-      label: Text("Refunds"),
+      label: Text(AppLocalizations.of(context)!.refunds),
       style: ElevatedButton.styleFrom(
         backgroundColor: Theme.of(context).cardColor,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -478,7 +540,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             MaterialPageRoute(builder: (_) => const AdminFeedbackScreen()));
       },
       icon: const Icon(Icons.feedback_outlined),
-      label: Text("App Feedback"),
+      label: Text(AppLocalizations.of(context)!.feedback),
       style: ElevatedButton.styleFrom(
         backgroundColor: Theme.of(context).cardColor,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -496,7 +558,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             MaterialPageRoute(builder: (_) => const AdminBookingListScreen()));
       },
       icon: const Icon(Icons.confirmation_number_outlined),
-      label: Text("Bookings"),
+      label: Text(AppLocalizations.of(context)!.bookings),
       style: ElevatedButton.styleFrom(
         backgroundColor: Theme.of(context).cardColor,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -514,7 +576,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             MaterialPageRoute(builder: (_) => const AdminAnalyticsDashboard()));
       },
       icon: const Icon(Icons.analytics_outlined),
-      label: Text("Analytics"),
+      label: Text(AppLocalizations.of(context)!.analytics),
       style: ElevatedButton.styleFrom(
         backgroundColor: Theme.of(context).cardColor,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -532,7 +594,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             MaterialPageRoute(builder: (_) => const AdminRouteScreen()));
       },
       icon: const Icon(Icons.alt_route),
-      label: Text("Add Route"),
+      label: Text(AppLocalizations.of(context)!.addRoute),
       style: ElevatedButton.styleFrom(
         backgroundColor: Theme.of(context).colorScheme.onSurface,
         foregroundColor: Theme.of(context).colorScheme.surface,
@@ -564,7 +626,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Find Trips',
+              Text(AppLocalizations.of(context)!.findTrips,
                   style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -595,7 +657,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           padding: const EdgeInsets.symmetric(
                               vertical: 16, horizontal: 32),
                         ),
-                        child: Text('Search',
+                        child: Text(
+                            AppLocalizations.of(context)!
+                                .search, // search key exists
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontWeight: FontWeight.bold,
@@ -626,7 +690,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               borderRadius: BorderRadius.circular(8)),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: Text('Search',
+                        child: Text(AppLocalizations.of(context)!.search,
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontWeight: FontWeight.bold,
@@ -682,7 +746,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             Text(
               controller.travelDate != null
                   ? DateFormat('yyyy-MM-dd').format(controller.travelDate!)
-                  : 'Select Date',
+                  : AppLocalizations.of(context)!.selectDate,
               style: TextStyle(
                   fontFamily: 'Inter',
                   color: Theme.of(context).colorScheme.onSurface),

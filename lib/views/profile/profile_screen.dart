@@ -11,6 +11,8 @@ import 'support_screen.dart';
 import 'feedback_dialog.dart';
 import '../layout/desktop_navbar.dart';
 import '../favorites/favorites_screen.dart';
+import '../../providers/language_provider.dart'; // Added
+import 'package:buslink/l10n/app_localizations.dart'; // Added
 // import '../settings/language_selection_screen.dart'; // Removed
 
 // import '../layout/mobile_navbar.dart';
@@ -300,7 +302,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                   const NotificationSettingsScreen()));
                                     },
                                   ),
-                                  // Language Selector REMOVED
+                                  ListTile(
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.indigo
+                                            .withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.language,
+                                          color: Colors.indigo),
+                                    ),
+                                    title: Text(
+                                      AppLocalizations.of(context)!
+                                          .selectLanguage,
+                                      style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                    subtitle: Consumer<LanguageProvider>(
+                                      builder: (context, provider, child) {
+                                        String lang = "English";
+                                        if (provider
+                                                .currentLocale.languageCode ==
+                                            'si') {
+                                          lang = "Sinhala";
+                                        }
+                                        if (provider
+                                                .currentLocale.languageCode ==
+                                            'ta') {
+                                          lang = "Tamil";
+                                        }
+                                        return Text(lang,
+                                            style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey));
+                                      },
+                                    ),
+                                    trailing: const Icon(Icons.chevron_right,
+                                        color: Colors.grey),
+                                    onTap: () {
+                                      // Reuse the dialog from LanguageSelector widget logic
+                                      // Or just show dialog here directly
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title: Text(
+                                                AppLocalizations.of(context)!
+                                                    .selectLanguage),
+                                            content: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                _buildLanguageOption(
+                                                    context, 'en', 'English'),
+                                                _buildLanguageOption(
+                                                    context, 'si', 'Sinhala'),
+                                                _buildLanguageOption(
+                                                    context, 'ta', 'Tamil'),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
                                   const Divider(height: 1),
                                 ],
                               ),
@@ -619,5 +685,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .showSnackBar(SnackBar(content: Text("Upload failed: $e")));
       }
     }
+  }
+
+  Widget _buildLanguageOption(BuildContext context, String code, String label) {
+    final languageProvider =
+        Provider.of<LanguageProvider>(context, listen: false);
+    final isSelected = languageProvider.currentLocale.languageCode == code;
+
+    return ListTile(
+      title: Text(
+        label,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black,
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(
+              Icons.check,
+              color: Theme.of(context).colorScheme.primary,
+            )
+          : null,
+      onTap: () {
+        languageProvider.changeLanguage(code);
+        Navigator.pop(context);
+      },
+    );
   }
 }

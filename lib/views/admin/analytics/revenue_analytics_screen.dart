@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:buslink/l10n/app_localizations.dart';
 import '../../../utils/app_theme.dart';
 
 class RevenueAnalyticsScreen extends StatefulWidget {
@@ -34,11 +35,11 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
               ),
               TextButton(
                   onPressed: _pickDateRange,
-                  child: const Text('Refine Date')), // Fixed Text
+                  child: Text(AppLocalizations.of(context)!.refineDate)),
               // Quick Select
               PopupMenuButton<String>(
                 icon: const Icon(Icons.tune),
-                tooltip: "Quick Select",
+                tooltip: AppLocalizations.of(context)!.quickSelect,
                 onSelected: (val) {
                   DateTime now = DateTime.now();
                   DateTime start = now;
@@ -57,13 +58,16 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
                     _endDate = end;
                   });
                 },
-                itemBuilder: (context) => const [
+                itemBuilder: (context) => [
                   PopupMenuItem(
-                      value: '7', child: Text('Last 7 Days')), // Fixed Text
+                      value: '7',
+                      child: Text(AppLocalizations.of(context)!.last7Days)),
                   PopupMenuItem(
-                      value: '30', child: Text('Last 30 Days')), // Fixed Text
+                      value: '30',
+                      child: Text(AppLocalizations.of(context)!.last30Days)),
                   PopupMenuItem(
-                      value: 'month', child: Text('This Month')), // Fixed Text
+                      value: 'month',
+                      child: Text(AppLocalizations.of(context)!.thisMonth)),
                 ],
               )
             ],
@@ -117,15 +121,15 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
                       children: [
                         _buildKPIs(stats),
                         const SizedBox(height: 32),
-                        const Text('Net Revenue Over Time', // Fixed
-                            style: TextStyle(
+                        Text(AppLocalizations.of(context)!.netRevenueOverTime,
+                            style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
                         _buildScatterChart(
                             stats['daily'] as Map<String, double>),
                         const SizedBox(height: 32),
-                        const Text('Top Routes by Net Revenue', // Fixed
-                            style: TextStyle(
+                        Text(AppLocalizations.of(context)!.topRoutesRevenue,
+                            style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
                         _buildRouteTable(
@@ -149,6 +153,7 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
       firstDate: DateTime(2024),
       lastDate: DateTime.now().add(const Duration(days: 1)),
       initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
+      saveText: AppLocalizations.of(context)!.generateReport,
     );
     if (picked != null) {
       setState(() {
@@ -293,13 +298,13 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
       children: [
         Expanded(
             child: _kpiCard(
-                'Net Revenue (30d)', // Fixed
+                AppLocalizations.of(context)!.netRevenue30d,
                 "LKR ${(stats['total'] as double).toStringAsFixed(0)}",
                 Colors.green)),
         const SizedBox(width: 16),
         Expanded(
             child: _kpiCard(
-                'Net Revenue (Today)', // Fixed
+                AppLocalizations.of(context)!.netRevenueToday,
                 "LKR ${(stats['today'] as double).toStringAsFixed(0)}",
                 Colors.blue)),
       ],
@@ -338,8 +343,8 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
       return Container(
           height: 200,
           color: Colors.grey.withValues(alpha: 0.1),
-          child: const Center(
-              child: Text('No revenue data for this period'))); // Fixed
+          child:
+              Center(child: Text(AppLocalizations.of(context)!.noRevenueData)));
     }
     final keys = daily.keys.toList()..sort();
     double maxVal = daily.values.isNotEmpty
@@ -454,9 +459,9 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
 
   Widget _buildRouteTable(Map<String, double> routes) {
     if (routes.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Center(child: Text('No route data available')), // Fixed
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(child: Text(AppLocalizations.of(context)!.noRouteData)),
       );
     }
     return Card(

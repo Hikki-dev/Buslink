@@ -7,7 +7,9 @@ import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
 //  // Removed
 
+import '../widgets/language_selector.dart';
 // import 'phone_login_screen.dart';
+import 'package:buslink/l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -92,8 +94,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (email.isEmpty || password.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text("Email and Password cannot be empty.")),
+            SnackBar(
+                content: Text(AppLocalizations.of(context)!.loginErrorEmpty)),
           );
         }
         setState(() => _isLoading = false);
@@ -202,7 +204,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Row(
                             children: [
                               const _ThemeSwitcher(),
-                              // Language Switcher Removed
+                              const SizedBox(width: 8),
+                              const LanguageSelector(),
                             ],
                           ),
                         ),
@@ -304,7 +307,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _ThemeSwitcher(),
-                          // Language Switcher Removed
+                          const SizedBox(width: 8),
+                          const LanguageSelector(),
                         ],
                       ),
                     ),
@@ -367,7 +371,7 @@ class _LoginScreenState extends State<LoginScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            "Welcome!",
+            AppLocalizations.of(context)!.welcome,
             style: const TextStyle(
               fontFamily: 'Outfit',
               fontSize: 36,
@@ -377,8 +381,8 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 8),
           Text(
             _isLogin
-                ? "Log in to BusLink to continue."
-                : "Join us and start your journey today.",
+                ? AppLocalizations.of(context)!.loginSubtitle
+                : AppLocalizations.of(context)!.signupSubtitle,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: Colors.grey.shade500,
               fontSize: 16,
@@ -392,7 +396,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _googleSignIn,
                   iconUrl:
                       'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png',
-                  label: "Continue with Google",
+                  label: AppLocalizations.of(context)!.continueWithGoogle,
                 ),
               ),
               const SizedBox(width: 12),
@@ -405,7 +409,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Expanded(child: Divider(color: Color(0xFF1E1E22))),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text("OR",
+                child: Text(AppLocalizations.of(context)!.orDivider,
                     style: TextStyle(
                         color: Colors.grey.shade700,
                         fontSize: 14,
@@ -418,16 +422,20 @@ class _LoginScreenState extends State<LoginScreen> {
           if (!_isLogin) ...[
             _buildPremiumTextField(
               controller: _nameController,
-              label: 'Full Name',
-              hint: 'Enter your full name',
+              label: AppLocalizations.of(context)!.fullName,
+              hint: AppLocalizations.of(context)!.enterFullName,
               icon: Icons.person_outline_rounded,
               theme: theme,
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Name is required';
-                if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(v)) {
-                  return 'Enter a valid name (Alphabets only)';
+                if (v == null || v.isEmpty) {
+                  return AppLocalizations.of(context)!.nameRequired;
                 }
-                if (v.length < 3) return 'Name too short';
+                if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(v)) {
+                  return AppLocalizations.of(context)!.nameInvalid;
+                }
+                if (v.length < 3) {
+                  return AppLocalizations.of(context)!.nameTooShort;
+                }
                 return null;
               },
             ),
@@ -436,16 +444,18 @@ class _LoginScreenState extends State<LoginScreen> {
           _buildPremiumTextField(
             fieldKey: const Key('login_email_field'),
             controller: _emailController,
-            label: "Email",
-            hint: "Your email address",
+            label: AppLocalizations.of(context)!.email,
+            hint: AppLocalizations.of(context)!.enterEmail,
             icon: Icons.email_outlined,
             theme: theme,
             validator: (v) {
-              if (v == null || v.isEmpty) return 'Email is required';
+              if (v == null || v.isEmpty) {
+                return AppLocalizations.of(context)!.emailRequired;
+              }
               if (!RegExp(
                       r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
                   .hasMatch(v)) {
-                return 'Enter a valid email address';
+                return AppLocalizations.of(context)!.emailInvalid;
               }
               return null;
             },
@@ -458,8 +468,8 @@ class _LoginScreenState extends State<LoginScreen> {
           _buildPremiumTextField(
             fieldKey: const Key('login_password_field'),
             controller: _passwordController,
-            label: "Password",
-            hint: "Your password",
+            label: AppLocalizations.of(context)!.password,
+            hint: AppLocalizations.of(context)!.enterPassword,
             icon: Icons.lock_outline_rounded,
             theme: theme,
             isPassword: true,
@@ -467,7 +477,7 @@ class _LoginScreenState extends State<LoginScreen> {
             onVisibilityToggle: () =>
                 setState(() => _isPasswordVisible = !_isPasswordVisible),
             validator: (v) => v == null || v.length < 6
-                ? 'Password must be at least 6 characters'
+                ? AppLocalizations.of(context)!.passwordLengthError
                 : null,
             onFieldSubmitted: _submitAuthForm, // Submit on Enter
           ),
@@ -475,9 +485,9 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 24),
             _buildPremiumTextField(
               controller: _confirmPasswordController,
-              label:
-                  'Confirm Password', // Hardcoded for now, or use lp.translate
-              hint: 'Re-enter your password',
+              label: AppLocalizations.of(context)!
+                  .confirmPassword, // Hardcoded for now, or use lp.translate
+              hint: AppLocalizations.of(context)!.reenterPassword,
               icon: Icons.lock_outline_rounded,
               theme: theme,
               isPassword: true,
@@ -488,10 +498,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       !_isConfirmPasswordVisible), // Toggle
               validator: (v) {
                 if (v == null || v.isEmpty) {
-                  return 'Please confirm your password';
+                  return AppLocalizations.of(context)!.confirmPasswordRequired;
                 }
                 if (v != _passwordController.text) {
-                  return 'Passwords do not match';
+                  return AppLocalizations.of(context)!.passwordsDoNotMatch;
                 }
                 return null;
               },
@@ -508,7 +518,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   textStyle: const TextStyle(
                       fontSize: 13, decoration: TextDecoration.underline),
                 ),
-                child: Text("Forgot Password?"),
+                child: Text(AppLocalizations.of(context)!.forgotPassword),
               ),
             ),
           const SizedBox(height: 32),
@@ -535,7 +545,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           valueColor: AlwaysStoppedAnimation(Colors.white)),
                     )
                   : Text(
-                      _isLogin ? "Log In" : "Sign Up",
+                      _isLogin
+                          ? AppLocalizations.of(context)!.login
+                          : AppLocalizations.of(context)!.signup,
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold),
                     ),
@@ -551,14 +563,16 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               Text(
                   _isLogin
-                      ? "Don't have an account?"
-                      : "Already have an account?",
+                      ? AppLocalizations.of(context)!.noAccount
+                      : AppLocalizations.of(context)!.alreadyHaveAccount,
                   style: theme.textTheme.bodyMedium
                       ?.copyWith(color: Colors.grey.shade600, fontSize: 16)),
               GestureDetector(
                 onTap: () => setState(() => _isLogin = !_isLogin),
                 child: Text(
-                  _isLogin ? "Sign Up" : "Login",
+                  _isLogin
+                      ? AppLocalizations.of(context)!.signup
+                      : AppLocalizations.of(context)!.login,
                   style: const TextStyle(
                     color: Colors.grey,
                     fontWeight: FontWeight.bold,
@@ -747,7 +761,7 @@ class _IllustrationPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Travel with\nComfort & Style',
+                    AppLocalizations.of(context)!.marketingTitle,
                     textAlign: TextAlign.right,
                     style: const TextStyle(
                         fontFamily: 'Outfit',
@@ -758,7 +772,7 @@ class _IllustrationPanel extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Join thousands of satisfied travelers who trust\nBusLink for their daily commutes.',
+                    AppLocalizations.of(context)!.marketingSubtitle,
                     textAlign: TextAlign.right,
                     style: const TextStyle(
                         fontFamily: 'Inter',

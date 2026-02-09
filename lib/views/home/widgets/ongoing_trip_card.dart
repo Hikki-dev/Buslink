@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../models/trip_view_model.dart';
 import '../../../utils/app_theme.dart';
+import 'package:buslink/l10n/app_localizations.dart';
 
 class OngoingTripCard extends StatelessWidget {
   final EnrichedTrip trip;
@@ -47,7 +48,7 @@ class OngoingTripCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Upcoming Trip",
+                      AppLocalizations.of(context)!.upcomingTrip,
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 fontFamily: 'Outfit',
@@ -84,7 +85,7 @@ class OngoingTripCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            "Arriving in $timeStr",
+                            "${AppLocalizations.of(context)!.arrivingIn} $timeStr",
                             style: TextStyle(
                               fontFamily: 'Outfit',
                               fontWeight: FontWeight.bold,
@@ -121,7 +122,7 @@ class OngoingTripCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "Bus No: ${trip.busNumber}",
+                    "${AppLocalizations.of(context)!.busNo}: ${trip.busNumber}",
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
@@ -139,7 +140,10 @@ class OngoingTripCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildLocationInfo(
-                    context, "Origin", trip.fromCity, isDark),
+                    context,
+                    AppLocalizations.of(context)!.origin,
+                    trip.fromCity,
+                    isDark),
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4.0),
@@ -147,7 +151,10 @@ class OngoingTripCard extends StatelessWidget {
               ),
               Expanded(
                 child: _buildLocationInfo(
-                    context, "Destination", trip.toCity, isDark,
+                    context,
+                    AppLocalizations.of(context)!.destination,
+                    trip.toCity,
+                    isDark,
                     alignRight: true),
               ),
             ],
@@ -159,7 +166,7 @@ class OngoingTripCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Seats",
+                  Text(AppLocalizations.of(context)!.seats,
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -174,7 +181,7 @@ class OngoingTripCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text("Price Paid",
+                  Text(AppLocalizations.of(context)!.pricePaid,
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -240,7 +247,7 @@ class OngoingTripCard extends StatelessWidget {
       case 'on way':
         bg = Colors.green.withValues(alpha: 0.1);
         text = Colors.green;
-        label = "Active";
+        label = AppLocalizations.of(context)!.statusActive;
         break;
       case 'delayed':
         bg = Colors.orange.withValues(alpha: 0.1);
@@ -251,29 +258,29 @@ class OngoingTripCard extends StatelessWidget {
           final h = mins ~/ 60;
           final m = mins % 60;
           if (h > 0) {
-            label = "$h h $m m Delayed";
+            label = "$h h $m m ${AppLocalizations.of(context)!.statusDelayed}";
           } else {
-            label = "$mins m Delayed";
+            label = "$mins m ${AppLocalizations.of(context)!.statusDelayed}";
           }
         } else {
-          label = "Delayed";
+          label = AppLocalizations.of(context)!.statusDelayed;
         }
         break;
       case 'cancelled':
         bg = Colors.red.withValues(alpha: 0.1);
         text = Colors.red;
-        label = "Cancelled";
+        label = AppLocalizations.of(context)!.statusCancelled;
         break;
       case 'arrived':
       case 'completed':
         bg = Colors.blue.withValues(alpha: 0.1);
         text = Colors.blue;
-        label = "Completed";
+        label = AppLocalizations.of(context)!.statusCompleted;
         break;
       default:
         bg = Colors.grey.withValues(alpha: 0.1);
         text = Colors.grey;
-        label = "Scheduled";
+        label = AppLocalizations.of(context)!.statusScheduled;
     }
 
     return Container(

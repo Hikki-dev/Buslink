@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
+import 'package:buslink/l10n/app_localizations.dart';
 
 import '../../../utils/app_theme.dart'; // Added
 import '../../../../controllers/trip_controller.dart';
@@ -92,8 +93,9 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
               const SizedBox(height: 32),
 
               // --- PIE CHART ---
-              const Text('Punctuality Overview',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(AppLocalizations.of(context)!.punctualityOverview,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 24),
               SizedBox(
                 height: 250,
@@ -103,8 +105,9 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
               const SizedBox(height: 32),
 
               // --- RECENT LATE TRIPS ---
-              const Text('High Delay Trips',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(AppLocalizations.of(context)!.highDelayTrips,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               _buildLateTripsList(stats['lateTrips']),
             ],
@@ -193,7 +196,7 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
               controller: textEditingController,
               focusNode: focusNode,
               decoration: InputDecoration(
-                  hintText: "Search Route (e.g. Colombo)",
+                  hintText: AppLocalizations.of(context)!.searchRouteHint,
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12)),
@@ -241,9 +244,9 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _filterChip("Daily", "Daily"),
-              _filterChip("Monthly", "Monthly"),
-              _filterChip("Yearly", "Yearly"),
+              _filterChip(AppLocalizations.of(context)!.daily, "Daily"),
+              _filterChip(AppLocalizations.of(context)!.monthly, "Monthly"),
+              _filterChip(AppLocalizations.of(context)!.yearly, "Yearly"),
             ],
           ));
 
@@ -312,7 +315,7 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
           });
         },
         icon: const Icon(Icons.search, size: 18),
-        label: const Text('Search'),
+        label: Text(AppLocalizations.of(context)!.generateReport),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryColor,
           foregroundColor: Colors.white,
@@ -386,7 +389,7 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
         Expanded(
           child: _statCard(
             context,
-            "Total Trips",
+            AppLocalizations.of(context)!.totalTrips,
             "${stats['total']}",
             Icons.directions_bus,
             Colors.blue,
@@ -397,7 +400,7 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
         Expanded(
           child: _statCard(
             context,
-            "Late Rate",
+            AppLocalizations.of(context)!.lateRate,
             "${(stats['rate'] as double).toStringAsFixed(1)}%",
             Icons.warning_amber,
             stats['healthColor'],
@@ -463,7 +466,9 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
     int late = stats['late'];
     final total = onTime + late;
 
-    if (total == 0) return const Center(child: Text("No Data"));
+    if (total == 0) {
+      return Center(child: Text(AppLocalizations.of(context)!.noData));
+    }
 
     final onTimePct = onTime / total;
     final latePct = late / total;
@@ -492,11 +497,11 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
             children: [
               _legendItem(
                   Colors.blue,
-                  "On Time", // Changed to Blue
+                  AppLocalizations.of(context)!.onTime, // Changed to Blue
                   "${(onTimePct * 100).toStringAsFixed(1)}%"),
               const SizedBox(height: 16),
-              _legendItem(
-                  Colors.red, "Late", "${(latePct * 100).toStringAsFixed(1)}%"),
+              _legendItem(Colors.red, AppLocalizations.of(context)!.late,
+                  "${(latePct * 100).toStringAsFixed(1)}%"),
             ],
           )
         ],
@@ -516,7 +521,9 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
   }
 
   Widget _buildLateTripsList(List<Map<String, dynamic>> trips) {
-    if (trips.isEmpty) return const Text("No significant delays.");
+    if (trips.isEmpty) {
+      return Text(AppLocalizations.of(context)!.noSignificantDelays);
+    }
     return Column(
       children: trips.take(5).map((t) {
         return Card(
@@ -615,7 +622,7 @@ Future<DateTime?> showMonthYearPicker({
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: const Text('Select Month'),
+            title: Text(AppLocalizations.of(context)!.selectMonth),
             content: SizedBox(
               width: double.maxFinite,
               child: Column(
@@ -694,7 +701,7 @@ Future<DateTime?> showMonthYearPicker({
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -705,7 +712,7 @@ Future<DateTime?> showMonthYearPicker({
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('OK'),
+                child: Text(AppLocalizations.of(context)!.ok),
               ),
             ],
           );
@@ -732,7 +739,7 @@ Future<DateTime?> showYearPicker({
       );
 
       return AlertDialog(
-        title: const Text('Select Year'),
+        title: Text(AppLocalizations.of(context)!.selectYear),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(

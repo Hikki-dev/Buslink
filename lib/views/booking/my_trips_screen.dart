@@ -12,6 +12,7 @@ import '../layout/desktop_navbar.dart';
 import '../layout/custom_app_bar.dart';
 import '../analytics/travel_stats_screen.dart';
 import 'refund_request_screen.dart';
+import 'package:buslink/l10n/app_localizations.dart';
 
 enum TripFilter { upcoming, completed, cancelled, delayed }
 
@@ -66,7 +67,7 @@ class MyTripsScreen extends StatelessWidget {
                                 }
                               })
                           : null,
-                      title: Text("My Trips",
+                      title: Text(AppLocalizations.of(context)!.myTrips,
                           style: TextStyle(
                               fontFamily: 'Outfit',
                               color: Theme.of(context).colorScheme.onSurface,
@@ -91,11 +92,11 @@ class MyTripsScreen extends StatelessWidget {
                         indicatorColor: AppTheme.primaryColor,
                         labelStyle: const TextStyle(
                             fontFamily: 'Outfit', fontWeight: FontWeight.bold),
-                        tabs: const [
-                          Tab(text: "UPCOMING"),
-                          Tab(text: "COMPLETED"),
-                          Tab(text: "CANCELLED"),
-                          Tab(text: "DELAYED"),
+                        tabs: [
+                          Tab(text: AppLocalizations.of(context)!.tabUpcoming),
+                          Tab(text: AppLocalizations.of(context)!.tabCompleted),
+                          Tab(text: AppLocalizations.of(context)!.tabCancelled),
+                          Tab(text: AppLocalizations.of(context)!.tabDelayed),
                         ],
                       ),
                     ),
@@ -109,7 +110,8 @@ class MyTripsScreen extends StatelessWidget {
                                   CircularProgressIndicator(
                                       color: AppTheme.primaryColor),
                                   SizedBox(height: 16),
-                                  Text("Loading your trips...",
+                                  Text(
+                                      "Loading your trips...", // TODO: Add to ARB if strictly needed, or leave generic
                                       style: TextStyle(
                                           fontFamily: 'Inter',
                                           color: Colors.grey))
@@ -313,8 +315,9 @@ class _TripsList extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                     filter == TripFilter.upcoming
-                        ? "No upcoming trips"
-                        : "No trips found",
+                        ? AppLocalizations.of(context)!.upcomingTrip
+                        : AppLocalizations.of(context)!
+                            .noRoutesFound, // Using noRoutesFound as close proxy or add specific key if needed
                     style: const TextStyle(
                         fontFamily: 'Inter', fontSize: 18, color: Colors.grey)),
               ],
@@ -367,7 +370,9 @@ class _BoardingPassCard extends StatelessWidget {
 
   Widget _buildCardContent(BuildContext context, DocumentSnapshot? snapshot) {
     var tripData = ticket.tripData;
-    String statusStr = "SCHEDULED";
+    String internalStatus = "SCHEDULED"; // For Logic
+    String displayStatus =
+        AppLocalizations.of(context)!.statusScheduled; // For UI
     Color statusColor = Colors.grey;
 
     if (snapshot != null && snapshot.exists) {
@@ -378,19 +383,30 @@ class _BoardingPassCard extends StatelessWidget {
       final delayMin = data['delayMinutes'] ?? 0;
 
       if (rawStatus == 'delayed') {
-        statusStr = "DELAYED (+${delayMin}m)";
+        internalStatus = "DELAYED";
+        if (delayMin > 0) {
+          displayStatus =
+              "${AppLocalizations.of(context)!.statusDelayed} (+${delayMin}m)";
+        } else {
+          displayStatus = AppLocalizations.of(context)!.statusDelayed;
+        }
         statusColor = Colors.red;
       } else if (rawStatus == 'started' || rawStatus == 'departed') {
-        statusStr = "ON WAY";
+        internalStatus = "ON WAY";
+        displayStatus = AppLocalizations.of(context)!
+            .statusActive; // mapped 'Active' to 'On Way' context
         statusColor = Colors.blue;
       } else if (rawStatus == 'completed' || rawStatus == 'arrived') {
-        statusStr = "ARRIVED";
+        internalStatus = "COMPLETED"; // or ARRIVED
+        displayStatus = AppLocalizations.of(context)!.statusCompleted;
         statusColor = Colors.green;
       } else if (rawStatus == 'onTime' || rawStatus == 'scheduled') {
-        statusStr = "SCHEDULED";
+        internalStatus = "SCHEDULED";
+        displayStatus = AppLocalizations.of(context)!.statusScheduled;
         statusColor = Colors.green;
       } else if (rawStatus == 'cancelled') {
-        statusStr = "CANCELLED";
+        internalStatus = "CANCELLED";
+        displayStatus = AppLocalizations.of(context)!.statusCancelled;
         statusColor = Colors.red.shade900;
       }
     } else {
@@ -398,18 +414,24 @@ class _BoardingPassCard extends StatelessWidget {
       final rawStatus =
           (tripData['status'] ?? ticket.status).toString().toLowerCase();
       if (rawStatus == 'Confirmed') {
-        statusStr = "CONFIRMED";
+        internalStatus = "CONFIRMED";
+        displayStatus = AppLocalizations.of(context)!
+            .statusScheduled; // Confirmed usually implies scheduled/booked
       } else if (rawStatus == 'cancelled') {
-        statusStr = "CANCELLED";
+        internalStatus = "CANCELLED";
+        displayStatus = AppLocalizations.of(context)!.statusCancelled;
         statusColor = Colors.red.shade900;
       } else if (rawStatus == 'delayed') {
-        statusStr = "DELAYED";
+        internalStatus = "DELAYED";
+        displayStatus = AppLocalizations.of(context)!.statusDelayed;
         statusColor = Colors.red;
       } else if (rawStatus == 'completed' || rawStatus == 'arrived') {
-        statusStr = "COMPLETED";
+        internalStatus = "COMPLETED";
+        displayStatus = AppLocalizations.of(context)!.statusCompleted;
         statusColor = Colors.green;
       } else {
-        statusStr = "SCHEDULED";
+        internalStatus = "SCHEDULED";
+        displayStatus = AppLocalizations.of(context)!.statusScheduled;
         statusColor = Colors.green;
       }
     }
@@ -455,7 +477,7 @@ class _BoardingPassCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildStatusBadge(statusStr, statusColor),
+                    _buildStatusBadge(displayStatus, statusColor),
                     // No Ref ID needed
                   ],
                 ),
@@ -588,7 +610,7 @@ class _BoardingPassCard extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: Text("view ticket".toUpperCase(),
+                      child: Text(AppLocalizations.of(context)!.viewTicket,
                           style: TextStyle(
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.bold,
@@ -599,10 +621,11 @@ class _BoardingPassCard extends StatelessWidget {
                 ),
                 // Refund Button (Visible if not Cancelled/Completed/Refunded)
                 // Date check removed to allow refunds on "Active" trips even if technically past departure (testing/edge cases)
-                if (statusStr != 'CANCELLED' &&
-                    statusStr != 'COMPLETED' &&
-                    statusStr != 'ARRIVED' &&
-                    statusStr != 'REFUNDED' &&
+                // Date check removed to allow refunds on "Active" trips even if technically past departure (testing/edge cases)
+                if (internalStatus != 'CANCELLED' &&
+                    internalStatus != 'COMPLETED' &&
+                    internalStatus != 'ARRIVED' &&
+                    internalStatus != 'REFUNDED' &&
                     depTime.isAfter(DateTime.now())) ...[
                   const SizedBox(width: 12),
                   Expanded(
@@ -622,8 +645,8 @@ class _BoardingPassCard extends StatelessWidget {
                             backgroundColor: Colors.red.shade400,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12))),
-                        child: const Text("Refund",
-                            style: TextStyle(
+                        child: Text(AppLocalizations.of(context)!.refund,
+                            style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold)),
                       ),

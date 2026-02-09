@@ -86,8 +86,8 @@ class _AnimatedFavoriteButtonState extends State<AnimatedFavoriteButton>
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: _isFavorite
-                ? Colors.red.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.red.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(

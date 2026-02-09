@@ -243,7 +243,15 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                   } else {
                     await _service.updateRoute(newRoute);
                   }
-                  if (context.mounted) Navigator.pop(context);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Route saved successfully"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context)
@@ -546,7 +554,15 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                     } else {
                       await _service.updateSchedule(newSchedule);
                     }
-                    if (context.mounted) Navigator.pop(context);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Schedule saved successfully"),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context)
@@ -634,7 +650,15 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                 if (scheduleId != null) {
                   await _service.deleteSchedule(scheduleId);
                 }
-                if (context.mounted) Navigator.pop(context);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Item deleted successfully"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context)

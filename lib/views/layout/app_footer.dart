@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import '../../utils/app_theme.dart';
+import 'package:buslink/l10n/app_localizations.dart';
 
-
-// 
+//
 
 class AppFooter extends StatelessWidget {
   const AppFooter({super.key});
@@ -24,39 +24,59 @@ class AppFooter extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 2, child: _brandColumn()),
+                    Expanded(flex: 2, child: _brandColumn(context)),
                     Expanded(
-                        child: _linksColumn("Company",
-                            ["About Us", "Careers", "Blog", "Partners"])),
+                        child: _linksColumn(
+                            AppLocalizations.of(context)!.company,
+                            [
+                              AppLocalizations.of(context)!.aboutUs,
+                              AppLocalizations.of(context)!.careers,
+                              AppLocalizations.of(context)!.blog,
+                              AppLocalizations.of(context)!.partners
+                            ],
+                            context)),
                     Expanded(
-                        child: _linksColumn("Support", [
-                      "Help Center",
-                      "Terms of Service",
-                      "Privacy Policy",
-                      "FAQs"
-                    ])),
-                    Expanded(flex: 1, child: _contactColumn()),
+                        child: _linksColumn(
+                            AppLocalizations.of(context)!.support,
+                            [
+                              AppLocalizations.of(context)!.helpCenter,
+                              AppLocalizations.of(context)!.termsOfService,
+                              AppLocalizations.of(context)!.privacyPolicy,
+                              AppLocalizations.of(context)!.faqs
+                            ],
+                            context)),
+                    Expanded(flex: 1, child: _contactColumn(context)),
                   ],
                 )
               else
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _brandColumn(),
+                    _brandColumn(context),
                     const SizedBox(height: 40),
                     Wrap(
                       spacing: 40,
                       runSpacing: 40,
                       children: [
-                        _linksColumn("Company",
-                            ["About Us", "Careers", "Blog", "Partners"]),
-                        _linksColumn("Support", [
-                          "Help Center",
-                          "Terms of Service",
-                          "Privacy Policy",
-                          "FAQs"
-                        ]),
-                        _contactColumn(),
+                        _linksColumn(
+                            AppLocalizations.of(context)!.company,
+                            [
+                              AppLocalizations.of(context)!.aboutUs,
+                              AppLocalizations.of(context)!.careers,
+                              AppLocalizations.of(context)!.blog,
+                              AppLocalizations.of(context)!.partners
+                            ],
+                            context),
+                        _linksColumn(
+                            AppLocalizations.of(context)!.support,
+                            [
+                              AppLocalizations.of(context)!.helpCenter,
+                              AppLocalizations.of(context)!.termsOfService,
+                              AppLocalizations.of(context)!.privacyPolicy,
+                              AppLocalizations.of(context)!.faqs
+                            ],
+                            context),
+                        _contactColumn(context),
                       ],
                     )
                   ],
@@ -68,14 +88,14 @@ class AppFooter extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("© 2024 BusLink. All rights reserved.",
+                    Text(AppLocalizations.of(context)!.rightsReserved,
                         style: TextStyle(
                             fontFamily: 'Inter',
                             color: Colors.grey.shade500,
                             fontSize: 14)),
                     Row(
                       children: [
-                        Text("Made with love in Sri Lanka",
+                        Text(AppLocalizations.of(context)!.madeWithLove,
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 color: Colors.grey.shade500,
@@ -87,14 +107,14 @@ class AppFooter extends StatelessWidget {
               else
                 Column(
                   children: [
-                    Text("© 2024 BusLink. All rights reserved.",
+                    Text(AppLocalizations.of(context)!.rightsReserved,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontFamily: 'Inter',
                             color: Colors.grey.shade500,
                             fontSize: 14)),
                     const SizedBox(height: 12),
-                    Text("Made with love in Sri Lanka",
+                    Text(AppLocalizations.of(context)!.madeWithLove,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontFamily: 'Inter',
@@ -109,11 +129,11 @@ class AppFooter extends StatelessWidget {
     );
   }
 
-  Widget _brandColumn() {
+  Widget _brandColumn(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
             Icon(Icons.directions_bus, color: Colors.white, size: 30),
             SizedBox(width: 8),
@@ -143,7 +163,7 @@ class AppFooter extends StatelessWidget {
     );
   }
 
-  Widget _linksColumn(String title, List<String> links) {
+  Widget _linksColumn(String title, List<String> links, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -159,12 +179,12 @@ class AppFooter extends StatelessWidget {
     );
   }
 
-  Widget _contactColumn() {
+  Widget _contactColumn(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Contact",
-            style: TextStyle(
+        Text(AppLocalizations.of(context)!.contact,
+            style: const TextStyle(
                 fontFamily: 'Outfit',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

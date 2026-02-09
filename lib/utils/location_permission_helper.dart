@@ -6,8 +6,9 @@ class LocationPermissionHelper {
   /// Shows a rationale dialog if permissions are denied or required.
   /// Returns [true] if permission is granted, [false] otherwise.
   static Future<bool> checkAndRequestPermission(BuildContext context) async {
-    if (const bool.fromEnvironment('IS_TESTING'))
+    if (const bool.fromEnvironment('IS_TESTING')) {
       return true; // Mock as granted for tests
+    }
     bool serviceEnabled;
     LocationPermission permission;
 

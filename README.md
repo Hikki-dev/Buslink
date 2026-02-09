@@ -2,23 +2,34 @@
 
 A modern Flutter application for bus ticket booking and management, featuring real-time seat selection, Firebase authentication, and cross-platform support.
 
+# Logins
+
+Customer:
+buslink@gmail.com
+12345678
+
+Conductor:
+conductor@buslink.com
+123456
+
+Admin:
+admin@buslink.com
+123456
+
 ## ✨ Features
 
 - 🔐 **Authentication**
-
   - Email/Password sign-up and login
   - Google Sign-In integration
   - Secure Firebase Authentication
 
 - 🎫 **Ticket Booking**
-
   - Browse available bus trips
   - Real-time seat selection
   - Interactive seat map with availability status
   - Booking confirmation and management
 
 - 📱 **Cross-Platform**
-
   - Android
   - iOS
   - Web
@@ -57,7 +68,6 @@ A modern Flutter application for bus ticket booking and management, featuring re
 3. **Firebase Setup** ⚠️ **REQUIRED**
 
    This app requires Firebase configuration. Follow these steps:
-
    - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
    - Enable Authentication (Email/Password and Google Sign-In)
    - Download configuration files:

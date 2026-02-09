@@ -259,6 +259,18 @@ class _AdminScreenState extends State<AdminScreen> {
           await controller.addTrip(tripData);
         }
       }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isEditing
+                ? "Trip updated successfully"
+                : "Trip created successfully"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

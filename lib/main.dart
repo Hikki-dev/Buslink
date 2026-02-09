@@ -28,6 +28,9 @@ import 'views/booking/payment_success_screen.dart';
 import 'views/customer_main_screen.dart';
 import 'views/auth/login_screen.dart';
 
+import 'package:buslink/l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'providers/language_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -270,13 +273,26 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
         ),
         ChangeNotifierProvider(create: (_) => TripController()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
-      child: Consumer<ThemeController>(
-        builder: (context, themeController, child) {
+      child: Consumer2<ThemeController, LanguageProvider>(
+        builder: (context, themeController, languageProvider, child) {
           return MaterialApp(
             // ... props ...
             navigatorKey: _AppBootstrapperState.navigatorKey,
             title: 'BusLink',
+            locale: languageProvider.currentLocale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              Locale('si'),
+              Locale('ta'),
+            ],
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeController.themeMode,

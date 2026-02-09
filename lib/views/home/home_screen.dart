@@ -1,6 +1,7 @@
 // lib/views/home/home_screen.dart
 import 'dart:async';
 import 'dart:math';
+import 'package:buslink/l10n/app_localizations.dart';
 
 import 'package:flutter/material.dart';
 import '../../models/trip_view_model.dart';
@@ -21,6 +22,7 @@ import '../results/bus_list_screen.dart';
 import '../auth/login_screen.dart';
 import 'widgets/ongoing_trip_card.dart';
 // import 'widgets/favorites_section.dart'; // Removed
+import '../widgets/language_selector.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
 import '../layout/notifications_screen.dart';
@@ -167,7 +169,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void _searchBuses() {
     if (_originController.text.isEmpty || _destinationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter origin and destination')),
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.enterOriginDestination)),
       );
       return;
     }
@@ -339,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: AppTheme.primaryColor, size: 20),
                           ),
                           const SizedBox(width: 12),
-                          Text("BusLink",
+                          Text(AppLocalizations.of(context)!.appTitle,
                               style: TextStyle(
                                   fontFamily: 'Outfit',
                                   fontWeight: FontWeight.bold,
@@ -393,7 +397,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
 
                         // Language Switcher (Globe Icon)
-                        // Language Switcher Removed
+                        const LanguageSelector(),
+                        const SizedBox(width: 8),
 
                         // Theme Switcher
                         Consumer<ThemeController>(
@@ -422,7 +427,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     onPressed: () =>
                                         Navigator.pushNamed(context, '/login'),
                                     icon: const Icon(Icons.login, size: 18),
-                                    label: const Text("Log In",
+                                    label: Text(
+                                        AppLocalizations.of(context)!.login,
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold)),
                                     style: TextButton.styleFrom(
@@ -550,7 +556,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Padding(
               padding: EdgeInsets.symmetric(
                   horizontal: isDesktop ? 0 : 24, vertical: 16),
-              child: Text("Your Favorites",
+              child: Text(AppLocalizations.of(context)!.yourFavorites,
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       fontSize: 20,
@@ -675,7 +681,7 @@ class _HomeFavoriteCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Text("Tap to quick book",
+            Text(AppLocalizations.of(context)!.tapToQuickBook,
                 style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
@@ -1231,7 +1237,7 @@ class LiveJourneyCard extends StatelessWidget {
                           color: Colors.greenAccent, size: 10),
                       const SizedBox(width: 8),
                       Text(
-                        'Live Journey',
+                        AppLocalizations.of(context)!.liveJourney,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -1252,7 +1258,7 @@ class LiveJourneyCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Your bus is here',
+              AppLocalizations.of(context)!.yourBusIsHere,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 22,
@@ -1278,7 +1284,7 @@ class LiveJourneyCard extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  'TRACK NOW'.toUpperCase(),
+                  AppLocalizations.of(context)!.trackNow.toUpperCase(),
                   style: const TextStyle(
                     color: Color(0xFF2563EB),
                     fontWeight: FontWeight.w900,
@@ -1345,19 +1351,17 @@ class _HeroSectionState extends State<_HeroSection> {
     {
       "image":
           "https://live.staticflickr.com/65535/55025510678_c31eb6da24_b.jpg", // User Flickr 1
-      "subtitle":
-          "Book your bus tickets instantly with BusLink. Reliable, fast, and secure."
+      "subtitle": "heroSubtitle1" // Placeholder to be replaced in build
     },
     {
       "image":
           "https://live.staticflickr.com/65535/55025567979_f812048ac2_h.jpg", // User Flickr 2
-      "subtitle":
-          "Discover the most beautiful routes across the island in comfort."
+      "subtitle": "heroSubtitle2"
     },
     {
       "image":
           "https://live.staticflickr.com/65535/55015711501_a4d336d2c0_b.jpg", // User Flickr 3
-      "subtitle": "Seamless payments and real-time tracking for your journey."
+      "subtitle": "heroSubtitle3"
     },
   ];
 
@@ -1402,9 +1406,39 @@ class _HeroSectionState extends State<_HeroSection> {
 
   @override
   Widget build(BuildContext context) {
+    // Localized Data
+    final List<Map<String, String>> heroData = [
+      {
+        "image":
+            "https://live.staticflickr.com/65535/55025510678_c31eb6da24_b.jpg", // User Flickr 1
+        "subtitle": AppLocalizations.of(context)!.heroSubtitle1
+      },
+      {
+        "image":
+            "https://live.staticflickr.com/65535/55025567979_f812048ac2_h.jpg", // User Flickr 2
+        "subtitle": AppLocalizations.of(context)!.heroSubtitle2
+      },
+      {
+        "image":
+            "https://live.staticflickr.com/65535/55015711501_a4d336d2c0_b.jpg", // User Flickr 3
+        "subtitle": AppLocalizations.of(context)!.heroSubtitle3
+      },
+    ];
+
     try {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       final user = FirebaseAuth.instance.currentUser;
+
+      // Greeting Logic
+      String greeting = "";
+      int hour = DateTime.now().hour;
+      if (hour < 12) {
+        greeting = AppLocalizations.of(context)!.greetingMorning;
+      } else if (hour < 17) {
+        greeting = AppLocalizations.of(context)!.greetingAfternoon;
+      } else {
+        greeting = AppLocalizations.of(context)!.greetingEvening;
+      }
 
       return SizedBox(
         child: Stack(
@@ -1415,11 +1449,11 @@ class _HeroSectionState extends State<_HeroSection> {
                 duration:
                     const Duration(milliseconds: 800), // Faster transition
                 child: Container(
-                  key: ValueKey(_heroData[_currentImageIndex]["image"]),
+                  key: ValueKey(heroData[_currentImageIndex]["image"]),
                   decoration: BoxDecoration(
                     image: DecorationImage(
                       image: NetworkImage(
-                          _heroData[_currentImageIndex]["image"] ?? ""),
+                          heroData[_currentImageIndex]["image"] ?? ""),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -1496,14 +1530,17 @@ class _HeroSectionState extends State<_HeroSection> {
                           // 4. Fallback if somehow still empty (Should catch all)
                           if (name.isEmpty) name = "friend";
 
-                          String greeting = "Hi";
+                          String greeting = "";
                           final hour = DateTime.now().hour;
                           if (hour < 12) {
-                            greeting = "Good Morning";
+                            greeting =
+                                AppLocalizations.of(context)!.greetingMorning;
                           } else if (hour < 17) {
-                            greeting = "Good Afternoon";
+                            greeting =
+                                AppLocalizations.of(context)!.greetingAfternoon;
                           } else {
-                            greeting = "Good Evening";
+                            greeting =
+                                AppLocalizations.of(context)!.greetingEvening;
                           }
 
                           return Text(
@@ -1528,37 +1565,55 @@ class _HeroSectionState extends State<_HeroSection> {
                         },
                       )
                     else
-                      // Fallback if NOT logged in (User requested no "Traveler")
-                      Text(
-                        "Welcome",
-                        style: TextStyle(
-                          fontFamily: 'Outfit',
-                          fontSize: 56,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -1.0,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black.withValues(alpha: 0.5),
-                              offset: const Offset(2, 4),
-                              blurRadius: 12,
-                            ),
-                          ],
+                      // Greeting / Welcome
+                      _AnimateFadeInUp(
+                        delay: const Duration(milliseconds: 200),
+                        child: Text(
+                          user != null
+                              ? "$greeting, ${user.displayName?.split(' ').first ?? 'Traveler'}"
+                              : AppLocalizations.of(context)!.welcome,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                            shadows: [
+                              Shadow(
+                                  blurRadius: 10,
+                                  color: Colors.black45,
+                                  offset: Offset(0, 2))
+                            ],
+                          ),
                         ),
                       ),
                     const SizedBox(height: 12),
-                    Text(
-                      "Book your journey in seconds.",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily:
-                            'Outfit', // Changed to Outfit for cleaner look
-                        fontSize: 18,
-                        color: Colors.white, // Slightly transparent
-                        fontWeight: FontWeight.w600,
+
+                    // Dynamic Subtitle
+                    _AnimateFadeInUp(
+                      delay: const Duration(milliseconds: 400),
+                      child: SizedBox(
+                        height: 60,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 600),
+                          child: Text(
+                            heroData[_currentImageIndex]["subtitle"]!,
+                            key: ValueKey(
+                                heroData[_currentImageIndex]["subtitle"]),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 16,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w500,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 30),
                     widget.isDesktop
                         ? _buildDesktopSearchCard(isDark)
                         : _buildMobileSearch(isDark),

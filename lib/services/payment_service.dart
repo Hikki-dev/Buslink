@@ -3,6 +3,7 @@ import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class PaymentService {
   static final http.Client _client = http.Client();
@@ -155,11 +156,6 @@ class PaymentService {
     required String bookingId, // To track which booking this is for
   }) async {
     try {
-      final stripeSecretKey = dotenv.env['STRIPE_SECRET_KEY'];
-      if (stripeSecretKey == null || stripeSecretKey.isEmpty) {
-        throw Exception("Missing STRIPE_SECRET_KEY in .env");
-      }
-
       final double amountVal = double.parse(amount);
       final int amountCents = (amountVal * 100).toInt();
 
@@ -169,35 +165,106 @@ class PaymentService {
 
       debugPrint("Creating Checkout Session... Success: $successUrl");
 
-      final response = await _client.post(
-        Uri.parse('https://api.stripe.com/v1/checkout/sessions'),
-        headers: {
-          'Authorization': 'Bearer $stripeSecretKey',
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: {
-          'payment_method_types[]':
-              'card', // Can add more like 'ideal', 'sepa_debit'
-          'mode': 'payment',
-          'success_url': successUrl,
-          'cancel_url': cancelUrl,
-          'line_items[0][price_data][currency]': currency.toLowerCase(),
-          'line_items[0][price_data][product_data][name]': 'Bus Ticket Booking',
-          'line_items[0][price_data][unit_amount]': amountCents.toString(),
-          'line_items[0][quantity]': '1',
-          'client_reference_id': bookingId, // Important: Link to our DB booking
-          // 'customer_email': userEmail, // Optional: Pre-fill email
-        },
-      );
+      // WEB: Use Vercel Serverless Function Proxy to avoid CORS
+      if (kIsWeb) {
+        // 1. Determine API Base URL
+        // 1. Determine API Base URL
+        String apiBase = Uri.base.origin; // e.g. https://buslink-eta.vercel.app
 
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        return json['url']; // The Redirect URL
-      } else {
-        final error = jsonDecode(response.body)['error'];
-        final message = error?['message'] ?? response.body;
-        debugPrint("Stripe Checkout Error: $message");
-        throw Exception("Stripe Checkout Error: $message");
+        if (Uri.base.host.contains('localhost') ||
+            Uri.base.host.contains('127.0.0.1')) {
+          // Debugging locally: Point to Production API
+          apiBase = 'https://buslink-eta.vercel.app';
+          debugPrint("Running on Localhost: redirecting API calls to $apiBase");
+        }
+
+        final uri = Uri.parse('$apiBase/api/checkout_session');
+
+        try {
+          debugPrint("Calling Backend API: $uri");
+          final response = await http.post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'amount': amountCents,
+              'currency': currency.toLowerCase(),
+              'bookingId': bookingId,
+              'successUrl': successUrl,
+              'cancelUrl': cancelUrl,
+            }),
+          );
+
+          if (response.statusCode == 200) {
+            try {
+              final json = jsonDecode(response.body);
+              return json['url'];
+            } catch (e) {
+              debugPrint("JSON Decode Error: ${response.body}");
+              throw Exception("Invalid JSON response from server");
+            }
+          } else {
+            // Attempt to parse error, but fallback to raw body if not JSON (e.g. 404 HTML)
+            String errorMsg =
+                "Failed to create session on backend (Status: ${response.statusCode})";
+            try {
+              final errorJson = jsonDecode(response.body);
+              if (errorJson['error'] != null) errorMsg = errorJson['error'];
+            } catch (_) {
+              // Not JSON, probably HTML error page
+              debugPrint("Backend Error Body: ${response.body}");
+              if (response.statusCode == 404) {
+                errorMsg =
+                    "API Endpoint not found. Did you deploy the latest code to Vercel? (api/checkout_session.js)";
+              }
+            }
+            throw Exception(errorMsg);
+          }
+        } catch (e) {
+          debugPrint("Network/CORS Error: $e");
+          if (e.toString().contains("Failed to create session")) rethrow;
+          throw Exception(
+              "Localhost Connection Failed. Please ensure you have DEPLOYED the backend to Vercel (vercel --prod). Error: $e");
+        }
+      }
+
+      // MOBILE: Direct Call (Legacy/Existing flow)
+      // Note: Ideally mobile should also use backend to hide secrets,
+      // but keeping as-is to minimize regression risk on mobile per task scope.
+      else {
+        final stripeSecretKey = dotenv.env['STRIPE_SECRET_KEY'];
+        if (stripeSecretKey == null || stripeSecretKey.isEmpty) {
+          throw Exception("Missing STRIPE_SECRET_KEY in .env");
+        }
+
+        final response = await _client.post(
+          Uri.parse('https://api.stripe.com/v1/checkout/sessions'),
+          headers: {
+            'Authorization': 'Bearer $stripeSecretKey',
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: {
+            'payment_method_types[]': 'card',
+            'mode': 'payment',
+            'success_url': successUrl,
+            'cancel_url': cancelUrl,
+            'line_items[0][price_data][currency]': currency.toLowerCase(),
+            'line_items[0][price_data][product_data][name]':
+                'Bus Ticket Booking',
+            'line_items[0][price_data][unit_amount]': amountCents.toString(),
+            'line_items[0][quantity]': '1',
+            'client_reference_id': bookingId,
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final json = jsonDecode(response.body);
+          return json['url'];
+        } else {
+          final error = jsonDecode(response.body)['error'];
+          final message = error?['message'] ?? response.body;
+          debugPrint("Stripe Checkout Error: $message");
+          throw Exception("Stripe Checkout Error: $message");
+        }
       }
     } catch (e) {
       debugPrint("Checkout Session Create Failed: $e");

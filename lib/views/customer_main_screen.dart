@@ -11,6 +11,7 @@ import '../controllers/trip_controller.dart';
 import 'layout/notifications_screen.dart'; // Added Import
 import '../services/notification_service.dart'; // Added for Permission Dialog
 // Added for Logout
+import 'package:buslink/l10n/app_localizations.dart';
 
 class CustomerMainScreen extends StatefulWidget {
   final bool isAdminView;
@@ -78,7 +79,9 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(data['title'] ?? 'New Notification',
+                      Text(
+                          data['title'] ??
+                              AppLocalizations.of(context)!.newNotification,
                           style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.white)),
@@ -87,7 +90,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                     ],
                   ),
                   action: SnackBarAction(
-                    label: "VIEW",
+                    label: AppLocalizations.of(context)!.view,
                     textColor: Colors.amber,
                     onPressed: () {
                       Navigator.push(
@@ -173,10 +176,10 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     ];
 
     final List<BottomNavigationBarItem> navItems = [
-      const BottomNavigationBarItem(
+      BottomNavigationBarItem(
         icon: Icon(Icons.home_outlined),
         activeIcon: Icon(Icons.home),
-        label: 'Home',
+        label: AppLocalizations.of(context)!.home,
       ),
     ];
 
@@ -197,21 +200,21 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
       ]);
 
       navItems.addAll([
-        const BottomNavigationBarItem(
+        BottomNavigationBarItem(
           icon: Icon(Icons.confirmation_number_outlined),
           activeIcon: Icon(Icons.confirmation_number),
-          label: 'My Trips',
+          label: AppLocalizations.of(context)!.myTrips,
         ),
-        const BottomNavigationBarItem(
+        BottomNavigationBarItem(
           icon: Icon(Icons.favorite_border),
           activeIcon: Icon(Icons.favorite),
-          label: 'Favorites',
+          label: AppLocalizations.of(context)!.favorites,
         ),
-        const BottomNavigationBarItem(
+        BottomNavigationBarItem(
           key: Key('nav_profile'), // Key added for testing
           icon: Icon(Icons.person_outline),
           activeIcon: Icon(Icons.person),
-          label: 'Profile',
+          label: AppLocalizations.of(context)!.profile,
         ),
       ]);
     } else {
@@ -225,9 +228,9 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
       // but typically we need >=2 items.
       // Let's add a "Login" tab that redirects to Auth.
       pages.add(const Scaffold(body: SizedBox())); // Dummy for redirect
-      navItems.add(const BottomNavigationBarItem(
+      navItems.add(BottomNavigationBarItem(
         icon: Icon(Icons.login),
-        label: 'Log In',
+        label: AppLocalizations.of(context)!.login,
       ));
     }
 
@@ -276,7 +279,12 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                               const SizedBox(width: 8),
                               const Flexible(
                                 child: Text(
-                                  "Admin Preview", // Shortened
+                                  "Admin Preview", // Shortened - localizing might be tricky if context is needed but it's inside build.
+                                  // AppLocalizations.of(context)!.adminPreview
+                                  // Warning: Using context inside this deep nested structure is fine.
+                                  // But I need to be careful with const.
+                                  // Removing const from Text and parent widgets.
+                                  // String interpolation is not const.
                                   style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontWeight: FontWeight.bold,
@@ -306,8 +314,8 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                                   .exit_to_app, // Changed Icon to meaningful "Exit" from preview
                               size: 18,
                               color: Colors.black87),
-                          label: const Text("Exit Preview",
-                              style: TextStyle(
+                          label: Text(AppLocalizations.of(context)!.exitPreview,
+                              style: const TextStyle(
                                   fontFamily: 'Inter',
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black87)),
