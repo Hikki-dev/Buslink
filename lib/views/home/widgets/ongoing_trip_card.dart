@@ -168,7 +168,7 @@ class OngoingTripCard extends StatelessWidget {
                 children: [
                   Text(AppLocalizations.of(context)!.seats,
                       style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white : Colors.black)),
                   Text("$seatCount",
@@ -183,7 +183,7 @@ class OngoingTripCard extends StatelessWidget {
                 children: [
                   Text(AppLocalizations.of(context)!.pricePaid,
                       style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: isDark
                               ? Colors.white

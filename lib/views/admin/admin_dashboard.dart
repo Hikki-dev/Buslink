@@ -937,6 +937,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 child: const Text("View Seats")),
             const SizedBox(width: 12),
             IconButton(
+                tooltip: 'Delete',
                 onPressed: () => _confirmDelete(context, controller, trip.id),
                 icon: const Icon(Icons.delete_outline, color: Colors.red))
           ] else ...[

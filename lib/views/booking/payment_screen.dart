@@ -537,7 +537,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: Text(text,
             style: TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 10,
+                fontSize: 12,
                 color: Colors.grey.shade500)));
   }
 }

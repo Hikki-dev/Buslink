@@ -6,7 +6,6 @@ import '../favorites/favorites_screen.dart';
 import '../profile/profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-
 class MobileBottomNav extends StatelessWidget {
   final int selectedIndex;
 

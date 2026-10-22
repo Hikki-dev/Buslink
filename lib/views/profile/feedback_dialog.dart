@@ -40,6 +40,7 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.onSurface)),
                 IconButton(
+                  tooltip: 'Close',
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close),
                   color: Colors.grey,
@@ -51,6 +52,7 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (index) {
                 return IconButton(
+                  tooltip: 'Rate',
                   onPressed: () {
                     setState(() {
                       _rating = index + 1;

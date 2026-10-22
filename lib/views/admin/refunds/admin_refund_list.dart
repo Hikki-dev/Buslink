@@ -358,6 +358,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
               ),
             ),
             IconButton(
+              tooltip: 'Open',
               icon: const Icon(Icons.arrow_forward_ios, size: 16),
               onPressed: () {
                 Navigator.push(

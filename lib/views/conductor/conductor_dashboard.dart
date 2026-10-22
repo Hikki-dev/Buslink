@@ -641,6 +641,7 @@ class _FindTripDialogState extends State<FindTripDialog> {
                           overflow: TextOverflow.ellipsis),
                     ),
                     IconButton(
+                      tooltip: 'Close',
                       icon: const Icon(Icons.close),
                       onPressed: () => Navigator.pop(context),
                     )

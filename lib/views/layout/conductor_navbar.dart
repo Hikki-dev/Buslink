@@ -56,7 +56,7 @@ class ConductorNavBar extends StatelessWidget {
                     Text("CONDUCTOR",
                         style: TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 10,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.primaryColor,
                             letterSpacing: 2)),

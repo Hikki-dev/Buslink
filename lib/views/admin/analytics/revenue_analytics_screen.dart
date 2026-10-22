@@ -445,7 +445,7 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
                   if (index % step == 0 || index == keys.length - 1) {
                     return Text(keys[index],
                         style:
-                            const TextStyle(fontSize: 10, color: Colors.grey));
+                            const TextStyle(fontSize: 12, color: Colors.grey));
                   }
                   return const SizedBox.shrink();
                 }),

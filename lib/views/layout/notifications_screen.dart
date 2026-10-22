@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/app_theme.dart';
 import '../../services/notification_service.dart';
 import '../../models/notification_model.dart';
-// 
+//
 import 'package:intl/intl.dart';
 
 class NotificationsScreen extends StatelessWidget {
@@ -271,7 +271,7 @@ class NotificationsScreen extends StatelessWidget {
                               child: Text(statusText,
                                   style: TextStyle(
                                       fontFamily: 'Inter',
-                                      fontSize: 10,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                       color: color)),
                             )

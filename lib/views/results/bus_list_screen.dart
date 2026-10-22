@@ -664,7 +664,8 @@ class _BusListScreenState extends State<BusListScreen> {
                 //     borderRadius: BorderRadius.circular(4)
                 //   ),
                 Text("Bus",
-                    style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 // )
               ],
             ),
@@ -1081,7 +1082,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                     child: Text("Highly Rated",
                         style: const TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 10,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: Colors.blue)),
                   ),
@@ -1139,7 +1140,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
               style: TextStyle(
                   fontFamily: 'Inter',
                   color: Colors.grey.shade700,
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600)),
         ],
       ),
@@ -1169,7 +1170,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                 Text(
                     "${duration.inHours}h ${duration.inMinutes.remainder(60)}m",
                     style:
-                        TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                        TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                 Row(
                   children: [
                     const Icon(Icons.circle, size: 8, color: Colors.grey),
@@ -1234,7 +1235,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         crossAxisAlignment:
             isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.end,
         children: [
-          // Text("Standard", style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+          // Text("Standard", style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
           Text(displayPrice,
               style: const TextStyle(
                   fontFamily: 'Outfit',
@@ -1243,7 +1244,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                   color: AppTheme.primaryColor)),
           const SizedBox(height: 4),
           Text("per person",
-              style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -1305,7 +1306,7 @@ class _BusTicketCardState extends State<_BusTicketCard> {
           Center(
             child: Text(
                 "${trip.totalSeats - trip.bookedSeats.length} seats left",
-                style: TextStyle(fontSize: 11, color: Colors.green.shade700)),
+                style: TextStyle(fontSize: 12, color: Colors.green.shade700)),
           )
         ],
       ),

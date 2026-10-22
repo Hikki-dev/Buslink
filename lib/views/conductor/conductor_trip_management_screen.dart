@@ -299,41 +299,7 @@ class _ConductorTripManagementScreenState
             // Show dialog to ask for delay minutes
             final int? newDelay = await showDialog<int>(
               context: context,
-              builder: (ctx) {
-                final TextEditingController delayController =
-                    TextEditingController();
-                return AlertDialog(
-                  title: const Text("Report Delay"),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text("Enter delay duration in minutes:"),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: delayController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                            border: OutlineInputBorder(), hintText: "e.g. 15"),
-                      ),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text("Cancel"),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (delayController.text.isNotEmpty) {
-                          Navigator.pop(
-                              ctx, int.tryParse(delayController.text));
-                        }
-                      },
-                      child: const Text("Confirm"),
-                    ),
-                  ],
-                );
-              },
+              builder: (ctx) => const DelayDialog(),
             );
 
             if (newDelay == null) return; // Cancelled
@@ -411,5 +377,92 @@ class _ConductorTripManagementScreenState
     if (s == 'cancelled') return "Cancelled";
     if (s == 'completed') return "Completed";
     return status.toUpperCase();
+  }
+}
+
+/// "Report Delay": one tap for the usual delays, or type your own.
+class DelayDialog extends StatefulWidget {
+  const DelayDialog({super.key});
+
+  @override
+  State<DelayDialog> createState() => _DelayDialogState();
+}
+
+class _DelayDialogState extends State<DelayDialog> {
+  static const _quick = [15, 30, 45, 60, 90];
+  static const _maxMinutes = 600;
+  final _controller = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final minutes = int.tryParse(_controller.text.trim());
+    if (minutes == null || minutes < 1 || minutes > _maxMinutes) {
+      setState(() => _error = 'Enter a number from 1 to $_maxMinutes.');
+      return;
+    }
+    Navigator.pop(context, minutes);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Report Delay'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('How many minutes late is the bus?'),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final m in _quick)
+                  ChoiceChip(
+                    label: Text('$m min', style: const TextStyle(fontSize: 16)),
+                    selected: _controller.text == '$m',
+                    onSelected: (_) => setState(() {
+                      _controller.text = '$m';
+                      _error = null;
+                    }),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _controller,
+              keyboardType: TextInputType.number,
+              onChanged: (_) => setState(() => _error = null),
+              onSubmitted: (_) => _submit(),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: 'Or type the minutes',
+                suffixText: 'minutes',
+                errorText: _error,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Passengers get a notification straight away.',
+              style: TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(onPressed: _submit, child: const Text('Confirm')),
+      ],
+    );
   }
 }

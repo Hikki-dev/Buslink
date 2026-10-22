@@ -442,7 +442,7 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
                   child: Text(subLabel,
                       style: TextStyle(
                           color: color,
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold)),
                 )
             ],

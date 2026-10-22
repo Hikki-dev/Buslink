@@ -70,6 +70,7 @@ class _TicketScreenState extends State<TicketScreen> {
         elevation: 0,
         backgroundColor: Theme.of(context).cardColor,
         leading: IconButton(
+          tooltip: 'Close',
           icon:
               Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
@@ -220,7 +221,7 @@ class _TicketScreenState extends State<TicketScreen> {
                       style: TextStyle(
                           fontFamily: 'Inter',
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold)),
                 )
               ],
@@ -241,7 +242,7 @@ class _TicketScreenState extends State<TicketScreen> {
                         Text("FROM",
                             style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant)),
@@ -267,7 +268,7 @@ class _TicketScreenState extends State<TicketScreen> {
                               "Via ${trip.via}",
                               style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant
@@ -284,7 +285,7 @@ class _TicketScreenState extends State<TicketScreen> {
                         Text("TO",
                             style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant)),
@@ -388,7 +389,7 @@ class _TicketScreenState extends State<TicketScreen> {
                         Text("PASSENGER",
                             style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant)),
@@ -404,7 +405,7 @@ class _TicketScreenState extends State<TicketScreen> {
                         Text("TOTAL PRICE",
                             style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant)),
@@ -463,7 +464,7 @@ class _TicketScreenState extends State<TicketScreen> {
         Text(label.toUpperCase(),
             style: TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 9,
+                fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
@@ -524,7 +525,7 @@ class _TicketScreenState extends State<TicketScreen> {
                                 pw.Text("TRIP DETAILS",
                                     style: pw.TextStyle(
                                         fontWeight: pw.FontWeight.bold,
-                                        fontSize: 10)),
+                                        fontSize: 12)),
                                 pw.SizedBox(height: 5),
                                 pw.Text("${trip.fromCity}  ->  ${trip.toCity}",
                                     style: pw.TextStyle(
@@ -575,7 +576,7 @@ class _TicketScreenState extends State<TicketScreen> {
                           color: PdfColors.white),
                       headerDecoration:
                           const pw.BoxDecoration(color: PdfColors.red900),
-                      cellStyle: const pw.TextStyle(fontSize: 10),
+                      cellStyle: const pw.TextStyle(fontSize: 12),
                       cellAlignments: {
                         0: pw.Alignment.centerLeft,
                         1: pw.Alignment.centerLeft,
@@ -760,6 +761,7 @@ class __FeedbackDialogState extends State<_FeedbackDialog> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(5, (index) {
                   return IconButton(
+                    tooltip: 'Rate',
                     icon: Icon(
                       index < _rating ? Icons.star : Icons.star_border,
                       color: Colors.amber,

@@ -220,7 +220,7 @@ class DesktopNavBar extends StatelessWidget {
                                                 BorderRadius.circular(4)),
                                         child: const Text("ADMIN",
                                             style: TextStyle(
-                                                fontSize: 10,
+                                                fontSize: 12,
                                                 fontWeight: FontWeight.bold,
                                                 color: Colors.red)),
                                       ),

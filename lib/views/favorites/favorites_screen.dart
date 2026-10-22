@@ -219,7 +219,7 @@ class _FavoriteItemCard extends StatelessWidget {
                           const Text("FROM",
                               style: TextStyle(
                                   fontFamily: 'Inter',
-                                  fontSize: 10,
+                                  fontSize: 12,
                                   color: Colors.grey,
                                   fontWeight: FontWeight.bold)),
                           Text(from,
@@ -241,7 +241,7 @@ class _FavoriteItemCard extends StatelessWidget {
                           const Text("TO",
                               style: TextStyle(
                                   fontFamily: 'Inter',
-                                  fontSize: 10,
+                                  fontSize: 12,
                                   color: Colors.grey,
                                   fontWeight: FontWeight.bold)),
                           Text(to,
@@ -273,7 +273,7 @@ class _FavoriteItemCard extends StatelessWidget {
                         const Text("Standard Bus",
                             style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 11,
+                                fontSize: 12,
                                 color: Colors.grey)),
                       ],
                     ),

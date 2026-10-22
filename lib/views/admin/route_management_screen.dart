@@ -116,10 +116,12 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
+                        tooltip: 'Edit',
                         icon: const Icon(Icons.edit, color: Colors.blue),
                         onPressed: () => _showRouteDialog(route: route),
                       ),
                       IconButton(
+                        tooltip: 'Delete',
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () => _confirmDelete(routeId: route.id),
                       ),
@@ -367,6 +369,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                               ),
                               const SizedBox(width: 8),
                               IconButton(
+                                tooltip: 'Edit',
                                 icon:
                                     const Icon(Icons.edit, color: Colors.blue),
                                 onPressed: () => _showScheduleDialog(
@@ -374,6 +377,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                                     schedule: schedule),
                               ),
                               IconButton(
+                                tooltip: 'Delete',
                                 icon:
                                     const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () =>
