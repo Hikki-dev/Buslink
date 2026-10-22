@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="380" viewBox="0 0 1500 380" font-family="Arial, Helvetica, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">From seat to boarding</title><desc id="d">The passenger picks seats. A Firestore transaction checks they are still free and holds them with a pending ticket. After payment the ticket is confirmed, and the conductor scans its QR code on board.</desc><defs>
+<marker id="a64748b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker>
+<style>.t{font-size:22px;font-weight:700;fill:#0f172a;text-anchor:middle}.s{font-size:16px;fill:#475569;text-anchor:middle}.l{font-size:15px;font-weight:700;fill:#334155;text-anchor:middle}.h{font-size:32px;font-weight:700;fill:#0f172a;text-anchor:middle}.g{font-size:15px;font-weight:700;fill:#94a3b8;letter-spacing:.08em}</style></defs>
+<rect width="1500" height="380" fill="#f8fafc"/>
+<text x="750.0" y="46" class="h">From seat to boarding</text>
+<line x1="274" y1="230" x2="294" y2="230" stroke="#64748b" stroke-width="2.4" marker-end="url(#a64748b)"/>
+<line x1="544" y1="230" x2="564" y2="230" stroke="#64748b" stroke-width="2.4" marker-end="url(#a64748b)"/>
+<line x1="814" y1="230" x2="834" y2="230" stroke="#64748b" stroke-width="2.4" marker-end="url(#a64748b)"/>
+<line x1="1084" y1="230" x2="1104" y2="230" stroke="#64748b" stroke-width="2.4" marker-end="url(#a64748b)"/>
+<rect x="32" y="180" width="235" height="100" rx="16" fill="#ffffff" stroke="#e53935" stroke-width="2.4"/>
+<rect x="32" y="180" width="9" height="100" rx="4" fill="#e53935"/>
+<text x="154" y="226" class="t">Pick seats</text>
+<text x="154" y="252" class="s">on the bus layout</text>
+<rect x="302" y="180" width="235" height="100" rx="16" fill="#ffffff" stroke="#e53935" stroke-width="2.4"/>
+<rect x="302" y="180" width="9" height="100" rx="4" fill="#e53935"/>
+<text x="424" y="226" class="t">Hold them</text>
+<text x="424" y="252" class="s">one Firestore transaction</text>
+<rect x="572" y="180" width="235" height="100" rx="16" fill="#ffffff" stroke="#635bff" stroke-width="2.4"/>
+<rect x="572" y="180" width="9" height="100" rx="4" fill="#635bff"/>
+<text x="694" y="226" class="t">Pay</text>
+<text x="694" y="252" class="s">Stripe sheet or Checkout</text>
+<rect x="842" y="180" width="235" height="100" rx="16" fill="#ffffff" stroke="#16a34a" stroke-width="2.4"/>
+<rect x="842" y="180" width="9" height="100" rx="4" fill="#16a34a"/>
+<text x="964" y="226" class="t">Confirm</text>
+<text x="964" y="252" class="s">ticket becomes confirmed</text>
+<rect x="1112" y="180" width="235" height="100" rx="16" fill="#ffffff" stroke="#0f766e" stroke-width="2.4"/>
+<rect x="1112" y="180" width="9" height="100" rx="4" fill="#0f766e"/>
+<text x="1234" y="226" class="t">Ride</text>
+<text x="1234" y="252" class="s">QR code, scanned on board</text>
+<text x="750.0" y="358" class="s">Two people can never take the same seat: the check and the hold happen together</text>
+</svg>
