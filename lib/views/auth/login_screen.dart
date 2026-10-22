@@ -370,6 +370,8 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
+          const LanguagePills(),
+          const SizedBox(height: 24),
           Text(
             AppLocalizations.of(context)!.welcome,
             style: const TextStyle(

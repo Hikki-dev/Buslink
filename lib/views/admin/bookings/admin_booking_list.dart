@@ -242,7 +242,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
             child: _isLoading && _bookings.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : _bookings.isEmpty
-                    ? Center(child: Text('no_bookings_found'))
+                    ? Center(child: Text('No bookings found'))
                     : ListView.builder(
                         padding: const EdgeInsets.all(8),
                         itemCount: _bookings.length + 1,
