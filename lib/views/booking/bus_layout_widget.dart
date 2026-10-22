@@ -79,7 +79,7 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
               const SizedBox(height: 4),
               Text("Entrance",
                   style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       color: widget.isDark ? Colors.white70 : Colors.black54,
                       fontWeight: FontWeight.bold)),
             ],
@@ -105,7 +105,7 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
               const SizedBox(height: 4),
               Text("Driver",
                   style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       color: widget.isDark ? Colors.white70 : Colors.black54,
                       fontWeight: FontWeight.bold)),
             ],
@@ -295,7 +295,7 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                 const SizedBox(height: 2),
                 Text("Exit",
                     style: TextStyle(
-                        fontSize: 8,
+                        fontSize: 12,
                         color: widget.isDark ? Colors.white70 : Colors.black54,
                         fontWeight: FontWeight.bold)),
               ],

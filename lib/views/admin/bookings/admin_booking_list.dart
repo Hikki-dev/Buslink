@@ -533,7 +533,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                     Text(
                       contactParts.join(" ").trim(),
                       style:
-                          TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                          TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                   const SizedBox(height: 6),
                 ],
@@ -557,7 +557,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                         borderRadius: BorderRadius.circular(6)),
                     child: Text(statusNorm.replaceAll('_', ' ').toUpperCase(),
                         style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             color: statusColor,
                             fontWeight: FontWeight.bold)),
                   ),

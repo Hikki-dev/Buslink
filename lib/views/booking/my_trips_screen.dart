@@ -491,7 +491,7 @@ class _BoardingPassCard extends StatelessWidget {
                         Text("FROM",
                             style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: subTextColor)),
                         const SizedBox(height: 4),
                         Text(fromCity,
@@ -519,7 +519,7 @@ class _BoardingPassCard extends StatelessWidget {
                               "Via ${tripData['via']}",
                               style: const TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: Colors.grey,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -533,7 +533,7 @@ class _BoardingPassCard extends StatelessWidget {
                         Text("TO",
                             style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: subTextColor)),
                         const SizedBox(height: 4),
                         Text(toCity,
@@ -831,7 +831,7 @@ class _BulkBoardingPassCard extends StatelessWidget {
                                   "Via ${first.tripData['via']}",
                                   style: const TextStyle(
                                     fontFamily: 'Inter',
-                                    fontSize: 10,
+                                    fontSize: 12,
                                     color: Colors.grey,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -852,7 +852,7 @@ class _BulkBoardingPassCard extends StatelessWidget {
                         Text("DATES",
                             style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: Colors.grey)),
                         const SizedBox(height: 4),
                         Text(dateRange,

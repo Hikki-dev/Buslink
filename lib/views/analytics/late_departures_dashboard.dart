@@ -251,7 +251,7 @@ class _LateDeparturesDashboardState extends State<LateDeparturesDashboard> {
               child: Text(color == Colors.red ? "Needs Attention" : "Healthy",
                   style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold)),
             )
           ],

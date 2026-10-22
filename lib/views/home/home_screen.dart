@@ -376,6 +376,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 }
 
                                 return IconButton(
+                                  tooltip: 'Notifications',
                                   icon: Badge(
                                     isLabelVisible: unreadCount > 0,
                                     label: Text("$unreadCount"),
@@ -404,6 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Consumer<ThemeController>(
                           builder: (context, themeController, child) {
                             return IconButton(
+                              tooltip: 'Switch light or dark mode',
                               icon: Icon(themeController.isDark
                                   ? Icons.light_mode
                                   : Icons.dark_mode),

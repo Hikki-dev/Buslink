@@ -25,6 +25,18 @@ class RefundStatusScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+          if (snapshot.hasError) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  "We could not load this refund.\nPlease check your internet and try again.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            );
+          }
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return const Center(child: Text("Refund request not found"));
           }
@@ -36,6 +48,8 @@ class RefundStatusScreen extends StatelessWidget {
             child: Column(
               children: [
                 _buildStatusBadge(refund.status),
+                const SizedBox(height: 20),
+                RefundProgress(status: refund.status),
                 const SizedBox(height: 24),
                 if (refund.status == RefundStatus.rejected)
                   Container(
@@ -83,10 +97,10 @@ class RefundStatusScreen extends StatelessWidget {
                 const SizedBox(height: 32),
                 if (refund.status == RefundStatus.approved)
                   const Text("Processing time: 5–7 working days",
-                      style: TextStyle(color: Colors.grey)),
+                      style: TextStyle(color: Color(0xFF616161), fontSize: 16)),
                 if (refund.status == RefundStatus.pending)
                   const Text("Your request is under review.",
-                      style: TextStyle(color: Colors.grey)),
+                      style: TextStyle(color: Color(0xFF616161), fontSize: 16)),
               ],
             ),
           );
@@ -148,12 +162,112 @@ class RefundStatusScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(label,
+              style: const TextStyle(color: Color(0xFF616161), fontSize: 16)),
           Text(value,
               style: TextStyle(
                   fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
                   fontSize: isBold ? 20 : 16,
                   color: color)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Three plain steps so people can see where their refund is:
+/// Sent -> In review -> Decision.
+class RefundProgress extends StatelessWidget {
+  final RefundStatus status;
+  const RefundProgress({super.key, required this.status});
+
+  /// 0 = sent, 1 = in review (current), 2 = decided.
+  static int stepFor(RefundStatus s) => s == RefundStatus.pending ? 1 : 2;
+
+  @override
+  Widget build(BuildContext context) {
+    final step = stepFor(status);
+    final rejected =
+        status == RefundStatus.rejected || status == RefundStatus.failed;
+    final decisionLabel = rejected ? 'Rejected' : 'Approved';
+    final labels = [
+      'Sent',
+      'In review',
+      step == 2 ? decisionLabel : 'Decision'
+    ];
+
+    return Semantics(
+      label: 'Refund progress: ${labels[step]}',
+      child: Row(
+        children: [
+          for (var i = 0; i < 3; i++) ...[
+            _Dot(
+              label: labels[i],
+              done: i < step || (i == 2 && step == 2),
+              current: i == step && step < 2,
+              failed: i == 2 && rejected,
+            ),
+            if (i < 2)
+              Expanded(
+                child: Container(
+                  height: 3,
+                  margin: const EdgeInsets.only(bottom: 22),
+                  color:
+                      i < step ? AppTheme.primaryColor : Colors.grey.shade300,
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Dot extends StatelessWidget {
+  final String label;
+  final bool done;
+  final bool current;
+  final bool failed;
+  const _Dot({
+    required this.label,
+    required this.done,
+    required this.current,
+    required this.failed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = failed ? Colors.red.shade700 : AppTheme.primaryColor;
+    return SizedBox(
+      width: 84,
+      child: Column(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: done ? color : Colors.white,
+              border: Border.all(
+                color: done || current ? color : Colors.grey.shade400,
+                width: 3,
+              ),
+            ),
+            child: done
+                ? Icon(failed ? Icons.close : Icons.check,
+                    size: 16, color: Colors.white)
+                : null,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: done || current ? FontWeight.w700 : FontWeight.w400,
+              color: done || current ? color : const Color(0xFF616161),
+            ),
+          ),
         ],
       ),
     );

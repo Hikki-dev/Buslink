@@ -230,7 +230,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
                 style: TextStyle(
                     color: color, fontWeight: FontWeight.bold, fontSize: 18)),
             Text(label,
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis)
@@ -305,6 +305,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
+                          tooltip: 'Previous',
                           onPressed: () {
                             setState(() {
                               _focusedDate = DateTime(_focusedDate.year - 1);
@@ -314,6 +315,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
                       Text("${_focusedDate.year}",
                           style: const TextStyle(fontWeight: FontWeight.bold)),
                       IconButton(
+                          tooltip: 'Next',
                           onPressed: () {
                             setState(() {
                               _focusedDate = DateTime(_focusedDate.year + 1);
@@ -463,7 +465,7 @@ class _SimpleScatterChart extends StatelessWidget {
                     // Show every 2 months
                     final m = index * 2 + 1;
                     return Text(DateFormat('MMM').format(DateTime(year, m)),
-                        style: TextStyle(fontSize: 10, color: Colors.grey));
+                        style: TextStyle(fontSize: 12, color: Colors.grey));
                   }),
                 ))
           ],

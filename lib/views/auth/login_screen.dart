@@ -239,6 +239,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       _bgImages[_currentBgIndex],
                       key: ValueKey(_bgImages[_currentBgIndex]),
                       fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          const ColoredBox(color: AppTheme.primaryDark),
                     ),
                   ),
                 ),
@@ -649,6 +651,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               suffixIcon: isPassword
                   ? IconButton(
+                      tooltip: 'Show or hide password',
                       icon: Icon(
                         isPasswordVisible
                             ? Icons.visibility_outlined
@@ -695,7 +698,12 @@ class _SocialButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (iconUrl != null) Image.network(iconUrl!, height: 18),
+            if (iconUrl != null)
+              Image.network(
+                iconUrl!,
+                height: 18,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
             // if (icon != null) Icon(icon, size: 18, color: Colors.white), // Removed unused logic
             const SizedBox(width: 8),
             Flexible(
@@ -738,6 +746,8 @@ class _IllustrationPanel extends StatelessWidget {
                       key: ValueKey(bgImage),
                       fit: BoxFit.cover,
                       alignment: Alignment.center,
+                      errorBuilder: (_, __, ___) =>
+                          const ColoredBox(color: AppTheme.primaryDark),
                     ),
                   ),
                 ),

@@ -161,6 +161,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                       CircleAvatar(
                         backgroundColor: Colors.black54,
                         child: IconButton(
+                          tooltip: 'Close',
                           icon: const Icon(Icons.close, color: Colors.white),
                           onPressed: () => Navigator.pop(context),
                         ),
@@ -175,6 +176,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                               // Access torchState from the MobileScannerState
                               final isOn = state.torchState == TorchState.on;
                               return IconButton(
+                                tooltip: 'Turn the flashlight on or off',
                                 icon: Icon(
                                   isOn ? Icons.flash_on : Icons.flash_off,
                                   color: isOn ? Colors.yellow : Colors.white,
@@ -188,6 +190,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                             valueListenable: _controller,
                             builder: (context, state, child) {
                               return IconButton(
+                                tooltip: 'Switch camera',
                                 icon: const Icon(Icons.cameraswitch,
                                     color: Colors.white),
                                 onPressed: () => _controller.switchCamera(),

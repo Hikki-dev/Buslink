@@ -337,6 +337,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                               padding: const EdgeInsets.only(
                                                   right: 16),
                                               child: IconButton(
+                                                  tooltip: 'Go back',
                                                   icon: Icon(Icons.arrow_back,
                                                       color: textColor),
                                                   onPressed: () =>
@@ -1134,7 +1135,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           const SizedBox(height: 4),
                           Text("EXIT",
                               style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 12,
                                   color: Colors.red.withValues(alpha: 0.8),
                                   fontWeight: FontWeight.bold)),
                         ],
@@ -1201,7 +1202,7 @@ class _AdminScreenState extends State<AdminScreen> {
                             const SizedBox(width: 4),
                             Text("EXIT",
                                 style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 12,
                                     color: Colors.red.withValues(alpha: 0.8),
                                     fontWeight: FontWeight.bold)),
                           ],

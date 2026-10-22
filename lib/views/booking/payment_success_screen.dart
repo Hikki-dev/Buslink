@@ -603,6 +603,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             IconButton(
+                              tooltip: 'Previous ticket',
                               icon: const Icon(Icons.arrow_back_ios_rounded),
                               onPressed: _currentIndex > 0
                                   ? () => _pageController.previousPage(
@@ -616,6 +617,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold)),
                             IconButton(
+                              tooltip: 'Next ticket',
                               icon: const Icon(Icons.arrow_forward_ios_rounded),
                               onPressed:
                                   _currentIndex < _verifiedTickets.length - 1

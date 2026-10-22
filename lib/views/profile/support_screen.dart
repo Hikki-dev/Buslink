@@ -117,6 +117,7 @@ class SupportScreen extends StatelessWidget {
             ),
           ),
           IconButton(
+            tooltip: 'Call',
             onPressed: () {
               // In a real app, uses url_launcher to call
               ScaffoldMessenger.of(context)

@@ -190,6 +190,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
               // Notifications (Last)
               IconButton(
+                tooltip: 'Notifications',
                 icon: const Icon(Icons.notifications_outlined),
                 onPressed: () {
                   Navigator.push(
@@ -211,7 +212,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     child: const Text("ADMIN",
                         style: TextStyle(
                             color: Colors.amber,
-                            fontSize: 10,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold))),
             ],
     );
