@@ -1,214 +1,129 @@
-# 🚌 BusLink
+# BusLink
 
-A modern Flutter application for bus ticket booking and management, featuring real-time seat selection, Firebase authentication, and cross-platform support.
+A cross-platform **bus booking and operations platform** built with Flutter and Firebase. Passengers search trips, pick seats and pay online. Conductors scan tickets and run their trips. Admins manage routes, schedules, users, refunds and analytics.
 
-# Logins
+![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-Auth%20%7C%20Firestore%20%7C%20FCM-FFCA28?logo=firebase&logoColor=black)
+![Stripe](https://img.shields.io/badge/Payments-Stripe-635BFF?logo=stripe&logoColor=white)
+![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Desktop-lightgrey)
 
-Customer:
-buslink@gmail.com
-12345678
+## Features
 
-Conductor:
-conductor@buslink.com
-123456
+### Passengers
+- Sign in with email/password, Google, or **phone number (OTP)**.
+- Search trips by route and date, with a weather lookup on the results list.
+- Interactive **bus seat layout** showing booked seats.
+- **Bulk booking** across several dates in one flow.
+- Pay with **Stripe** (PaymentIntents on mobile, Checkout Sessions on web).
+- **QR-code tickets**, downloadable as PDF.
+- **My Trips** with travel statistics, favourite routes, and a live **track my bus** map.
+- **Refund requests** with status tracking.
+- Push and local notifications, and trip reminders.
+- Languages: **English, Sinhala, Tamil**. Light and dark themes.
 
-Admin:
-admin@buslink.com
-123456
+### Conductors
+- Dashboard of assigned trips and trip management (status, delays, platform).
+- **QR scanner** to validate passenger tickets.
+- Walk-up **offline bookings** for passengers without the app.
 
-## ✨ Features
+### Admins
+- Manage **routes** and **schedules**. Trips are generated from schedules.
+- **User management** (roles) and **feedback** inbox.
+- **Booking** list and details, and **refund** review (approve, reject, process).
+- Analytics: **revenue** and **late departures**.
 
-- 🔐 **Authentication**
-  - Email/Password sign-up and login
-  - Google Sign-In integration
-  - Secure Firebase Authentication
+## Roles
 
-- 🎫 **Ticket Booking**
-  - Browse available bus trips
-  - Real-time seat selection
-  - Interactive seat map with availability status
-  - Booking confirmation and management
+Each user has a `role` on `users/{uid}`: `customer` (default), `conductor` or `admin`. `RoleDispatcher` in `lib/main.dart` routes each signed-in user to the matching home screen and listens live, so a role change applies without a restart.
 
-- 📱 **Cross-Platform**
-  - Android
-  - iOS
-  - Web
-  - Windows (Desktop)
+## Tech stack
 
-- 🎨 **Modern UI**
-  - Clean, intuitive interface
-  - Material Design 3
-  - Responsive layout for all screen sizes
+| Area | Choice |
+|---|---|
+| App | Flutter (Material 3), `provider`, `get` |
+| Auth | Firebase Auth (email, Google, phone) |
+| Data | Cloud Firestore with offline persistence |
+| Payments | `flutter_stripe`, Stripe Checkout |
+| Notifications | `firebase_messaging`, `flutter_local_notifications` |
+| Maps and location | `flutter_map`, `latlong2`, `geolocator`, `google_maps_flutter` |
+| Tickets | `qr_flutter`, `mobile_scanner`, `pdf`, `printing` |
+| Serverless | Firebase Cloud Functions (`functions/`), Vercel functions (`api/`) |
+| i18n | Flutter `gen-l10n` (`lib/l10n/*.arb`) |
+| Web hosting | Vercel (`vercel.json`, `build_vercel.sh`) |
 
-## 🚀 Getting Started
+## Quick start
 
-### Prerequisites
-
-- [Flutter SDK](https://flutter.dev/docs/get-started/install) (3.35.4 or higher)
-- [Firebase Account](https://firebase.google.com/)
-- Android Studio or VS Code
-- For iOS: Xcode (macOS only)
-- For Android: Java 11 or higher
-
-### Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/yourusername/buslink.git
-   cd buslink
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   flutter pub get
-   ```
-
-3. **Firebase Setup** ⚠️ **REQUIRED**
-
-   This app requires Firebase configuration. Follow these steps:
-   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
-   - Enable Authentication (Email/Password and Google Sign-In)
-   - Download configuration files:
-     - Android: `google-services.json` → place in `android/app/`
-     - iOS: `GoogleService-Info.plist` → place in `ios/Runner/`
-
-   **For detailed setup instructions, see [SETUP.md](SETUP.md)**
-
-4. **Environment Variables**
-
-   Create a `.env` file in the project root:
-
-   ```env
-   WEB_CLIENT_ID=your_web_client_id.apps.googleusercontent.com
-   SERVER_CLIENT_ID=your_web_client_id.apps.googleusercontent.com
-   ```
-
-   See `.env.example` for reference.
-
-5. **Run the app**
-
-   ```bash
-   # Android/iOS
-   flutter run
-
-   # Web
-   flutter run -d chrome
-
-   # Windows
-   flutter run -d windows
-   ```
-
-## 📁 Project Structure
-
-```
-buslink/
-├── lib/
-│   ├── controllers/       # Business logic controllers
-│   ├── models/           # Data models
-│   ├── services/         # API and authentication services
-│   │   ├── auth_service.dart
-│   │   └── firestore_service.dart
-│   ├── views/            # UI screens
-│   │   ├── auth/        # Login & signup screens
-│   │   ├── home/        # Home screen
-│   │   ├── booking/     # Seat selection & booking
-│   │   └── placeholder/ # My tickets screen
-│   └── main.dart        # App entry point
-├── android/             # Android-specific code
-├── ios/                 # iOS-specific code
-├── web/                 # Web-specific code
-└── windows/            # Windows-specific code
+```bash
+git clone https://github.com/Hikki-dev/Buslink.git
+cd Buslink
+flutter pub get
 ```
 
-## 🔧 Configuration
+Then, before the first run:
 
-### Android
+1. Create `lib/firebase_options.dart` for **your** Firebase project: `flutterfire configure` (or copy `lib/firebase_options_template.dart` and fill it in). The file is git-ignored.
+2. Create a `.env` file in the repo root. It is declared as an asset, so the build fails without it. Keys are listed in [docs/SETUP.md](docs/SETUP.md).
+3. Deploy `firestore.rules` and `firestore.indexes.json`, and seed some trips.
 
-- **Minimum SDK**: 21 (Android 5.0 Lollipop)
-- **Target SDK**: 36
-- **Requires**: SHA-1 fingerprint added to Firebase
-
-### iOS
-
-- **Minimum Version**: iOS 12.0
-- **Requires**: GoogleService-Info.plist configuration
-
-### Web
-
-- **Requires**: Web client ID meta tag in `index.html`
-
-## 🛠️ Technologies Used
-
-- **Framework**: Flutter 3.35.4
-- **Language**: Dart 3.9.2
-- **Backend**: Firebase
-  - Firebase Auth
-  - Cloud Firestore
-- **State Management**: Provider
-- **Authentication**:
-  - Firebase Auth
-  - Google Sign-In 7.2.0
-
-## 📦 Key Dependencies
-
-```yaml
-firebase_core: ^4.2.1
-firebase_auth: ^6.1.2
-cloud_firestore: ^6.1.0
-google_sign_in: ^7.2.0
-provider: ^6.0.0
-qr_flutter: ^4.1.0
-intl: ^0.20.2
+```bash
+flutter run             # Android / iOS
+flutter run -d chrome   # Web
 ```
 
-## 🔐 Security
+The full walkthrough is in **[docs/SETUP.md](docs/SETUP.md)**.
 
-- Sensitive configuration files (API keys, certificates) are excluded from version control
-- See `.gitignore` for protected files
-- Never commit:
-  - `google-services.json`
-  - `GoogleService-Info.plist`
-  - `.env` files
-  - `*.keystore` files
+## Repository layout
 
-## 🤝 Contributing
+```
+lib/
+├── main.dart                 # Bootstrapping, auth gate, RoleDispatcher
+├── controllers/              # TripController (ChangeNotifier)
+├── models/                   # Trip, Ticket, Route, Schedule, Refund, User, ...
+├── services/                 # auth, firestore, payment, stripe, refund,
+│                             # notification, sms, location, cache, reminders
+├── providers/                # language provider
+├── l10n/                     # en, si, ta
+├── data/                     # city and destination data
+├── utils/                    # theme, constants, platform helpers
+└── views/                    # auth, home, results, booking, ticket, tracking,
+                              # profile, settings, conductor, admin, analytics, ...
+api/                          # Vercel functions: checkout_session.js, refund.js
+functions/                    # Firebase Cloud Function: processRefund
+scripts/                      # Node seeding and migration scripts
+integration_test/, test/      # Flutter tests
+firestore.rules, firestore.indexes.json
+```
 
-Contributions are welcome! Please follow these steps:
+Data model, booking flow and payment flow are described in **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**. Stripe notes are in [STRIPE_SETUP.md](STRIPE_SETUP.md).
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## Testing
 
-## 📄 License
+```bash
+flutter analyze
+flutter test                      # unit and widget tests
+./run_automated_tests.sh          # browser-driven integration run (macOS, Chrome)
+```
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+The main end-to-end test is `integration_test/full_system_test.dart` (admin, then conductor, then passenger).
 
-## 👥 Authors
+## Security notes
 
-- Your Name - Initial work
+This project started as a coursework build and several items need hardening before real-money use. They are listed so nobody deploys it unaware:
 
-## 🐛 Known Issues
+- **Secrets in the client.** `STRIPE_SECRET_KEY` and `FIREBASE_SERVICE_ACCOUNT_BASE64` are read from `.env`, which is bundled into app builds. Anyone can extract them. Move refunds and push sending to Cloud Functions or the Vercel API, and remove these keys from `.env`.
+- **Unauthenticated refund endpoint.** `api/refund.js` allows any origin and does not check who is calling.
+- **Refund function has no admin check.** `functions/index.js` only requires a signed-in user (the admin check is commented out).
+- **Role escalation.** `firestore.rules` lets a user write their own `users/{uid}` document, including `role`. Restrict `role` to admins.
+- **Hard-coded admin email** in `firestore.rules` and `lib/main.dart`.
 
-- Google Sign-In requires proper SHA-1 configuration for Android
-- iOS requires additional Xcode setup for Google Sign-In
+Never commit `.env`, `service-account.json`, or `firebase_options.dart`.
 
-## 📞 Support
+## Contributing
 
-For setup help or issues:
+1. Fork and create a branch: `git checkout -b feature/my-change`
+2. Run `flutter analyze` and `flutter test`
+3. Open a pull request
 
-- Open an issue on GitHub
-- Check [SETUP.md](SETUP.md) for detailed configuration guide
+## Author
 
-## 🙏 Acknowledgments
-
-- Flutter team for the amazing framework
-- Firebase for backend services
-- All contributors who help improve this project
-
----
-
-**Note**: This app requires Firebase configuration to run. Please follow the setup instructions in [SETUP.md](SETUP.md) before running the app.
+Built by [Yusuf (Hikki-dev)](https://github.com/Hikki-dev).

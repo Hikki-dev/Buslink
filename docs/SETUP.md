@@ -1,0 +1,112 @@
+# Setup guide
+
+How to run BusLink against your own Firebase and Stripe accounts.
+
+## 1. Prerequisites
+
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (stable, Dart 3.x)
+- A [Firebase](https://console.firebase.google.com/) project
+- A [Stripe](https://stripe.com) account (test mode is fine)
+- Node.js 18+ for the seeding scripts, Cloud Functions and Vercel functions
+- [FlutterFire CLI](https://firebase.google.com/docs/flutter/setup): `dart pub global activate flutterfire_cli`
+- Xcode for iOS builds (macOS only)
+
+## 2. Firebase
+
+1. Create a project and register the platforms you need (Android, iOS, Web).
+2. **Authentication > Sign-in method**: enable **Email/Password**, **Google** and **Phone**.
+3. **Firestore Database**: create a database.
+4. **Cloud Messaging**: enabled by default. For web push, generate a **Web Push certificate** (VAPID key).
+
+## 3. Connect the app
+
+```bash
+flutter pub get
+flutterfire configure
+```
+
+This writes `lib/firebase_options.dart` (git-ignored). Alternatively copy `lib/firebase_options_template.dart` to `lib/firebase_options.dart` and fill in your values.
+
+Then deploy the rules and indexes from this repo:
+
+```bash
+firebase deploy --only firestore:rules,firestore:indexes
+```
+
+## 4. Create the `.env` file
+
+`.env` is listed as an asset in `pubspec.yaml`, so **it must exist or the build fails**. It is git-ignored.
+
+| Key | Needed for |
+|---|---|
+| `STRIPE_PUBLISHABLE_KEY` | Initialising Stripe (`pk_test_...`) |
+| `STRIPE_SECRET_KEY` | Prototype payments and refunds from the client (see warning) |
+| `OPENWEATHER_API_KEY` | Weather on the trip results list |
+| `FIREBASE_PROJECT_ID` | FCM push sending |
+| `FIREBASE_VAPID_KEY` | Web push |
+| `FIREBASE_SERVICE_ACCOUNT_BASE64` | Client-side FCM sending (see warning) |
+
+```env
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+OPENWEATHER_API_KEY=...
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_VAPID_KEY=...
+FIREBASE_SERVICE_ACCOUNT_BASE64=...
+```
+
+> **Warning.** Everything in `.env` is bundled into the app and can be extracted. Use **test-mode** keys only, and never a production secret key or a real service account. For production, move payment creation, refunds and push sending to server code (see [Security notes](../README.md#security-notes)). Missing keys degrade the matching feature rather than crashing the whole app.
+
+## 5. Stripe
+
+- **Mobile**: PaymentIntents via `flutter_stripe` (currency is LKR, minimum LKR 150).
+- **Web**: Checkout Sessions via the Vercel function `api/checkout_session.js`, and refunds via `api/refund.js`. Both need `STRIPE_SECRET_KEY` set as a **Vercel environment variable**.
+- **Cloud Function** `processRefund` (in `functions/`) needs `STRIPE_SECRET_KEY` as a function secret or environment value.
+
+More background in [STRIPE_SETUP.md](../STRIPE_SETUP.md).
+
+## 6. Seed data
+
+The app needs routes, schedules and trips. The Node scripts in `scripts/` use the Firebase Admin SDK and expect a **`service-account.json`** next to them (download from Firebase project settings > Service accounts). It is a secret: never commit it.
+
+```bash
+cd scripts
+npm install
+node seed_master_data.js   # routes and schedules
+node generate_trips.js     # trips for the next 30 days
+```
+
+Re-run `generate_trips.js` regularly (for example with a scheduled job) to keep future trips available.
+
+## 7. Roles
+
+New accounts are created as `customer`. To make someone a conductor or admin, edit their document in the Firebase console: **Firestore > users > {uid} > `role`** set to `conductor` or `admin`. The app picks the change up live. Admins can also change roles from the in-app user management screen.
+
+## 8. Platform notes
+
+- **Android**: add your debug and release **SHA-1** to Firebase for Google and phone sign-in, then re-download `google-services.json` into `android/app/`.
+- **iOS**: add `GoogleService-Info.plist` to `ios/Runner/` and the reversed client ID as a URL scheme in `Info.plist`.
+- **Web**: add your domains under Authentication > Settings > Authorized domains. `cors.json` holds the Storage CORS config.
+
+## 9. Run
+
+```bash
+flutter run             # Android / iOS
+flutter run -d chrome   # Web
+flutter run -d macos    # Desktop
+```
+
+## 10. Deploy the web build (Vercel)
+
+`vercel.json` serves `build/web`, routes `/api/*` to the functions, and falls back to `index.html`. `build_vercel.sh` installs Flutter and builds on Vercel. Set `STRIPE_SECRET_KEY` in the Vercel project settings.
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `unable to find asset .env` | Create the `.env` file (step 4). |
+| `DefaultFirebaseOptions` not found | Create `lib/firebase_options.dart` (step 3). |
+| No trips in search | Seed data (step 6). |
+| Everyone lands on the customer screen | `role` is not exactly `admin` or `conductor` (step 7). |
+| Google or phone sign-in fails on Android | Add SHA-1 and re-download `google-services.json` (step 8). |
+| `Missing or insufficient permissions` | Deploy `firestore.rules` (step 3). |
