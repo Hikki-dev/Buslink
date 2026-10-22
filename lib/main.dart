@@ -105,6 +105,16 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
           persistenceEnabled: true,
           cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED);
 
+      // Demo mode: talk to the local Firebase emulators instead of a real project.
+      // Off unless the app is started with --dart-define=USE_FIREBASE_EMULATORS=true.
+      // See docs/Demo mode.md.
+      if (const bool.fromEnvironment('USE_FIREBASE_EMULATORS')) {
+        const emulatorHost =
+            String.fromEnvironment('EMULATOR_HOST', defaultValue: '127.0.0.1');
+        FirebaseFirestore.instance.useFirestoreEmulator(emulatorHost, 8080);
+        await FirebaseAuth.instance.useAuthEmulator(emulatorHost, 9099);
+      }
+
       _authService = AuthService();
 
       // 4. Local Notification Init (Android/iOS)
