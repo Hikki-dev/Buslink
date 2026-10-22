@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/status_chip.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../../models/refund_model.dart';
@@ -332,6 +333,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                                 DateFormat('MMM d, h:mm a')
                                     .format(refund.createdAt),
                                 style: const TextStyle(fontSize: 12)),
+                            StatusChip(refund.status.name),
                           ],
                         ),
                         const SizedBox(height: 8),

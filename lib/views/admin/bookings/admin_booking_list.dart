@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../utils/app_theme.dart';
 
 import 'booking_details_screen.dart';
+import '../widgets/status_chip.dart';
 
 class AdminBookingListScreen extends StatefulWidget {
   const AdminBookingListScreen({super.key});
@@ -549,18 +550,10 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                           fontSize: 15,
                           color: AppTheme.primaryColor)),
                   const SizedBox(height: 4),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6)),
-                    child: Text(statusNorm.replaceAll('_', ' ').toUpperCase(),
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: statusColor,
-                            fontWeight: FontWeight.bold)),
-                  ),
+                  StatusChip(
+                      statusNorm == 'confirmed' && data['boardedAt'] != null
+                          ? 'boarded'
+                          : statusNorm),
                 ],
               ),
               onTap: () {
