@@ -188,10 +188,11 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
+              color: Colors.grey.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.search, size: 64, color: Colors.blue),
+            child: Icon(Icons.search,
+                size: 48, color: Theme.of(context).colorScheme.onSurface),
           ),
           const SizedBox(height: 24),
           Text(AppLocalizations.of(context)!.findTrips,
@@ -281,13 +282,13 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: AppTheme.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.qr_code_scanner,
-                size: 64, color: AppTheme.primaryColor),
+                size: 48, color: AppTheme.primaryColor),
           ),
           const SizedBox(height: 24),
           Text(AppLocalizations.of(context)!.scanTicket,
@@ -308,6 +309,9 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               Expanded(
                 child: TextField(
                   controller: _ticketIdController,
+                  textInputAction: TextInputAction.go,
+                  autocorrect: false,
+                  onSubmitted: _verifyTicket,
                   style:
                       TextStyle(color: Theme.of(context).colorScheme.onSurface),
                   decoration: InputDecoration(
@@ -422,9 +426,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
 
           if (now.difference(depTime).inHours > 12) {
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("Access Denied: Trip expired >12h ago"),
-                  backgroundColor: Colors.red));
+              _showRejectedDialog("Ticket not accepted",
+                  "Access Denied: Trip expired >12h ago");
             }
             return;
           }
@@ -436,11 +439,27 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       if (mounted) _showTicketDetailsDialog(ticket);
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("Invalid Ticket ID: $ticketId"),
-            backgroundColor: Colors.red));
+        _showRejectedDialog("Ticket not found", "Invalid Ticket ID: $ticketId");
       }
     }
+  }
+
+  void _showRejectedDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: TicketRejectedCard(
+            title: title,
+            message: message,
+            onClose: () => Navigator.pop(ctx),
+          ),
+        ),
+      ),
+    );
   }
 
   void _showTicketDetailsDialog(Ticket ticket) {
@@ -454,68 +473,9 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
             padding: const EdgeInsets.all(24),
             constraints: const BoxConstraints(maxWidth: 400),
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.1),
-                        shape: BoxShape.circle),
-                    child: const Icon(Icons.verified,
-                        color: Colors.green, size: 48),
-                  ),
-                  const SizedBox(height: 16),
-                  Text("Verified Code: ${ticket.shortId ?? 'N/A'}",
-                      style: const TextStyle(
-                          fontFamily: 'Outfit',
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green)),
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  _ticketDetailRow("Passenger", ticket.passengerName),
-                  _ticketDetailRow("Seats", ticket.seatNumbers.join(", ")),
-                  _ticketDetailRow(
-                      "Bus No", ticket.tripData['busNumber'] ?? 'N/A'),
-                  _ticketDetailRow(
-                      "Origin", ticket.tripData['fromCity'] ?? 'N/A'),
-                  _ticketDetailRow(
-                      "Destination", ticket.tripData['toCity'] ?? 'N/A'),
-
-                  const SizedBox(height: 16),
-                  const Text("Seat Location:",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-
-                  // Visual Seat Verification
-                  SizedBox(
-                    height: 300,
-                    child: SingleChildScrollView(
-                      child: BusLayoutWidget(
-                        trip: Trip.fromMap(ticket.tripData, ticket.tripId),
-                        totalSeats: 40,
-                        highlightedSeats: ticket.seatNumbers,
-                        isReadOnly: true,
-                        isDark: false,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16)),
-                      child: const Text("Approve Boarding"),
-                    ),
-                  )
-                ],
+              child: TicketVerifiedCard(
+                ticket: ticket,
+                onApprove: () => Navigator.pop(context),
               ),
             ),
           ),
@@ -523,21 +483,223 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       },
     );
   }
+}
 
-  Widget _ticketDetailRow(String label, String value) {
+/// Shown when a ticket checks out. The 4-digit code is the thing the
+/// conductor must compare with the passenger's own screen, so it is the
+/// biggest item.
+class TicketVerifiedCard extends StatelessWidget {
+  final Ticket ticket;
+  final VoidCallback onApprove;
+
+  /// Live seat data for the mini seat map (defaults to Firestore).
+  final Stream<Trip>? seatStream;
+
+  const TicketVerifiedCard({
+    super.key,
+    required this.ticket,
+    required this.onApprove,
+    this.seatStream,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final code = ticket.shortId;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.green.shade50,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.verified, color: Colors.green.shade800, size: 32),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text("Ticket is valid",
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green.shade800)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text("Passenger",
+            style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: Colors.grey.shade700)),
+        Text(ticket.passengerName.isEmpty ? 'N/A' : ticket.passengerName,
+            style: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 26,
+                fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final seat in ticket.seatNumbers)
+              Chip(
+                avatar: const Icon(Icons.event_seat, size: 18),
+                label: Text("Seat $seat",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+                color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                width: 1.5),
+          ),
+          child: Column(
+            children: [
+              const Text(
+                "Ask the passenger for their 4-digit code. It must match:",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              Semantics(
+                label: 'Verified code ${code ?? 'not available'}',
+                excludeSemantics: true,
+                child: Text(code ?? 'N/A',
+                    style: const TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 44,
+                        letterSpacing: 8,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        _row("Bus No", ticket.tripData['busNumber'] ?? 'N/A'),
+        _row("Origin", ticket.tripData['fromCity'] ?? 'N/A'),
+        _row("Destination", ticket.tripData['toCity'] ?? 'N/A'),
+        const SizedBox(height: 8),
+        const Text("Seat Location:",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        const SizedBox(height: 8),
+        // Visual Seat Verification
+        SizedBox(
+          height: 300,
+          child: SingleChildScrollView(
+            child: BusLayoutWidget(
+              trip: Trip.fromMap(ticket.tripData, ticket.tripId),
+              totalSeats: 40,
+              highlightedSeats: ticket.seatNumbers,
+              isReadOnly: true,
+              isDark: false,
+              tripStream: seatStream,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 56,
+          child: ElevatedButton(
+            onPressed: onApprove,
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade700,
+                foregroundColor: Colors.white,
+                textStyle:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: const Text("Approve Boarding"),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _row(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style:
-                  TextStyle(fontFamily: 'Inter', color: Colors.grey.shade600)),
+              style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: Colors.grey.shade700)),
           Text(value,
               style: const TextStyle(
-                  fontFamily: 'Inter', fontWeight: FontWeight.bold)),
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold)),
         ],
       ),
+    );
+  }
+}
+
+/// Shown when a ticket cannot be accepted. A dialog, not a snackbar that
+/// disappears while the conductor is looking at the passenger.
+class TicketRejectedCard extends StatelessWidget {
+  final String title;
+  final String message;
+  final VoidCallback onClose;
+  const TicketRejectedCard({
+    super.key,
+    required this.title,
+    required this.message,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+                color: Colors.red.shade50, shape: BoxShape.circle),
+            child: Icon(Icons.cancel, color: Colors.red.shade800, size: 56),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.red.shade800)),
+        const SizedBox(height: 8),
+        Text(message,
+            textAlign: TextAlign.center, style: const TextStyle(fontSize: 17)),
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 52,
+          child: ElevatedButton(
+            onPressed: onClose,
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                textStyle:
+                    const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+            child: const Text("Try again"),
+          ),
+        ),
+      ],
     );
   }
 }

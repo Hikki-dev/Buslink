@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QRScanScreen extends StatefulWidget {
@@ -17,6 +18,8 @@ class _QRScanScreenState extends State<QRScanScreen> {
     formats: [BarcodeFormat.qrCode],
     autoStart: false, // We will start manually to handle permissions better
   );
+
+  final TextEditingController _manualController = TextEditingController();
 
   bool _isScanned = false; // Prevent multiple pops
   bool _showManualStart = false; // To show button if auto-start hangs
@@ -60,8 +63,8 @@ class _QRScanScreenState extends State<QRScanScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text("Camera Error"),
-            content:
-                Text("Could not start camera: $e\nCheck browser permissions."),
+            content: const Text(
+                "We could not open the camera. Please allow camera access in your browser or phone settings, then tap Retry Camera. You can also type the ticket ID instead."),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx), child: const Text("OK"))
@@ -72,8 +75,14 @@ class _QRScanScreenState extends State<QRScanScreen> {
     }
   }
 
+  void _submitManual() {
+    final value = _manualController.text.trim();
+    if (value.isNotEmpty) Navigator.pop(context, value);
+  }
+
   @override
   void dispose() {
+    _manualController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -96,6 +105,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
               for (final barcode in barcodes) {
                 if (barcode.rawValue != null) {
                   setState(() => _isScanned = true);
+                  HapticFeedback.mediumImpact(); // you feel the scan land
                   // Return the scanned code
                   Navigator.pop(context, barcode.rawValue);
                   return;
@@ -108,12 +118,13 @@ class _QRScanScreenState extends State<QRScanScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.broken_image, size: 48),
+                    const Icon(Icons.no_photography,
+                        size: 56, color: Colors.white),
                     const SizedBox(height: 16),
-                    Text(
-                      "Camera not available.\n(${error.errorCode})",
+                    const Text(
+                      "Camera not available.\nCheck that camera access is allowed, or type the ticket ID below.",
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white70),
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
@@ -218,7 +229,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 14),
+                        fontSize: 17),
                   ),
                 ),
 
@@ -242,37 +253,38 @@ class _QRScanScreenState extends State<QRScanScreen> {
                       Text(
                         "Scanning failed?",
                         style: TextStyle(
-                            color: Theme.of(context).disabledColor,
-                            fontSize: 12,
+                            color: Colors.grey.shade800,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
                       TextField(
+                        controller: _manualController,
+                        textInputAction: TextInputAction.go,
+                        autocorrect: false,
+                        style: const TextStyle(fontSize: 17),
                         decoration: InputDecoration(
                           hintText: "Enter Ticket ID Manually",
                           filled: true,
                           fillColor: Colors.grey.shade100,
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 0),
+                              horizontal: 16, vertical: 14),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide.none,
                           ),
-                          suffixIcon: Container(
-                            margin: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.black,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.arrow_forward,
-                                color: Colors.white, size: 20),
+                          // The arrow used to be a picture only; now it works.
+                          suffixIcon: IconButton(
+                            tooltip: 'Check this ticket',
+                            style: IconButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(48, 48)),
+                            icon: const Icon(Icons.arrow_forward, size: 22),
+                            onPressed: _submitManual,
                           ),
                         ),
-                        onSubmitted: (value) {
-                          if (value.trim().isNotEmpty) {
-                            Navigator.pop(context, value.trim());
-                          }
-                        },
+                        onSubmitted: (_) => _submitManual(),
                       ),
                     ],
                   ),
