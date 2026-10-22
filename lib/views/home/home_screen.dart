@@ -445,6 +445,29 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
 
+                  // PHONES: your trips come first. A signed-in traveller sees
+                  // a greeting, their upcoming trip and favourites straight
+                  // away; the search form follows right below.
+                  if (!isDesktop)
+                    SliverToBoxAdapter(
+                      child: StreamBuilder<User?>(
+                        stream: FirebaseAuth.instance.authStateChanges(),
+                        builder: (context, snapshot) {
+                          final user = snapshot.data;
+                          if (user == null || widget.isAdminView) {
+                            return const SizedBox.shrink();
+                          }
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _GreetingHeader(user: user),
+                              _buildDashboardSection(context, user, false),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
                   SliverToBoxAdapter(
                     child: _HeroSection(
                       isDesktop: isDesktop,
@@ -474,18 +497,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   // NEWS CAROUSEL SECTION
                   const NewsCarousel(),
 
-                  // --- ONGOING TRIPS & FAVORITES SECTION ---
-                  StreamBuilder<User?>(
-                      stream: FirebaseAuth.instance.authStateChanges(),
-                      builder: (context, snapshot) {
-                        final user = snapshot.data;
-                        if (user == null) return const SliverToBoxAdapter();
+                  // --- ONGOING TRIPS & FAVORITES SECTION (desktop) ---
+                  if (isDesktop)
+                    StreamBuilder<User?>(
+                        stream: FirebaseAuth.instance.authStateChanges(),
+                        builder: (context, snapshot) {
+                          final user = snapshot.data;
+                          if (user == null) return const SliverToBoxAdapter();
 
-                        return SliverToBoxAdapter(
-                          child:
-                              _buildDashboardSection(context, user, isDesktop),
-                        );
-                      }),
+                          return SliverToBoxAdapter(
+                            child: _buildDashboardSection(
+                                context, user, isDesktop),
+                          );
+                        }),
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     sliver: SliverToBoxAdapter(
@@ -2778,6 +2802,44 @@ class _AnimateFadeInUpState extends State<_AnimateFadeInUp>
       child: SlideTransition(
         position: _translate,
         child: widget.child,
+      ),
+    );
+  }
+}
+
+/// "Good Morning" + first name. Shown at the top of the phone home screen.
+class _GreetingHeader extends StatelessWidget {
+  final User user;
+  const _GreetingHeader({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? l10n.greetingMorning
+        : hour < 17
+            ? l10n.greetingAfternoon
+            : l10n.greetingEvening;
+    final name = (user.displayName ?? '').trim().split(' ').first;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(greeting,
+              style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.bodyMedium?.color)),
+          if (name.isNotEmpty)
+            Text(name,
+                style: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold)),
+        ],
       ),
     );
   }

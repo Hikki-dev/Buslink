@@ -244,7 +244,7 @@ class _BusListScreenState extends State<BusListScreen> {
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 16),
                               itemBuilder: (context, index) =>
-                                  _BusTicketCard(trip: trips[index]),
+                                  BusTicketCard(trip: trips[index]),
                             ),
                         ],
                       ),
@@ -311,7 +311,7 @@ class _BusListScreenState extends State<BusListScreen> {
           if (index == 0) {
             return _buildInfoHeader(context, controller, isMobile: true);
           }
-          return _BusTicketCard(trip: trips[index - 1]);
+          return BusTicketCard(trip: trips[index - 1]);
         },
       ),
     );
@@ -938,15 +938,31 @@ class _BusListScreenState extends State<BusListScreen> {
   }
 }
 
-class _BusTicketCard extends StatefulWidget {
-  final EnrichedTrip trip;
-  const _BusTicketCard({required this.trip});
-
-  @override
-  State<_BusTicketCard> createState() => _BusTicketCardState();
+/// "3h 15m". Never "0h 5m" noise for short hops, never negative.
+String busDuration(Duration d) {
+  final mins = d.inMinutes < 0 ? 0 : d.inMinutes;
+  final h = mins ~/ 60;
+  final m = mins % 60;
+  if (h == 0) return '${m}m';
+  return m == 0 ? '${h}h' : '${h}h ${m}m';
 }
 
-class _BusTicketCardState extends State<_BusTicketCard> {
+/// How the "seats left" line should look.
+enum SeatsLevel { plenty, few, none }
+
+SeatsLevel seatsLevel(int left) => left <= 0
+    ? SeatsLevel.none
+    : (left <= 5 ? SeatsLevel.few : SeatsLevel.plenty);
+
+class BusTicketCard extends StatefulWidget {
+  final EnrichedTrip trip;
+  const BusTicketCard({super.key, required this.trip});
+
+  @override
+  State<BusTicketCard> createState() => _BusTicketCardState();
+}
+
+class _BusTicketCardState extends State<BusTicketCard> {
   bool isHovered = false;
 
   @override
@@ -978,6 +994,11 @@ class _BusTicketCardState extends State<_BusTicketCard> {
               ? "LKR ${totalPrice.toStringAsFixed(0)} (x${controller.bulkDates.length} Days)"
               : "LKR ${trip.price.toStringAsFixed(0)}";
 
+          final dark = Theme.of(context).brightness == Brightness.dark;
+          final status = trip.status.toLowerCase();
+          final unavailable = status == 'cancelled' ||
+              trip.totalSeats - trip.bookedSeats.length <= 0;
+
           return RepaintBoundary(
             child: MouseRegion(
               onEnter: (_) => setState(() => isHovered = true),
@@ -985,18 +1006,19 @@ class _BusTicketCardState extends State<_BusTicketCard> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
+                  color: unavailable && !dark
+                      ? Colors.grey.shade100
+                      : Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                       color: isHovered
                           ? AppTheme.primaryColor.withValues(alpha: 0.5)
-                          : (Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white12
-                              : Colors.grey.shade200)),
+                          : (dark ? Colors.white12 : Colors.grey.shade300),
+                      width: 1.5),
                   boxShadow: [
                     BoxShadow(
                         color: Colors.black
-                            .withValues(alpha: isHovered ? 0.08 : 0.02),
+                            .withValues(alpha: isHovered ? 0.1 : 0.04),
                         blurRadius: 15,
                         offset: const Offset(0, 5))
                   ],
@@ -1033,9 +1055,10 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildCardHeader(trip),
-          const SizedBox(height: 12),
+          _buildStatusBanner(trip),
+          const SizedBox(height: 14),
           _buildTimeline(trip, duration),
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
           _buildAmenities(trip),
         ],
       ),
@@ -1049,11 +1072,62 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildCardHeader(trip),
-          const SizedBox(height: 12),
+          _buildStatusBanner(trip),
+          const SizedBox(height: 14),
           _buildTimeline(trip, duration),
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
           _buildAmenities(trip),
         ],
+      ),
+    );
+  }
+
+  /// Cancelled, delayed or full: said in words, with an icon, not colour alone.
+  Widget _buildStatusBanner(EnrichedTrip trip) {
+    final status = trip.status.toLowerCase();
+    final left = trip.totalSeats - trip.bookedSeats.length;
+    String? text;
+    IconData? icon;
+    Color fg = Colors.black87;
+    Color bg = Colors.grey.shade200;
+    if (status == 'cancelled') {
+      text = 'This trip is cancelled';
+      icon = Icons.cancel;
+      fg = const Color(0xFF7F1D14);
+      bg = const Color(0xFFFBE0DC);
+    } else if (left <= 0) {
+      text = 'This bus is full';
+      icon = Icons.block;
+      fg = const Color(0xFF3A3A3A);
+      bg = Colors.grey.shade300;
+    } else if (status == 'delayed' || trip.delayMinutes > 0) {
+      text = trip.delayMinutes > 0
+          ? 'Running ${trip.delayMinutes} minutes late'
+          : 'Delayed';
+      icon = Icons.schedule;
+      fg = const Color(0xFF7A4300);
+      bg = const Color(0xFFFFF1DB);
+    }
+    if (text == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration:
+            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: fg),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(text,
+                  style: TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w700, color: fg)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1064,43 +1138,43 @@ class _BusTicketCardState extends State<_BusTicketCard> {
             .isRouteFavorite(trip.originCity, trip.destinationCity),
         builder: (context, snapshot) {
           final isFavorite = snapshot.data ?? false;
+          final onSurface = Theme.of(context).colorScheme.onSurface;
+          final bus = [
+            if (trip.busType.isNotEmpty) trip.busType,
+            if (trip.busNumber.isNotEmpty) trip.busNumber,
+          ].join(' · ');
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Operator Info
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text("Highly Rated",
-                        style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                        trip.operatorName.isEmpty
+                            ? "BusLink Operator"
+                            : trip.operatorName,
+                        style: TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.blue)),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                      trip.operatorName.isEmpty
-                          ? "BusLink Operator"
-                          : trip.operatorName,
-                      style: TextStyle(
-                          fontFamily: 'Outfit',
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onSurface)),
-                  const SizedBox(height: 4),
-                  // Only Show Via
-                  if (trip.via.isNotEmpty)
-                    _detailChip(Icons.route, "${"via"} ${trip.via}"),
-                ],
+                            color: onSurface)),
+                    if (bus.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(bus,
+                          style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 15,
+                              color: Colors.grey.shade700)),
+                    ],
+                    if (trip.via.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _detailChip(Icons.route, "via ${trip.via}"),
+                    ],
+                  ],
+                ),
               ),
 
               // Animated Favorite Button
@@ -1118,14 +1192,12 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         });
   }
 
-  // Details Removed as requested
-
   Widget _detailChip(IconData icon, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.white12
@@ -1134,13 +1206,13 @@ class _BusTicketCardState extends State<_BusTicketCard> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: Colors.grey.shade700),
+          Icon(icon, size: 14, color: Colors.grey.shade700),
           const SizedBox(width: 4),
           Text(label,
               style: TextStyle(
                   fontFamily: 'Inter',
                   color: Colors.grey.shade700,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600)),
         ],
       ),
@@ -1148,52 +1220,53 @@ class _BusTicketCardState extends State<_BusTicketCard> {
   }
 
   Widget _buildTimeline(EnrichedTrip trip, Duration duration) {
-    return Row(
-      children: [
-        Column(
+    final grey = Colors.grey.shade700;
+    Widget stop(DateTime t, String city, CrossAxisAlignment align) => Column(
+          crossAxisAlignment: align,
           children: [
-            Text(DateFormat('HH:mm').format(trip.departureTime),
+            Text(DateFormat('h:mm a').format(t),
                 style: const TextStyle(
                     fontFamily: 'Outfit',
                     fontWeight: FontWeight.bold,
-                    fontSize: 20)),
-            Text(trip.fromCity.toLowerCase().replaceAll(' ', '_'),
-                style: const TextStyle(
-                    fontFamily: 'Inter', fontSize: 12, color: Colors.grey)),
+                    fontSize: 22)),
+            Text(city,
+                style:
+                    TextStyle(fontFamily: 'Inter', fontSize: 14, color: grey)),
           ],
-        ),
+        );
+
+    return Row(
+      children: [
+        stop(trip.departureTime, trip.fromCity, CrossAxisAlignment.start),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(
               children: [
-                Text(
-                    "${duration.inHours}h ${duration.inMinutes.remainder(60)}m",
-                    style:
-                        TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(busDuration(duration),
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: grey)),
+                ),
                 Row(
                   children: [
-                    const Icon(Icons.circle, size: 8, color: Colors.grey),
-                    Expanded(child: Divider(color: Colors.grey.shade300)),
-                    const Icon(Icons.circle, size: 8, color: Colors.grey),
+                    Icon(Icons.circle, size: 8, color: grey),
+                    Expanded(child: Divider(color: Colors.grey.shade400)),
+                    Icon(Icons.directions_bus, size: 16, color: grey),
+                    Expanded(child: Divider(color: Colors.grey.shade400)),
+                    Icon(Icons.circle, size: 8, color: grey),
                   ],
                 ),
               ],
             ),
           ),
         ),
-        Column(
-          children: [
-            Text(DateFormat('HH:mm').format(trip.arrivalTime),
-                style: const TextStyle(
-                    fontFamily: 'Outfit',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20)),
-            Text(trip.toCity.toLowerCase().replaceAll(' ', '_'),
-                style: const TextStyle(
-                    fontFamily: 'Inter', fontSize: 12, color: Colors.grey)),
-          ],
-        ),
+        stop(trip.arrivalTime, trip.toCity, CrossAxisAlignment.end),
       ],
     );
   }
@@ -1209,25 +1282,28 @@ class _BusTicketCardState extends State<_BusTicketCard> {
     if (controller.isBulkBooking) {
       displayPrice = priceLabel.replaceAll('Days', "days");
     }
+    final left = trip.totalSeats - trip.bookedSeats.length;
+    final level = seatsLevel(left);
+    final cancelled = trip.status.toLowerCase() == 'cancelled';
 
     return Container(
-      width: isMobile ? double.infinity : 180,
+      width: isMobile ? double.infinity : 190,
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: isMobile
-            ? const BorderRadius.vertical(bottom: Radius.circular(12))
-            : const BorderRadius.horizontal(right: Radius.circular(12)),
+            ? const BorderRadius.vertical(bottom: Radius.circular(16))
+            : const BorderRadius.horizontal(right: Radius.circular(16)),
         border: isMobile
             ? Border(
                 top: BorderSide(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Colors.grey.withValues(alpha: 0.2)
-                        : Colors.grey.shade100))
+                        : Colors.grey.shade200))
             : Border(
                 left: BorderSide(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Colors.grey.withValues(alpha: 0.2)
-                        : Colors.grey.shade100)),
+                        : Colors.grey.shade200)),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -1235,21 +1311,30 @@ class _BusTicketCardState extends State<_BusTicketCard> {
         crossAxisAlignment:
             isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.end,
         children: [
-          // Text("Standard", style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
           Text(displayPrice,
               style: const TextStyle(
                   fontFamily: 'Outfit',
-                  fontSize: 24,
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryColor)),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text("per person",
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
-          const SizedBox(height: 16),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade700)),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
+            height: 52,
             child: ElevatedButton(
               onPressed: () {
+                if (cancelled || level == SeatsLevel.none) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(cancelled
+                        ? "This trip is cancelled. Please choose another bus."
+                        : "This bus is full. Please choose another bus."),
+                    duration: const Duration(seconds: 4),
+                  ));
+                  return;
+                }
                 final now = DateTime.now();
                 final diff = trip.departureTime.difference(now).inMinutes;
 
@@ -1294,20 +1379,60 @@ class _BusTicketCardState extends State<_BusTicketCard> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
+                  backgroundColor: cancelled || level == SeatsLevel.none
+                      ? Colors.grey.shade500
+                      : AppTheme.primaryColor,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  textStyle: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.w800),
+                  side: BorderSide.none,
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6))),
-              child: Text("Select"),
+                      borderRadius: BorderRadius.circular(12))),
+              child: Text(cancelled
+                  ? "Cancelled"
+                  : level == SeatsLevel.none
+                      ? "Full"
+                      : "Select"),
             ),
           ),
-          const SizedBox(height: 8),
-          Center(
-            child: Text(
-                "${trip.totalSeats - trip.bookedSeats.length} seats left",
-                style: TextStyle(fontSize: 12, color: Colors.green.shade700)),
-          )
+          const SizedBox(height: 10),
+          if (!cancelled)
+            Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    level == SeatsLevel.few
+                        ? Icons.local_fire_department
+                        : level == SeatsLevel.none
+                            ? Icons.block
+                            : Icons.event_seat,
+                    size: 16,
+                    color: level == SeatsLevel.few
+                        ? const Color(0xFFB3261E)
+                        : level == SeatsLevel.none
+                            ? Colors.grey.shade700
+                            : Colors.green.shade800,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                      level == SeatsLevel.none
+                          ? "No seats left"
+                          : level == SeatsLevel.few
+                              ? "Only $left seats left"
+                              : "$left seats left",
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: level == SeatsLevel.few
+                              ? const Color(0xFFB3261E)
+                              : level == SeatsLevel.none
+                                  ? Colors.grey.shade700
+                                  : Colors.green.shade800)),
+                ],
+              ),
+            ),
         ],
       ),
     );
