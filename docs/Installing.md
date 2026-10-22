@@ -1,10 +1,10 @@
-# Setup guide
+# Installing
 
 How to run BusLink against your own Firebase and Stripe accounts.
 
 ## 1. Prerequisites
 
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) (stable, Dart 3.x)
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) 3.38 or newer (Dart 3.x). The web deploy is pinned to 3.38.9.
 - A [Firebase](https://console.firebase.google.com/) project
 - A [Stripe](https://stripe.com) account (test mode is fine)
 - Node.js 18+ for the seeding scripts, Cloud Functions and Vercel functions
@@ -33,6 +33,8 @@ Then deploy the rules and indexes from this repo:
 firebase deploy --only firestore:rules,firestore:indexes
 ```
 
+The rules do nothing until you deploy them. An optional extra rule for boarding is in `firestore.rules.proposed`; see [Security](../SECURITY.md#the-proposed-boarding-rule).
+
 ## 4. Create the `.env` file
 
 `.env` is listed as an asset in `pubspec.yaml`, so **it must exist or the build fails**. It is git-ignored.
@@ -40,11 +42,11 @@ firebase deploy --only firestore:rules,firestore:indexes
 | Key | Needed for |
 |---|---|
 | `STRIPE_PUBLISHABLE_KEY` | Initialising Stripe (`pk_test_...`) |
-| `STRIPE_SECRET_KEY` | Prototype payments and refunds from the client (see warning) |
+| `STRIPE_SECRET_KEY` | Prototype payments and refunds from the client (see the warning below) |
 | `OPENWEATHER_API_KEY` | Weather on the trip results list |
 | `FIREBASE_PROJECT_ID` | FCM push sending |
 | `FIREBASE_VAPID_KEY` | Web push |
-| `FIREBASE_SERVICE_ACCOUNT_BASE64` | Client-side FCM sending (see warning) |
+| `FIREBASE_SERVICE_ACCOUNT_BASE64` | Client-side FCM sending (see the warning below) |
 
 ```env
 STRIPE_PUBLISHABLE_KEY=pk_test_...
@@ -55,7 +57,7 @@ FIREBASE_VAPID_KEY=...
 FIREBASE_SERVICE_ACCOUNT_BASE64=...
 ```
 
-> **Warning.** Everything in `.env` is bundled into the app and can be extracted. Use **test-mode** keys only, and never a production secret key or a real service account. For production, move payment creation, refunds and push sending to server code (see [Security notes](../README.md#security-notes)). Missing keys degrade the matching feature rather than crashing the whole app.
+> **Warning.** Everything in `.env` is bundled into the app and can be extracted. Use **test-mode** keys only, and never a production secret key or a real service account. For production, move payment creation, refunds and push sending to server code (see [Security](../SECURITY.md#what-still-needs-doing-before-real-money)). Missing keys degrade the matching feature rather than crashing the whole app.
 
 ## 5. Stripe
 
@@ -96,9 +98,9 @@ flutter run -d chrome   # Web
 flutter run -d macos    # Desktop
 ```
 
-## 10. Deploy the web build (Vercel)
+## 10. Put the web build online
 
-`vercel.json` serves `build/web`, routes `/api/*` to the functions, and falls back to `index.html`. `build_vercel.sh` installs Flutter and builds on Vercel. Set `STRIPE_SECRET_KEY` in the Vercel project settings.
+See [Deploying](Deploying.md): Vercel setup, every environment variable, the health check, and the free limits.
 
 ## Troubleshooting
 
@@ -110,3 +112,8 @@ flutter run -d macos    # Desktop
 | Everyone lands on the customer screen | `role` is not exactly `admin` or `conductor` (step 7). |
 | Google or phone sign-in fails on Android | Add SHA-1 and re-download `google-services.json` (step 8). |
 | `Missing or insufficient permissions` | Deploy `firestore.rules` (step 3). |
+
+## Next
+
+* Learn the screens: [Passenger](Passenger%20guide.md), [Conductor](Conductor%20guide.md) and [Admin](Admin%20guide.md) guides.
+* Something not working: [Fixing problems](Fixing%20problems.md).

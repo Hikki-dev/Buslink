@@ -148,6 +148,32 @@ void main() {
       expect(find.text('Select'), findsOneWidget);
     });
 
+    testWidgets('long city names fit a 390px phone without overflowing',
+        (tester) async {
+      tester.view.physicalSize = const Size(780, 1600);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      final e = _trip();
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: ChangeNotifierProvider<TripController>(
+            create: (_) => _FakeController(),
+            child: Provider<FirestoreService>.value(
+              value: _FakeService(e.trip),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: SingleChildScrollView(child: BusTicketCard(trip: e)),
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump();
+      expect(tester.takeException(), isNull); // no RenderFlex overflow
+      expect(find.text('Nuwara Eliya'), findsOneWidget);
+    });
+
     testWidgets('delayed and nearly full say so in words', (tester) async {
       await _pumpCard(tester, _trip(status: 'delayed', delay: 30, booked: 36));
       expect(find.text('Running 30 minutes late'), findsOneWidget);

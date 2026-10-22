@@ -399,8 +399,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Expanded(
                 child: _SocialButton(
                   onPressed: _googleSignIn,
-                  iconUrl:
-                      'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png',
+                  iconAsset: 'assets/images/google_g.png',
                   label: AppLocalizations.of(context)!.continueWithGoogle,
                 ),
               ),
@@ -672,11 +671,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
 class _SocialButton extends StatelessWidget {
   final VoidCallback onPressed;
-  final String? iconUrl;
+  final String? iconAsset;
   final String label;
 
   const _SocialButton(
-      {required this.onPressed, this.iconUrl, required this.label});
+      {required this.onPressed, this.iconAsset, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -698,13 +697,10 @@ class _SocialButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (iconUrl != null)
-              Image.network(
-                iconUrl!,
-                height: 18,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-            // if (icon != null) Icon(icon, size: 18, color: Colors.white), // Removed unused logic
+            // The real four-colour Google "G", bundled so it never depends
+            // on a website being reachable.
+            if (iconAsset != null)
+              Image.asset(iconAsset!, height: 20, width: 20),
             const SizedBox(width: 8),
             Flexible(
                 child: Text(label,
