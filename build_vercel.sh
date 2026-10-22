@@ -1,4 +1,6 @@
 #!/bin/bash
+# Fail the deploy on ANY error, so a broken build can never replace the live site.
+set -euo pipefail
 
 echo "------------------------------------------"
 echo "   Installing Flutter for Vercel Build     "
@@ -9,7 +11,8 @@ if [ -d "flutter" ]; then
     echo "Flutter already installed."
 else
     echo "Cloning Flutter repository..."
-    git clone https://github.com/flutter/flutter.git -b stable --depth 1
+    # Pinned: a floating "stable" silently broke the web build when Flutter updated.
+    git clone https://github.com/flutter/flutter.git -b 3.38.9 --depth 1
 fi
 
 # 2. Add Flutter to Path

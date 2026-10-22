@@ -8,8 +8,6 @@ import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
 import 'payment_screen.dart';
 
-
-
 class BulkConfirmationScreen extends StatefulWidget {
   final EnrichedTrip trip;
   const BulkConfirmationScreen({super.key, required this.trip});
@@ -74,12 +72,11 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
     final tripCtrl = Provider.of<TripController>(context);
     final total = tripCtrl.calculateBulkTotal(widget.trip.price);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-//     
+//
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            'bulk_booking_summary',
+        title: Text('Bulk Booking Summary',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
@@ -91,11 +88,10 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
             // 1. Bus Details Card
             _buildDetailCard(
               context,
-              title: 'selected_route',
+              title: 'Selected Route',
               content: Column(
                 children: [
-                  _buildRow('operator',
-                      widget.trip.operatorName),
+                  _buildRow('operator', widget.trip.operatorName),
                   const SizedBox(height: 8),
                   _buildRow('Route',
                       "${widget.trip.fromCity} - ${widget.trip.toCity}"),
@@ -138,23 +134,20 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
             // 3. Price Breakdown
             _buildDetailCard(
               context,
-              title: 'price_breakdown',
+              title: 'Price Breakdown',
               content: Column(
                 children: [
-                  _buildRow(
-                      'price_per_ticket',
+                  _buildRow('Price per ticket',
                       "LKR ${widget.trip.price.toStringAsFixed(2)}"),
                   const SizedBox(height: 8),
-                  _buildRow('passengers',
-                      "${tripCtrl.seatsPerTrip}"),
+                  _buildRow('passengers', "${tripCtrl.seatsPerTrip}"),
                   const SizedBox(height: 8),
-                  _buildRow('total_days',
-                      "${tripCtrl.bulkDates.length}"),
+                  _buildRow('Total days', "${tripCtrl.bulkDates.length}"),
                   const Divider(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('total_amount',
+                      Text('Total Amount',
                           style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold)),
                       Text(
@@ -197,7 +190,7 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
                     height: 24,
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2))
-                : Text('proceed_payment',
+                : Text('Proceed to Payment',
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold)),
           ),

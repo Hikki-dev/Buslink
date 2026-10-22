@@ -1,6 +1,7 @@
 // lib/views/auth/login_screen.dart
 import 'dart:math';
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
@@ -370,6 +371,8 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
+          const LanguagePills(),
+          const SizedBox(height: 24),
           Text(
             AppLocalizations.of(context)!.welcome,
             style: const TextStyle(
@@ -528,12 +531,11 @@ class _LoginScreenState extends State<LoginScreen> {
               key: const Key('login_button'),
               onPressed: _isLoading ? null : _submitAuthForm,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF16161A),
+                backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Color(0xFF1E1E22)),
                 ),
               ),
               child: _isLoading
@@ -675,16 +677,19 @@ class _SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       height: 48,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          backgroundColor: const Color(0xFF0F0F12),
-          side: const BorderSide(color: Color(0xFF1E1E22)),
+          backgroundColor: dark ? const Color(0xFF0F0F12) : Colors.white,
+          side: BorderSide(
+              color: dark ? const Color(0xFF1E1E22) : Colors.grey.shade400,
+              width: 1.5),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          foregroundColor: Colors.white,
+          foregroundColor: dark ? Colors.white : Colors.black,
           padding: const EdgeInsets.symmetric(horizontal: 8),
         ),
         child: Row(
@@ -803,6 +808,9 @@ class HiddenDebugButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Debug-only shortcut. In a release build (the public demo) this widget
+    // must not exist: it would auto-sign-in as admin with a known password.
+    if (!kDebugMode) return const SizedBox.shrink();
     return Opacity(
       opacity: 0.02, // Hidden
       child: PopupMenuButton<String>(

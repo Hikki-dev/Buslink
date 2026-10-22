@@ -1,4 +1,5 @@
 // lib/utils/app_theme.dart
+import 'package:flutter/cupertino.dart'; // ignore: unnecessary_import (newer Flutter needs it)
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 

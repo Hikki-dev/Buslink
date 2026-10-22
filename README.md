@@ -1,5 +1,9 @@
 # BusLink
 
+[![Demo status](https://github.com/Hikki-dev/Buslink/actions/workflows/uptime.yml/badge.svg)](https://github.com/Hikki-dev/Buslink/actions/workflows/uptime.yml)
+
+**Live demo:** https://buslink-eta.vercel.app (the badge above turns red if the demo goes down)
+
 A cross-platform **bus booking and operations platform** built with Flutter and Firebase. Passengers search trips, pick seats and pay online. Conductors scan tickets and run their trips. Admins manage routes, schedules, users, refunds and analytics.
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)
