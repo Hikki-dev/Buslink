@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../controllers/trip_controller.dart';
+import '../../models/boarding_result.dart';
 import '../../models/trip_view_model.dart';
 import '../../models/trip_model.dart';
 import '../../services/auth_service.dart';
@@ -436,6 +437,11 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
         debugPrint("Expiration check error: $e");
       }
 
+      if (ticket.isBoarded) {
+        if (mounted) _showAlreadyBoarded(ticket.boardedAt!);
+        return;
+      }
+
       if (mounted) _showTicketDetailsDialog(ticket);
     } else {
       if (mounted) {
@@ -462,20 +468,43 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
     );
   }
 
+  void _showAlreadyBoarded(DateTime at) =>
+      _showRejectedDialog("Already boarded", alreadyBoardedMessage(at));
+
   void _showTicketDetailsDialog(Ticket ticket) {
+    final controller = Provider.of<TripController>(context, listen: false);
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: SingleChildScrollView(
-              child: TicketVerifiedCard(
-                ticket: ticket,
-                onApprove: () => Navigator.pop(context),
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        var busy = false;
+        return StatefulBuilder(
+          builder: (_, setDialogState) => Dialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: SingleChildScrollView(
+                child: TicketVerifiedCard(
+                  ticket: ticket,
+                  busy: busy,
+                  onApprove: () async {
+                    setDialogState(() => busy = true);
+                    final result =
+                        await controller.approveBoarding(ticket.ticketId);
+                    if (!mounted || !dialogContext.mounted) return;
+                    if (result.status == BoardingStatus.failed) {
+                      setDialogState(() => busy = false);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text(
+                              "Could not record boarding. Check your connection and try again.")));
+                      return;
+                    }
+                    Navigator.pop(dialogContext);
+                    _announceBoarding(result);
+                  },
+                ),
               ),
             ),
           ),
@@ -483,7 +512,30 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       },
     );
   }
+
+  void _announceBoarding(BoardingResult result) {
+    switch (result.status) {
+      case BoardingStatus.recorded:
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("Boarding recorded")));
+      case BoardingStatus.alreadyBoarded:
+        _showAlreadyBoarded(result.boardedAt ?? DateTime.now());
+      case BoardingStatus.cancelled:
+        _showRejectedDialog(
+            "Ticket not accepted", "This ticket was cancelled.");
+      case BoardingStatus.notFound:
+        _showRejectedDialog(
+            "Ticket not found", "This ticket no longer exists.");
+      case BoardingStatus.failed:
+        break;
+    }
+  }
 }
+
+/// Wording for the reject dialog when a ticket has already been checked in.
+String alreadyBoardedMessage(DateTime at) =>
+    "This ticket was already checked in at ${DateFormat('h:mm a').format(at)}. "
+    "Each ticket can board only once.";
 
 /// Shown when a ticket checks out. The 4-digit code is the thing the
 /// conductor must compare with the passenger's own screen, so it is the
@@ -492,6 +544,9 @@ class TicketVerifiedCard extends StatelessWidget {
   final Ticket ticket;
   final VoidCallback onApprove;
 
+  /// True while the boarding is being saved; disables the button.
+  final bool busy;
+
   /// Live seat data for the mini seat map (defaults to Firestore).
   final Stream<Trip>? seatStream;
 
@@ -499,6 +554,7 @@ class TicketVerifiedCard extends StatelessWidget {
     super.key,
     required this.ticket,
     required this.onApprove,
+    this.busy = false,
     this.seatStream,
   });
 
@@ -613,13 +669,19 @@ class TicketVerifiedCard extends StatelessWidget {
         SizedBox(
           height: 56,
           child: ElevatedButton(
-            onPressed: onApprove,
+            onPressed: busy ? null : onApprove,
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade700,
                 foregroundColor: Colors.white,
                 textStyle:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            child: const Text("Approve Boarding"),
+            child: busy
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 3, color: Colors.white))
+                : const Text("Approve Boarding"),
           ),
         ),
       ],
