@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 250" font-family="Roboto, Helvetica, Arial, sans-serif">
+  <title>From picking a seat to boarding the bus</title>
+  <desc>Six steps: the passenger picks seats, the app reserves them in one safe step, the passenger pays, the ticket is confirmed, the conductor scans it, and approving boarding stamps the ticket so it cannot be used twice.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#6b5b5c"/></marker>
+  </defs>
+  <rect width="900" height="250" fill="#ffffff"/>
+  <g font-size="14" text-anchor="middle">
+    <g>
+      <rect x="10" y="60" width="130" height="110" rx="14" fill="#fdeeee" stroke="#BA181B" stroke-width="2"/>
+      <circle cx="75" cy="40" r="16" fill="#BA181B"/><text x="75" y="46" fill="#fff" font-weight="700">1</text>
+      <text x="75" y="105" font-weight="700" fill="#660708">Pick seats</text>
+      <text x="75" y="126" fill="#4a3a3b">Live seat map,</text>
+      <text x="75" y="144" fill="#4a3a3b">taken seats greyed</text>
+    </g>
+    <g>
+      <rect x="160" y="60" width="130" height="110" rx="14" fill="#fdeeee" stroke="#BA181B" stroke-width="2"/>
+      <circle cx="225" cy="40" r="16" fill="#BA181B"/><text x="225" y="46" fill="#fff" font-weight="700">2</text>
+      <text x="225" y="105" font-weight="700" fill="#660708">Reserve</text>
+      <text x="225" y="126" fill="#4a3a3b">One safe step: two</text>
+      <text x="225" y="144" fill="#4a3a3b">people can't get</text>
+      <text x="225" y="162" fill="#4a3a3b">the same seat</text>
+    </g>
+    <g>
+      <rect x="310" y="60" width="130" height="110" rx="14" fill="#fdeeee" stroke="#BA181B" stroke-width="2"/>
+      <circle cx="375" cy="40" r="16" fill="#BA181B"/><text x="375" y="46" fill="#fff" font-weight="700">3</text>
+      <text x="375" y="105" font-weight="700" fill="#660708">Pay</text>
+      <text x="375" y="126" fill="#4a3a3b">Stripe card</text>
+      <text x="375" y="144" fill="#4a3a3b">payment</text>
+    </g>
+    <g>
+      <rect x="460" y="60" width="130" height="110" rx="14" fill="#fdeeee" stroke="#BA181B" stroke-width="2"/>
+      <circle cx="525" cy="40" r="16" fill="#BA181B"/><text x="525" y="46" fill="#fff" font-weight="700">4</text>
+      <text x="525" y="105" font-weight="700" fill="#660708">Ticket</text>
+      <text x="525" y="126" fill="#4a3a3b">Confirmed, with a</text>
+      <text x="525" y="144" fill="#4a3a3b">QR code and a</text>
+      <text x="525" y="162" fill="#4a3a3b">4-digit code</text>
+    </g>
+    <g>
+      <rect x="610" y="60" width="130" height="110" rx="14" fill="#e8f5ec" stroke="#1B6B35" stroke-width="2"/>
+      <circle cx="675" cy="40" r="16" fill="#1B6B35"/><text x="675" y="46" fill="#fff" font-weight="700">5</text>
+      <text x="675" y="105" font-weight="700" fill="#14532D">Scan</text>
+      <text x="675" y="126" fill="#33473a">Conductor scans</text>
+      <text x="675" y="144" fill="#33473a">or types the code</text>
+    </g>
+    <g>
+      <rect x="760" y="60" width="130" height="110" rx="14" fill="#e8f5ec" stroke="#1B6B35" stroke-width="2"/>
+      <circle cx="825" cy="40" r="16" fill="#1B6B35"/><text x="825" y="46" fill="#fff" font-weight="700">6</text>
+      <text x="825" y="105" font-weight="700" fill="#14532D">Board</text>
+      <text x="825" y="126" fill="#33473a">Approve stamps the</text>
+      <text x="825" y="144" fill="#33473a">ticket. A second</text>
+      <text x="825" y="162" fill="#33473a">try is refused</text>
+    </g>
+  </g>
+  <g stroke="#6b5b5c" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M142 115 L158 115"/><path d="M292 115 L308 115"/><path d="M442 115 L458 115"/><path d="M592 115 L608 115"/><path d="M742 115 L758 115"/>
+  </g>
+  <text x="450" y="215" text-anchor="middle" font-size="13" fill="#6b5b5c">Steps 1 to 4 are the passenger. Steps 5 and 6 are the conductor.</text>
+</svg>

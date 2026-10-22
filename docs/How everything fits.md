@@ -1,6 +1,8 @@
-# Architecture
+# How everything fits
 
 ## Overview
+
+<p align="center"><img src="images/how-it-fits.svg" alt="Diagram of the app, Firebase, the payment functions and Stripe" width="100%"></p>
 
 A Flutter client talks directly to Firebase (Auth, Firestore, FCM). Two small server-side pieces handle Stripe operations that must not run in a browser: Vercel functions in `api/` and a Firebase Cloud Function in `functions/`.
 
@@ -42,7 +44,7 @@ signed in         -> RoleDispatcher, streams users/{uid}.role
 | `routes` | A city-to-city route | `originCity`, `destinationCity`, `via`, `stops[]`, `distanceKm`, `estimatedDurationMins`, `isActive` |
 | `schedules` | Recurring timetable for a route | `routeId`, `busNumber`, `operatorName`, `busType`, `amenities[]`, `recurrenceDays[]` (1 = Mon ... 7 = Sun), `departureTime` (`HH:mm`), `basePrice`, `totalSeats`, `conductorId` |
 | `trips` | One operating run on one date | `scheduleId`, `date`, `originCity`, `destinationCity`, `departureDateTime`, `arrivalDateTime`, `price`, `status`, `totalSeats`, `delayMinutes`, `bookedSeatNumbers[]`, `conductorId`, `via` |
-| `tickets` | A booking | `userId`, `tripId`, `seatNumbers[]`, `status`, `totalAmount`, `paymentIntentId`, `shortId`, `tripData{}` |
+| `tickets` | A booking | `userId`, `tripId`, `seatNumbers[]`, `status`, `totalAmount`, `paymentIntentId`, `shortId`, `tripData{}`, and once boarded `boardedAt`, `boardedBy` |
 | `refunds` | Refund requests | `status` (pending, approved, rejected, processed, failed), `ticketId`, `refundAmount` |
 | `refund_transactions` | Admin-only audit of Stripe refunds | status (pending, success, failed) |
 | `notifications` | In-app notifications | `userId`, type |
@@ -65,6 +67,25 @@ Indexes are in `firestore.indexes.json` and security rules in `firestore.rules`.
 
 Conductors can also create **offline bookings** (`createOfflineBooking`) for walk-up passengers.
 
+<p align="center"><img src="images/booking-flow.svg" alt="The six steps from picking a seat to boarding" width="100%"></p>
+
+## Boarding flow
+
+1. The conductor scans the QR code or types the ticket code. `TripController.verifyTicket` reads `tickets/{id}`. It returns nothing if the ticket is missing or cancelled.
+2. The dashboard refuses a ticket whose trip left more than 12 hours ago, and a ticket that already has `boardedAt` ("Already boarded", with the time).
+3. Otherwise it shows the ticket: passenger, seats, the 4-digit code and the seat map.
+4. **Approve Boarding** calls `TripController.approveBoarding`, which calls `FirestoreService.recordBoarding`. That runs one **Firestore transaction**: read the ticket, ask `decideBoarding` (a small pure function in `lib/models/boarding_result.dart`) whether it may board, and if yes write `boardedAt` and `boardedBy`.
+5. Because the read and the write are one transaction, two conductors approving at once cannot both succeed: the second sees `boardedAt` and gets "Already boarded".
+6. If the write fails (for example no connection), the card stays open and says so. Nothing is shown as boarded unless it was saved.
+
+## Tracking
+
+`track_bus_screen.dart` shows the bus on a map from `LocationService.getBusLocationStream(tripId)`, the position the conductor's phone reports for that trip. The time left comes from `TripEta.compute`, a plain function of the departure time, the arrival time, any reported delay and the current time. City positions for the map are in `lib/data/city_coords.dart`.
+
+## Statuses on screen
+
+`lib/views/admin/widgets/status_chip.dart` turns a status word (`confirmed`, `cancelled`, `pending`, `delayed` and so on) into an icon, a label and a colour, so admin lists never rely on colour alone.
+
 ## Refund flow
 
 1. The passenger files a refund request (`refunds`, status `pending`).
@@ -81,4 +102,4 @@ Conductors can also create **offline bookings** (`createOfflineBooking`) for wal
 
 ## Known limitations
 
-See [Security notes](../README.md#security-notes) in the README. In short: Stripe secret key and a service account are read from a client-bundled `.env`, the refund endpoint is unauthenticated, the refund function lacks an admin check, and `users/{uid}` rules allow self-edited roles.
+See [Security](../SECURITY.md) for the full, current list. In short: on mobile and desktop a Stripe secret key and a service account can be read from the bundled `.env`, the web refund endpoint is unauthenticated, and the refund function lacks an admin check. The web demo build contains no secrets.

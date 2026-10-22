@@ -1221,24 +1221,32 @@ class _BusTicketCardState extends State<BusTicketCard> {
 
   Widget _buildTimeline(EnrichedTrip trip, Duration duration) {
     final grey = Colors.grey.shade700;
-    Widget stop(DateTime t, String city, CrossAxisAlignment align) => Column(
-          crossAxisAlignment: align,
-          children: [
-            Text(DateFormat('h:mm a').format(t),
-                style: const TextStyle(
-                    fontFamily: 'Outfit',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22)),
-            Text(city,
-                style:
-                    TextStyle(fontFamily: 'Inter', fontSize: 14, color: grey)),
-          ],
+    // Long city names (e.g. "Nuwara Eliya") are cut with "..." rather than
+    // squeezing the bus line in the middle below the width of its icons.
+    Widget stop(DateTime t, String city, CrossAxisAlignment align) => Flexible(
+          flex: 3,
+          child: Column(
+            crossAxisAlignment: align,
+            children: [
+              Text(DateFormat('h:mm a').format(t),
+                  style: const TextStyle(
+                      fontFamily: 'Outfit',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22)),
+              Text(city,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontFamily: 'Inter', fontSize: 14, color: grey)),
+            ],
+          ),
         );
 
     return Row(
       children: [
         stop(trip.departureTime, trip.fromCity, CrossAxisAlignment.start),
         Expanded(
+          flex: 2,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(
