@@ -11,6 +11,7 @@ import '../../models/route_model.dart';
 import '../../utils/app_theme.dart';
 import 'layout/admin_navbar.dart';
 import 'layout/admin_footer.dart';
+import 'widgets/status_chip.dart';
 
 class AdminScreen extends StatefulWidget {
   final EnrichedTrip? trip;
@@ -48,6 +49,10 @@ class _AdminScreenState extends State<AdminScreen> {
       TextEditingController(text: "40");
   final TextEditingController _platformController = TextEditingController();
   final List<String> _blockedSeats = [];
+
+  /// 0 = route, 1 = schedule, 2 = fare & bus. Fields of the other steps are
+  /// not on screen, so Next validates only what you can see.
+  int _step = 0;
 
   bool get isEditing => widget.trip != null;
 
@@ -373,308 +378,295 @@ class _AdminScreenState extends State<AdminScreen> {
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 32),
-
-                                      _buildRouteSelector(),
+                                      const SizedBox(height: 24),
+                                      TripFormSteps(current: _step),
                                       const SizedBox(height: 24),
 
-                                      _buildSectionHeader("A) Route Details"),
+                                      if (_step == 0) ...[
+                                        _buildRouteSelector(),
+                                        const SizedBox(height: 24),
 
-                                      // From / To
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                              child: _buildCityAutocomplete(
-                                                  "From (Origin)",
-                                                  _originCity,
-                                                  (v) => _originCity = v)),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                              child: _buildCityAutocomplete(
-                                                  "To (Destination)",
-                                                  _destinationCity,
-                                                  (v) => _destinationCity = v)),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
+                                        _buildSectionHeader("Route details"),
 
-                                      // Via / Duration
-                                      _buildViaDurationRow(
-                                          isDesktop,
-                                          _viaOptions,
-                                          _viaRoute,
-                                          _durationController, (val) {
-                                        setState(() {
-                                          _viaRoute = val;
-                                        });
-                                      }),
-
-                                      const SizedBox(height: 32),
-                                      _buildSectionHeader("B) Schedule"),
-
-                                      // Times
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                              child: _buildTimePicker(
-                                                  "Departure Time",
-                                                  _departureTime, (d) {
-                                            setState(() => _departureTime = d);
-                                            _calculateArrival();
-                                          })),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                              child: _buildTimePicker(
-                                                  "Arrival Time",
-                                                  _arrivalTime,
-                                                  (d) => setState(
-                                                      () => _arrivalTime = d))),
-                                        ],
-                                      ),
-
-                                      const SizedBox(height: 20),
-
-                                      // Toggle: Recurring vs Single
-                                      if (!isEditing)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12, vertical: 8),
-                                          decoration: BoxDecoration(
-                                              color: isDark
-                                                  ? Colors.grey
-                                                      .withValues(alpha: 0.1)
-                                                  : Colors.grey.shade100,
-                                              borderRadius:
-                                                  BorderRadius.circular(8)),
-                                          child: Wrap(
-                                            crossAxisAlignment:
-                                                WrapCrossAlignment.center,
-                                            spacing: 16,
-                                            runSpacing: 8,
-                                            children: [
-                                              Text("Schedule Type:",
-                                                  style: TextStyle(
-                                                      fontFamily: 'Inter',
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14,
-                                                      color: textColor)),
-                                              ToggleButtons(
-                                                constraints:
-                                                    const BoxConstraints(
-                                                  minHeight: 36.0,
-                                                  minWidth: 80.0,
-                                                ),
-                                                isSelected: [
-                                                  _isRecurring,
-                                                  !_isRecurring
-                                                ],
-                                                onPressed: (index) {
-                                                  setState(() {
-                                                    _isRecurring = index == 0;
-                                                  });
-                                                },
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                selectedColor: Colors.white,
-                                                fillColor:
-                                                    AppTheme.primaryColor,
-                                                color: textColor.withValues(
-                                                    alpha: 0.7),
-                                                children: const [
-                                                  Padding(
-                                                      padding:
-                                                          EdgeInsets.symmetric(
-                                                              horizontal: 12),
-                                                      child: Text(
-                                                          "Recurring Route",
-                                                          style: TextStyle(
-                                                              fontSize: 13))),
-                                                  Padding(
-                                                      padding:
-                                                          EdgeInsets.symmetric(
-                                                              horizontal: 12),
-                                                      child: Text(
-                                                          "One-Time Trip",
-                                                          style: TextStyle(
-                                                              fontSize: 13))),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
+                                        // From / To
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                                child: _buildCityAutocomplete(
+                                                    "From (Origin)",
+                                                    _originCity,
+                                                    (v) => _originCity = v)),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                                child: _buildCityAutocomplete(
+                                                    "To (Destination)",
+                                                    _destinationCity,
+                                                    (v) =>
+                                                        _destinationCity = v)),
+                                          ],
                                         ),
-                                      const SizedBox(height: 16),
+                                        const SizedBox(height: 16),
 
-                                      if (_isRecurring) ...[
-                                        Text("Operating Days (Weekly)",
-                                            style: TextStyle(
-                                                fontFamily: 'Inter',
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                                color: textColor)),
-                                        const SizedBox(height: 8),
-                                        Wrap(
-                                          spacing: 10,
-                                          children: _daysOfWeek.map((day) {
-                                            final isSelected =
-                                                _operatingDays.contains(day);
-                                            return FilterChip(
-                                              label: Text(day.substring(0, 3)),
-                                              selected: isSelected,
-                                              onSelected: (selected) {
-                                                setState(() {
-                                                  if (selected) {
-                                                    _operatingDays.add(day);
-                                                  } else {
-                                                    _operatingDays.remove(day);
-                                                  }
-                                                });
-                                              },
-                                              checkmarkColor: Colors.white,
-                                              selectedColor:
-                                                  AppTheme.primaryColor,
-                                              backgroundColor: isDark
-                                                  ? Colors.grey
-                                                      .withValues(alpha: 0.2)
-                                                  : null,
-                                              labelStyle: TextStyle(
-                                                  color: isSelected
-                                                      ? Colors.white
-                                                      : textColor),
-                                            );
-                                          }).toList(),
-                                        ),
-                                      ] else ...[
-                                        Text("Trip Date",
-                                            style: TextStyle(
-                                                fontFamily: 'Inter',
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                                color: textColor)),
-                                        const SizedBox(height: 8),
-                                        InkWell(
-                                          onTap: () async {
-                                            final picked = await showDatePicker(
-                                              context: context,
-                                              initialDate:
-                                                  _tripDate ?? DateTime.now(),
-                                              firstDate: DateTime.now(),
-                                              lastDate: DateTime.now().add(
-                                                  const Duration(days: 365)),
-                                            );
-                                            if (picked != null) {
+                                        // Via / Duration
+                                        _buildViaDurationRow(
+                                            isDesktop,
+                                            _viaOptions,
+                                            _viaRoute,
+                                            _durationController, (val) {
+                                          setState(() {
+                                            _viaRoute = val;
+                                          });
+                                        }),
+                                      ] else if (_step == 1) ...[
+                                        _buildSectionHeader("Schedule"),
+
+                                        // Times
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                                child: _buildTimePicker(
+                                                    "Departure Time",
+                                                    _departureTime, (d) {
                                               setState(
-                                                  () => _tripDate = picked);
-                                            }
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.all(16),
+                                                  () => _departureTime = d);
+                                              _calculateArrival();
+                                            })),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                                child: _buildTimePicker(
+                                                    "Arrival Time",
+                                                    _arrivalTime,
+                                                    (d) => setState(() =>
+                                                        _arrivalTime = d))),
+                                          ],
+                                        ),
+
+                                        const SizedBox(height: 20),
+
+                                        // Toggle: Recurring vs Single
+                                        if (!isEditing)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 8),
                                             decoration: BoxDecoration(
-                                              border: Border.all(
-                                                  color: Colors.grey.shade400),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                            child: Row(
+                                                color: isDark
+                                                    ? Colors.grey
+                                                        .withValues(alpha: 0.1)
+                                                    : Colors.grey.shade100,
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            child: Wrap(
+                                              crossAxisAlignment:
+                                                  WrapCrossAlignment.center,
+                                              spacing: 16,
+                                              runSpacing: 8,
                                               children: [
-                                                Icon(Icons.calendar_month,
-                                                    color:
-                                                        Colors.grey.shade600),
-                                                const SizedBox(width: 12),
-                                                Text(
-                                                  _tripDate == null
-                                                      ? "Select Date"
-                                                      : DateFormat(
-                                                              'EEE, MMM d, yyyy')
-                                                          .format(_tripDate!),
-                                                  style: TextStyle(
-                                                      fontFamily: 'Inter',
-                                                      fontSize: 16,
-                                                      color: _tripDate == null
-                                                          ? Colors.grey
-                                                          : textColor),
+                                                Text("Schedule Type:",
+                                                    style: TextStyle(
+                                                        fontFamily: 'Inter',
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 14,
+                                                        color: textColor)),
+                                                ToggleButtons(
+                                                  constraints:
+                                                      const BoxConstraints(
+                                                    minHeight: 36.0,
+                                                    minWidth: 80.0,
+                                                  ),
+                                                  isSelected: [
+                                                    _isRecurring,
+                                                    !_isRecurring
+                                                  ],
+                                                  onPressed: (index) {
+                                                    setState(() {
+                                                      _isRecurring = index == 0;
+                                                    });
+                                                  },
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  selectedColor: Colors.white,
+                                                  fillColor:
+                                                      AppTheme.primaryColor,
+                                                  color: textColor.withValues(
+                                                      alpha: 0.7),
+                                                  children: const [
+                                                    Padding(
+                                                        padding: EdgeInsets
+                                                            .symmetric(
+                                                                horizontal: 12),
+                                                        child: Text(
+                                                            "Recurring Route",
+                                                            style: TextStyle(
+                                                                fontSize: 13))),
+                                                    Padding(
+                                                        padding: EdgeInsets
+                                                            .symmetric(
+                                                                horizontal: 12),
+                                                        child: Text(
+                                                            "One-Time Trip",
+                                                            style: TextStyle(
+                                                                fontSize: 13))),
+                                                  ],
                                                 ),
                                               ],
                                             ),
                                           ),
-                                        ),
-                                      ],
-
-                                      const SizedBox(height: 32),
-                                      _buildSeatLayoutEditor(),
-                                      const SizedBox(height: 32),
-                                      _buildSectionHeader("C) Fare & Bus Info"),
-
-                                      _buildTextField(
-                                          "Fare Amount (LKR)", _fareController,
-                                          isNumber: true,
-                                          icon: Icons.attach_money),
-                                      const SizedBox(height: 16),
-                                      _buildTextField(
-                                          "Total Seats", _seatsController,
-                                          isNumber: true,
-                                          icon: Icons.event_seat),
-
-                                      // Status Dropdown (Edits Only)
-                                      if (isEditing) ...[
                                         const SizedBox(height: 16),
-                                        DropdownButtonFormField<TripStatus>(
-                                          key: ValueKey(_tripStatus),
-                                          initialValue: _tripStatus,
-                                          decoration: InputDecoration(
-                                            labelText: "Trip Status",
-                                            filled: true,
-                                            fillColor: isDark
-                                                ? Colors.grey
-                                                    .withValues(alpha: 0.1)
-                                                : Colors.grey.shade50,
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
+
+                                        if (_isRecurring) ...[
+                                          Text("Operating Days (Weekly)",
+                                              style: TextStyle(
+                                                  fontFamily: 'Inter',
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                  color: textColor)),
+                                          const SizedBox(height: 8),
+                                          Wrap(
+                                            spacing: 10,
+                                            children: _daysOfWeek.map((day) {
+                                              final isSelected =
+                                                  _operatingDays.contains(day);
+                                              return FilterChip(
+                                                label:
+                                                    Text(day.substring(0, 3)),
+                                                selected: isSelected,
+                                                onSelected: (selected) {
+                                                  setState(() {
+                                                    if (selected) {
+                                                      _operatingDays.add(day);
+                                                    } else {
+                                                      _operatingDays
+                                                          .remove(day);
+                                                    }
+                                                  });
+                                                },
+                                                checkmarkColor: Colors.white,
+                                                selectedColor:
+                                                    AppTheme.primaryColor,
+                                                backgroundColor: isDark
+                                                    ? Colors.grey
+                                                        .withValues(alpha: 0.2)
+                                                    : null,
+                                                labelStyle: TextStyle(
+                                                    color: isSelected
+                                                        ? Colors.white
+                                                        : textColor),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ] else ...[
+                                          Text("Trip Date",
+                                              style: TextStyle(
+                                                  fontFamily: 'Inter',
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                  color: textColor)),
+                                          const SizedBox(height: 8),
+                                          InkWell(
+                                            onTap: () async {
+                                              final picked =
+                                                  await showDatePicker(
+                                                context: context,
+                                                initialDate:
+                                                    _tripDate ?? DateTime.now(),
+                                                firstDate: DateTime.now(),
+                                                lastDate: DateTime.now().add(
+                                                    const Duration(days: 365)),
+                                              );
+                                              if (picked != null) {
+                                                setState(
+                                                    () => _tripDate = picked);
+                                              }
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(16),
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                    color:
+                                                        Colors.grey.shade400),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.calendar_month,
+                                                      color:
+                                                          Colors.grey.shade600),
+                                                  const SizedBox(width: 12),
+                                                  Text(
+                                                    _tripDate == null
+                                                        ? "Select Date"
+                                                        : DateFormat(
+                                                                'EEE, MMM d, yyyy')
+                                                            .format(_tripDate!),
+                                                    style: TextStyle(
+                                                        fontFamily: 'Inter',
+                                                        fontSize: 16,
+                                                        color: _tripDate == null
+                                                            ? Colors.grey
+                                                            : textColor),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ),
-                                          items: TripStatus.values.map((s) {
-                                            return DropdownMenuItem(
-                                              value: s,
-                                              child: Text(
-                                                s.name.toUpperCase(),
-                                                style:
-                                                    TextStyle(color: textColor),
+                                        ],
+                                      ] else ...[
+                                        _buildSeatLayoutEditor(),
+                                        const SizedBox(height: 32),
+                                        _buildSectionHeader("Fare & bus info"),
+
+                                        _buildTextField("Fare Amount (LKR)",
+                                            _fareController,
+                                            isNumber: true,
+                                            icon: Icons.attach_money),
+                                        const SizedBox(height: 16),
+                                        _buildTextField(
+                                            "Total Seats", _seatsController,
+                                            isNumber: true,
+                                            icon: Icons.event_seat),
+
+                                        // Status Dropdown (Edits Only)
+                                        if (isEditing) ...[
+                                          const SizedBox(height: 16),
+                                          DropdownButtonFormField<TripStatus>(
+                                            key: ValueKey(_tripStatus),
+                                            initialValue: _tripStatus,
+                                            decoration: InputDecoration(
+                                              labelText: "Trip Status",
+                                              filled: true,
+                                              fillColor: isDark
+                                                  ? Colors.grey
+                                                      .withValues(alpha: 0.1)
+                                                  : Colors.grey.shade50,
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                               ),
-                                            );
-                                          }).toList(),
-                                          onChanged: (val) {
-                                            if (val != null) {
-                                              setState(() => _tripStatus = val);
-                                            }
-                                          },
-                                        ),
+                                            ),
+                                            items: TripStatus.values.map((s) {
+                                              return DropdownMenuItem(
+                                                value: s,
+                                                child: Text(
+                                                  s.name.toUpperCase(),
+                                                  style: TextStyle(
+                                                      color: textColor),
+                                                ),
+                                              );
+                                            }).toList(),
+                                            onChanged: (val) {
+                                              if (val != null) {
+                                                setState(
+                                                    () => _tripStatus = val);
+                                              }
+                                            },
+                                          ),
+                                        ],
                                       ],
 
-                                      const SizedBox(height: 48),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 56,
-                                        child: ElevatedButton(
-                                          onPressed: _save,
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                AppTheme.primaryColor,
-                                            foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(12)),
-                                          ),
-                                          child: Text(
-                                              isEditing
-                                                  ? "SAVE CHANGES"
-                                                  : "SAVE TRIP",
-                                              style: const TextStyle(
-                                                  fontFamily: 'Outfit',
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 16)),
-                                        ),
-                                      )
+                                      const SizedBox(height: 40),
+                                      _buildStepButtons(),
                                     ],
                                   ),
                                 ),
@@ -702,6 +694,58 @@ class _AdminScreenState extends State<AdminScreen> {
         ),
       );
     });
+  }
+
+  void _next() {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _step++);
+  }
+
+  Widget _buildStepButtons() {
+    final last = _step == 2;
+    return Row(
+      children: [
+        if (_step > 0) ...[
+          Expanded(
+            child: SizedBox(
+              height: 56,
+              child: OutlinedButton.icon(
+                onPressed: () => setState(() => _step--),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text("Back"),
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryColor,
+                    side: const BorderSide(color: AppTheme.primaryColor),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12))),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+        Expanded(
+          flex: 2,
+          child: SizedBox(
+            height: 56,
+            child: ElevatedButton(
+              onPressed: last ? _save : _next,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(
+                  last ? (isEditing ? "SAVE CHANGES" : "SAVE TRIP") : "NEXT",
+                  style: const TextStyle(
+                      fontFamily: 'Outfit',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16)),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildSectionHeader(String title) {
