@@ -14,16 +14,26 @@ service cloud.firestore {
     }
 
     // User Profiles
+    // A user may create/edit their own profile but can NEVER choose or change
+    // their own role (that would let anyone make themselves an admin).
     match /users/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      
-      // Subcollections (favorite_routes, etc.)
-      match /{document=**} {
+      allow create: if request.auth != null && (
+          isAdmin() ||
+          (request.auth.uid == userId &&
+           request.resource.data.get('role', 'customer') == 'customer'));
+      allow update: if request.auth != null && (
+          isAdmin() ||
+          (request.auth.uid == userId &&
+           request.resource.data.get('role', 'customer') == resource.data.get('role', 'customer')));
+      allow delete: if isAdmin();
+
+      // Subcollections (favorite_routes, etc.) - one level deep.
+      match /{subcollection}/{docId} {
         allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
       }
     }
-    
+
     // Trips (Public read, admins/conductors can edit everything, Users can ONLY update seat numbers)
     match /trips/{tripId} {
       allow read: if true;
