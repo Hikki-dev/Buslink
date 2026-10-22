@@ -1,5 +1,10 @@
 # 🚌 BusLink
 
+[![Demo status](https://github.com/Hikki-dev/Buslink/actions/workflows/uptime.yml/badge.svg)](https://github.com/Hikki-dev/Buslink/actions/workflows/uptime.yml)
+
+**Live demo:** https://buslink-eta.vercel.app (the badge above turns red if the demo goes down)
+
+
 A modern Flutter application for bus ticket booking and management, featuring real-time seat selection, Firebase authentication, and cross-platform support.
 
 # Logins
