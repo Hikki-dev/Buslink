@@ -1,6 +1,7 @@
 // lib/views/auth/login_screen.dart
 import 'dart:math';
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
@@ -803,6 +804,8 @@ class HiddenDebugButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Debug-only shortcut with well-known passwords. It must never ship in a release build.
+    if (!kDebugMode) return const SizedBox.shrink();
     return Opacity(
       opacity: 0.02, // Hidden
       child: PopupMenuButton<String>(
