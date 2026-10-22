@@ -3,6 +3,9 @@ import '../../models/trip_model.dart';
 import '../../utils/app_theme.dart';
 import '../../services/firestore_service.dart';
 
+/// Seat button size. 48px meets the usual minimum touch target.
+const double _kSeat = 48;
+
 class BusLayoutWidget extends StatefulWidget {
   final Trip trip;
   final int totalSeats;
@@ -11,6 +14,10 @@ class BusLayoutWidget extends StatefulWidget {
   final Function(int)? onSeatToggle;
   final bool isReadOnly;
   final bool isDark;
+
+  /// Live seat data. Defaults to the trip's Firestore stream; tests can pass
+  /// their own.
+  final Stream<Trip>? tripStream;
 
   const BusLayoutWidget({
     super.key,
@@ -21,6 +28,7 @@ class BusLayoutWidget extends StatefulWidget {
     this.onSeatToggle,
     this.isReadOnly = false,
     required this.isDark,
+    this.tripStream,
   });
 
   @override
@@ -31,7 +39,7 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 300, // Slightly more compact than original 340
+      width: 320, // seats are 48px tall/wide: easy to tap
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
       decoration: BoxDecoration(
         color: widget.isDark ? const Color(0xFF2D3142) : Colors.white,
@@ -117,7 +125,8 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
 
   Widget _buildSeatGrid() {
     return StreamBuilder<Trip>(
-        stream: FirestoreService().getTripStream(widget.trip.id),
+        stream: widget.tripStream ??
+            FirestoreService().getTripStream(widget.trip.id),
         builder: (context, snapshot) {
           final currentTrip = snapshot.data;
           // Use Schedule/Enriched data for setup
@@ -202,7 +211,7 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                             isReadOnly: widget.isReadOnly,
                           )
                         else
-                          const SizedBox(width: 44, height: 44),
+                          const SizedBox(width: _kSeat, height: _kSeat),
                         const SizedBox(width: 10),
                         if (seatExists(1))
                           _SeatItem(
@@ -222,7 +231,7 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                             isReadOnly: widget.isReadOnly,
                           )
                         else
-                          const SizedBox(width: 44, height: 44),
+                          const SizedBox(width: _kSeat, height: _kSeat),
                       ]),
 
                       // Right Side
@@ -245,7 +254,7 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                             isReadOnly: widget.isReadOnly,
                           )
                         else
-                          const SizedBox(width: 44, height: 44),
+                          const SizedBox(width: _kSeat, height: _kSeat),
                         const SizedBox(width: 10),
                         if (seatExists(3))
                           _SeatItem(
@@ -265,7 +274,7 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                             isReadOnly: widget.isReadOnly,
                           )
                         else
-                          const SizedBox(width: 44, height: 44),
+                          const SizedBox(width: _kSeat, height: _kSeat),
                       ]),
                     ],
                   ),
@@ -365,7 +374,7 @@ class _SeatItemState extends State<_SeatItem> {
     } else if (isBlocked) {
       seatColor = Colors.amber;
     } else if (isBooked) {
-      seatColor = Colors.red.shade300;
+      seatColor = Colors.grey.shade300; // taken: grey, not an alarming red
     } else if (widget.isSelected) {
       seatColor = AppTheme.primaryColor;
     } else {
@@ -374,59 +383,91 @@ class _SeatItemState extends State<_SeatItem> {
           : Colors.white;
     }
 
+    final String stateLabel = widget.isHighlighted
+        ? 'your seat'
+        : isBlocked
+            ? 'not available'
+            : isBooked
+                ? 'taken'
+                : widget.isSelected
+                    ? 'selected'
+                    : 'free';
+    final bool canTap =
+        !(isUnavailable && !widget.isReadOnly) && widget.onTap != null;
+
     return MouseRegion(
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
       cursor: (isUnavailable && !widget.isReadOnly) || widget.isReadOnly
           ? SystemMouseCursors.basic
           : SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: isUnavailable && !widget.isReadOnly ? null : widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: seatColor,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-                color: widget.isSelected || widget.isHighlighted
-                    ? (widget.isHighlighted
-                        ? Colors.green
-                        : AppTheme.primaryColor)
-                    : isUnavailable
-                        ? Colors.transparent
-                        : Colors.grey.shade300,
-                width: 2),
-            boxShadow: widget.isSelected || widget.isHighlighted
-                ? [
-                    BoxShadow(
-                        color: (widget.isHighlighted
-                                ? Colors.green
-                                : AppTheme.primaryColor)
-                            .withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4))
-                  ]
-                : null,
-          ),
-          child: Center(
-            child: isBlocked
-                ? const Icon(Icons.block, size: 16, color: Colors.black54)
-                : (isBooked && !widget.isHighlighted)
-                    ? const Icon(Icons.close, size: 16, color: Colors.white)
-                    : Text(
-                        "${widget.seatNum}",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: (widget.isSelected ||
-                                  widget.isHighlighted ||
-                                  isBooked)
-                              ? Colors.white
-                              : Colors.black,
-                        ),
-                      ),
+      child: Semantics(
+        label: 'Seat ${widget.seatNum}, $stateLabel',
+        button: canTap,
+        selected: widget.isSelected,
+        excludeSemantics: true,
+        child: GestureDetector(
+          onTap: isUnavailable && !widget.isReadOnly ? null : widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: _kSeat,
+            height: _kSeat,
+            decoration: BoxDecoration(
+              color: seatColor,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                  color: widget.isSelected || widget.isHighlighted
+                      ? (widget.isHighlighted
+                          ? Colors.green
+                          : AppTheme.primaryColor)
+                      : isUnavailable
+                          ? Colors.transparent
+                          : Colors.grey.shade500,
+                  width: 2),
+              boxShadow: widget.isSelected || widget.isHighlighted
+                  ? [
+                      BoxShadow(
+                          color: (widget.isHighlighted
+                                  ? Colors.green
+                                  : AppTheme.primaryColor)
+                              .withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4))
+                    ]
+                  : null,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Center(
+                  child: isBlocked
+                      ? const Icon(Icons.block, size: 20, color: Colors.black54)
+                      : (isBooked && !widget.isHighlighted)
+                          ? Icon(Icons.close,
+                              size: 22, color: Colors.grey.shade700)
+                          : Text(
+                              "${widget.seatNum}",
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color:
+                                    (widget.isSelected || widget.isHighlighted)
+                                        ? Colors.white
+                                        : Colors.black,
+                              ),
+                            ),
+                ),
+                // A tick as well as the colour, so "selected" never depends
+                // on colour alone.
+                if (widget.isSelected && !widget.isHighlighted)
+                  const Positioned(
+                    top: 2,
+                    right: 2,
+                    child:
+                        Icon(Icons.check_circle, size: 14, color: Colors.white),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

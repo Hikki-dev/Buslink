@@ -12,7 +12,7 @@ import 'package:intl/intl.dart';
 
 class TripController extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  late final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Search State
   List<EnrichedTrip> searchResults = [];

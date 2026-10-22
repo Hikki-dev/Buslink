@@ -8,6 +8,7 @@ import '../../models/trip_model.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
 import '../ticket/ticket_screen.dart';
+import '../tracking/track_bus_screen.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/custom_app_bar.dart';
 import '../analytics/travel_stats_screen.dart';
@@ -335,7 +336,7 @@ class _TripsList extends StatelessWidget {
                 if (item is List<Ticket>) {
                   return _BulkBoardingPassCard(tickets: item);
                 } else {
-                  return _BoardingPassCard(
+                  return BoardingPassCard(
                     ticket: item as Ticket,
                     shouldListen: filter == TripFilter.upcoming ||
                         filter == TripFilter.delayed,
@@ -347,10 +348,11 @@ class _TripsList extends StatelessWidget {
   }
 }
 
-class _BoardingPassCard extends StatelessWidget {
+class BoardingPassCard extends StatelessWidget {
   final Ticket ticket;
   final bool shouldListen;
-  const _BoardingPassCard({required this.ticket, this.shouldListen = true});
+  const BoardingPassCard(
+      {super.key, required this.ticket, this.shouldListen = true});
 
   @override
   Widget build(BuildContext context) {
@@ -413,7 +415,7 @@ class _BoardingPassCard extends StatelessWidget {
       // Fallback checks
       final rawStatus =
           (tripData['status'] ?? ticket.status).toString().toLowerCase();
-      if (rawStatus == 'Confirmed') {
+      if (rawStatus == 'confirmed') {
         internalStatus = "CONFIRMED";
         displayStatus = AppLocalizations.of(context)!
             .statusScheduled; // Confirmed usually implies scheduled/booked
@@ -491,7 +493,7 @@ class _BoardingPassCard extends StatelessWidget {
                         Text("FROM",
                             style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 12,
+                                fontSize: 13,
                                 color: subTextColor)),
                         const SizedBox(height: 4),
                         Text(fromCity,
@@ -533,7 +535,7 @@ class _BoardingPassCard extends StatelessWidget {
                         Text("TO",
                             style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 12,
+                                fontSize: 13,
                                 color: subTextColor)),
                         const SizedBox(height: 4),
                         Text(toCity,
@@ -590,69 +592,102 @@ class _BoardingPassCard extends StatelessWidget {
           ),
 
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
               children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => TicketScreen(
-                                    ticketArg: ticket,
-                                    tripArg: Trip.fromMap(
-                                        tripData, ticket.tripId))));
-                      },
-                      style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                      child: Text(AppLocalizations.of(context)!.viewTicket,
-                          style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: textColor)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => TicketScreen(
+                                        ticketArg: ticket,
+                                        tripArg: Trip.fromMap(
+                                            tripData, ticket.tripId))));
+                          },
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12))),
+                          child: Text(AppLocalizations.of(context)!.viewTicket,
+                              style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16)),
+                        ),
+                      ),
                     ),
-                  ),
+                    // Track the bus: only when it is on its way, running
+                    // late, or about to leave.
+                    if (internalStatus == 'ON WAY' ||
+                        internalStatus == 'DELAYED' ||
+                        (internalStatus == 'SCHEDULED' &&
+                            depTime.isAfter(DateTime.now()) &&
+                            depTime.difference(DateTime.now()).inHours <
+                                3)) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => TrackBusScreen(
+                                          trip: Trip.fromMap(
+                                              tripData, ticket.tripId))));
+                            },
+                            icon: const Icon(Icons.my_location, size: 20),
+                            label: const Text('Track bus',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                            style: OutlinedButton.styleFrom(
+                                foregroundColor: AppTheme.primaryColor,
+                                side: const BorderSide(
+                                    color: AppTheme.primaryColor, width: 2),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12))),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 // Refund Button (Visible if not Cancelled/Completed/Refunded)
-                // Date check removed to allow refunds on "Active" trips even if technically past departure (testing/edge cases)
-                // Date check removed to allow refunds on "Active" trips even if technically past departure (testing/edge cases)
+                // Quiet on purpose: it is rarely wanted and should not
+                // compete with "View ticket".
                 if (internalStatus != 'CANCELLED' &&
                     internalStatus != 'COMPLETED' &&
                     internalStatus != 'ARRIVED' &&
                     internalStatus != 'REFUNDED' &&
-                    depTime.isAfter(DateTime.now())) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => RefundRequestScreen(
-                                      ticket: ticket,
-                                      trip: Trip.fromMap(
-                                          tripData, ticket.tripId))));
-                        },
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade400,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12))),
-                        child: Text(AppLocalizations.of(context)!.refund,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  )
-                ]
+                    depTime.isAfter(DateTime.now()))
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => RefundRequestScreen(
+                                  ticket: ticket,
+                                  trip:
+                                      Trip.fromMap(tripData, ticket.tripId))));
+                    },
+                    style: TextButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                        foregroundColor: Colors.grey.shade700),
+                    child: Text(AppLocalizations.of(context)!.refund,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline)),
+                  ),
               ],
             ),
           ),
@@ -662,29 +697,54 @@ class _BoardingPassCard extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(String text, Color color) {
+    // An icon next to the words, so the status never depends on colour alone.
+    final upper = text.toUpperCase();
+    final IconData icon = upper.contains('CANCEL')
+        ? Icons.cancel
+        : upper.contains('DELAY')
+            ? Icons.schedule
+            : upper.contains('COMPLETE') || upper.contains('ARRIVED')
+                ? Icons.check_circle
+                : upper.contains('ACTIVE') || upper.contains('WAY')
+                    ? Icons.directions_bus
+                    : Icons.event_available;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(text,
-          style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: color)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(text,
+              style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: color)),
+        ],
+      ),
     );
   }
 
   Widget _infoBadge(IconData icon, String text, Color color) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 6),
-        Text(text,
-            style: TextStyle(
-                fontFamily: 'Inter', fontWeight: FontWeight.w500, color: color))
+        Flexible(
+          child: Text(text,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: color)),
+        )
       ],
     );
   }
