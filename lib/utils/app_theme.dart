@@ -1,4 +1,5 @@
 // lib/utils/app_theme.dart
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
