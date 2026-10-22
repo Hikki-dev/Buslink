@@ -234,6 +234,11 @@ class Ticket {
   final String? fcmToken; // Added to allow push without User read access
   final Map<String, dynamic>? userData; // Added userData metadata
 
+  /// Set when a conductor approves boarding. Null until then.
+  final DateTime? boardedAt;
+  final String? boardedBy;
+  bool get isBoarded => boardedAt != null;
+
   Ticket({
     required this.ticketId,
     required this.tripId,
@@ -250,6 +255,8 @@ class Ticket {
     this.paymentIntentId,
     this.fcmToken,
     this.userData,
+    this.boardedAt,
+    this.boardedBy,
   });
 
   factory Ticket.fromMap(Map<String, dynamic> data, String id) {
@@ -272,6 +279,10 @@ class Ticket {
       paymentIntentId: data['paymentIntentId'],
       fcmToken: data['fcmToken'],
       userData: data['userData'],
+      boardedAt: data['boardedAt'] is Timestamp
+          ? (data['boardedAt'] as Timestamp).toDate()
+          : null,
+      boardedBy: data['boardedBy'],
     );
   }
 

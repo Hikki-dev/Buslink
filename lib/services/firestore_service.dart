@@ -8,6 +8,7 @@ import '../models/schedule_model.dart'; // Added ScheduleModel
 
 import 'dart:math';
 import 'cache_service.dart';
+import '../models/boarding_result.dart';
 
 class FirestoreService {
   FirebaseFirestore get _db => FirebaseFirestore.instance;
@@ -16,6 +17,24 @@ class FirestoreService {
   final String userCollection = 'users';
   final String routeCollection = 'routes';
   final String scheduleCollection = 'schedules'; // New Collection
+
+  /// Checks a passenger in. Reads the ticket and stamps `boardedAt` /
+  /// `boardedBy` in ONE transaction, so a ticket can only ever be boarded once
+  /// even if two conductors approve it at the same moment.
+  Future<BoardingResult> recordBoarding(
+      String ticketId, String conductorId) async {
+    final ref = _db.collection(ticketCollection).doc(ticketId);
+    return _db.runTransaction<BoardingResult>((tx) async {
+      final snap = await tx.get(ref);
+      final decision = decideBoarding(snap.exists ? snap.data() : null);
+      if (!decision.isRecorded) return decision;
+      tx.update(ref, {
+        'boardedAt': FieldValue.serverTimestamp(),
+        'boardedBy': conductorId,
+      });
+      return BoardingResult(BoardingStatus.recorded, boardedAt: DateTime.now());
+    });
+  }
 
   String _generateShortId() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

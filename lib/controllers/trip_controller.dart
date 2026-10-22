@@ -6,6 +6,7 @@ import '../models/schedule_model.dart';
 import '../models/route_model.dart'; // Added
 import '../models/trip_view_model.dart'; // EnrichedTrip
 import '../services/firestore_service.dart';
+import '../models/boarding_result.dart';
 import '../services/notification_service.dart' as import_notification_service;
 import '../services/sms_service.dart'; // Re-added for Automated SMS
 import 'package:intl/intl.dart';
@@ -356,6 +357,19 @@ class TripController extends ChangeNotifier {
     } catch (e) {
       debugPrint("Verify Error: $e");
       return null;
+    }
+  }
+
+  /// Conductor approves boarding: records it on the ticket. See
+  /// [FirestoreService.recordBoarding].
+  Future<BoardingResult> approveBoarding(String ticketId) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return const BoardingResult(BoardingStatus.failed);
+    try {
+      return await _firestoreService.recordBoarding(ticketId, uid);
+    } catch (e) {
+      debugPrint("Approve boarding error: $e");
+      return const BoardingResult(BoardingStatus.failed);
     }
   }
 
