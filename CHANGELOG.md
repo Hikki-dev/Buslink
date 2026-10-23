@@ -4,6 +4,10 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 ## Unreleased
 
+### Licence
+
+* Added the MIT licence (`LICENSE`), the same one as the media-server-setup repository, and a licence badge in the README.
+
 ### Project structure (this change)
 
 * **Checks on every pull request** (`.github/workflows/checks.yml`): the docs check, `flutter analyze` and `flutter test`, with the **Checks** badge in the README.

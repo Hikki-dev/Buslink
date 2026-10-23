@@ -56,4 +56,4 @@ Do not edit the PNG files in `docs/images/` by hand. Redraw them with the comman
 
 ## Licence
 
-The project has no licence file yet, so by default all rights are reserved by the author. If you plan to contribute code, ask the owner to choose a licence first.
+By contributing, you agree that your changes are released under the project's [MIT licence](LICENSE).
