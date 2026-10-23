@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth_service.dart';
-import '../../utils/app_theme.dart';
+import '../../utils/bl_colors.dart';
+import '../widgets/bl_widgets.dart';
 
 class AccountSettingsScreen extends StatefulWidget {
   const AccountSettingsScreen({super.key});
@@ -114,129 +115,155 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    InputDecoration deco(String? helper) => InputDecoration(
+          helperText: helper,
+          helperStyle: const TextStyle(fontSize: 14, color: BL.muted),
+          errorStyle:
+              const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          filled: true,
+          fillColor: const Color(0xFFF5F3F4),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: BL.crimson, width: 2)),
+        );
+    Widget label(String t) => Padding(
+          padding: const EdgeInsets.only(bottom: 4, top: 14),
+          child: Text(t,
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        );
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text("Account Settings",
-            style:
-                TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        foregroundColor: Theme.of(context).iconTheme.color,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text("Personal Information",
-                  style: TextStyle(
-                      fontFamily: 'Outfit',
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-
-              // Name Field
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: "Display Name",
-                  prefixIcon: const Icon(Icons.person_outline),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Theme.of(context).cardColor,
-                ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? "Name cannot be empty" : null,
-              ),
-              const SizedBox(height: 16),
-
-              // Phone Field
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                    labelText: "Phone Number",
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Theme.of(context).cardColor,
-                    helperText: "Format: +94 7X XXX XXXX"),
-                validator: (val) {
-                  if (val == null || val.isEmpty) {
-                    return "Phone cannot be empty";
-                  }
-                  // Simple SL regex check for MVP
-                  // Allows +947... or 07...
-                  final phoneRegex = RegExp(r'^(?:\+94|0)7\d{8}$');
-                  if (!phoneRegex.hasMatch(val.replaceAll(' ', ''))) {
-                    return "Invalid Phone Number. Use 07X XXX XXXX";
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: _saveProfile,
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          textStyle: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold)),
-                      child: const Text("Save Changes"),
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          const BlHeader(title: 'Account Settings'),
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text('Personal Information',
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.w800)),
+                        label('Display Name'),
+                        TextFormField(
+                          controller: _nameController,
+                          style: const TextStyle(fontSize: 17),
+                          decoration: deco(null),
+                          validator: (v) => v == null || v.trim().isEmpty
+                              ? 'Please enter your name'
+                              : null,
+                        ),
+                        label('Phone Number'),
+                        TextFormField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          style: const TextStyle(fontSize: 17),
+                          decoration: deco('Format: +94 7X XXX XXXX'),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Please enter your phone number';
+                            }
+                            final ok = RegExp(r'^(?:\+94|0)7\d{8}$')
+                                .hasMatch(v.replaceAll(' ', ''));
+                            return ok
+                                ? null
+                                : 'Invalid Phone Number. Use 07X XXX XXXX';
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        BlPrimaryButton(
+                          label: _isLoading ? 'Saving...' : 'Save Changes',
+                          color: BL.crimson,
+                          onTap: _isLoading ? null : _saveProfile,
+                        ),
+                        const Divider(height: 44, color: BL.hairline),
+                        const Text('Linked Accounts',
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: BL.hairline),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            children: [
+                              Image.asset('assets/images/google_g.png',
+                                  width: 32, height: 32),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Google',
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700)),
+                                    Row(
+                                      children: [
+                                        if (_isGoogleLinked)
+                                          const Icon(Icons.check,
+                                              size: 16, color: BL.success),
+                                        if (_isGoogleLinked)
+                                          const SizedBox(width: 4),
+                                        Text(
+                                            _isGoogleLinked
+                                                ? 'Connected'
+                                                : 'Not connected',
+                                            style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w700,
+                                                color: _isGoogleLinked
+                                                    ? const Color(0xFF14532D)
+                                                    : BL.muted)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (!_isGoogleLinked)
+                                OutlinedButton(
+                                  onPressed: _isLoading ? null : _linkGoogle,
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size(0, 48),
+                                    foregroundColor: BL.crimson,
+                                    side: const BorderSide(
+                                        color: BL.crimson, width: 2),
+                                    shape: const StadiumBorder(),
+                                    textStyle: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800),
+                                  ),
+                                  child: const Text('Link'),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-
-              const SizedBox(height: 40),
-              const Divider(),
-              const SizedBox(height: 20),
-
-              const Text("Linked Accounts",
-                  style: TextStyle(
-                      fontFamily: 'Outfit',
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                tileColor: Theme.of(context).cardColor,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side:
-                        BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
-                leading: Image.network(
-                    "https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg",
-                    width: 24,
-                    height: 24,
-                    errorBuilder: (c, o, s) => const Icon(Icons.link)),
-                title: const Text("Google",
-                    style: TextStyle(
-                        fontFamily: 'Inter', fontWeight: FontWeight.bold)),
-                subtitle: Text(_isGoogleLinked ? "Connected" : "Not connected"),
-                trailing: _isGoogleLinked
-                    ? const Icon(Icons.check_circle, color: Colors.green)
-                    : OutlinedButton(
-                        onPressed: _isLoading ? null : _linkGoogle,
-                        child: const Text("Link"),
-                      ),
+                  ),
+                ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

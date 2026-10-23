@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../utils/app_theme.dart';
+import '../../utils/bl_colors.dart';
+import '../widgets/bl_widgets.dart';
 import 'otp_verification_screen.dart';
 import '../../services/auth_service.dart';
 import 'package:provider/provider.dart';
@@ -87,72 +88,101 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Phone Login"),
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                "Enter your phone number",
-                style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Outfit'),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                "We will send you a 6-digit verification code.",
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 32),
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                style: const TextStyle(fontSize: 18, letterSpacing: 1.2),
-                decoration: InputDecoration(
-                  labelText: "Phone Number",
-                  hintText: "+94 77 123 4567",
-                  prefixIcon: const Icon(Icons.phone),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          const BlHeader(title: 'Phone Login'),
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            width: 72,
+                            height: 72,
+                            decoration: const BoxDecoration(
+                                color: Color(0xFFFDEEEE),
+                                shape: BoxShape.circle),
+                            child: const Icon(Icons.phone_iphone,
+                                size: 36, color: BL.crimson),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('Enter your phone number',
+                            style: TextStyle(
+                                fontSize: 28, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 8),
+                        const Text(
+                            'We will send you a 6-digit verification code.',
+                            style: TextStyle(
+                                fontSize: 18, height: 1.4, color: BL.muted)),
+                        const SizedBox(height: 22),
+                        const Text('Phone Number',
+                            style: TextStyle(
+                                fontSize: 17, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          style:
+                              const TextStyle(fontSize: 19, letterSpacing: 0.8),
+                          decoration: InputDecoration(
+                            hintText: '+94 77 123 4567',
+                            errorStyle: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w700),
+                            filled: true,
+                            fillColor: const Color(0xFFF5F3F4),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 18),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: BL.hairline, width: 1.5)),
+                            enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: BL.hairline, width: 1.5)),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: BL.crimson, width: 2.5)),
+                          ),
+                          validator: (v) => v == null || v.isEmpty
+                              ? 'Please enter your phone number'
+                              : null,
+                        ),
+                        const SizedBox(height: 22),
+                        BlPrimaryButton(
+                          label: _isLoading ? 'Sending...' : 'Send Code',
+                          color: BL.crimson,
+                          onTap: _isLoading ? null : _sendCode,
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () => Navigator.maybePop(context),
+                          style: TextButton.styleFrom(
+                              foregroundColor: BL.crimson,
+                              minimumSize: const Size(0, 52),
+                              textStyle: const TextStyle(
+                                  fontSize: 17, fontWeight: FontWeight.w700)),
+                          child: const Text('Use email instead'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Please enter your phone number";
-                  }
-                  return null;
-                },
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _sendCode,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : const Text("Send Code",
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

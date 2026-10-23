@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import '../../utils/app_theme.dart';
+import '../../utils/bl_colors.dart';
+import '../widgets/bl_widgets.dart';
 
 class TravelStatsScreen extends StatefulWidget {
   const TravelStatsScreen({super.key});
@@ -27,76 +28,77 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Travel Trends'),
-        elevation: 1,
-        backgroundColor: Theme.of(context).cardColor,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('tickets')
-            .where('userId', isEqualTo: user.uid)
-            // Removed status filter to get ALL trips for stats
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return _buildEmptyState(languageCode);
-          }
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          const BlHeader(title: 'Travel Trends'),
+          Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('tickets')
+                .where('userId', isEqualTo: user.uid)
+                // Removed status filter to get ALL trips for stats
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return _buildEmptyState(languageCode);
+              }
 
-          final docs = snapshot.data!.docs;
-          final stats = _calculateStats(docs);
+              final docs = snapshot.data!.docs;
+              final stats = _calculateStats(docs);
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // NEW: Status Boxes
-                Row(
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _statusBox(context, 'Upcoming', "${stats['Upcoming']}",
-                        Colors.blue, Icons.schedule),
-                    _statusBox(context, 'Delayed', "${stats['delayed']}",
-                        Colors.orange, Icons.timer_off),
-                    _statusBox(context, 'Arrived', "${stats['arrived']}",
-                        Colors.green, Icons.check_circle),
-                    _statusBox(context, 'Cancelled', "${stats['cancelled']}",
-                        Colors.red, Icons.cancel),
+                    // Status boxes
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 2.1,
+                      children: [
+                        _statusBox(context, 'Upcoming', "${stats['Upcoming']}",
+                            BL.ink, Icons.schedule),
+                        _statusBox(context, 'Arrived', "${stats['arrived']}",
+                            BL.ink, Icons.check_circle),
+                        _statusBox(context, 'Delayed', "${stats['delayed']}",
+                            const Color(0xFF7A4300), Icons.timer_off),
+                        _statusBox(
+                            context,
+                            'Cancelled',
+                            "${stats['cancelled']}",
+                            const Color(0xFF7F1D14),
+                            Icons.cancel),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    _buildHeader(stats, languageCode),
+                    const SizedBox(height: 24),
+                    _buildTrendsAccordion(stats, languageCode),
+                    const SizedBox(height: 16),
+                    _buildInsightsAccordion(stats, languageCode),
                   ],
                 ),
-                const SizedBox(height: 24),
-
-                _buildHeader(stats, languageCode),
-                const SizedBox(height: 24),
-                _buildTrendsAccordion(stats, languageCode),
-                const SizedBox(height: 16),
-                _buildInsightsAccordion(stats, languageCode),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(String lang) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.query_stats, size: 80),
-          const SizedBox(height: 16),
-          Text('No Active Trips', style: const TextStyle(fontSize: 18)),
-          const SizedBox(height: 8),
-          const Text("Complete a trip to see your stats.", style: TextStyle()),
+              );
+            },
+          )),
         ],
       ),
     );
   }
+
+  Widget _buildEmptyState(String lang) => const BlEmpty(
+      icon: Icons.query_stats,
+      title: 'No Active Trips',
+      message: 'Complete a trip to see your stats.');
 
   Map<String, dynamic> _calculateStats(List<QueryDocumentSnapshot> docs) {
     int completedTrips = 0;
@@ -213,73 +215,39 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
 
   Widget _statusBox(BuildContext context, String label, String count,
       Color color, IconData icon) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 4),
-            Text(count,
-                style: TextStyle(
-                    color: color, fontWeight: FontWeight.bold, fontSize: 18)),
-            Text(label,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis)
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: BL.hairline),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(count,
+              style: TextStyle(
+                  color: color, fontWeight: FontWeight.w800, fontSize: 30)),
+          Text(label, style: const TextStyle(fontSize: 16, color: BL.muted)),
+        ],
       ),
     );
   }
 
   Widget _buildHeader(Map<String, dynamic> stats, String lang) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [
-          AppTheme.primaryColor,
-          AppTheme.primaryColor.withValues(alpha: 0.8)
-        ]),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 8))
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          color: BL.crimsonDark, borderRadius: BorderRadius.circular(18)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Total Spent',
-                  style: const TextStyle(color: Colors.white70)),
-              const SizedBox(height: 8),
-              Text("LKR ${stats['totalSpent'].toStringAsFixed(0)}",
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold)),
-            ],
-          ),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle),
-            child: const Icon(Icons.credit_card_rounded,
-                color: Colors.white, size: 28),
-          )
+          const Text('Total Spent',
+              style: TextStyle(color: Colors.white, fontSize: 16)),
+          Text("LKR ${NumberFormat('#,###').format(stats['totalSpent'])}",
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -295,7 +263,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
           initiallyExpanded: true,
           title: Text('Travel Trends',
               style: const TextStyle(fontWeight: FontWeight.bold)),
-          leading: const Icon(Icons.trending_up, color: AppTheme.primaryColor),
+          leading: const Icon(Icons.trending_up, color: BL.crimson),
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -416,9 +384,7 @@ class _SimpleScatterChart extends StatelessWidget {
               CustomPaint(
                   size: Size(w, h),
                   painter: _LinePainter(
-                      data: data,
-                      maxVal: maxVal,
-                      color: AppTheme.primaryColor)),
+                      data: data, maxVal: maxVal, color: BL.crimson)),
 
             // Scatter Points
             ...List.generate(12, (index) {
@@ -441,11 +407,11 @@ class _SimpleScatterChart extends StatelessWidget {
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor,
+                      color: BL.crimson,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                            color: BL.crimson.withValues(alpha: 0.4),
                             blurRadius: 4,
                             spreadRadius: 2)
                       ],

@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/firestore_service.dart';
 
-import '../../utils/app_theme.dart';
+import '../../utils/bl_colors.dart';
+import '../widgets/bl_widgets.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -87,112 +88,101 @@ class _NotificationSettingsScreenState
 
   @override
   Widget build(BuildContext context) {
-    // Check role for "Duty Assignments" visibility
-    // Ideally we pass role or check user doc, but we can assume 'dutyAssignments' is harmless for customers
-    // Or we can check cache. For simplicity, we show it but maybe hide it if role != conductor?
-    // Let's keep it simple for now.
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Notification Settings",
-            style:
-                TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        iconTheme:
-            IconThemeData(color: Theme.of(context).textTheme.bodyLarge?.color),
-        titleTextStyle: TextStyle(
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-            fontSize: 20,
-            fontWeight: FontWeight.bold),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
+    Widget section(String t) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
+          child: Text(t,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.1,
+                  color: BL.crimson)),
+        );
+    Widget row(String title, String sub, bool value, String key) => InkWell(
+          onTap: () => _savePreference(key, !value),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 72),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFF0E8E9)))),
+            child: Row(
               children: [
-                _buildSectionHeader("My Trips"),
-                _buildSwitchTile(
-                  "Trip Updates",
-                  "Delays, departures, and arrival alerts.",
-                  _tripUpdates,
-                  (v) => _savePreference('tripUpdates', v),
-                  Icons.departure_board,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w700)),
+                      Text(sub,
+                          style:
+                              const TextStyle(fontSize: 15, color: BL.muted)),
+                    ],
+                  ),
                 ),
-                _buildSwitchTile(
-                    "Booking Confirmations",
-                    "E-Tickets and payment receipts.",
-                    _bookingConfirmations,
-                    (v) => _savePreference('bookingConfirmations', v),
-                    Icons.confirmation_num),
-                const Divider(height: 32),
-                _buildSectionHeader("General"),
-                _buildSwitchTile(
-                    "Reminders",
-                    "Upcoming trip reminders (1hr before).",
-                    _reminders,
-                    (v) => _savePreference('reminders', v),
-                    Icons.alarm),
-                _buildSwitchTile(
-                    "Promotions & News",
-                    "Discounts and service updates.",
-                    _promotions,
-                    (v) => _savePreference('promotions', v),
-                    Icons.local_offer),
-                const Divider(height: 32),
-                // Only showing this for completeness, logic checks role
-                _buildSwitchTile(
-                    "Duty Assignments (Conductors)",
-                    "New trip assignments and roster changes.",
-                    _dutyAssignments,
-                    (v) => _savePreference('dutyAssignments', v),
-                    Icons.work),
-
-                const SizedBox(height: 40),
-                // Test button removed as per request
+                Semantics(
+                  toggled: value,
+                  label: '$title ${value ? 'on' : 'off'}',
+                  child: ExcludeSemantics(
+                    child: Switch(
+                      value: value,
+                      activeTrackColor: BL.crimson,
+                      onChanged: (v) => _savePreference(key, v),
+                    ),
+                  ),
+                ),
               ],
             ),
-    );
-  }
+          ),
+        );
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12, left: 4),
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-            color: Colors.grey.shade600,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
-            letterSpacing: 1),
-      ),
-    );
-  }
-
-  Widget _buildSwitchTile(String title, String subtitle, bool value,
-      ValueChanged<bool> onChanged, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
-      ),
-      child: SwitchListTile(
-        secondary: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle),
-            child: Icon(icon, color: AppTheme.primaryColor)),
-        title: Text(title,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-        subtitle: Text(subtitle,
-            style: const TextStyle(color: Colors.grey, fontSize: 13)),
-        value: value,
-        activeThumbColor: AppTheme.primaryColor,
-        onChanged: onChanged,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          const BlHeader(title: 'Notification Settings'),
+          Expanded(
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: BL.crimson))
+                : Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 640),
+                      child: ListView(
+                        children: [
+                          section('MY TRIPS'),
+                          row(
+                              'Trip Updates',
+                              'Delays, departures, and arrival alerts.',
+                              _tripUpdates,
+                              'tripUpdates'),
+                          row(
+                              'Booking Confirmations',
+                              'E-Tickets and payment receipts.',
+                              _bookingConfirmations,
+                              'bookingConfirmations'),
+                          section('GENERAL'),
+                          row(
+                              'Reminders',
+                              'Upcoming trip reminders (1hr before).',
+                              _reminders,
+                              'reminders'),
+                          row(
+                              'Promotions & News',
+                              'Discounts and service updates.',
+                              _promotions,
+                              'promotions'),
+                          section('DUTY ASSIGNMENTS (CONDUCTORS ONLY)'),
+                          row(
+                              'Duty Assignments',
+                              'New trip assignments and roster changes.',
+                              _dutyAssignments,
+                              'dutyAssignments'),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }

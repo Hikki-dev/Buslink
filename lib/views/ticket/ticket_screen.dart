@@ -16,9 +16,9 @@ import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/bl_colors.dart';
 import '../home/home_sections.dart' show cityPhoto;
-import '../../services/auth_service.dart';
 import '../../services/notification_service.dart'; // Added
 import '../tracking/track_bus_screen.dart'; // Added
+import '../profile/feedback_dialog.dart';
 // Added
 
 // import '../home/home_screen.dart'; // Unused
@@ -362,7 +362,7 @@ class _TicketScreenState extends State<TicketScreen> {
   void _showFeedbackDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) => _FeedbackDialog(),
+      builder: (ctx) => const FeedbackDialog(),
     );
   }
 
@@ -609,100 +609,5 @@ class _TicketScreenState extends State<TicketScreen> {
             .showSnackBar(SnackBar(content: Text("Error saving PDF")));
       }
     }
-  }
-}
-
-class _FeedbackDialog extends StatefulWidget {
-  @override
-  __FeedbackDialogState createState() => __FeedbackDialogState();
-}
-
-class __FeedbackDialogState extends State<_FeedbackDialog> {
-  int _rating = 0;
-  final TextEditingController _commentController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Give Feedback",
-                  style: TextStyle(
-                      fontFamily: 'Outfit',
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              const Text("Rate your experience",
-                  style: TextStyle(
-                      fontFamily: 'Inter',
-                      color: Colors
-                          .grey)), // Revert to generic grey or access theme if possible. accessing theme in Dialog might require removing const.
-
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return IconButton(
-                    tooltip: 'Rate',
-                    icon: Icon(
-                      index < _rating ? Icons.star : Icons.star_border,
-                      color: Colors.amber,
-                      size: 32,
-                    ),
-                    onPressed: () => setState(() => _rating = index + 1),
-                  );
-                }),
-              ),
-              const SizedBox(height: 16),
-              const Text("Tell us more (Max 200 chars)",
-                  style: TextStyle(fontFamily: 'Inter', color: Colors.grey)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _commentController,
-                maxLength: 200,
-                maxLines: 3,
-                decoration: InputDecoration(
-                    hintText: "Review...",
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12))),
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_rating == 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text("Please provide a rating")));
-                      return;
-                    }
-
-                    final user =
-                        Provider.of<AuthService>(context, listen: false)
-                            .currentUser;
-                    if (user != null) {
-                      Provider.of<TripController>(context, listen: false)
-                          .submitFeedback(_rating,
-                              _commentController.text.trim(), user.uid);
-                    }
-
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text("Thank you for your feedback.")));
-                  },
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white),
-                  child: const Text("Submit Feedback"),
-                ),
-              )
-            ],
-          ),
-        ));
   }
 }

@@ -89,3 +89,115 @@ class BookingSteps extends StatelessWidget {
     );
   }
 }
+
+/// The red page header: back arrow, title, optional line under it and
+/// buttons on the right (mockups' "Go back" bar).
+class BlHeader extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final bool showBack;
+  final VoidCallback? onBack;
+  final List<Widget> actions;
+  final Widget? bottom;
+  const BlHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.showBack = true,
+    this.onBack,
+    this.actions = const [],
+    this.bottom,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: BL.crimson,
+      padding: EdgeInsets.fromLTRB(
+          showBack ? 8 : 20, MediaQuery.paddingOf(context).top + 4, 8, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (showBack)
+                IconButton(
+                  tooltip: 'Go back',
+                  onPressed: onBack ?? () => Navigator.maybePop(context),
+                  color: Colors.white,
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                  constraints:
+                      const BoxConstraints(minWidth: 48, minHeight: 48),
+                ),
+              if (showBack) const SizedBox(width: 4),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(top: showBack ? 0 : 8),
+                      child: Text(title,
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: showBack ? 22 : 26,
+                              fontWeight: FontWeight.w800)),
+                    ),
+                    if (subtitle != null)
+                      Text(subtitle!,
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16)),
+                  ],
+                ),
+              ),
+              ...actions,
+            ],
+          ),
+          if (bottom != null) bottom!,
+        ],
+      ),
+    );
+  }
+}
+
+/// An empty or "nothing to show" message with a round icon.
+class BlEmpty extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? message;
+  const BlEmpty(
+      {super.key, required this.icon, required this.title, this.message});
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: const BoxDecoration(
+                      color: Color(0xFFFDEEEE), shape: BoxShape.circle),
+                  child: Icon(icon, size: 30, color: BL.crimson),
+                ),
+                const SizedBox(height: 14),
+                Text(title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.w800)),
+                if (message != null) ...[
+                  const SizedBox(height: 6),
+                  Text(message!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 16, height: 1.35, color: BL.muted)),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+}

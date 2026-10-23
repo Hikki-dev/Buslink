@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../utils/app_theme.dart';
+import '../../utils/bl_colors.dart';
+import '../widgets/bl_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
@@ -16,91 +17,108 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmitting = false;
 
+  bool _anonymous = false;
+
+  static const _words = ['', 'Very poor', 'Poor', 'OK', 'Good', 'Excellent'];
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: theme.cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Rate your experience",
-                    style: TextStyle(
-                        fontFamily: 'Outfit',
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface)),
-                IconButton(
-                  tooltip: 'Close',
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                  color: Colors.grey,
-                )
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) {
-                return IconButton(
-                  tooltip: 'Rate',
-                  onPressed: () {
-                    setState(() {
-                      _rating = index + 1;
-                    });
-                  },
-                  icon: Icon(
-                    index < _rating ? Icons.star : Icons.star_border,
-                    color:
-                        index < _rating ? Colors.amber : Colors.grey.shade300,
-                    size: 32,
-                  ),
-                );
-              }),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _commentController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: "Tell us what you think...",
-                filled: true,
-                fillColor: isDark
-                    ? Colors.black.withValues(alpha: 0.2)
-                    : Colors.grey.shade50,
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none),
+      insetPadding: const EdgeInsets.all(20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: Colors.white,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Rate your experience',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  final on = i < _rating;
+                  return IconButton(
+                    tooltip: '${i + 1} star${i == 0 ? '' : 's'}',
+                    constraints:
+                        const BoxConstraints(minWidth: 52, minHeight: 52),
+                    onPressed: () => setState(() => _rating = i + 1),
+                    icon: Icon(
+                        on ? Icons.star_rounded : Icons.star_outline_rounded,
+                        size: 40,
+                        color: on ? BL.crimson : const Color(0xFFB5ABAC)),
+                  );
+                }),
               ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitFeedback,
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12))),
-              child: _isSubmitting
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : const Text("Submit Feedback",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-            )
-          ],
+              if (_rating > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                      '$_rating star${_rating == 1 ? '' : 's'}: ${_words[_rating]}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: BL.crimson)),
+                ),
+              TextField(
+                controller: _commentController,
+                maxLines: 4,
+                style: const TextStyle(fontSize: 17),
+                decoration: InputDecoration(
+                  hintText: 'Tell us what you think...',
+                  filled: true,
+                  fillColor: const Color(0xFFF5F3F4),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          const BorderSide(color: BL.hairline, width: 1.5)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          const BorderSide(color: BL.hairline, width: 1.5)),
+                ),
+              ),
+              InkWell(
+                onTap: () => setState(() => _anonymous = !_anonymous),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Row(
+                    children: [
+                      Icon(
+                          _anonymous
+                              ? Icons.check_box
+                              : Icons.check_box_outline_blank,
+                          size: 26,
+                          color: _anonymous ? BL.crimson : BL.muted),
+                      const SizedBox(width: 10),
+                      const Text('Send as Anonymous',
+                          style: TextStyle(fontSize: 17)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              BlPrimaryButton(
+                label: _isSubmitting ? 'Sending...' : 'Submit Feedback',
+                color: BL.crimson,
+                onTap: _isSubmitting ? null : _submitFeedback,
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                    foregroundColor: BL.muted,
+                    minimumSize: const Size(0, 48),
+                    textStyle: const TextStyle(fontSize: 16)),
+                child: const Text('Not now'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -116,7 +134,9 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
     setState(() => _isSubmitting = true);
 
     try {
-      final user = Provider.of<AuthService>(context, listen: false).currentUser;
+      final user = _anonymous
+          ? null
+          : Provider.of<AuthService>(context, listen: false).currentUser;
 
       String userName = user?.displayName ?? 'Anonymous';
       if (userName == 'Anonymous' && user != null) {

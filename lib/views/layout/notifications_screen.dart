@@ -1,287 +1,181 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../utils/app_theme.dart';
+import 'package:intl/intl.dart';
 import '../../services/notification_service.dart';
 import '../../models/notification_model.dart';
-//
-import 'package:intl/intl.dart';
+import '../../utils/bl_colors.dart';
+import '../settings/notification_settings_screen.dart';
+import '../widgets/bl_widgets.dart';
 
+/// "Notifications" (mockup "Notifications").
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
-
-    if (user == null) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: const BackButton(),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-        body: const Center(child: Text("Please login to view notifications")),
-      );
-    }
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Notifications",
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        centerTitle: true,
-        leading: const BackButton(),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.done_all, color: AppTheme.primaryColor),
-            tooltip: "Mark all as read",
-            onPressed: () {
-              NotificationService.markAllAsRead(user.uid);
-            },
-          )
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          BlHeader(
+            title: 'Notifications',
+            actions: [
+              if (user != null)
+                IconButton(
+                  tooltip: 'Mark all as read',
+                  color: Colors.white,
+                  constraints:
+                      const BoxConstraints(minWidth: 48, minHeight: 48),
+                  icon: const Icon(Icons.done_all),
+                  onPressed: () => NotificationService.markAllAsRead(user.uid),
+                ),
+              IconButton(
+                tooltip: 'Notification settings',
+                color: Colors.white,
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const NotificationSettingsScreen())),
+              ),
+            ],
+          ),
+          Expanded(
+            child: user == null
+                ? const BlEmpty(
+                    icon: Icons.lock_outline,
+                    title: 'Please log in to continue',
+                    message:
+                        'Your trips and favourites are saved to your account.')
+                : StreamBuilder<List<AppNotification>>(
+                    stream: NotificationService.getUserNotifications(user.uid),
+                    builder: (context, snap) {
+                      if (snap.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                            child:
+                                CircularProgressIndicator(color: BL.crimson));
+                      }
+                      final items = snap.data ?? [];
+                      if (items.isEmpty) {
+                        return const BlEmpty(
+                            icon: Icons.notifications_none,
+                            title: 'No notifications',
+                            message: 'No important alerts right now.');
+                      }
+                      return Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 700),
+                          child: ListView.builder(
+                            itemCount: items.length,
+                            itemBuilder: (_, i) => _Item(n: items[i]),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
         ],
-      ),
-      body: StreamBuilder<List<AppNotification>>(
-        stream: NotificationService.getUserNotifications(user.uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.notifications_off_outlined,
-                      size: 60, color: Colors.grey.withValues(alpha: 0.5)),
-                  const SizedBox(height: 16),
-                  Text("No notifications",
-                      style:
-                          TextStyle(color: Colors.grey.withValues(alpha: 0.8))),
-                ],
-              ),
-            );
-          }
-
-          // FILTER: Only show Important Notifications (Delayed, Cancelled, Refunded)
-          final notifications = snapshot.data!.where((n) {
-            return n.type == NotificationType.cancellation ||
-                n.type == NotificationType.delay ||
-                n.type == NotificationType.refundStatus;
-          }).toList();
-
-          if (notifications.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_circle_outline,
-                      size: 60, color: Colors.grey.withValues(alpha: 0.5)),
-                  const SizedBox(height: 16),
-                  Text("No important alerts",
-                      style:
-                          TextStyle(color: Colors.grey.withValues(alpha: 0.8))),
-                ],
-              ),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: notifications.length,
-            separatorBuilder: (context, index) => const SizedBox.shrink(),
-            itemBuilder: (context, index) {
-              final notif = notifications[index];
-              return _buildNotificationItem(context, notif);
-            },
-          );
-        },
       ),
     );
   }
+}
 
-  Widget _buildNotificationItem(BuildContext context, AppNotification notif) {
-    // Determine Color and Icon based on Type + Title (Accessibility Enrichment)
-    IconData icon = Icons.notifications;
-    Color color = AppTheme.primaryColor;
-    String statusText = "INFO";
+String _ago(DateTime t) {
+  final d = DateTime.now().difference(t);
+  if (d.inMinutes < 1) return 'Just now';
+  if (d.inMinutes < 60) return '${d.inMinutes} min ago';
+  if (d.inHours < 24) return '${d.inHours} hr ago';
+  if (d.inDays == 1) return 'Yesterday';
+  if (d.inDays < 7) return '${d.inDays} days ago';
+  return DateFormat('d MMM').format(t);
+}
 
-    switch (notif.type) {
-      case NotificationType.tripStatus:
-        if (notif.title.contains("Departed") ||
-            notif.title.contains("On Way")) {
-          icon = Icons.directions_bus;
-          color = Colors.blue;
-          statusText = "ON WAY";
-        } else if (notif.title.contains("Arrived")) {
-          icon = Icons.check_circle;
-          color = Colors.green;
-          statusText = "ARRIVED";
-        } else {
-          icon = Icons.schedule;
-          color = Colors.orange;
-          statusText = "SCHEDULED";
-        }
-        break;
-      case NotificationType.refundStatus:
-        if (notif.title.toLowerCase().contains("approved") ||
-            notif.body.toLowerCase().contains("refunded")) {
-          icon = Icons.monetization_on;
-          color = Colors.green;
-          statusText = "REFUNDED";
-        } else if (notif.title.toLowerCase().contains("rejected")) {
-          icon = Icons.error_outline;
-          color = Colors.red;
-          statusText = "REJECTED";
-        } else {
-          icon = Icons.refresh;
-          color = Colors.orange;
-          statusText = "PROCESSING";
-        }
-        break;
-      case NotificationType.cancellation:
-        icon = Icons.cancel;
-        color = Colors.red;
-        statusText = "CANCELLED";
-        break;
+class _Item extends StatelessWidget {
+  final AppNotification n;
+  const _Item({required this.n});
+
+  @override
+  Widget build(BuildContext context) {
+    IconData icon;
+    Color color;
+    switch (n.type) {
       case NotificationType.delay:
-        icon = Icons.timer_off;
-        color = Colors.redAccent;
-        statusText = "DELAYED";
-        break;
-      case NotificationType.general:
-        icon = Icons.notifications;
-        color = AppTheme.primaryColor;
-        statusText = "NEW";
-        break;
+        icon = Icons.schedule;
+        color = const Color(0xFFA64B00);
+      case NotificationType.cancellation:
+        icon = Icons.cancel_outlined;
+        color = const Color(0xFF7F1D14);
       case NotificationType.booking:
-        icon = Icons.confirmation_number;
-        color = Colors.green;
-        statusText = "CONFIRMED";
-        break;
+        icon = Icons.check;
+        color = BL.success;
+      case NotificationType.refundStatus:
+        icon = Icons.payments_outlined;
+        color = const Color(0xFF374151);
+      case NotificationType.tripStatus:
+        icon = Icons.directions_bus;
+        color = BL.crimson;
+      case NotificationType.general:
+        icon = Icons.notifications_none;
+        color = BL.crimson;
     }
-
-    // Override info if read
-    if (notif.isRead) {
-      // color = Colors.grey; // Optional: Grey out read notifications?
-      // Keeping original color but maybe dimming opacity could work,
-      // but users prefer keeping color context.
-    }
-
-    return GestureDetector(
-      onTap: () async {
-        if (!notif.isRead) {
-          await NotificationService.markAsRead(notif.id);
-        }
-      },
-      child: Container(
-        clipBehavior: Clip.hardEdge,
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        child: IntrinsicHeight(
+    return Semantics(
+      label: '${n.isRead ? '' : 'New. '}${n.title}. ${n.body}',
+      button: !n.isRead,
+      child: InkWell(
+        onTap: n.isRead ? null : () => NotificationService.markAsRead(n.id),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: n.isRead ? Colors.white : const Color(0xFFFDEEEE),
+            border: const Border(bottom: BorderSide(color: BL.hairline)),
+          ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Colored Strip
               Container(
-                  width: 6,
-                  color: notif.isRead ? color.withValues(alpha: 0.5) : color),
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                child: Icon(icon, color: Colors.white, size: 26),
+              ),
+              const SizedBox(width: 14),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Large Icon
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(n.title,
+                              style: const TextStyle(
+                                  fontSize: 17, fontWeight: FontWeight.w700)),
                         ),
-                        child: Icon(icon, color: color, size: 24),
-                      ),
-                      const SizedBox(width: 16),
-                      // Content
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(notif.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                          fontFamily: 'Outfit',
-                                          fontSize: 16,
-                                          fontWeight: notif.isRead
-                                              ? FontWeight.normal
-                                              : FontWeight.bold,
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .bodyLarge
-                                              ?.color)),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                    DateFormat('h:mm a')
-                                        .format(notif.timestamp),
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey.shade400)),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(notif.body,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 14,
-                                    height: 1.4,
-                                    color: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.color
-                                            ?.withValues(alpha: 0.7) ??
-                                        Colors.grey)),
-                            const SizedBox(height: 8),
-                            // Status Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                  color: color.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(4)),
-                              child: Text(statusText,
-                                  style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: color)),
-                            )
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
+                        const SizedBox(width: 8),
+                        Text(_ago(n.timestamp),
+                            style:
+                                const TextStyle(fontSize: 14, color: BL.muted)),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(n.body,
+                        style: TextStyle(
+                            fontSize: 16,
+                            height: 1.4,
+                            color: n.isRead ? BL.muted : BL.ink)),
+                  ],
                 ),
-              )
+              ),
+              if (!n.isRead)
+                Container(
+                  width: 12,
+                  height: 12,
+                  margin: const EdgeInsets.only(top: 6, left: 8),
+                  decoration: const BoxDecoration(
+                      color: BL.crimson, shape: BoxShape.circle),
+                ),
             ],
           ),
         ),

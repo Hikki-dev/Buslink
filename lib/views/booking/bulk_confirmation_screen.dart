@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_view_model.dart'; // EnrichedTrip
-import '../../utils/app_theme.dart';
+import '../../utils/bl_colors.dart';
+import '../widgets/bl_widgets.dart';
 import '../../services/auth_service.dart';
 import 'payment_screen.dart';
 
@@ -71,174 +72,147 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
   Widget build(BuildContext context) {
     final tripCtrl = Provider.of<TripController>(context);
     final total = tripCtrl.calculateBulkTotal(widget.trip.price);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-//
+    final fmt = NumberFormat('#,###');
+    final dates = tripCtrl.bulkDates;
+    final shown = dates.take(3).toList();
+
+    Widget card(String title, Widget child) => Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: BL.hairline),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                      color: BL.crimson)),
+              const SizedBox(height: 8),
+              child,
+            ],
+          ),
+        );
+    Widget row(String l, String v) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(children: [
+            Text(l, style: const TextStyle(fontSize: 17, color: BL.muted)),
+            const Spacer(),
+            Text(v,
+                style:
+                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          ]),
+        );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Bulk Booking Summary',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            // 1. Bus Details Card
-            _buildDetailCard(
-              context,
-              title: 'Selected Route',
-              content: Column(
-                children: [
-                  _buildRow('operator', widget.trip.operatorName),
-                  const SizedBox(height: 8),
-                  _buildRow('Route',
-                      "${widget.trip.fromCity} - ${widget.trip.toCity}"),
-                  const SizedBox(height: 8),
-                  _buildRow('TIME',
-                      DateFormat('hh:mm a').format(widget.trip.departureTime)),
-                ],
-              ),
-              isDark: isDark,
-            ),
-            const SizedBox(height: 20),
-
-            // 2. Dates List
-            _buildDetailCard(
-              context,
-              title:
-                  "${'TRAVEL DATES'} (${tripCtrl.bulkDates.length} ${'days'})",
-              content: Column(
-                children: tripCtrl.bulkDates.map((date) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.event,
-                            size: 16, color: AppTheme.primaryColor),
-                        const SizedBox(width: 12),
-                        Text(
-                          DateFormat('EEEE, d MMMM y').format(date),
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-              isDark: isDark,
-            ),
-            const SizedBox(height: 20),
-
-            // 3. Price Breakdown
-            _buildDetailCard(
-              context,
-              title: 'Price Breakdown',
-              content: Column(
-                children: [
-                  _buildRow('Price per ticket',
-                      "LKR ${widget.trip.price.toStringAsFixed(2)}"),
-                  const SizedBox(height: 8),
-                  _buildRow('passengers', "${tripCtrl.seatsPerTrip}"),
-                  const SizedBox(height: 8),
-                  _buildRow('Total days', "${tripCtrl.bulkDates.length}"),
-                  const Divider(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Total Amount',
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                      Text(
-                        "LKR ${total.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.primaryColor),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              isDark: isDark,
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(24),
-        decoration:
-            BoxDecoration(color: Theme.of(context).cardColor, boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5))
-        ]),
-        child: SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: ElevatedButton(
-            onPressed: _isProcessing ? null : _processBulkBooking,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-            ),
-            child: _isProcessing
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2))
-                : Text('Proceed to Payment',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold)),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailCard(BuildContext context,
-      {required String title, required Widget content, required bool isDark}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: Colors.white,
+      body: Column(
         children: [
-          Text(title,
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade500,
-                  letterSpacing: 1.0)),
-          const SizedBox(height: 16),
-          content,
+          const BlHeader(title: 'Bulk Booking Summary'),
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    card(
+                      'SELECTED ROUTE',
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              '${widget.trip.fromCity} to ${widget.trip.toCity}',
+                              style: const TextStyle(
+                                  fontSize: 22, fontWeight: FontWeight.w800)),
+                          Text(
+                              '${widget.trip.operatorName} · Leaves ${DateFormat('hh:mm a').format(widget.trip.departureTime)}',
+                              style: const TextStyle(
+                                  fontSize: 16, color: BL.muted)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    card(
+                      'TRAVEL DATES',
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final d in shown)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Text(
+                                  DateFormat('EEEE, d MMMM yyyy').format(d),
+                                  style: const TextStyle(fontSize: 17)),
+                            ),
+                          if (dates.length > shown.length)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                  '+ ${dates.length - shown.length} more days',
+                                  style: const TextStyle(
+                                      fontSize: 17, color: BL.muted)),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    card(
+                      'PRICE BREAKDOWN',
+                      Column(
+                        children: [
+                          row('Price per ticket',
+                              'LKR ${fmt.format(widget.trip.price)}'),
+                          row('Passengers', '${tripCtrl.seatsPerTrip}'),
+                          row('Total days', '${dates.length}'),
+                          const Divider(height: 22, color: BL.hairline),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              const Text('Total Amount',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700)),
+                              const Spacer(),
+                              Text('LKR ${fmt.format(total)}',
+                                  style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                      color: BL.crimson)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.fromLTRB(
+                16, 12, 16, 12 + MediaQuery.paddingOf(context).bottom),
+            decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: BL.hairline))),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: BlPrimaryButton(
+                  label:
+                      _isProcessing ? 'Please wait...' : 'Proceed to Payment',
+                  color: BL.crimson,
+                  onTap: _isProcessing ? null : _processBulkBooking,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(color: Colors.grey)),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-      ],
     );
   }
 }

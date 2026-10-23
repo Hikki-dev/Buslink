@@ -1,15 +1,12 @@
 // lib/views/auth/login_screen.dart
-import 'dart:math';
-import 'dart:async';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
-import '../../utils/app_theme.dart';
-//  // Removed
-
-import '../widgets/language_selector.dart';
-// import 'phone_login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../providers/language_provider.dart';
+import '../../utils/bl_colors.dart';
+import 'phone_login_screen.dart';
 import 'package:buslink/l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -30,57 +27,34 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false; // Added
-  int _currentBgIndex = 0;
-  Timer? _bgTimer;
-  // The slideshow behind the form. These are web-sized versions (about 150 to
-  // 800 KB each) rather than the originals (up to 1.5 MB each), and only the
-  // current one is downloaded up front; the next is fetched a little later.
-  final List<String> _bgImages = [
-    "https://live.staticflickr.com/65535/55025510678_c31eb6da24_b.jpg", // Flickr 1
-    "https://live.staticflickr.com/65535/55025567979_f812048ac2_h.jpg", // Flickr 2
-    "https://live.staticflickr.com/65535/55015711501_a4d336d2c0_b.jpg", // Flickr 3
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/SLTB_Kandy_South_Depot_Mercedes-Benz_OP312_Bus_-_II.jpg/960px-SLTB_Kandy_South_Depot_Mercedes-Benz_OP312_Bus_-_II.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/CTB_bus_no._290.JPG/960px-CTB_bus_no._290.JPG",
-  ];
-  Timer? _precacheTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentBgIndex = Random().nextInt(_bgImages.length);
-    _startBgTimer();
-    // Let the form appear first; then quietly fetch the next photo.
-    _precacheTimer = Timer(const Duration(seconds: 3), _precacheNext);
-  }
-
-  void _precacheNext() {
-    if (!mounted) return;
-    final next = _bgImages[(_currentBgIndex + 1) % _bgImages.length];
-    precacheImage(NetworkImage(next), context);
-  }
 
   @override
   void dispose() {
-    _bgTimer?.cancel();
-    _precacheTimer?.cancel();
-    _nameController.dispose(); // Added
+    _nameController.dispose();
     _emailController.dispose();
-
     _passwordController.dispose();
-    _confirmPasswordController.dispose(); // Added
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _startBgTimer() {
-    _bgTimer = Timer.periodic(const Duration(seconds: 8), (timer) {
-      if (mounted) {
-        setState(() {
-          _currentBgIndex = (_currentBgIndex + 1) % _bgImages.length;
-        });
-        // Get the photo after this one ready before it is needed.
-        _precacheNext();
-      }
-    });
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+    final messenger = ScaffoldMessenger.of(context);
+    if (email.isEmpty || !email.contains('@')) {
+      messenger.showSnackBar(const SnackBar(
+          content:
+              Text('Type your email above first, then tap Forgot Password.')));
+      return;
+    }
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      messenger.showSnackBar(SnackBar(
+          content: Text('We sent a link to $email to choose a new password.')));
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(
+          content: Text(
+              'We could not send the email. Check the address and try again.')));
+    }
   }
 
   void _submitAuthForm() async {
@@ -158,654 +132,485 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // void _appleSignIn() async {
-  //   setState(() => _isLoading = true);
-  //   final authService = Provider.of<AuthService>(context, listen: false);
-  //   final cred = await authService.signInWithApple(context);
+  static const _photo = 'assets/images/home/ella_train.jpg';
 
-  //   if (mounted) {
-  //     setState(() => _isLoading = false);
-  //     if (cred != null && cred.user != null) {
-  //       await Future.delayed(const Duration(milliseconds: 200));
-  //       if (mounted) Navigator.of(context).pushReplacementNamed('/');
-  //     }
-  //   }
-  // }
+  Widget _languagePills() {
+    final lp = Provider.of<LanguageProvider>(context);
+    final cur = lp.currentLocale.languageCode;
+    Widget pill(String code, String label) {
+      final on = cur == code;
+      return Expanded(
+        child: Semantics(
+          button: true,
+          selected: on,
+          label: label,
+          child: InkWell(
+            onTap: () => lp.changeLanguage(code),
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              height: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: on ? BL.crimson : Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border:
+                    Border.all(color: on ? BL.crimson : BL.border, width: 1.5),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (on)
+                    const Icon(Icons.check, size: 18, color: Colors.white),
+                  if (on) const SizedBox(width: 6),
+                  Text(label,
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: on ? Colors.white : BL.ink)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      // Fix: Prevent keyboard from squashing the background
-      resizeToAvoidBottomInset: false,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth > 900) {
-            return Row(
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: Container(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: SingleChildScrollView(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 450),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 40.0, vertical: 60),
-                                child: _buildAnimatedForm(context),
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Theme & Language Switchers (Desktop)
-                        Positioned(
-                          top: 24,
-                          right: 24,
-                          child: Row(
-                            children: [
-                              const _ThemeSwitcher(),
-                              const SizedBox(width: 8),
-                              const LanguageSelector(),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 7,
-                  child: _IllustrationPanel(
-                    bgImage: _bgImages[_currentBgIndex],
-                    onDebugLogin: (email, pass) {
-                      _emailController.text = email;
-                      _passwordController.text = pass;
-                      _submitAuthForm();
-                    },
-                  ),
-                ),
-              ],
-            );
-          } else {
-            // Mobile Layout
-            return Stack(
-              children: [
-                // Background stays static
-                Positioned.fill(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(seconds: 2),
-                    child: Image.network(
-                      _bgImages[_currentBgIndex],
-                      key: ValueKey(_bgImages[_currentBgIndex]),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          const ColoredBox(color: AppTheme.primaryDark),
-                    ),
-                  ),
-                ),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.red.shade900.withValues(alpha: 0.8),
-                          Colors.red.shade800.withValues(alpha: 0.9),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Scrollable Form Container that respects keyboard
-                Positioned.fill(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.only(
-                        left: 24,
-                        right: 24,
-                        top: 24,
-                        // Add padding for keyboard manually
-                        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-                      ),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 400),
-                        child: Container(
-                          padding: const EdgeInsets.all(32),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildHeaderLogo(context),
-                              const SizedBox(height: 32),
-                              _buildAnimatedForm(context),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                // Theme & Language Switchers
-                Positioned(
-                  top: 16,
-                  right: 16,
-                  child: SafeArea(
-                    child: Material(
-                      color: Colors.transparent,
-                      elevation: 8,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _ThemeSwitcher(),
-                          const SizedBox(width: 8),
-                          const LanguageSelector(),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // HIDDEN DEBUG BUTTON (Mobile)
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: HiddenDebugButton(
-                    onDebugLogin: (email, pass) {
-                      _emailController.text = email;
-                      _passwordController.text = pass;
-                      _submitAuthForm();
-                    },
-                  ),
-                ),
-              ],
-            );
-          }
-        },
-      ),
-    );
-  }
-
-  Widget _buildHeaderLogo(BuildContext context) {
-    return Column(children: [
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          Icons.directions_bus_filled_rounded,
-          size: 48,
-          color: Theme.of(context).primaryColor,
-        ),
-      ),
-      const SizedBox(height: 24),
-      Text(
-        'BusLink',
-        style: TextStyle(
-          fontSize: 42,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).primaryColor,
-        ),
-      ),
+    return Row(children: [
+      pill('en', 'English'),
+      const SizedBox(width: 8),
+      pill('si', 'සිංහල'),
+      const SizedBox(width: 8),
+      pill('ta', 'தமிழ்'),
     ]);
   }
 
-  Widget _buildAnimatedForm(BuildContext context) {
-    final theme = Theme.of(context);
-    //
-
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const LanguagePills(),
-          const SizedBox(height: 24),
-          Text(
-            AppLocalizations.of(context)!.welcome,
-            style: const TextStyle(
-              fontFamily: 'Outfit',
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _isLogin
-                ? AppLocalizations.of(context)!.loginSubtitle
-                : AppLocalizations.of(context)!.signupSubtitle,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.grey.shade500,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 32),
-          Row(
-            children: [
-              Expanded(
-                child: _SocialButton(
-                  onPressed: _googleSignIn,
-                  iconAsset: 'assets/images/google_g.png',
-                  label: AppLocalizations.of(context)!.continueWithGoogle,
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Phone Button Removed
-            ],
-          ),
-          const SizedBox(height: 32),
-          Row(
-            children: [
-              const Expanded(child: Divider(color: Color(0xFF1E1E22))),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(AppLocalizations.of(context)!.orDivider,
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold)),
-              ),
-              const Expanded(child: Divider(color: Color(0xFF1E1E22))),
-            ],
-          ),
-          const SizedBox(height: 32),
-          if (!_isLogin) ...[
-            _buildPremiumTextField(
-              controller: _nameController,
-              label: AppLocalizations.of(context)!.fullName,
-              hint: AppLocalizations.of(context)!.enterFullName,
-              icon: Icons.person_outline_rounded,
-              theme: theme,
-              validator: (v) {
-                if (v == null || v.isEmpty) {
-                  return AppLocalizations.of(context)!.nameRequired;
-                }
-                if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(v)) {
-                  return AppLocalizations.of(context)!.nameInvalid;
-                }
-                if (v.length < 3) {
-                  return AppLocalizations.of(context)!.nameTooShort;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 24),
-          ],
-          _buildPremiumTextField(
-            fieldKey: const Key('login_email_field'),
-            controller: _emailController,
-            label: AppLocalizations.of(context)!.email,
-            hint: AppLocalizations.of(context)!.enterEmail,
-            icon: Icons.email_outlined,
-            theme: theme,
-            validator: (v) {
-              if (v == null || v.isEmpty) {
-                return AppLocalizations.of(context)!.emailRequired;
-              }
-              if (!RegExp(
-                      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-                  .hasMatch(v)) {
-                return AppLocalizations.of(context)!.emailInvalid;
-              }
-              return null;
-            },
-          ),
-          if (!_isLogin) ...[
-            const SizedBox(height: 24),
-            // Phone Number Removed
-          ],
-          const SizedBox(height: 24),
-          _buildPremiumTextField(
-            fieldKey: const Key('login_password_field'),
-            controller: _passwordController,
-            label: AppLocalizations.of(context)!.password,
-            hint: AppLocalizations.of(context)!.enterPassword,
-            icon: Icons.lock_outline_rounded,
-            theme: theme,
-            isPassword: true,
-            isPasswordVisible: _isPasswordVisible,
-            onVisibilityToggle: () =>
-                setState(() => _isPasswordVisible = !_isPasswordVisible),
-            validator: (v) => v == null || v.length < 6
-                ? AppLocalizations.of(context)!.passwordLengthError
-                : null,
-            onFieldSubmitted: _submitAuthForm, // Submit on Enter
-          ),
-          if (!_isLogin) ...[
-            const SizedBox(height: 24),
-            _buildPremiumTextField(
-              controller: _confirmPasswordController,
-              label: AppLocalizations.of(context)!
-                  .confirmPassword, // Hardcoded for now, or use lp.translate
-              hint: AppLocalizations.of(context)!.reenterPassword,
-              icon: Icons.lock_outline_rounded,
-              theme: theme,
-              isPassword: true,
-              isPasswordVisible:
-                  _isConfirmPasswordVisible, // Use separate state
-              onVisibilityToggle: () => setState(() =>
-                  _isConfirmPasswordVisible =
-                      !_isConfirmPasswordVisible), // Toggle
-              validator: (v) {
-                if (v == null || v.isEmpty) {
-                  return AppLocalizations.of(context)!.confirmPasswordRequired;
-                }
-                if (v != _passwordController.text) {
-                  return AppLocalizations.of(context)!.passwordsDoNotMatch;
-                }
-                return null;
-              },
-            ),
-          ],
-          const SizedBox(height: 16),
-          if (_isLogin)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {},
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.grey.shade600,
-                  textStyle: const TextStyle(
-                      fontSize: 13, decoration: TextDecoration.underline),
-                ),
-                child: Text(AppLocalizations.of(context)!.forgotPassword),
-              ),
-            ),
-          const SizedBox(height: 32),
-          SizedBox(
-            height: 54,
-            child: ElevatedButton(
-              key: const Key('login_button'),
-              onPressed: _isLoading ? null : _submitAuthForm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(Colors.white)),
-                    )
-                  : Text(
-                      _isLogin
-                          ? AppLocalizations.of(context)!.login
-                          : AppLocalizations.of(context)!.signup,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const SizedBox(height: 24),
-          Wrap(
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 4, // Horizontal spacing
-            runSpacing: 4, // Vertical spacing if it wraps
-            children: [
-              Text(
-                  _isLogin
-                      ? AppLocalizations.of(context)!.noAccount
-                      : AppLocalizations.of(context)!.alreadyHaveAccount,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: Colors.grey.shade600, fontSize: 16)),
-              GestureDetector(
-                onTap: () => setState(() => _isLogin = !_isLogin),
-                child: Text(
-                  _isLogin
-                      ? AppLocalizations.of(context)!.signup
-                      : AppLocalizations.of(context)!.login,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPremiumTextField({
-    required TextEditingController controller,
+  Widget _field({
     required String label,
     required String hint,
     required IconData icon,
-    required ThemeData theme,
-    bool isPassword = false,
-    bool isPasswordVisible = false,
-    VoidCallback? onVisibilityToggle,
+    required TextEditingController controller,
     String? Function(String?)? validator,
-    VoidCallback? onFieldSubmitted, // NEW: Callback for Submit
-    Key? fieldKey,
+    bool password = false,
+    bool visible = false,
+    VoidCallback? onToggle,
+    TextInputType? type,
+    String? helper,
+    double height = 52,
   }) {
-    final isDark = theme.brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black,
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F0F12) : Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-                color: isDark ? const Color(0xFF1E1E22) : Colors.grey.shade200),
-          ),
-          child: TextFormField(
-            key: fieldKey,
-            controller: controller,
-            obscureText: isPassword ? !isPasswordVisible : false,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black,
-            ),
-            validator: validator,
-            textInputAction: isPassword
-                ? TextInputAction.done
-                : TextInputAction.next, // Keyboard Action
-            onFieldSubmitted: (_) => onFieldSubmitted?.call(), // Trigger Submit
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: TextStyle(
-                color: isDark ? Colors.white54 : Colors.black54,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-              border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              suffixIcon: isPassword
-                  ? IconButton(
-                      tooltip: 'Show or hide password',
-                      icon: Icon(
-                        isPasswordVisible
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        color: isDark ? Colors.white : Colors.black,
-                        size: 20,
-                      ),
-                      onPressed: onVisibilityToggle,
-                    )
-                  : null,
-            ),
+        Text(label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 4),
+        TextFormField(
+          controller: controller,
+          keyboardType: type,
+          obscureText: password && !visible,
+          style: const TextStyle(fontSize: 17),
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: hint,
+            helperText: helper,
+            helperStyle: const TextStyle(fontSize: 14, color: BL.muted),
+            errorStyle:
+                const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            hintStyle: const TextStyle(fontSize: 17, color: BL.muted),
+            prefixIcon: Icon(icon, color: BL.muted),
+            suffixIcon: password
+                ? IconButton(
+                    tooltip: visible ? 'Hide password' : 'Show password',
+                    icon: Icon(visible
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined),
+                    onPressed: onToggle,
+                  )
+                : null,
+            filled: true,
+            fillColor: const Color(0xFFF5F3F4),
+            contentPadding: EdgeInsets.symmetric(vertical: (height - 24) / 2),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: BL.crimson, width: 2)),
           ),
         ),
       ],
     );
   }
-}
 
-class _SocialButton extends StatelessWidget {
-  final VoidCallback onPressed;
-  final String? iconAsset;
-  final String label;
-
-  const _SocialButton(
-      {required this.onPressed, this.iconAsset, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return SizedBox(
-      height: 48,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: dark ? const Color(0xFF0F0F12) : Colors.white,
-          side: BorderSide(
-              color: dark ? const Color(0xFF1E1E22) : Colors.grey.shade400,
-              width: 1.5),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          foregroundColor: dark ? Colors.white : Colors.black,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // The real four-colour Google "G", bundled so it never depends
-            // on a website being reachable.
-            if (iconAsset != null)
-              Image.asset(iconAsset!, height: 20, width: 20),
-            const SizedBox(width: 8),
-            Flexible(
-                child: Text(label,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis)),
+  Widget _form(bool desktop) {
+    final l10n = AppLocalizations.of(context)!;
+    final gap = SizedBox(height: desktop ? 14 : 12);
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _languagePills(),
+          gap,
+          if (!_isLogin) ...[
+            _field(
+              label: l10n.fullName,
+              hint: l10n.enterFullName,
+              icon: Icons.person_outline,
+              controller: _nameController,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return l10n.nameRequired;
+                if (v.trim().length < 3) return l10n.nameTooShort;
+                if (!RegExp(r"^[\p{L} .'-]+$", unicode: true)
+                    .hasMatch(v.trim())) {
+                  return l10n.nameInvalid;
+                }
+                return null;
+              },
+            ),
+            gap,
           ],
-        ),
+          _field(
+            label: l10n.email,
+            hint: l10n.enterEmail,
+            icon: Icons.mail_outline,
+            controller: _emailController,
+            type: TextInputType.emailAddress,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) return l10n.emailRequired;
+              if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim())) {
+                return l10n.emailInvalid;
+              }
+              return null;
+            },
+          ),
+          gap,
+          _field(
+            label: l10n.password,
+            hint: l10n.enterPassword,
+            icon: Icons.lock_outline,
+            controller: _passwordController,
+            password: true,
+            visible: _isPasswordVisible,
+            onToggle: () =>
+                setState(() => _isPasswordVisible = !_isPasswordVisible),
+            helper: _isLogin ? null : 'At least 6 characters',
+            validator: (v) =>
+                v == null || v.length < 6 ? l10n.passwordLengthError : null,
+          ),
+          if (!_isLogin) ...[
+            gap,
+            _field(
+              label: l10n.confirmPassword,
+              hint: l10n.reenterPassword,
+              icon: Icons.lock_outline,
+              controller: _confirmPasswordController,
+              password: true,
+              visible: _isConfirmPasswordVisible,
+              onToggle: () => setState(
+                  () => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
+              validator: (v) {
+                if (v == null || v.isEmpty) return l10n.confirmPasswordRequired;
+                if (v != _passwordController.text) {
+                  return l10n.passwordsDoNotMatch;
+                }
+                return null;
+              },
+            ),
+          ],
+          if (_isLogin)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _forgotPassword,
+                style: TextButton.styleFrom(
+                    foregroundColor: BL.crimson,
+                    minimumSize: const Size(0, 44),
+                    textStyle: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
+                child: Text(l10n.forgotPassword),
+              ),
+            )
+          else
+            const SizedBox(height: 6),
+          SizedBox(
+            height: desktop ? 58 : 56,
+            child: FilledButton(
+              onPressed: _isLoading ? null : _submitAuthForm,
+              style: FilledButton.styleFrom(
+                backgroundColor: BL.crimson,
+                shape: const StadiumBorder(),
+                textStyle:
+                    const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2.5))
+                  : Text(_isLogin ? l10n.login : l10n.signup),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(children: [
+            const Expanded(child: Divider(color: BL.hairline)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(l10n.orDivider,
+                  style: const TextStyle(fontSize: 15, color: BL.muted)),
+            ),
+            const Expanded(child: Divider(color: BL.hairline)),
+          ]),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: _isLoading ? null : _googleSignIn,
+            style: _outline,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/images/google_g.png',
+                    width: 22, height: 22),
+                const SizedBox(width: 10),
+                Text(l10n.continueWithGoogle),
+              ],
+            ),
+          ),
+          if (_isLogin) ...[
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: _isLoading
+                  ? null
+                  : () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const PhoneLoginScreen())),
+              icon: const Icon(Icons.phone_iphone),
+              label: const Text('Log in with phone number'),
+              style: _outline,
+            ),
+          ],
+        ],
       ),
     );
   }
-}
 
-// Language Switcher Class Removed
+  ButtonStyle get _outline => OutlinedButton.styleFrom(
+        minimumSize: const Size(0, 54),
+        foregroundColor: BL.ink,
+        side: const BorderSide(color: BL.border, width: 1.5),
+        shape: const StadiumBorder(),
+        textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+      );
 
-class _IllustrationPanel extends StatelessWidget {
-  final String bgImage;
-  final Function(String email, String pass)? onDebugLogin;
+  Widget _switchMode() {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(_isLogin ? l10n.noAccount : l10n.alreadyHaveAccount,
+              style: const TextStyle(fontSize: 16, color: BL.muted)),
+          TextButton(
+            onPressed: () => setState(() => _isLogin = !_isLogin),
+            style: TextButton.styleFrom(
+                foregroundColor: BL.crimson,
+                minimumSize: const Size(0, 48),
+                textStyle:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+            child: Text(_isLogin ? l10n.signup : l10n.login),
+          ),
+        ],
+      ),
+    );
+  }
 
-  const _IllustrationPanel({required this.bgImage, this.onDebugLogin});
+  void _debugLogin(String email, String pass) {
+    _emailController.text = email;
+    _passwordController.text = pass;
+    _submitAuthForm();
+  }
 
   @override
   Widget build(BuildContext context) {
-    //
-    return Container(
-      decoration: const BoxDecoration(color: Color(0xFF0A0A0B)),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: ClipRect(
-              child: Opacity(
-                opacity: 0.5,
-                child: AnimatedSwitcher(
-                  duration: const Duration(seconds: 2),
-                  child: Transform.scale(
-                    scale: 1.2, // Zoom in by 20%
-                    child: Image.network(
-                      bgImage,
-                      key: ValueKey(bgImage),
-                      fit: BoxFit.cover,
-                      alignment: Alignment.center,
-                      errorBuilder: (_, __, ___) =>
-                          const ColoredBox(color: AppTheme.primaryDark),
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: LayoutBuilder(
+        builder: (context, box) {
+          if (box.maxWidth > 900) {
+            return Row(
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(40),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 440),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text('BusLink',
+                                style: TextStyle(
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.w800,
+                                    color: BL.crimson)),
+                            const SizedBox(height: 18),
+                            Text(l10n.welcome,
+                                style: const TextStyle(
+                                    fontSize: 38, fontWeight: FontWeight.w800)),
+                            const SizedBox(height: 4),
+                            Text(
+                                _isLogin
+                                    ? l10n.loginSubtitle
+                                    : l10n.signupSubtitle,
+                                style: const TextStyle(
+                                    fontSize: 18, color: BL.muted)),
+                            const SizedBox(height: 18),
+                            _form(true),
+                            const SizedBox(height: 8),
+                            _switchMode(),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppTheme.primaryColor.withValues(alpha: 0.4),
-                    const Color(0xFF0A0B10).withValues(alpha: 1.0),
-                  ],
+                Expanded(
+                  flex: 5,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Semantics(
+                        image: true,
+                        label:
+                            'A blue train crossing the Nine Arches Bridge near Ella',
+                        child: Image.asset(_photo,
+                            fit: BoxFit.cover,
+                            alignment: const Alignment(0, 0.2)),
+                      ),
+                      const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0x8C3C0304), Color(0xEB660708)],
+                          ),
+                        ),
+                      ),
+                      const Positioned(
+                        left: 56,
+                        right: 56,
+                        bottom: 64,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Travel with\nComfort & Style',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 52,
+                                    height: 1.08,
+                                    fontWeight: FontWeight.w800)),
+                            SizedBox(height: 16),
+                            Text(
+                                'Join thousands of satisfied travelers who trust BusLink for their daily commutes.',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    height: 1.4)),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: HiddenDebugButton(onDebugLogin: _debugLogin)),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(60.0),
+              ],
+            );
+          }
+          final top = MediaQuery.paddingOf(context).top;
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: box.maxHeight),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    AppLocalizations.of(context)!.marketingTitle,
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                        fontFamily: 'Outfit',
-                        fontSize: 52,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        height: 1.1),
+                  Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Semantics(
+                              image: true,
+                              label:
+                                  'A blue train crossing the Nine Arches Bridge near Ella',
+                              child: Image.asset(_photo,
+                                  fit: BoxFit.cover,
+                                  alignment: const Alignment(0, 0.2)),
+                            ),
+                            const DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Color(0x803C0304),
+                                    Color(0xE6660708)
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(24, top + 20, 24, 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('BusLink',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.w800)),
+                            const SizedBox(height: 14),
+                            Text(l10n.welcome,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800)),
+                            Text(
+                                _isLogin
+                                    ? l10n.loginSubtitle
+                                    : l10n.signupSubtitle,
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 17)),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    AppLocalizations.of(context)!.marketingSubtitle,
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 18,
-                        color: Colors.white70,
-                        height: 1.5),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(24, 16, 24,
+                        MediaQuery.viewInsetsOf(context).bottom + 8),
+                    child: _form(false),
                   ),
+                  _switchMode(),
+                  HiddenDebugButton(onDebugLogin: _debugLogin),
                 ],
               ),
             ),
-          ),
-          // HIDDEN DEBUG BUTTON
-          if (onDebugLogin != null)
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: HiddenDebugButton(onDebugLogin: onDebugLogin!),
-            ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -851,37 +656,6 @@ class HiddenDebugButton extends StatelessWidget {
             child: Text('User Access'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ThemeSwitcher extends StatelessWidget {
-  const _ThemeSwitcher();
-  @override
-  Widget build(BuildContext context) {
-    final themeController = Provider.of<ThemeController>(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InkWell(
-      onTap: () {
-        final newMode = isDark ? ThemeMode.light : ThemeMode.dark;
-        debugPrint('🎨 Theme toggled to: $newMode');
-        themeController.setTheme(newMode);
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F0F12) : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isDark ? const Color(0xFF1E1E22) : Colors.grey.shade300,
-          ),
-        ),
-        child: Icon(
-            isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-            color: isDark ? Colors.grey.shade400 : Colors.black87,
-            size: 20),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../utils/app_theme.dart';
+import '../../utils/bl_colors.dart';
+import '../widgets/bl_widgets.dart';
 import '../../services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -87,9 +88,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         } else if (e.code == 'session-expired') {
           message = "Code expired. Please resend.";
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("$message (${e.code})")),
-        );
+        setState(() => _error = message);
       }
     } catch (e) {
       if (mounted) {
@@ -101,113 +100,150 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
+  String? _error;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Verify Phone"),
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            const Text(
-              "Verification Code",
-              style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Outfit'),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Please enter the code sent to ${widget.phoneNumber}",
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 32),
-
-            // OTP Input Fields
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(6, (index) {
-                return SizedBox(
-                  width: 45,
-                  child: TextField(
-                    controller: _codeControllers[index],
-                    focusNode: _focusNodes[index],
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    maxLength: 1,
-                    style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      counterText: "",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          const BlHeader(title: 'Verify Phone'),
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text('Verification Code',
+                          style: TextStyle(
+                              fontSize: 28, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 8),
+                      Text.rich(TextSpan(
+                        style: const TextStyle(
+                            fontSize: 18, height: 1.4, color: BL.muted),
+                        children: [
+                          const TextSpan(text: 'Type the 6 digits we sent to '),
+                          TextSpan(
+                              text: widget.phoneNumber,
+                              style: const TextStyle(
+                                  color: BL.ink, fontWeight: FontWeight.w700)),
+                        ],
+                      )),
+                      const SizedBox(height: 22),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(6, (i) {
+                          return SizedBox(
+                            width: 48,
+                            height: 60,
+                            child: TextField(
+                              controller: _codeControllers[i],
+                              focusNode: _focusNodes[i],
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              maxLength: 1,
+                              style: const TextStyle(
+                                  fontSize: 26, fontWeight: FontWeight.w800),
+                              decoration: InputDecoration(
+                                counterText: '',
+                                filled: true,
+                                fillColor: const Color(0xFFF5F3F4),
+                                contentPadding: EdgeInsets.zero,
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                        color: BL.border, width: 1.5)),
+                                enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                        color: BL.border, width: 1.5)),
+                                focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                        color: BL.crimson, width: 2.5)),
+                              ),
+                              onChanged: (v) {
+                                setState(() => _error = null);
+                                if (v.isNotEmpty && i < 5) {
+                                  _focusNodes[i + 1].requestFocus();
+                                }
+                                if (v.isEmpty && i > 0) {
+                                  _focusNodes[i - 1].requestFocus();
+                                }
+                              },
+                            ),
+                          );
+                        }),
                       ),
-                    ),
-                    onChanged: (value) {
-                      if (value.isNotEmpty && index < 5) {
-                        _focusNodes[index + 1].requestFocus();
-                      }
-                      if (value.isEmpty && index > 0) {
-                        _focusNodes[index - 1].requestFocus();
-                      }
-                      if (_fullCode.length == 6) {
-                        // Optional: Auto-submit
-                      }
-                    },
+                      if (_error != null) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                              color: const Color(0xFFFBE0DC),
+                              borderRadius: BorderRadius.circular(12)),
+                          child: Row(children: [
+                            const Icon(Icons.error_outline,
+                                color: Color(0xFF7F1D14)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(_error!,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF7F1D14))),
+                            ),
+                          ]),
+                        ),
+                      ],
+                      const SizedBox(height: 22),
+                      BlPrimaryButton(
+                        label: _isLoading ? 'Checking...' : 'Verify',
+                        color: BL.crimson,
+                        onTap: _isLoading ? null : _verifyCode,
+                      ),
+                      const SizedBox(height: 14),
+                      const Text('Did not get it?',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16, color: BL.muted)),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 52,
+                        child: OutlinedButton(
+                          onPressed: _resendTimer == 0
+                              ? () => Navigator.pop(context)
+                              : null,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: BL.crimson,
+                            side: BorderSide(
+                                color:
+                                    _resendTimer == 0 ? BL.crimson : BL.border,
+                                width: 2),
+                            shape: const StadiumBorder(),
+                            textStyle: const TextStyle(
+                                fontSize: 17, fontWeight: FontWeight.w800),
+                          ),
+                          child: Text(_resendTimer > 0
+                              ? 'Resend code in ${_resendTimer}s'
+                              : 'Resend Code'),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                          'Code expired? Tap Resend Code to get a new one.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 15, color: BL.muted)),
+                    ],
                   ),
-                );
-              }),
-            ),
-
-            const SizedBox(height: 32),
-
-            ElevatedButton(
-              onPressed: _isLoading ? null : _verifyCode,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                minimumSize: const Size(double.infinity, 50),
+                ),
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : const Text("Verify",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
-
-            const SizedBox(height: 24),
-
-            TextButton(
-              onPressed: _resendTimer == 0
-                  ? () {
-                      // Implement Resend Logic if needed (usually requires passing verifyPhoneNumber again)
-                      Navigator.pop(
-                          context); // Simple way: Go back to re-enter number
-                    }
-                  : null,
-              child: Text(
-                _resendTimer > 0
-                    ? "Resend code in ${_resendTimer}s"
-                    : "Resend Code",
-                style: TextStyle(
-                    color:
-                        _resendTimer > 0 ? Colors.grey : AppTheme.primaryColor),
-              ),
-            )
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
-// import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../utils/app_theme.dart';
-//
 import '../../controllers/trip_controller.dart';
 import '../../services/auth_service.dart';
-// import '../results/bus_list_screen.dart';
+import '../../utils/bl_colors.dart';
+import '../home/home_sections.dart' show cityPhoto;
+import '../layout/app_footer.dart';
 import '../layout/desktop_navbar.dart';
-
-// import '../layout/mobile_navbar.dart';
-import '../layout/custom_app_bar.dart';
-
 import '../customer_main_screen.dart';
-import '../widgets/animated_favorite_button.dart';
+import '../widgets/bl_widgets.dart';
 
+/// "My favourites" (mockups "Favourites" and "Desktop-Favourites").
 class FavoritesScreen extends StatelessWidget {
   final bool showBackButton;
   final VoidCallback? onBookNow;
   final VoidCallback? onBack;
-
   final bool isAdminView;
 
   const FavoritesScreen(
@@ -30,149 +25,139 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = Provider.of<AuthService>(context, listen: false).currentUser;
     final controller = Provider.of<TripController>(context, listen: false);
-    final user = authService.currentUser;
-    final isDesktop = MediaQuery.of(context).size.width > 800;
+    final isDesktop = MediaQuery.of(context).size.width > 900;
 
-    return Column(
-      children: [
-        if (isDesktop)
-          Material(
-            elevation: 4,
-            child: DesktopNavBar(selectedIndex: 2, isAdminView: isAdminView),
-          ),
-        Expanded(
-          child: Scaffold(
-            // bottomNavigationBar:
-            //    isDesktop ? null : const MobileBottomNav(selectedIndex: 2),
-            // Use theme background
-            appBar: CustomAppBar(
-              hideActions:
-                  isDesktop, // Hide actions on Desktop (they are in Navbar), show on Mobile
-              automaticallyImplyLeading: showBackButton && !isDesktop,
-              leading: showBackButton && !isDesktop
-                  ? BackButton(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      onPressed: () {
-                        if (onBack != null) {
-                          onBack!();
-                        } else {
-                          Navigator.pop(context);
-                        }
-                      })
-                  : null,
-              title: Text("My Favourites",
-                  style: TextStyle(
-                      fontFamily: 'Outfit',
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.bold)),
-              centerTitle: true,
-            ),
-            body: user == null
-                ? Center(
-                    child: Text("Please log in to view favorites",
-                        style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 16,
-                            color: Theme.of(context).colorScheme.onSurface)),
-                  )
-                : StreamBuilder<List<Map<String, dynamic>>>(
-                    stream: controller.getUserFavoriteRoutes(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.favorite_border,
-                                  size: 64, color: Colors.grey.shade300),
-                              const SizedBox(height: 16),
-                              Text("No favourites yet",
-                                  style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 18,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface)),
-                            ],
-                          ),
-                        );
-                      }
-
-                      final favorites =
-                          snapshot.data!.where((f) => f['id'] != null).toList();
-
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        child: Center(
-                          child: Wrap(
-                            spacing: 20,
-                            runSpacing: 20,
-                            alignment: WrapAlignment.center,
-                            children: favorites.map((fav) {
-                              return SizedBox(
-                                width: isDesktop
-                                    ? 450
-                                    : MediaQuery.of(context).size.width -
-                                        48, // Responsive width
-                                child: _FavoriteItemCard(
-                                  from: fav['fromCity'] ?? 'Unknown',
-                                  to: fav['toCity'] ?? 'Unknown',
-                                  operator: fav['operatorName'] ?? 'Unknown',
-                                  price: fav['price'] != null
-                                      ? "LKR ${fav['price']}"
-                                      : "Price Varies",
-                                  onRemove: () async {
-                                    await controller.removeFavorite(fav['id']);
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content: Text(
-                                                "Removed from favourites")),
-                                      );
-                                    }
-                                  },
-                                  onBook: () {
-                                    controller.setFromCity(fav['fromCity']);
-                                    controller.setToCity(fav['toCity']);
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const CustomerMainScreen(
-                                                  initialIndex: 0)),
-                                      (route) => false,
-                                    );
-                                  },
-                                ),
-                              );
-                            }).toList(),
-                          ),
+    Widget body;
+    if (user == null) {
+      body = const BlEmpty(
+          icon: Icons.lock_outline,
+          title: 'Please log in to continue',
+          message: 'Your trips and favourites are saved to your account.');
+    } else {
+      body = StreamBuilder<List<Map<String, dynamic>>>(
+        stream: controller.getUserFavoriteRoutes(),
+        builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(
+                child: CircularProgressIndicator(color: BL.crimson));
+          }
+          final favs = (snap.data ?? []).where((f) => f['id'] != null).toList();
+          if (favs.isEmpty) {
+            return const BlEmpty(
+                icon: Icons.favorite_border,
+                title: 'No favourites yet',
+                message:
+                    'Tap the heart on a bus to save the route. It will be here for quick booking.');
+          }
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(isDesktop ? 24 : 16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : 600),
+                child: Wrap(
+                  spacing: 20,
+                  runSpacing: 14,
+                  children: [
+                    for (final f in favs)
+                      SizedBox(
+                        width: isDesktop
+                            ? 380
+                            : MediaQuery.of(context).size.width - 32,
+                        height: 150,
+                        child: _FavCard(
+                          from: (f['fromCity'] ?? 'Unknown').toString(),
+                          to: (f['toCity'] ?? 'Unknown').toString(),
+                          operator: (f['operatorName'] ?? '').toString(),
+                          price: f['price'] != null
+                              ? 'LKR ${f['price']}'
+                              : 'Price varies',
+                          onRemove: () async {
+                            await controller.removeFavorite(f['id']);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('Removed from favourites')));
+                            }
+                          },
+                          onBook: () {
+                            controller.setFromCity(f['fromCity']);
+                            controller.setToCity(f['toCity']);
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (_) => const CustomerMainScreen(
+                                      initialIndex: 0)),
+                              (r) => false,
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    if (!isDesktop) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Column(children: [
+          BlHeader(
+              title: 'My Favourites',
+              subtitle: 'Routes you travel often',
+              showBack: showBackButton,
+              onBack: onBack),
+          Expanded(child: body),
+        ]),
+      );
+    }
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            DesktopNavBar(selectedIndex: 2, isAdminView: isAdminView),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: const Padding(
+                  padding: EdgeInsets.fromLTRB(24, 32, 24, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('My favourites',
+                          style: TextStyle(
+                              fontSize: 34, fontWeight: FontWeight.w700)),
+                      Text('Routes you travel often',
+                          style: TextStyle(fontSize: 18, color: BL.muted)),
+                    ],
                   ),
-          ),
+                ),
+              ),
+            ),
+            SizedBox(height: 360, child: body),
+            const SizedBox(height: 40),
+            const AppFooter(),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
 
-class _FavoriteItemCard extends StatelessWidget {
+class _FavCard extends StatelessWidget {
   final String from;
   final String to;
   final String operator;
   final String price;
   final VoidCallback onRemove;
   final VoidCallback onBook;
-
-  const _FavoriteItemCard({
+  const _FavCard({
     required this.from,
     required this.to,
     required this.operator,
@@ -183,141 +168,91 @@ class _FavoriteItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161A1D) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : Colors.grey.shade200,
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          )
-        ],
-        border: isDark ? Border.all(color: Colors.grey.shade800) : null,
-      ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
       child: Stack(
+        fit: StackFit.expand,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              // mainAxisAlignment: MainAxisAlignment.spaceBetween, // Removed
-              children: [
-                // Route
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const Text("FROM",
-                              style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.bold)),
-                          Text(from,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontFamily: 'Outfit',
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.onSurface)),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.arrow_forward_rounded,
-                        color: Colors.grey.shade500),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const Text("TO",
-                              style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.bold)),
-                          Text(to,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontFamily: 'Outfit',
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.onSurface)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16), // Added spacing
-
-                // Operator & Price
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center, // Centered
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(operator,
-                            style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onSurface)),
-                        const Text("Standard Bus",
-                            style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: Colors.grey)),
-                      ],
-                    ),
-                    const SizedBox(width: 24), // Spacing
-                    Text(price,
-                        style: const TextStyle(
-                            fontFamily: 'Outfit',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: AppTheme.primaryColor))
-                  ],
-                ),
-                const SizedBox(height: 16), // Added spacing
-
-                // Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: onBook,
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0),
-                    child: Text("BOOK AGAIN",
-                        style: TextStyle(
-                            fontFamily: 'Outfit',
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
-                  ),
-                )
-              ],
+          Image.asset(cityPhoto(to),
+              fit: BoxFit.cover, alignment: const Alignment(0, -0.4)),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0x0D000000), Color(0xE6320304)],
+                stops: [0.2, 1],
+              ),
             ),
           ),
           Positioned(
-            top: 16,
-            right: 16,
-            child: AnimatedFavoriteButton(
-              isFavorite: true,
-              size: 18,
-              onToggle: onRemove,
+            right: 6,
+            top: 6,
+            child: Semantics(
+              button: true,
+              label: 'Remove $from to $to from favourites',
+              child: Material(
+                color: Colors.white.withValues(alpha: 0.92),
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: onRemove,
+                  child: const SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Icon(Icons.favorite, color: BL.crimson, size: 24),
+                  ),
+                ),
+              ),
             ),
-          )
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 12,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('$from to $to',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800)),
+                      Text(
+                          '${operator.isEmpty ? 'Standard Bus' : operator} · $price',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 15)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: onBook,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: BL.crimson,
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      shape: const StadiumBorder(),
+                      textStyle: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w800),
+                    ),
+                    child: const Text('BOOK AGAIN'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
