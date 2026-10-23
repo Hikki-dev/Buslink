@@ -3,6 +3,7 @@
 ## On this page
 
 * [Run the tests](#run-the-tests)
+* [What runs on every pull request](#what-runs-on-every-pull-request)
 * [What is covered](#what-is-covered)
 * [What is not covered](#what-is-not-covered)
 * [Writing a test](#writing-a-test)
@@ -22,6 +23,18 @@ Nothing needs Firebase, Stripe or the internet. The tests build the real screens
 ```bash
 flutter test test/boarding_test.dart
 ```
+
+## What runs on every pull request
+
+`.github/workflows/checks.yml` runs on every pull request and every push to `main`:
+
+1. `python3 tool/check_docs.py`: every link and picture in the docs exists, every heading link lands on a heading, and the README links to every page in `docs/`.
+2. `flutter analyze`.
+3. `flutter test`, on every file in `test/` except `widget_test.dart` (see above).
+
+It uses Flutter 3.38.9, the same version as the live site. `lib/firebase_options.dart` and `.env` are git-ignored because they hold your own keys, so the workflow creates placeholder copies. The tests only need them to exist.
+
+Run the same three commands yourself before opening a pull request. The **Checks** badge in the README shows the result for `main`.
 
 ## What is covered
 
@@ -65,3 +78,5 @@ python3 tool/trim_screenshots.py
 The second command needs Python with Pillow (`python3 -m pip install pillow`). It trims the empty space under each picture.
 
 The test uses Roboto in place of the app's own fonts, because the app's variable fonts do not pick a weight in the test engine. The layout is the real layout; only the letter shapes differ from a phone. A few pictures stop just above a button for the same reason: some button labels draw as blank boxes in the test engine.
+
+`tool/check_docs.py` is the checker for the written docs. It needs only Python, no packages.

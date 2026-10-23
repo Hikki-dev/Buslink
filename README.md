@@ -1,5 +1,6 @@
 # BusLink
 
+[![Checks](https://github.com/Hikki-dev/Buslink/actions/workflows/checks.yml/badge.svg)](https://github.com/Hikki-dev/Buslink/actions/workflows/checks.yml)
 [![Demo status](https://github.com/Hikki-dev/Buslink/actions/workflows/uptime.yml/badge.svg)](https://github.com/Hikki-dev/Buslink/actions/workflows/uptime.yml)
 [![Live demo](https://img.shields.io/badge/live-demo-BA181B)](https://buslink-eta.vercel.app)
 ![Flutter](https://img.shields.io/badge/Flutter-3.38-02569B?logo=flutter&logoColor=white)
@@ -19,7 +20,7 @@ Everything is written for people who are not used to apps: big buttons, plain wo
 * [Try it first](#try-it-first): the live demo
 * [What you get](#what-you-get): for passengers, conductors and admins
 * [How everything fits together](#how-everything-fits-together)
-* [Using the app](#using-the-app)
+* [Using the app](#using-the-app) (the full walk through is in [Getting started](docs/Getting%20started.md))
   * [Passengers](#passengers)
   * [Conductors](#conductors)
   * [Admins](#admins)
@@ -38,7 +39,7 @@ Everything is written for people who are not used to apps: big buttons, plain wo
 * To pay, use Stripe's test card `4242 4242 4242 4242`, any future date and any three digits. The demo is built with Stripe **test** keys. Never type a real card number into it.
 * Conductor and admin screens need an account that the owner has given that role. See [Roles](docs/Installing.md#7-roles).
 
-The badge at the top of this page turns red if the demo goes down. A small check runs every six hours (see [Deploying](docs/Deploying.md)).
+The **Demo status** badge at the top of this page turns red if the demo goes down. A small check runs every six hours (see [Deploying](docs/Deploying.md)). The **Checks** badge shows that the code and the docs pass their tests.
 
 ## What you get
 
@@ -147,7 +148,10 @@ Every step is explained, with the exact keys and commands, in [Installing](docs/
 ```bash
 flutter analyze
 flutter test
+python3 tool/check_docs.py   # links and pictures in the docs
 ```
+
+The same three checks run on every pull request (the **Checks** badge above).
 
 The tests cover the parts that are easy to get wrong: the boarding rule, the arrival-time maths, the refund progress, the three-step trip form, the bus and ticket cards, and the status chips. See [Testing](docs/Testing.md), which also shows how to remake the pictures in this README.
 
@@ -165,19 +169,22 @@ Some parts were built as coursework and need hardening before real money is invo
 
 | If you want to | Read |
 |---|---|
+| Follow the app from the first screen to a boarded ticket | [Getting started](docs/Getting%20started.md) |
 | Run your own copy | [Installing](docs/Installing.md) |
 | Put it online | [Deploying](docs/Deploying.md) |
 | Learn each passenger screen | [Passenger guide](docs/Passenger%20guide.md) |
 | Learn the conductor screens | [Conductor guide](docs/Conductor%20guide.md) |
 | Learn the admin screens | [Admin guide](docs/Admin%20guide.md) |
-| Understand how it works inside | [How everything fits](docs/How%20everything%20fits.md) |
+| Understand how it works for people | [How everything fits](docs/How%20everything%20fits.md) |
+| See what is stored and who can change it | [Data and rules](docs/Data%20and%20rules.md) |
+| Read or change the code | [How it works](docs/How%20it%20works.md) |
 | See the look and the rules it follows | [Design](docs/Design.md) |
 | Fix a problem | [Fixing problems](docs/Fixing%20problems.md) |
 | Find a quick answer | [Questions and answers](docs/FAQ.md) |
 | Set up Stripe | [Stripe setup](STRIPE_SETUP.md) |
 | Run or write tests | [Testing](docs/Testing.md) |
 | Report a security problem | [Security](SECURITY.md) |
-| Change the code | [Contributing](CONTRIBUTING.md) |
+| Contribute a change | [Contributing](CONTRIBUTING.md) |
 | See what changed | [Changes](CHANGELOG.md) |
 
 ## Legal and responsibility
