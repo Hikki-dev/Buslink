@@ -68,21 +68,23 @@ Two details make the first screen the right one:
 | Repeat visits | Every font and image asked "has this changed?" | Fonts and images are reused for a day |
 | `main.dart` | 532 lines doing everything | About 15 lines. The rest is in `lib/app/` |
 
-**Measured**, on the live app and a preview of this change, both cold (nothing cached), on a phone-sized screen, with the network slowed to "Fast 4G" and the processor slowed 4 times:
+**Measured** three times: on the old live app, on a preview of this change, and on the live app after it went out. Each was cold (nothing cached), on a phone-sized screen, with the network slowed to "Fast 4G" and the processor slowed 4 times.
 
 | Moment | Before | After |
 |---|---|---|
-| First thing you can read on screen | 6.0 s | **2.5 s** |
-| The app draws its first frame | 5.3 s | 5.0 s |
-| The sign-in screen is built | 7.1 s | 6.8 s |
-| The sign-in photo is showing | 8.7 to 11.3 s | **7.4 s** |
-| Data downloaded, as the browser reports it | 3.2 MB | **0.7 MB** |
+| First thing you can read on screen | 6.0 s | **2.5 s** (2.46 s on the preview, 2.49 s live) |
+| The app draws its first frame | 5.3 to 5.4 s | 5.0 to 5.7 s (no real change) |
+| The sign-in screen is built | 7.1 to 7.7 s | 6.8 to 7.3 s (no real change) |
+| The sign-in photo is showing | 8.7 to 11.3 s | **7.4 to 7.7 s** |
+| Data downloaded, as the browser reports it | 3.2 MB | **0.5 to 0.7 MB** |
 
-These are single runs on a slowed-down computer, so read them as the size of the change, not exact seconds. The big win is what you see while you wait: a designed screen after 2.5 seconds instead of nothing readable for 6. The sign-in screen itself is only about 0.3 seconds earlier. See the next section.
+These are single runs on a slowed-down computer, and the same page varies by about 0.7 seconds from run to run. Read them as the size of the change, not exact seconds.
+
+**What this does and does not show.** The big win is what you see while you wait: a designed screen after 2.5 seconds instead of nothing readable for 6. The data and the sign-in photo improved a lot too. But the app's own first frame and the moment the sign-in screen is built **did not get measurably faster**. That wait is the app and its graphics engine downloading and starting, which this change does not shrink. See the next section.
 
 ## What is still slow
 
-Most of the wait that is left is two downloads that no setting makes small:
+Most of the wait that is left (about 5 seconds on this slowed-down test) is two downloads that no setting makes small:
 
 * **The app itself** (`main.dart.js`), about 6.4 MB (1.6 MB compressed), which the browser then has to read and prepare.
 * **CanvasKit**, the engine Flutter uses to draw on the web, which is another large download of its own.
