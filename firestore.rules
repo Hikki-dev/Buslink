@@ -1,95 +1,136 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+
+    // --- HELPER FUNCTIONS ---
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // NOTE: this admin email is a leftover from early development. Remove it
+    // once your own admin account has role == 'admin' (see SECURITY.md).
     function isAdmin() {
-      return request.auth.token.email == 'admin@buslink.com' || 
-             (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      return request.auth != null && (
+        request.auth.token.email == 'admin@buslink.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
     }
-    
+
     function isConductor() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'conductor';
+      return request.auth != null && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'conductor'
+      );
     }
 
-    // User Profiles
-    // A user may create/edit their own profile but can NEVER choose or change
-    // their own role (that would let anyone make themselves an admin).
-    match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow create: if request.auth != null && (
-          isAdmin() ||
-          (request.auth.uid == userId &&
-           request.resource.data.get('role', 'customer') == 'customer'));
-      allow update: if request.auth != null && (
-          isAdmin() ||
-          (request.auth.uid == userId &&
-           request.resource.data.get('role', 'customer') == resource.data.get('role', 'customer')));
-      allow delete: if isAdmin();
+    // A conductor may change a ticket as before, but the boarding stamp
+    // (boardedAt / boardedBy) can be set ONCE, and boardedBy must be them.
+    function boardingStampIsSafe() {
+      let touched = request.resource.data.diff(resource.data).affectedKeys();
+      return !touched.hasAny(['boardedAt', 'boardedBy'])
+          || (!('boardedAt' in resource.data)
+              && request.resource.data.boardedBy == request.auth.uid);
+    }
 
-      // Subcollections (favorite_routes, etc.) - one level deep.
-      match /{subcollection}/{docId} {
-        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    // A passenger may update their own ticket (confirm payment, request a
+    // refund) but never who it belongs to, what it costs, which seats it
+    // covers, or whether it has boarded.
+    function ownerUpdateIsSafe() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(['userId', 'tripId', 'totalAmount', 'seatNumbers', 'boardedAt', 'boardedBy']);
+    }
+
+    // --- RULES ---
+
+    // User profiles. A person can create their own profile only as a
+    // customer, and can never change their own role. Only an admin sets roles.
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin() || isConductor();
+      allow create: if isAdmin() ||
+        (isOwner(userId) &&
+         request.resource.data.get('role', 'customer') == 'customer');
+      allow update: if isAdmin() ||
+        (isOwner(userId) &&
+         request.resource.data.get('role', 'customer') ==
+           resource.data.get('role', 'customer'));
+      allow delete: if isOwner(userId) || isAdmin();
+
+      // favorite_routes and any other subcollection. It must be written as
+      // /{subcollection}/{document=**}: a bare /{document=**} also matches
+      // the user document itself and would let people write their own role.
+      match /{subcollection}/{document=**} {
+        allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
-    // Trips (Public read, admins/conductors can edit everything, Users can ONLY update seat numbers)
+    // Trips: public read. Admins and conductors manage them. Any signed-in
+    // user may change ONLY the booked seat lists (that is how booking works).
     match /trips/{tripId} {
       allow read: if true;
-      allow update: if isAdmin() || isConductor() || 
-                    (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookedSeatNumbers', 'blockedSeats']));
-      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || isConductor() || (
+        request.auth != null &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['bookedSeatNumbers', 'bookedSeats'])
+      );
+      allow create: if isAdmin();
+      allow delete: if isAdmin();
     }
 
-    // Routes (Public read, admin write)
+    // Routes and schedules: public read, admin write.
     match /routes/{routeId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Schedules (Public read, admin write)
     match /schedules/{scheduleId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Feedback (Authenticated users can submit, admins can read)
+    // Tickets
+    match /tickets/{ticketId} {
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid || isAdmin() || isConductor()
+      );
+      allow create: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin()
+        || (isConductor() && boardingStampIsSafe())
+        || (request.auth != null &&
+            resource.data.userId == request.auth.uid &&
+            ownerUpdateIsSafe());
+    }
+
+    // Feedback: any signed-in user can send, admins read.
     match /feedback/{feedbackId} {
       allow create: if request.auth != null;
       allow read: if isAdmin();
     }
 
-    // Tickets (Users own their tickets, admins/conductors can view/cancel)
-    match /tickets/{ticketId} {
-      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin() || isConductor());
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      // Users can't update tickets (only admins/conductors can cancel/refund)
-      allow update: if isAdmin() || isConductor();
-    }
-
-    // Refunds (Users create their own, admins approve/reject)
+    // Refunds: users create their own, admins review.
     match /refunds/{refundId} {
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin()); 
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
       allow update: if isAdmin();
     }
 
-    // Refund Transactions (Admin only)
+    // Refund transactions: admin only.
     match /refund_transactions/{txnId} {
       allow read, write: if isAdmin();
     }
 
-    // Notifications (Users create/read their own, admins can create for anyone)
+    // Notifications. A person can create their own (for example "refund
+    // received"). Conductors and admins can create them for passengers (trip
+    // delayed or cancelled). People read and mark their own as read.
     match /notifications/{notificationId} {
       allow create: if request.auth != null && (
-          request.resource.data.userId == request.auth.uid || 
-          isAdmin()
+        request.resource.data.userId == request.auth.uid ||
+        isConductor() ||
+        isAdmin()
       );
-      allow read, update: if request.auth != null && (
-          resource.data.userId == request.auth.uid || 
-          isAdmin()
-      );
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
     }
   }
 }

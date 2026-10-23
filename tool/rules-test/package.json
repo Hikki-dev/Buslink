@@ -1,0 +1,16 @@
+{
+  "name": "buslink-rules-test",
+  "private": true,
+  "description": "Tests for firestore.rules, run in the Firebase emulator",
+  "type": "module",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project demo-buslink \"node test.mjs\""
+  },
+  "dependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.0.0"
+  },
+  "devDependencies": {
+    "firebase-tools": "^14.24.2"
+  }
+}

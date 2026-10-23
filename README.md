@@ -158,8 +158,8 @@ The tests cover the parts that are easy to get wrong: the boarding rule, the arr
 ## Your privacy and safety
 
 * A passenger can only see their own tickets and profile.
-* **Nobody can choose their own role.** A new account is always a passenger. Only an admin can make someone a conductor or admin (in the repository's rules; make sure you have deployed them, see [Security](SECURITY.md)).
-* Two people cannot book the same seat, and one ticket cannot board twice. Both are checked in a single safe step on the server, not just on the screen.
+* **Nobody can choose their own role.** A new account is always a passenger. Only an admin can make someone a conductor or admin. This is enforced by the database rules, which are tested on every change (see [Security](SECURITY.md)).
+* Two people cannot book the same seat, and one ticket cannot board twice. Both are checked in a single safe step on the server, not just on the screen. A passenger cannot edit the price, seats or owner of their own ticket, or mark it boarded.
 * Card details go straight to Stripe. BusLink never sees or stores them.
 * The hidden debug login only exists in developer builds. It is not in the live app.
 

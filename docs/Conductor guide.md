@@ -92,4 +92,4 @@ For someone walking up with cash or no phone, a conductor can create an **offlin
 * Approving needs a signed-in conductor or admin account.
 * The record shows who approved each boarding (`boardedBy`) and when (`boardedAt`) on the ticket.
 
-An optional tightening of the database rules for these two fields is described in [Security](../SECURITY.md#the-proposed-boarding-rule).
+The database rules enforce this too, not just the app: a conductor can set `boardedAt` and `boardedBy` only once, and `boardedBy` must be their own account. See [Data and rules](Data%20and%20rules.md#who-can-do-what).

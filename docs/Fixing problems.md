@@ -37,7 +37,7 @@ Start with the line that matches what you see.
 |---|---|
 | "Seat N is already booked" when continuing | Someone else just booked that seat. Pick another. This is the safety check working. |
 | Payment fails on the web | Check `STRIPE_SECRET_KEY` is set in Vercel and is a test key if you use test mode. |
-| Stripe says the amount is too small | The smallest payment is LKR 150. |
+| Stripe says the amount is too small | Stripe needs at least about 50 US cents (around LKR 165). The app's own minimum of LKR 150 is a little too low. |
 | A refund stays "In review" | An admin has not processed it yet. Admins process refunds from the refund list. |
 
 ## Conductor screens

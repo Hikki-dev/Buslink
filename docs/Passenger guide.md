@@ -61,7 +61,7 @@ Pay by card. Card details go straight to Stripe. BusLink never sees them.
 * On the **phone app** a payment sheet opens.
 * On the **web** you are taken to Stripe's secure page and sent back when you finish.
 
-Prices are in Sri Lankan rupees (LKR). The smallest payment Stripe accepts here is LKR 150.
+Prices are in Sri Lankan rupees (LKR). The app asks for at least LKR 150, and Stripe itself needs about 50 US cents (around LKR 165), so a very small amount is refused on the card page.
 
 ## Your ticket
 

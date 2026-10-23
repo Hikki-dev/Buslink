@@ -44,7 +44,15 @@ Large changes are split into small pull requests that sit on top of each other (
 
 ## Changing the database rules
 
-Any change to `firestore.rules` should come with the reason, and should be checked with the rules validator or the Firebase emulator before it is deployed. If a rule change is optional, put it in a separate file for review, as `firestore.rules.proposed` does.
+Any change to `firestore.rules` should come with the reason, and must pass the rules tests before it is deployed:
+
+```bash
+cd tool/rules-test
+npm install
+npm test      # needs Java; runs the Firebase emulator
+```
+
+Add a case to `tool/rules-test/test.mjs` for every rule you add or change: one that must be allowed, and one that must be refused. The tests also run on every pull request. See [Data and rules](docs/Data%20and%20rules.md).
 
 ## Documentation
 
