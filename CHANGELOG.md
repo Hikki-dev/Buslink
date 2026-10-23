@@ -4,6 +4,10 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 ## Unreleased
 
+### Repository cleanup
+
+* Removed ten one-off Python scripts from the top level (`final_fix.py`, `fix_*.py`, `repair_*.py`, `restore_ui_text.py`) that were used once to rewrite source files, and 90 Xcode build cache files under `scripts/build/`. Nothing used them, and git history still has them. `scripts/build/` is now git-ignored.
+
 ### Project structure (this change)
 
 * **Checks on every pull request** (`.github/workflows/checks.yml`): the docs check, `flutter analyze` and `flutter test`, with the **Checks** badge in the README.

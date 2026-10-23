@@ -77,3 +77,5 @@ scripts/service-account.json
 
 
 assets/service_account.json
+# Xcode build output that was once committed by mistake
+scripts/build/
