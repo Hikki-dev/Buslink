@@ -6,7 +6,8 @@ import '../../models/trip_model.dart';
 import '../../models/refund_model.dart';
 
 import '../../services/refund_service.dart'; // Added
-import '../../utils/app_theme.dart';
+import '../../utils/bl_colors.dart';
+import '../home/home_sections.dart' show cityPhoto;
 import 'refund_status_screen.dart';
 
 class RefundRequestScreen extends StatefulWidget {
@@ -237,280 +238,243 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Used cached values from state
     final refundPct = _refundPercentage;
     final isEligible = _isEligible;
     final reasonText = _eligibilityReason.isNotEmpty
         ? _eligibilityReason
         : "Refund unavailable (less than 6 hours before departure).";
+    final paid = widget.ticket.totalAmount;
+    final fmt = NumberFormat('#,###');
+    final trip = widget.trip;
+    final seats = (widget.ticket.seatNumbers.toList()..sort()).join(', ');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Request Refund"),
-        elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        leading: const BackButton(),
+    final summary = Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        border: Border.all(color: BL.hairline),
+        borderRadius: BorderRadius.circular(16),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(cityPhoto(trip.destinationCity),
+                width: 64, height: 64, fit: BoxFit.cover),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Trip Summary
-                _buildTripSummary(),
-                const SizedBox(height: 24),
-
-                // Rules
-                const Text("Refund Policy",
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 8),
-                _buildPolicyTable(),
-                const SizedBox(height: 24),
-
-                if (!isEligible)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8)),
-                    child: Row(children: [
-                      const Icon(Icons.error_outline, color: Colors.red),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(reasonText)) // Dynamic Reason
-                    ]),
-                  ),
-
-                if (isEligible) ...[
-                  const Text("Select Reason",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 8),
-                  RadioGroup<RefundReason>(
-                    groupValue: _selectedReason,
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedReason = val);
-                    },
-                    child: Column(
-                      children: RefundReason.values
-                          .map((r) => RadioListTile<RefundReason>(
-                                title: Text(_formatReason(r)),
-                                value: r,
-                                contentPadding: EdgeInsets.zero,
-                                // groupValue and onChanged are managed by RadioGroup ancestor
-                              ))
-                          .toList(),
-                    ),
-                  ),
-
-                  if (_selectedReason == RefundReason.other)
-                    TextField(
-                      controller: _otherReasonController,
-                      decoration: const InputDecoration(
-                        labelText: "Please specify",
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                    ),
-
-                  const SizedBox(height: 24),
-
-                  // Calculation Preview
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color:
-                                AppTheme.primaryColor.withValues(alpha: 0.2))),
-                    child: Column(
-                      children: [
-                        _row("Trip Price",
-                            "LKR ${widget.ticket.totalAmount.toStringAsFixed(2)}"),
-                        _row("Cancellation Fee",
-                            "LKR ${(widget.ticket.totalAmount * (1 - refundPct)).toStringAsFixed(2)}",
-                            color: Colors.red.shade300),
-                        const Divider(height: 32),
-                        Column(
-                          children: [
-                            const Text("YOU RECEIVE",
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey,
-                                    letterSpacing: 1.5)),
-                            const SizedBox(height: 4),
-                            Text(
-                              "LKR ${(widget.ticket.totalAmount * refundPct).toStringAsFixed(2)}",
-                              style: const TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppTheme.primaryColor),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _submitRefund,
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text("Submit Request",
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                    ),
-                  )
-                ]
+                Text('${trip.originCity} to ${trip.destinationCity}',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w800)),
+                Text(
+                    '${DateFormat('EEE d MMM').format(trip.departureTime)} · Seats $seats',
+                    style: const TextStyle(fontSize: 16, color: BL.muted)),
+                Text('Paid LKR ${fmt.format(paid)}',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+
+    final policy = Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+          color: const Color(0xFFF5F3F4),
+          borderRadius: BorderRadius.circular(14)),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Refund Policy',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+          SizedBox(height: 6),
+          Text(
+              'The earlier you cancel, the more you get back. More than 24 hours before the bus leaves: 90% back. Between 6 and 24 hours: 50% back. Less than 6 hours: no refund.',
+              style: TextStyle(
+                  fontSize: 16, height: 1.45, color: Color(0xFF3A2F31))),
+        ],
+      ),
+    );
+
+    final form = <Widget>[
+      if (!isEligible)
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+              color: const Color(0xFFFBE0DC),
+              borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            const Icon(Icons.block, color: Color(0xFF7F1D14)),
+            const SizedBox(width: 10),
+            Expanded(
+                child: Text(reasonText,
+                    style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF7F1D14)))),
+          ]),
+        ),
+      if (isEligible) ...[
+        const Text('Select Reason',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<RefundReason>(
+          initialValue: _selectedReason,
+          isExpanded: true,
+          hint: const Text('Choose a reason'),
+          icon: const Icon(Icons.expand_more),
+          style: const TextStyle(fontSize: 17, color: BL.ink),
+          decoration: InputDecoration(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: BL.border, width: 1.5)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: BL.border, width: 1.5)),
+          ),
+          items: [
+            for (final r in RefundReason.values)
+              DropdownMenuItem(value: r, child: Text(_formatReason(r))),
+          ],
+          onChanged: (v) => setState(() => _selectedReason = v),
+        ),
+        if (_selectedReason == RefundReason.other) ...[
+          const SizedBox(height: 12),
+          TextField(
+            controller: _otherReasonController,
+            maxLines: 2,
+            style: const TextStyle(fontSize: 17),
+            decoration: InputDecoration(
+              labelText: 'Please tell us more',
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFDEEEE),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE5383B), width: 1.5),
+          ),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text('YOU RECEIVE',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8)),
+              ),
+              Text('LKR ${fmt.format(paid * refundPct)}',
+                  style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: BL.crimson)),
+            ],
           ),
         ),
-      ),
-    );
-  }
+      ],
+    ];
 
-  Widget _buildTripSummary() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4,
-                offset: const Offset(0, 2))
-          ]),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("From",
-                      style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  Text(widget.trip.originCity,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
-                ],
-              ),
-              const Icon(Icons.arrow_forward, color: Colors.grey),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text("To",
-                      style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  Text(widget.trip.destinationCity,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
-                ],
-              )
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(DateFormat('MMM d, yyyy - h:mm a')
-                  .format(widget.trip.departureTime)),
-              Text(
-                  "${widget.trip.arrivalTime.difference(widget.trip.departureTime).inHours}h ${widget.trip.arrivalTime.difference(widget.trip.departureTime).inMinutes % 60}m"),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPolicyTable() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _policyRow("> 24 Hours", "90% Refund", Colors.green),
-          const Divider(),
-          _policyRow("6 - 24 Hours", "50% Refund", Colors.orange),
-          const Divider(),
-          _policyRow("< 6 Hours", "No Refund", Colors.red),
-        ],
-      ),
-    );
-  }
-
-  Widget _policyRow(String time, String refund, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(time, style: const TextStyle(fontWeight: FontWeight.w600)),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(6),
+    final submit = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: FilledButton(
+            onPressed: (_isLoading || !isEligible) ? null : _submitRefund,
+            style: FilledButton.styleFrom(
+              backgroundColor: BL.crimson,
+              disabledBackgroundColor: const Color(0xFFE3DADB),
+              shape: const StadiumBorder(),
+              textStyle:
+                  const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
             ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2.5))
+                : const Text('Submit Request'),
+          ),
+        ),
+        const SizedBox(height: 10),
+        const Text('Processing time: 5–7 working days',
+            style: TextStyle(fontSize: 15, color: BL.muted)),
+      ],
+    );
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          Container(
+            color: BL.crimson,
+            padding: EdgeInsets.fromLTRB(
+                8, MediaQuery.paddingOf(context).top + 4, 8, 16),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  color == Colors.green
-                      ? Icons.check_circle
-                      : (color == Colors.orange ? Icons.warning : Icons.cancel),
-                  size: 14,
-                  color: color,
+                IconButton(
+                  tooltip: 'Go back',
+                  onPressed: () => Navigator.maybePop(context),
+                  color: Colors.white,
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                  constraints:
+                      const BoxConstraints(minWidth: 48, minHeight: 48),
                 ),
                 const SizedBox(width: 4),
-                Text(refund,
+                const Text('Request Refund',
                     style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12)),
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800)),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _row(String label, String value, {bool isBold = false, Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: TextStyle(
-                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
-          Text(value,
-              style: TextStyle(
-                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-                  fontSize: isBold ? 18 : 14,
-                  color: color)),
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      summary,
+                      const SizedBox(height: 16),
+                      policy,
+                      const SizedBox(height: 16),
+                      ...form,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.fromLTRB(
+                16, 14, 16, 14 + MediaQuery.paddingOf(context).bottom),
+            decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: BL.hairline))),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: submit,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -519,19 +483,19 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
   String _formatReason(RefundReason r) {
     switch (r) {
       case RefundReason.changeOfPlans:
-        return "Change of Plans";
+        return "Change of plans";
       case RefundReason.personalEmergency:
-        return "Personal Emergency";
+        return "Personal emergency";
       case RefundReason.tripDelay:
-        return "Trip Delayed";
+        return "The trip was delayed";
       case RefundReason.tripCancelledByOperator:
-        return "Cancelled by Operator";
+        return "Cancelled by the operator";
       case RefundReason.bookingMistake:
-        return "Booking Mistake";
+        return "Booking mistake";
       case RefundReason.seatOrBusIssue:
-        return "Seat/Bus Issue";
+        return "Seat or bus problem";
       case RefundReason.other:
-        return "Other";
+        return "Something else";
     }
   }
 }
