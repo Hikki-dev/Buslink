@@ -10,6 +10,7 @@ What BusLink keeps in its database, who is allowed to read and change each part,
 * [Indexes](#indexes)
 * [Roles](#roles)
 * [The scripts that fill the database](#the-scripts-that-fill-the-database)
+* [Testing the rules](#testing-the-rules)
 * [Deploying the rules](#deploying-the-rules)
 
 ## The collections
@@ -37,22 +38,23 @@ These are the rules in `firestore.rules`.
 
 | Collection | Read | Create | Update | Delete |
 |---|---|---|---|---|
-| `users/{uid}` | The person, or an admin | The person, only as a customer. An admin may create any role | The person, but never their own `role`. An admin may change anything | Admin |
-| `users/{uid}/...` | The person, or an admin | The person, or an admin | The person, or an admin | The person, or an admin |
+| `users/{uid}` | The person, a conductor or an admin | The person, only as a customer. An admin may create any role | The person, but never their own `role`. An admin may change anything | The person, or an admin |
+| `users/{uid}/...` (such as `favorite_routes`) | The person, or an admin | The person, or an admin | The person, or an admin | The person, or an admin |
 | `routes`, `schedules` | Anyone | Admin | Admin | Admin |
-| `trips` | Anyone | Admin | Admin or conductor. Any signed-in user may change **only** `bookedSeatNumbers` and `blockedSeats` (that is how a booking reserves seats) | Admin |
-| `tickets` | The owner, a conductor or an admin | The signed-in user, for themselves | Conductor or admin | Nobody |
+| `trips` | Anyone | Admin | Admin or conductor. Any signed-in user may change **only** `bookedSeatNumbers` and `bookedSeats` (that is how a booking reserves seats) | Admin |
+| `tickets` | The owner, a conductor or an admin | The signed-in user, for themselves | Admin. A conductor, but a boarding stamp (`boardedAt`, `boardedBy`) can be set only once and only as themselves. The owner, but never `userId`, `tripId`, `totalAmount`, `seatNumbers` or the boarding stamp | Nobody |
 | `refunds` | The owner, or an admin | The signed-in user, for themselves | Admin | Nobody |
 | `refund_transactions` | Admin | Admin | Admin | Admin |
-| `notifications` | The owner, or an admin | The owner for themselves, or an admin for anyone | The owner, or an admin | Nobody |
+| `notifications` | The owner, or an admin | The owner for themselves. A conductor or an admin for anyone (trip delayed or cancelled) | The owner, or an admin | Nobody |
 | `feedback` | Admin | Any signed-in user | Nobody | Nobody |
 
 Anything not listed is refused.
 
-Two points to know:
+Three points to know:
 
-* **A conductor can change any field of a ticket.** That is how boarding is saved, but it is wider than it needs to be. `firestore.rules.proposed` narrows boarding so it can be stamped once. See [Security](../SECURITY.md#the-proposed-boarding-rule).
-* **An admin is a person whose `role` is `admin`,** or whose email is the one written into the rules. That email is a leftover from early development and is on the list in [Security](../SECURITY.md#what-still-needs-doing-before-real-money).
+* **Boarding is enforced here, not just in the app.** The rules let a conductor stamp `boardedAt` and `boardedBy` once, as themselves. A boarding cannot be overwritten or cleared, and a passenger cannot stamp their own ticket.
+* **A conductor can still change the other fields of a ticket.** That is how a conductor cancels one, but it is wider than it needs to be. It is on the list in [Security](../SECURITY.md#what-still-needs-doing-before-real-money).
+* **An admin is a person whose `role` is `admin`,** or whose email is `admin@buslink.com`, which is written into the rules. That email is a leftover from early development and is also on that list.
 
 ## A rule that is not there yet
 
@@ -90,12 +92,26 @@ node seed_master_data.js
 node generate_trips.js
 ```
 
-## Deploying the rules
+## Testing the rules
 
-The rules do nothing until you deploy them:
+`tool/rules-test` holds 43 cases that run the real `firestore.rules` in the Firebase emulator, as a passenger, a conductor, an admin and a signed-out visitor. They check that everything the app does still works (booking, paying, refunds, boarding, delay notifications) and that the things that must never work are refused (making yourself an admin, marking your own ticket boarded, boarding a ticket twice).
 
 ```bash
-firebase deploy --only firestore:rules,firestore:indexes
+cd tool/rules-test
+npm install
+npm test        # needs Java
 ```
+
+They run on every pull request. Add a case for every rule you add or change.
+
+## Deploying the rules
+
+The rules do nothing until you deploy them. Deploy the file exactly as it is in the repository:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+Do not deploy an older or hand-edited copy. The tests above exist because a stricter-looking file once refused the ticket update that confirms a payment.
 
 After a change, sign in as a passenger and check that you can still book, and that you cannot open the admin screens. See also [Deploying](Deploying.md#deploy-the-database-rules).

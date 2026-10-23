@@ -62,10 +62,10 @@ If one of the first eight is missing, the build stops with "unbound variable" an
 
 ## Deploy the database rules
 
-The rules in `firestore.rules` are what keep passengers from reading each other's tickets or promoting themselves. **They do nothing until you deploy them.**
+The rules in `firestore.rules` are what keep passengers from reading each other's tickets or promoting themselves. **They do nothing until you deploy them.** They are tested on every change (see [Data and rules](Data%20and%20rules.md#testing-the-rules)); deploy the file exactly as it is in the repository.
 
 ```bash
-firebase deploy --only firestore:rules,firestore:indexes
+firebase deploy --only firestore:rules
 ```
 
 Check the result in the Firebase console under Firestore, then Rules. After a change, sign in as a passenger and confirm you can still book, and that you cannot open the admin screens.
