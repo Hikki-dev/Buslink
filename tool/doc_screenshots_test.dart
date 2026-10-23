@@ -21,6 +21,7 @@ import 'package:buslink/views/booking/refund_status_screen.dart';
 import 'package:buslink/views/conductor/conductor_dashboard.dart';
 import 'package:buslink/views/conductor/conductor_trip_management_screen.dart';
 import 'package:buslink/views/results/bus_list_screen.dart';
+import 'package:buslink/views/splash/splash_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -322,5 +323,29 @@ void main() {
           SizedBox(height: 20),
           TripFormSteps(current: 2),
         ]));
+  });
+
+  // The start-up screens. Drawn with "reduce motion" on, which holds the
+  // animation still: the bus parked at Kandy, two stops lit.
+  void still(WidgetTester tester) {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+  }
+
+  testWidgets('splash', (tester) async {
+    still(tester);
+    await _shoot(tester, 'splash', const SplashScreen(), height: 700);
+  });
+
+  testWidgets('splash-slow', (tester) async {
+    still(tester);
+    await _shoot(tester, 'splash-slow', const SplashScreen(slow: true),
+        height: 700);
+  });
+
+  testWidgets('startup-failed', (tester) async {
+    await _shoot(tester, 'startup-failed', StartupFailedScreen(onRetry: () {}),
+        height: 700);
   });
 }

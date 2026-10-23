@@ -83,6 +83,12 @@ Add your Vercel address (and your own domain, if you use one) in Firebase Consol
 
 The badge at the top of the [README](../README.md) shows the result. If a run fails, GitHub emails the repository owner.
 
+## Caching and early connections
+
+* `vercel.json` lets the browser reuse fonts, images and icons for a day (and show them while it checks for a new one for up to a week). The app itself, the page and the manifests are always checked, so a deploy shows up straight away. If you change a font or image with the same file name, people may see the old one for up to a day.
+* `web/index.html` tells the browser to connect to Google's servers and fetch Firebase's scripts while the app is still downloading. The version in those lines (currently 12.7.0) should match `firebase_core_web` in `pubspec.lock`; if it drifts, nothing breaks, a little bandwidth is wasted.
+* The page shows the start-up screen from its first paint. See [Starting up](Starting%20up.md).
+
 ## Staying inside the free limits
 
 * The site is static, so visitors cost almost nothing. The only per-use cost is Firestore reads and writes, and the free daily allowance is far above demo traffic.

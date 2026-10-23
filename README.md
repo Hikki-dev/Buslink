@@ -88,7 +88,11 @@ It starts with someone who wants to get from Colombo to Kandy.
 
 <a href="docs/images/login-live.png"><img src="docs/images/login-live.png" alt="The sign-in page with three language buttons, a Continue with Google button and email and password boxes" width="320"></a>
 
-Choose English, Sinhala or Tamil with the three buttons at the top. Then sign in with email, Google or a phone number. A new account is always a passenger. Nobody can pick a higher role for themselves.
+While the app opens, a short scene plays: a bus drives from Colombo through Kandy to Ella, and a line says what is happening (more in [Starting up](docs/Starting%20up.md)).
+
+<img src="docs/images/splash.png" alt="The start-up scene: the BusLink logo and a bus on a small road from Colombo to Kandy to Ella" width="260">
+
+Then choose English, Sinhala or Tamil with the three buttons at the top, and sign in with email, Google or a phone number. A new account is always a passenger. Nobody can pick a higher role for themselves.
 
 #### 2. Find a bus
 
@@ -242,6 +246,7 @@ Some parts were built as coursework and need hardening before real money is invo
 | Follow the app from the first screen to a boarded ticket | [Getting started](docs/Getting%20started.md) |
 | Run your own copy | [Installing](docs/Installing.md) |
 | Put it online | [Deploying](docs/Deploying.md) |
+| See what happens while it opens, and why it is fast | [Starting up](docs/Starting%20up.md) |
 | Learn each passenger screen | [Passenger guide](docs/Passenger%20guide.md) |
 | Learn the conductor screens | [Conductor guide](docs/Conductor%20guide.md) |
 | Learn the admin screens | [Admin guide](docs/Admin%20guide.md) |

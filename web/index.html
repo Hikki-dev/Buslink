@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <base href="$FLUTTER_BASE_HREF" />
 
     <meta charset="UTF-8" />
     <meta content="IE=Edge" http-equiv="X-UA-Compatible" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
       content="Sri Lanka's #1 Bus Booking Platform. Fast, Secure, and Reliable."
     />
+    <meta name="theme-color" content="#BA181B" />
 
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -23,78 +25,180 @@
     />
 
     <title>BusLink - Book Your Journey</title>
-    <!-- Custom Flutter Bootstrap to Disable Service Worker (Fix Vercel 404s) -->
-    <!-- Custom Flutter Bootstrap to Disable Service Worker (Removed deprecated config) -->
-    <!-- Service worker control should now happen via flutter_bootstrap.js or service_worker.js directly if needed -->
-    <!-- <link rel="manifest" href="manifest.json" /> -->
-    <div
-      id="loading-indicator"
-      style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: #ffffff; /* Light Mode Default */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        transition: background-color 0.3s ease;
-      "
-    >
-      <style>
-        @media (prefers-color-scheme: dark) {
-          #loading-indicator {
-            background-color: #0A0B10 !important; /* AppTheme Dark Background */
-          }
-        }
-      </style>
-      <style>
-        .spinner {
-          width: 50px;
-          height: 50px;
-          border: 4px solid rgba(186, 24, 27, 0.2); /* Brand Red Faint */
-          border-top: 4px solid #ba181b; /* Brand Red */
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          0% {
-            transform: rotate(0deg);
-          }
-          100% {
-            transform: rotate(360deg);
-          }
-        }
-      </style>
-      <div class="spinner"></div>
+
+    <!--
+      Start-up speed. These hints let the browser begin work that the app needs
+      a few seconds later, while it is still downloading the app itself.
+      The Firebase version must match firebase_core_web (see pubspec.lock). If it
+      does not, the hints waste a little bandwidth and nothing else.
+    -->
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://js.stripe.com" />
+    <link rel="modulepreload" crossorigin href="https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js" />
+    <link rel="modulepreload" crossorigin href="https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js" />
+    <link rel="modulepreload" crossorigin href="https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js" />
+    <link rel="preload" as="font" type="font/ttf" crossorigin href="assets/assets/fonts/Outfit-Variable.ttf" />
+
+    <style>
+      /* The splash: drawn by the browser from the first paint, designed in
+         "35 · Starting up" on the design canvas. It is always light, because
+         the app always opens in light mode (see ThemeController). */
+      @font-face {
+        font-family: "BusLinkWord";
+        src: url("assets/assets/fonts/Outfit-Variable.ttf") format("truetype");
+        font-weight: 100 900;
+        font-display: swap;
+      }
+      html, body { margin: 0; height: 100%; background: #ffffff; }
+      #splash {
+        --bg: #ffffff; --word: #ba181b; --muted: #5a626a; --ink: #0b090a;
+        --road: #e7d3d4; --stop: #ffffff; --accent: #ba181b; --blush: #fdeeee;
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: radial-gradient(circle at 50% 42%, var(--blush) 0%, var(--bg) 62%);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        opacity: 1; transition: opacity 0.45s ease;
+        overflow: hidden;
+      }
+      #splash.leaving { opacity: 0; pointer-events: none; }
+      #splash .tile { position: relative; width: 112px; height: 112px; }
+      #splash .tile i, #splash .tile b {
+        position: absolute; inset: 0; border-radius: 34px; background: #ba181b;
+      }
+      #splash .tile b {
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 14px 30px rgba(186, 24, 27, 0.28);
+        animation: sp-pop 0.75s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+      }
+      #splash .tile i { opacity: 0; animation: sp-ring 2.6s ease-out 1s infinite; }
+      #splash .word {
+        margin-top: 26px; font-family: "BusLinkWord", system-ui, sans-serif;
+        font-weight: 800; font-size: 44px; letter-spacing: -1px; line-height: 1;
+        color: var(--word); animation: sp-rise 0.6s 0.3s both;
+      }
+      #splash svg.route { margin-top: 38px; overflow: visible; animation: sp-fade 0.6s 0.7s both; }
+      #splash .road { stroke: var(--road); }
+      #splash .stop { fill: var(--stop); stroke: var(--accent); }
+      #splash .prog { stroke: var(--accent); stroke-dasharray: 100; stroke-dashoffset: 100; animation: sp-draw 3.6s 1s infinite; }
+      #splash .lit { fill: var(--accent); transform-box: fill-box; transform-origin: center; transform: scale(0); }
+      #splash .lit1 { animation: sp-lit1 3.6s 1s infinite; }
+      #splash .lit2 { animation: sp-lit2 3.6s 1s infinite; }
+      #splash .lit3 { animation: sp-lit3 3.6s 1s infinite; }
+      #splash .bus { opacity: 0; animation: sp-bus 3.6s 1s infinite; }
+      #splash .bus-still { display: none; }
+      #splash .label { fill: var(--muted); font-size: 12px; font-weight: 600; font-family: inherit; }
+      #splash .msg { margin-top: 26px; min-height: 76px; text-align: center; max-width: 300px; color: var(--muted); animation: sp-fade 0.6s 1s both; }
+      #splash .msg p { margin: 0; }
+      #splash .msg .big { font-size: 18px; font-weight: 500; }
+      #splash .msg .title { font-size: 20px; font-weight: 700; color: var(--ink); }
+      #splash .msg .text { margin-top: 8px; font-size: 17px; line-height: 1.45; }
+      #splash .msg .try {
+        margin-top: 18px; height: 52px; padding: 0 34px; border: 0; border-radius: 26px;
+        background: #ba181b; color: #fff; font: 700 18px/1 system-ui, sans-serif; cursor: pointer;
+      }
+      #splash .dot { animation: sp-dot 1.2s infinite; opacity: 0.25; }
+      #splash .dot:nth-child(2) { animation-delay: 0.2s; }
+      #splash .dot:nth-child(3) { animation-delay: 0.4s; }
+      #splash [data-show] { display: none; }
+      #splash[data-state="loading"] [data-show~="loading"],
+      #splash[data-state="slow"] [data-show~="slow"],
+      #splash[data-state="failed"] [data-show~="failed"] { display: block; }
+      #splash[data-state="failed"] .tile b { background: #8a8f95; box-shadow: none; }
+      #splash[data-state="failed"] .tile i,
+      #splash[data-state="failed"] svg.route { display: none; }
+      @keyframes sp-pop { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+      @keyframes sp-ring { 0% { transform: scale(1); opacity: 0.35; } 100% { transform: scale(1.75); opacity: 0; } }
+      @keyframes sp-rise { 0% { transform: translateY(10px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+      @keyframes sp-fade { 0% { opacity: 0; } 100% { opacity: 1; } }
+      @keyframes sp-draw { 0% { stroke-dashoffset: 100; opacity: 1; } 85% { stroke-dashoffset: 0; opacity: 1; } 94% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+      @keyframes sp-lit1 { 0% { transform: scale(1); } 94% { transform: scale(1); } 100% { transform: scale(0); } }
+      @keyframes sp-lit2 { 0%, 39% { transform: scale(0); } 44% { transform: scale(1.3); } 48% { transform: scale(1); } 94% { transform: scale(1); } 100% { transform: scale(0); } }
+      @keyframes sp-lit3 { 0%, 83% { transform: scale(0); } 88% { transform: scale(1.3); } 91% { transform: scale(1); } 94% { transform: scale(1); } 100% { transform: scale(0); } }
+      @keyframes sp-bus { 0% { opacity: 0; } 3% { opacity: 1; } 92% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes sp-dot { 0%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+      /* People who ask their phone for less motion get the same screen, held still. */
+      @media (prefers-reduced-motion: reduce) {
+        #splash *, #splash *::before { animation: none !important; transition: none !important; }
+        #splash .tile b, #splash .word, #splash svg.route, #splash .msg { opacity: 1; }
+        #splash .lit { transform: scale(1); }
+        #splash .lit3 { transform: scale(0); }
+        #splash .prog { stroke-dashoffset: 53; }
+        #splash .bus { display: none; }
+        #splash .bus-still { display: inline; }
+        #splash .tile i { display: none; }
+        #splash .dot { opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="splash" data-state="loading" role="status" aria-live="polite" aria-label="BusLink is starting">
+      <div class="tile">
+        <i></i>
+        <b>
+          <svg width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="BusLink bus logo">
+            <rect x="12" y="8" width="40" height="42" rx="11" fill="#ffffff" />
+            <rect x="17" y="14" width="30" height="14" rx="4" fill="#ba181b" />
+            <circle cx="22" cy="38" r="3.6" fill="#ba181b" />
+            <circle cx="42" cy="38" r="3.6" fill="#ba181b" />
+            <rect x="17" y="49" width="8" height="9" rx="3" fill="#ffffff" />
+            <rect x="39" y="49" width="8" height="9" rx="3" fill="#ffffff" />
+          </svg>
+        </b>
+      </div>
+      <div class="word">BusLink</div>
+      <svg class="route" width="286" height="132" viewBox="0 0 260 120" role="img" aria-label="A bus travelling from Colombo to Kandy to Ella">
+        <path class="road" d="M16 90 C 62 90 70 36 124 44 S 196 94 244 28" fill="none" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 11" />
+        <path class="prog" pathLength="100" d="M16 90 C 62 90 70 36 124 44 S 196 94 244 28" fill="none" stroke-width="5" stroke-linecap="round" />
+        <circle class="stop" cx="16" cy="90" r="8" stroke-width="3" /><circle class="lit lit1" cx="16" cy="90" r="4.5" />
+        <circle class="stop" cx="124" cy="44" r="8" stroke-width="3" /><circle class="lit lit2" cx="124" cy="44" r="4.5" />
+        <circle class="stop" cx="244" cy="28" r="8" stroke-width="3" /><circle class="lit lit3" cx="244" cy="28" r="4.5" />
+        <text class="label" x="16" y="116" text-anchor="middle">Colombo</text>
+        <text class="label" x="124" y="72" text-anchor="middle">Kandy</text>
+        <text class="label" x="244" y="54" text-anchor="middle">Ella</text>
+        <g class="bus">
+          <animateMotion dur="3.6s" begin="1s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyTimes="0;0.85;1" keyPoints="0;1;1" path="M16 90 C 62 90 70 36 124 44 S 196 94 244 28" />
+          <rect x="-13" y="-10" width="26" height="15" rx="4.5" fill="#ba181b" stroke="#ffffff" stroke-width="2" />
+          <rect x="-9" y="-7" width="14" height="6" rx="1.8" fill="#ffffff" />
+          <circle cx="-6" cy="6" r="2.8" fill="#660708" /><circle cx="6" cy="6" r="2.8" fill="#660708" />
+        </g>
+        <g class="bus-still" transform="translate(124 44) rotate(8)">
+          <rect x="-13" y="-10" width="26" height="15" rx="4.5" fill="#ba181b" stroke="#ffffff" stroke-width="2" />
+          <rect x="-9" y="-7" width="14" height="6" rx="1.8" fill="#ffffff" />
+          <circle cx="-6" cy="6" r="2.8" fill="#660708" /><circle cx="6" cy="6" r="2.8" fill="#660708" />
+        </g>
+      </svg>
+      <div class="msg">
+        <p class="big" data-show="loading">Getting things ready<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></p>
+        <div data-show="slow">
+          <p class="title">Still getting ready</p>
+          <p class="text">Your connection looks slow. The first time can take a little longer.</p>
+        </div>
+        <div data-show="failed">
+          <p class="title">We couldn't start BusLink</p>
+          <p class="text">Check your internet connection, then try again.</p>
+          <button class="try" type="button" onclick="location.reload()">Try again</button>
+        </div>
+      </div>
     </div>
 
-    <!-- Error Catcher -->
     <script>
-      // Removed Error Catcher Visuals for Production Use
-      console.log("Index.html loaded");
-
-      window.addEventListener("load", function (ev) {
-        console.log("Window Loaded");
-
-        // Failsafe: Remove spinner after 8 seconds if app doesn't load
-        // Extended time because WASM can be slow initially
-        setTimeout(function () {
-          var loader = document.getElementById("loading-indicator");
-          if (loader) {
-            console.warn("Force removing spinner via Failsafe");
-            try {
-                loader.remove();
-            } catch(e) {
-                console.warn("Failed to remove loader:", e);
-            }
+      // If the app has not drawn its first screen after a while, say so in
+      // plain words. (The app itself also switches the splash to "slow".)
+      (function () {
+        function state(next, only) {
+          var s = document.getElementById("splash");
+          if (s && (!only || s.getAttribute("data-state") === only)) {
+            s.setAttribute("data-state", next);
           }
-        }, 8000);
-      });
+        }
+        setTimeout(function () { state("slow", "loading"); }, 8000);
+        // The app never started at all (for example the download failed).
+        setTimeout(function () { state("failed"); }, 45000);
+      })();
     </script>
-    <script src="https://js.stripe.com/v3/"></script>
-    <script src="flutter_bootstrap.js" async onerror="console.error('Failed to load flutter_bootstrap.js');"></script>
+
+    <!-- Stripe is only needed at checkout, so it must not hold up the app: defer. -->
+    <script src="https://js.stripe.com/v3/" defer></script>
+    <script src="flutter_bootstrap.js" async onerror="document.getElementById('splash').setAttribute('data-state','failed')"></script>
   </body>
 </html>

@@ -61,9 +61,15 @@ It runs on every pull request as the `rules` job. See [Data and rules](Data%20an
 | `test/delay_dialog_test.dart` | The delay dialog: quick choices, typed minutes, limits |
 | `test/refund_progress_test.dart` | The Sent, In review, Decision line |
 | `test/tracking_eta_test.dart` | The arrival-time and progress maths, and how a time left is written |
+| `test/startup_test.dart` | The start-up runner: steps run at the same time, `after` is respected, an optional step can fail, a critical failure is reported with its name, dependent work is not started after a failure, "slow" fires only when it should, and it gives up after the limit |
+| `test/splash_test.dart` | The start-up screens: the timeline of the animation, the status and slow messages, reduce motion (nothing moves), what a screen reader hears, the failure screen's button, and the whole bootstrapper journey: loading, slow, failed and Try again |
 | `test/google_logo_test.dart` | The bundled Google "G" is a real, square image |
 
 `integration_test/` holds slower, browser-driven end-to-end tests (admin, then conductor, then passenger). They need a real Firebase project. See `run_automated_tests.sh`.
+
+## Measuring start-up speed
+
+The tests prove the start-up rules, not how fast it feels. To measure speed, follow [Starting up](Starting%20up.md#how-to-measure-it-yourself).
 
 ## What is not covered
 

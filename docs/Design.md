@@ -56,8 +56,20 @@ Nothing is set smaller than 12 pixels. Body text is 14 to 17.
 | `DelayDialog` | `lib/views/conductor/conductor_trip_management_screen.dart` | Report a delay |
 | `RefundProgress` | `lib/views/booking/refund_status_screen.dart` | Sent, In review, Decision |
 | `LanguagePills` | `lib/views/widgets/language_selector.dart` | The three language buttons |
+| `SplashScreen`, `StartupFailedScreen` | `lib/views/splash/splash_screen.dart` | The start-up screens. The web page draws the same picture in `web/index.html` |
 
 The Google button uses the real four-colour Google "G" (`assets/images/google_g.png`, drawn from `google_g.svg`), bundled with the app so it does not depend on another website.
+
+## The start-up screen
+
+A short scene instead of a spinner: the logo, the name, and a bus driving from Colombo through Kandy to Ella while the app gets ready. It is on the design canvas as boards 35 and 36.
+
+* It says what is happening in words ("Getting things ready"), says so when it is slow, and has a real error screen with one big button if the app cannot start.
+* If the phone is set to reduce motion, nothing moves.
+* It is always light, because the app always opens in light mode.
+* It uses only movement that is cheap to draw (position and fade), so it does not slow down the start it is covering for.
+
+See [Starting up](Starting%20up.md).
 
 ## Languages
 

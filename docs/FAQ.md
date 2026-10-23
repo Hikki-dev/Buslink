@@ -32,6 +32,9 @@ The bus is either cancelled or full. The button is grey, and pressing it explain
 **What does Track bus show?**
 The bus on a map, using the location the conductor's phone reports, and how long is left, from the timetable plus any delay.
 
+**Why does BusLink take a moment to open?**
+On the web it first has to download the app and its graphics engine, which is the same for any Flutter web app. While that happens you see a short scene of a bus driving from Colombo to Kandy to Ella, and a message if it is slow. See [Starting up](Starting%20up.md).
+
 **Why is there no Track bus button on my trip?**
 It only appears when the bus is on its way, is running late, or leaves within three hours.
 

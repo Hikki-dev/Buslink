@@ -32,36 +32,37 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isConfirmPasswordVisible = false; // Added
   int _currentBgIndex = 0;
   Timer? _bgTimer;
+  // The slideshow behind the form. These are web-sized versions (about 150 to
+  // 800 KB each) rather than the originals (up to 1.5 MB each), and only the
+  // current one is downloaded up front; the next is fetched a little later.
   final List<String> _bgImages = [
     "https://live.staticflickr.com/65535/55025510678_c31eb6da24_b.jpg", // Flickr 1
     "https://live.staticflickr.com/65535/55025567979_f812048ac2_h.jpg", // Flickr 2
     "https://live.staticflickr.com/65535/55015711501_a4d336d2c0_b.jpg", // Flickr 3
-    "https://upload.wikimedia.org/wikipedia/commons/e/e6/SLTB_Kandy_South_Depot_Mercedes-Benz_OP312_Bus_-_II.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/8/87/CTB_bus_no._290.JPG",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/SLTB_Kandy_South_Depot_Mercedes-Benz_OP312_Bus_-_II.jpg/960px-SLTB_Kandy_South_Depot_Mercedes-Benz_OP312_Bus_-_II.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/CTB_bus_no._290.JPG/960px-CTB_bus_no._290.JPG",
   ];
+  Timer? _precacheTimer;
 
   @override
   void initState() {
     super.initState();
     _currentBgIndex = Random().nextInt(_bgImages.length);
     _startBgTimer();
+    // Let the form appear first; then quietly fetch the next photo.
+    _precacheTimer = Timer(const Duration(seconds: 3), _precacheNext);
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _precacheImages();
-  }
-
-  void _precacheImages() {
-    for (String url in _bgImages) {
-      precacheImage(NetworkImage(url), context);
-    }
+  void _precacheNext() {
+    if (!mounted) return;
+    final next = _bgImages[(_currentBgIndex + 1) % _bgImages.length];
+    precacheImage(NetworkImage(next), context);
   }
 
   @override
   void dispose() {
     _bgTimer?.cancel();
+    _precacheTimer?.cancel();
     _nameController.dispose(); // Added
     _emailController.dispose();
 
@@ -76,6 +77,8 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _currentBgIndex = (_currentBgIndex + 1) % _bgImages.length;
         });
+        // Get the photo after this one ready before it is needed.
+        _precacheNext();
       }
     });
   }
