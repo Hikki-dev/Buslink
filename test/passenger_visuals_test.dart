@@ -192,19 +192,19 @@ void main() {
   group('my trips card', () {
     testWidgets('upcoming soon: track button and quiet refund', (tester) async {
       await _pumpPass(tester, _ticket('scheduled', const Duration(hours: 2)));
-      expect(find.text('Track bus'), findsOneWidget);
+      expect(find.text('TRACK NOW'), findsOneWidget);
       expect(find.text('Refund'), findsOneWidget);
     });
 
     testWidgets('days away: no track button', (tester) async {
       await _pumpPass(tester, _ticket('scheduled', const Duration(days: 4)));
-      expect(find.text('Track bus'), findsNothing);
+      expect(find.text('TRACK NOW'), findsNothing);
       expect(find.text('Refund'), findsOneWidget);
     });
 
     testWidgets('cancelled: neither track nor refund', (tester) async {
       await _pumpPass(tester, _ticket('cancelled', const Duration(days: 3)));
-      expect(find.text('Track bus'), findsNothing);
+      expect(find.text('TRACK NOW'), findsNothing);
       expect(find.text('Refund'), findsNothing);
     });
   });

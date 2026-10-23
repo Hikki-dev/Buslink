@@ -159,7 +159,11 @@ class _TrackBusScreenState extends State<TrackBusScreen>
     final fit = (origin != null && destination != null)
         ? CameraFit.coordinates(
             coordinates: [origin, destination],
-            padding: const EdgeInsets.fromLTRB(48, 140, 48, 420),
+            padding: EdgeInsets.fromLTRB(
+                MediaQuery.of(context).size.width > 900 ? 520 : 48,
+                140,
+                48,
+                MediaQuery.of(context).size.width > 900 ? 140 : 420),
           )
         : null;
 
@@ -278,12 +282,18 @@ class _TrackBusScreenState extends State<TrackBusScreen>
             ? 'Arrived in ${_trip.toCity}'
             : 'Arriving in ${_trip.toCity}';
 
+    // Wide screens: a floating card on the left, so the map stays the star.
+    final wide = MediaQuery.of(context).size.width > 900;
     return Align(
-      alignment: Alignment.bottomCenter,
+      alignment: wide ? Alignment.centerLeft : Alignment.bottomCenter,
       child: Container(
+        width: wide ? 440 : null,
+        margin: wide ? const EdgeInsets.all(24) : null,
         decoration: BoxDecoration(
           color: theme.cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: wide
+              ? BorderRadius.circular(28)
+              : const BorderRadius.vertical(top: Radius.circular(28)),
           boxShadow: const [
             BoxShadow(
                 color: Colors.black26, blurRadius: 24, offset: Offset(0, -6)),

@@ -6,6 +6,12 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 The first redesign pass kept most of the old screens and only dressed some of them. This pass builds each screen from its mockup board, on phone and on desktop, one batch at a time.
 
+### My Trips, refunds and tracking
+
+* **My Trips** (`MyTickets`, `Desktop-MyTickets`): a red header with three numbers (Trips taken, Coming up, Top place) and the four tabs; each trip is a card with the destination photo, a status chip (icon and word), **VIEW TICKET** and **TRACK NOW**, and the quiet Refund link. On desktop it is a list on the left (the picked trip has a red outline) and the full ticket with its QR code on the right. Empty tabs now say something kind ("No cancelled trips. Good news.").
+* **Refund** (`Refund`, `RefundStatus`, `RefundRejected`): a trip summary, the policy in plain words, a reason menu, a big "YOU RECEIVE" amount and Submit Request. The status page shows Sent, In review, Decision inside a coloured card (amber, green or red), the money breakdown, and for a rejected refund the reason, your ticket ID and a Contact support button.
+* **Tracking** keeps its map and ETA card; on wide screens the card now floats on the left of the map. Not built: the "bus almost here" state (needs the passenger's boarding stop, which the app does not store) and "Next stop" (the app does not store stops per trip).
+
 ### Booking screens: results, bus details, seats, payment, confirmation, ticket
 
 * **Results** (`Results`, `Desktop-Results`): a photo banner for the destination, a "Narrow it down" panel (time of day, type of bus, hide full buses), and cards with Leaves, Arrives, price, seats left and one **Book Now** button. Delayed buses say "Running 30 minutes late"; full or cancelled buses become a quiet grey card that says so and sink to the bottom. The map, weather and clock header are gone (they are not in the designs).
