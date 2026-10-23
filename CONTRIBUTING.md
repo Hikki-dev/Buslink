@@ -60,7 +60,7 @@ If a change alters something a person sees, update the page that describes it an
 
 ## Pictures in the docs
 
-Do not edit the PNG files in `docs/images/` by hand. Redraw them with the command in [Testing](docs/Testing.md#remake-the-pictures-in-the-docs).
+Do not edit the PNG files in `docs/images/` by hand. Redraw them, and the hero animation, with the commands in [Testing](docs/Testing.md#remake-the-pictures-in-the-docs).
 
 ## Licence
 
