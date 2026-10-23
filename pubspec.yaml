@@ -77,9 +77,6 @@ flutter:
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Variable.ttf
-    - family: NotoSans
-      fonts:
-        - asset: assets/fonts/Noto_Sans/NotoSans-VariableFont_wdth,wght.ttf
     - family: Montserrat
       fonts:
         - asset: assets/fonts/Montserrat/Montserrat-VariableFont_wght.ttf

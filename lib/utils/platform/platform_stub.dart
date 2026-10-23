@@ -1,6 +1,10 @@
 // lib/utils/platform/platform_stub.dart
-void removeSpinner() {
-  // No-op for native
+void hideSplash() {
+  // No page splash on native.
+}
+
+void showSplashSlow() {
+  // No page splash on native.
 }
 
 String getLanguage() {
