@@ -33,7 +33,7 @@ Then deploy the rules and indexes from this repo:
 firebase deploy --only firestore:rules,firestore:indexes
 ```
 
-The rules do nothing until you deploy them. An optional extra rule for boarding is in `firestore.rules.proposed`; see [Security](../SECURITY.md#the-proposed-boarding-rule).
+The rules do nothing until you deploy them, and they are tested: see [Data and rules](Data%20and%20rules.md#testing-the-rules). Deploy `firestore.rules` exactly as it is in the repository. A looser or older copy can leave your database open, and a stricter one can stop bookings working.
 
 ## 4. Create the `.env` file
 
@@ -61,7 +61,7 @@ FIREBASE_SERVICE_ACCOUNT_BASE64=...
 
 ## 5. Stripe
 
-- **Mobile**: PaymentIntents via `flutter_stripe` (currency is LKR, minimum LKR 150).
+- **Mobile**: PaymentIntents via `flutter_stripe` (currency is LKR; the app asks for at least LKR 150, and Stripe itself needs about 50 US cents, around LKR 165).
 - **Web**: Checkout Sessions via the Vercel function `api/checkout_session.js`, and refunds via `api/refund.js`. Both need `STRIPE_SECRET_KEY` set as a **Vercel environment variable**.
 - **Cloud Function** `processRefund` (in `functions/`) needs `STRIPE_SECRET_KEY` as a function secret or environment value.
 

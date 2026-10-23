@@ -1,7 +1,8 @@
 name: Checks
 
 # The same checks you run before opening a pull request:
-#   flutter analyze, flutter test, and python3 tool/check_docs.py
+#   flutter analyze, flutter test, python3 tool/check_docs.py, and the
+# Firestore rules tests (tool/rules-test) in the Firebase emulator
 on:
   push:
     branches: [main]
@@ -41,3 +42,24 @@ jobs:
       # fakes Firebase in a way that no longer matches), so it is left out.
       - name: Run the tests
         run: flutter test $(ls test/*_test.dart | grep -v 'test/widget_test.dart')
+
+  # Proves what firestore.rules allows and refuses: a passenger cannot make
+  # themselves an admin or mark a ticket boarded, a conductor can board a
+  # ticket only once, and every write the app makes still works.
+  rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Test the Firestore rules in the emulator
+        working-directory: tool/rules-test
+        run: |
+          npm ci
+          npm test
