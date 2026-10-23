@@ -1,3 +1,4 @@
+import 'layout/admin_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // import 'package:google_fonts/google_fonts.dart';
@@ -27,7 +28,10 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      AdminShell(selected: 7, child: _buildPage(context));
+
+  Widget _buildPage(BuildContext context) {
     final controller = Provider.of<TripController>(context, listen: false);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

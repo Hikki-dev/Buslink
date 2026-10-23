@@ -16,6 +16,8 @@ class AdminNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Wide screens use the side menu (AdminShell) instead of this bar.
+    if (MediaQuery.of(context).size.width > 900) return const SizedBox.shrink();
     final authService = Provider.of<AuthService>(context, listen: false);
 
     return Container(

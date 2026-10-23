@@ -1,3 +1,4 @@
+import 'layout/admin_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +7,6 @@ import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../models/trip_view_model.dart'; // EnrichedTrip
 import '../../utils/app_theme.dart';
-import '../../providers/language_provider.dart';
 import 'package:buslink/l10n/app_localizations.dart';
 
 import '../customer_main_screen.dart';
@@ -41,7 +41,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      AdminShell(selected: 0, child: _buildPage(context));
+
+  Widget _buildPage(BuildContext context) {
     final controller = Provider.of<TripController>(context);
 //
     final isDesktop = MediaQuery.of(context).size.width > 800;
@@ -78,114 +81,50 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 if (isDesktop)
-                                  Column(
+                                  Row(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                        CrossAxisAlignment.center,
                                     children: [
-                                      Text(
-                                          AppLocalizations.of(context)!
-                                              .management,
-                                          style: GoogleFonts.outfit(
-                                              fontSize: 34,
-                                              height: 1.1,
-                                              fontWeight: FontWeight.w800,
-                                              color: AppTheme.primaryColor)),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                          AppLocalizations.of(context)!
-                                              .manageSubtitle,
-                                          style: GoogleFonts.inter(
-                                              color: Theme.of(context)
-                                                          .brightness ==
-                                                      Brightness.dark
-                                                  ? Colors.white
-                                                  : Colors.black
-                                                      .withValues(alpha: 0.7),
-                                              fontSize: 16)),
-                                      const SizedBox(height: 24),
-                                      Center(
-                                        child: Wrap(
-                                          spacing: 16,
-                                          runSpacing: 16,
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            _buildAddRouteButton(context),
-                                            _buildAddRouteSimpleButton(context),
-                                            _buildManageRoutesButton(context),
-                                            _buildRefundButton(context),
-                                            _buildBookingsButton(context),
-                                            _buildAnalyticsButton(context),
-                                            _buildFeedbackButton(context),
-                                            Consumer<ThemeController>(
-                                              builder: (context,
-                                                  themeController, _) {
-                                                final isDark = Theme.of(context)
-                                                        .brightness ==
-                                                    Brightness.dark;
-                                                return IconButton(
-                                                  onPressed: () {
-                                                    themeController.setTheme(
-                                                        isDark
-                                                            ? ThemeMode.light
-                                                            : ThemeMode.dark);
-                                                  },
-                                                  icon: Icon(
-                                                      isDark
-                                                          ? Icons.light_mode
-                                                          : Icons.dark_mode,
-                                                      color: isDark
-                                                          ? Colors.white
-                                                          : Colors.black87),
-                                                  tooltip: "Toggle Theme",
-                                                );
-                                              },
-                                            ),
-                                            Consumer<LanguageProvider>(
-                                              builder: (context,
-                                                  languageProvider, _) {
-                                                // Check for null localizations (safety)
-                                                final localizations =
-                                                    AppLocalizations.of(
-                                                        context);
-                                                return PopupMenuButton<String>(
-                                                  icon: Icon(Icons.language,
-                                                      color: Theme.of(context)
-                                                                  .brightness ==
-                                                              Brightness.dark
-                                                          ? Colors.white
-                                                          : Colors.black87),
-                                                  tooltip: localizations
-                                                          ?.selectLanguage ??
-                                                      'Select Language',
-                                                  onSelected: (String code) {
-                                                    languageProvider
-                                                        .changeLanguage(code);
-                                                  },
-                                                  itemBuilder: (BuildContext
-                                                          context) =>
-                                                      <PopupMenuEntry<String>>[
-                                                    PopupMenuItem<String>(
-                                                      value: 'en',
-                                                      child: Text(localizations
-                                                              ?.english ??
-                                                          'English'),
-                                                    ),
-                                                    PopupMenuItem<String>(
-                                                      value: 'si',
-                                                      child: Text(localizations
-                                                              ?.sinhala ??
-                                                          'Sinhala'),
-                                                    ),
-                                                    PopupMenuItem<String>(
-                                                      value: 'ta',
-                                                      child: Text(localizations
-                                                              ?.tamil ??
-                                                          'Tamil'),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            ),
+                                            Text('Upcoming trips',
+                                                style: TextStyle(
+                                                    fontSize: 34,
+                                                    fontWeight:
+                                                        FontWeight.w700)),
+                                            SizedBox(height: 4),
+                                            Text(
+                                                'Add, change or remove the trips passengers can book.',
+                                                style: TextStyle(
+                                                    fontSize: 17,
+                                                    color: Color(0xFF4A5560))),
                                           ],
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 56,
+                                        child: FilledButton.icon(
+                                          onPressed: () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const AdminScreen(
+                                                          trip: null))),
+                                          icon: const Icon(Icons.add),
+                                          label: const Text('Add new trip'),
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor:
+                                                AppTheme.primaryColor,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 28),
+                                            shape: const StadiumBorder(),
+                                            textStyle: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w700),
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -476,130 +415,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildAddRouteButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AdminScreen(trip: null)));
-      },
-      icon: const Icon(Icons.add),
-      label: Text(AppLocalizations.of(context)!.addTrip),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _buildManageRoutesButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const RouteManagementScreen()));
-      },
-      icon: const Icon(Icons.alt_route),
-      label: Text(AppLocalizations.of(context)!.manageRoutes),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).cardColor,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        side: BorderSide(color: Theme.of(context).dividerColor),
-      ),
-    );
-  }
-
-  Widget _buildRefundButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AdminRefundListScreen()));
-      },
-      icon: const Icon(Icons.monetization_on_outlined),
-      label: Text(AppLocalizations.of(context)!.refunds),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).cardColor,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        side: BorderSide(color: Theme.of(context).dividerColor),
-      ),
-    );
-  }
-
-  Widget _buildFeedbackButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AdminFeedbackScreen()));
-      },
-      icon: const Icon(Icons.feedback_outlined),
-      label: Text(AppLocalizations.of(context)!.feedback),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).cardColor,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        side: BorderSide(color: Theme.of(context).dividerColor),
-      ),
-    );
-  }
-
-  Widget _buildBookingsButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AdminBookingListScreen()));
-      },
-      icon: const Icon(Icons.confirmation_number_outlined),
-      label: Text(AppLocalizations.of(context)!.bookings),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).cardColor,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        side: BorderSide(color: Theme.of(context).dividerColor),
-      ),
-    );
-  }
-
-  Widget _buildAnalyticsButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AdminAnalyticsDashboard()));
-      },
-      icon: const Icon(Icons.analytics_outlined),
-      label: Text(AppLocalizations.of(context)!.analytics),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).cardColor,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        side: BorderSide(color: Theme.of(context).dividerColor),
-      ),
-    );
-  }
-
-  Widget _buildAddRouteSimpleButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AdminRouteScreen()));
-      },
-      icon: const Icon(Icons.alt_route),
-      label: Text(AppLocalizations.of(context)!.addRoute),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).colorScheme.onSurface,
-        foregroundColor: Theme.of(context).colorScheme.surface,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'layout/admin_shell.dart';
 import 'package:flutter/material.dart';
 import '../../models/route_model.dart';
 import '../../models/schedule_model.dart';
@@ -30,7 +31,10 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      AdminShell(selected: 2, child: _buildPage(context));
+
+  Widget _buildPage(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Route & Schedule Management",

@@ -1,3 +1,4 @@
+import 'layout/admin_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -285,7 +286,10 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      AdminShell(selected: 1, child: _buildPage(context));
+
+  Widget _buildPage(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       final isDesktop = constraints.maxWidth > 800;
       final isDark = Theme.of(context).brightness == Brightness.dark;

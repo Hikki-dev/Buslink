@@ -1,3 +1,4 @@
+import '../layout/admin_shell.dart';
 import 'package:flutter/material.dart';
 import '../widgets/status_chip.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,7 +26,10 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      AdminShell(selected: 4, child: _buildPage(context));
+
+  Widget _buildPage(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Refund Management',

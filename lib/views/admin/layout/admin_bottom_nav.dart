@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:buslink/utils/app_theme.dart';
+import '../../layout/bl_bottom_bar.dart';
 import '../../conductor/conductor_dashboard.dart';
 import '../admin_dashboard.dart';
 import '../admin_user_management.dart';
@@ -38,34 +38,26 @@ class AdminBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: selectedIndex,
-      onDestinationSelected: (index) => _onItemTapped(context, index),
-      backgroundColor: Theme.of(context).cardColor,
-      indicatorColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-      elevation: 3,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.dashboard_outlined),
-          selectedIcon: Icon(Icons.dashboard, color: AppTheme.primaryColor),
-          label: 'Admin',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.people_outlined),
-          selectedIcon: Icon(Icons.people, color: AppTheme.primaryColor),
-          label: 'Roles',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.confirmation_number_outlined),
-          selectedIcon:
-              Icon(Icons.confirmation_number, color: AppTheme.primaryColor),
-          label: 'Scanner',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.smartphone_outlined),
-          selectedIcon: Icon(Icons.smartphone, color: AppTheme.primaryColor),
-          label: 'Preview',
-        ),
+    return BlBottomBar(
+      currentIndex: selectedIndex,
+      onTap: (i) => _onItemTapped(context, i),
+      items: const [
+        BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: 'Admin'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.people_outline),
+            activeIcon: Icon(Icons.people),
+            label: 'Roles'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.confirmation_number_outlined),
+            activeIcon: Icon(Icons.confirmation_number),
+            label: 'Scanner'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.smartphone_outlined),
+            activeIcon: Icon(Icons.smartphone),
+            label: 'Preview'),
       ],
     );
   }
