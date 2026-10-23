@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../utils/app_theme.dart';
+import 'package:intl/intl.dart';
+import '../../utils/bl_colors.dart';
+import '../widgets/bl_widgets.dart';
 import '../../models/trip_model.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
@@ -33,127 +35,125 @@ class _BulkQuantityDialogState extends State<BulkQuantityDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final double perPerson = widget.trip.price * widget.days;
-    final double total = perPerson * _qty;
+    final fmt = NumberFormat('#,###');
+    final total = widget.trip.price * widget.days * _qty;
+
+    Widget round(IconData icon, String tip, VoidCallback onTap,
+            {required bool filled}) =>
+        Semantics(
+          button: true,
+          label: tip,
+          child: Material(
+            color: filled ? BL.crimson : Colors.white,
+            shape: CircleBorder(
+                side: filled
+                    ? BorderSide.none
+                    : const BorderSide(color: BL.crimson, width: 2)),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: SizedBox(
+                width: 64,
+                height: 64,
+                child: Icon(icon,
+                    size: 28, color: filled ? Colors.white : BL.crimson),
+              ),
+            ),
+          ),
+        );
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: Theme.of(context).cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Select Passengers",
-              style: TextStyle(
-                fontFamily: 'Outfit',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "For ${widget.days} days",
-              style: TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.grey.shade500,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildBtn(Icons.remove, () {
-                  if (_qty > 1) setState(() => _qty--);
-                }),
-                Container(
-                  width: 80,
-                  alignment: Alignment.center,
-                  child: Text(
-                    "$_qty",
-                    style: const TextStyle(
-                      fontFamily: 'Outfit',
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                _buildBtn(Icons.add, () {
-                  if (_qty < maxSeats) setState(() => _qty++);
-                }),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      backgroundColor: Colors.white,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Select Passengers',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 4),
+              Text(
+                  'How many people are travelling on each of the ${widget.days} days?',
+                  style: const TextStyle(fontSize: 17, color: BL.muted)),
+              const SizedBox(height: 22),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    "Total Price",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Inter',
-                    ),
+                  round(Icons.remove, 'One fewer passenger', () {
+                    if (_qty > 1) setState(() => _qty--);
+                  }, filled: false),
+                  const SizedBox(width: 28),
+                  Column(
+                    children: [
+                      Text('$_qty',
+                          style: const TextStyle(
+                              fontSize: 60,
+                              height: 1,
+                              fontWeight: FontWeight.w800)),
+                      Text(_qty == 1 ? 'passenger' : 'passengers',
+                          style:
+                              const TextStyle(fontSize: 16, color: BL.muted)),
+                    ],
                   ),
-                  Text(
-                    "LKR ${total.toStringAsFixed(0)}",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: AppTheme.primaryColor,
-                      fontFamily: 'Outfit',
-                    ),
-                  ),
+                  const SizedBox(width: 28),
+                  round(Icons.add, 'One more passenger', () {
+                    if (_qty < maxSeats) setState(() => _qty++);
+                  }, filled: true),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => widget.onConfirm(_qty),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  "Proceed to Payment",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Outfit',
-                    fontWeight: FontWeight.bold,
-                  ),
+              const SizedBox(height: 22),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                    color: const Color(0xFFFDEEEE),
+                    borderRadius: BorderRadius.circular(14)),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Total Price',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w800)),
+                          Text(
+                              '$_qty × ${widget.days} days × LKR ${fmt.format(widget.trip.price)}',
+                              style: const TextStyle(
+                                  fontSize: 14, color: BL.muted)),
+                        ],
+                      ),
+                    ),
+                    Text('LKR ${fmt.format(total)}',
+                        style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: BL.crimson)),
+                  ],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 18),
+              BlPrimaryButton(
+                  label: 'Proceed to Payment',
+                  color: BL.crimson,
+                  onTap: () => widget.onConfirm(_qty)),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                    foregroundColor: BL.muted,
+                    minimumSize: const Size(0, 48),
+                    textStyle: const TextStyle(fontSize: 16)),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildBtn(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(50),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: AppTheme.primaryColor),
       ),
     );
   }

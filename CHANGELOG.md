@@ -6,6 +6,14 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 The first redesign pass kept most of the old screens and only dressed some of them. This pass builds each screen from its mockup board, on phone and on desktop, one batch at a time.
 
+### Account, sign-in, support and bulk booking
+
+* **Favourites** (`Favourites`, `Desktop-Favourites`): photo cards with a big remove heart and BOOK AGAIN; a kind empty state. **Notifications** (`Notifications`): round coloured icons, plain words, a red dot and blush background for new ones. The old filter that hid booking and trip updates is gone, because the design shows them.
+* **Profile** (`Profile`, `Desktop-Profile`), **Account Settings**, **Notification Settings**, **Travel Trends** and **Feedback** follow their boards. The feedback box now has "Send as Anonymous" (it really sends without your name) and the ticket page uses the same box. Linked accounts shows the real Google logo.
+* **Sign in, sign up, phone and code** (`Login`, `Desktop-Login`, `SignUp`, `PhoneLogin`, `Otp`): the Ella train photo, three big language buttons, one form for both sign in and sign up, and a wrong-code message under the six boxes. The old rotating web photos are gone. **Forgot Password?** now works: it emails a reset link to the address you typed (the button used to do nothing).
+* **Support** (`Support`, `Desktop-Support`): FAQ, call and email buttons, hotlines, and a message form. The form now opens your email app with the message ready (it used to say "Message Sent Successfully" without sending anything). Two old, unused support screens were removed.
+* **Bulk booking** (`BulkPassengers`, `BulkSummary`): the passenger picker and the summary follow the boards. The date picker already matched `BulkDates`.
+
 ### My Trips, refunds and tracking
 
 * **My Trips** (`MyTickets`, `Desktop-MyTickets`): a red header with three numbers (Trips taken, Coming up, Top place) and the four tabs; each trip is a card with the destination photo, a status chip (icon and word), **VIEW TICKET** and **TRACK NOW**, and the quiet Refund link. On desktop it is a list on the left (the picked trip has a red outline) and the full ticket with its QR code on the right. Empty tabs now say something kind ("No cancelled trips. Good news.").

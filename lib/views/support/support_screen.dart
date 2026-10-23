@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../utils/app_theme.dart';
-import '../layout/desktop_navbar.dart';
+import '../../utils/bl_colors.dart';
 import '../layout/app_footer.dart';
+import '../layout/desktop_navbar.dart';
+import '../widgets/bl_widgets.dart';
 
+/// "Help & Support" (mockups "Support" and "Desktop-Support").
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
 
@@ -12,485 +14,392 @@ class SupportScreen extends StatefulWidget {
 }
 
 class _SupportScreenState extends State<SupportScreen> {
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _subjectController = TextEditingController();
-  final _messageController = TextEditingController();
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _subject = TextEditingController();
+  final _message = TextEditingController();
+  String? _error;
 
-  void _showErrorPopup(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        title: Text("Oops!",
-            style: TextStyle(
-                fontFamily: 'Outfit',
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface)),
-        content: Text(message,
-            style: TextStyle(
-                fontFamily: 'Inter',
-                color: Theme.of(context).colorScheme.onSurface)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Okay",
-                style: TextStyle(
-                    fontFamily: 'Outfit',
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor)),
-          )
-        ],
-      ),
+  static const _faqs = [
+    (
+      'How do I cancel a ticket?',
+      "You can cancel your ticket from the 'My Trips' section up to 24 hours before departure."
+    ),
+    (
+      'Where is my refund?',
+      'Refunds are processed within 5-7 business days to your original payment method.'
+    ),
+    (
+      'Can I change my seat?',
+      'Seat changes are allowed depending on availability. Please contact support.'
+    ),
+  ];
+  static const _hotlines = [
+    ('Police Emergency', '119', Icons.local_police_outlined),
+    ('Suwaseriya Ambulance', '1990', Icons.medical_services_outlined),
+    ('Fire & Rescue', '110', Icons.fire_truck_outlined),
+    ('NTC Hotline', '1955', Icons.directions_bus_outlined),
+  ];
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    _subject.dispose();
+    _message.dispose();
+    super.dispose();
+  }
+
+  Future<void> _call(String number) async {
+    final uri = Uri(scheme: 'tel', path: number);
+    if (!await launchUrl(uri) && mounted) _snack('Could not start the call.');
+  }
+
+  Future<void> _mail({String? subject, String? body}) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: 'support@buslink.com',
+      query: [
+        if (subject != null) 'subject=${Uri.encodeComponent(subject)}',
+        if (body != null) 'body=${Uri.encodeComponent(body)}',
+      ].join('&'),
+    );
+    if (!await launchUrl(uri) && mounted) {
+      _snack('Could not open your email app. Write to support@buslink.com.');
+    }
+  }
+
+  void _snack(String m) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+
+  /// The message goes out through the person's own email app, so it is only
+  /// "sent" when they press send there.
+  void _send() {
+    final email = _email.text.trim();
+    String? err;
+    if (_name.text.trim().isEmpty) {
+      err = 'Please enter your name so we know how to address you.';
+    } else if (email.isEmpty) {
+      err = 'Please enter your email address.';
+    } else if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      err = "That doesn't look like a valid email address. Please check again.";
+    } else if (_subject.text.trim().isEmpty) {
+      err = 'Please add a subject.';
+    } else if (_message.text.trim().isEmpty) {
+      err = 'Please describe your issue so we can help you.';
+    }
+    setState(() => _error = err);
+    if (err != null) return;
+    _mail(
+      subject: _subject.text.trim(),
+      body: '${_message.text.trim()}\n\n${_name.text.trim()}\n$email',
     );
   }
 
-  void _validateAndSubmit() {
-    // 1. Validate Name
-    if (_nameController.text.trim().isEmpty) {
-      _showErrorPopup("Please enter your name so we know how to address you.");
-      return;
-    }
-
-    // 2. Validate Email
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      _showErrorPopup("Please enter your email address.");
-      return;
-    }
-    final emailRegex = RegExp(r"^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
-    if (!emailRegex.hasMatch(email)) {
-      _showErrorPopup(
-          "That doesn't look like a valid email address. Please check again.");
-      return;
-    }
-
-    // 3. Validate Subject
-    if (_subjectController.text.trim().isEmpty) {
-      _showErrorPopup("Please verify the subject of your query.");
-      return;
-    }
-
-    // 4. Validate Message
-    if (_messageController.text.trim().isEmpty) {
-      _showErrorPopup("Please describe your issue so we can help you.");
-      return;
-    }
-
-    // Success
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        title: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-        content: Text(
-          "Message Sent Successfully! We'll allow you to track it soon.",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-              fontFamily: 'Inter',
-              color: Theme.of(context).colorScheme.onSurface),
+  Widget _faq(String q, String a) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: BL.hairline),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              expandedCrossAxisAlignment: CrossAxisAlignment.start,
+              iconColor: BL.crimson,
+              title: Text(q,
+                  style: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.w700)),
+              children: [
+                Text(a,
+                    style: const TextStyle(
+                        fontSize: 16, height: 1.45, color: BL.muted)),
+              ],
+            ),
+          ),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              // Clear fields
-              _nameController.clear();
-              _emailController.clear();
-              _subjectController.clear();
-              _messageController.clear();
-            },
-            child: const Text("Great",
-                style: TextStyle(
-                    fontFamily: 'Outfit',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green)),
-          )
-        ],
-      ),
+      );
+
+  Widget _hotline((String, String, IconData) h) => Semantics(
+        button: true,
+        label: 'Call ${h.$1} on ${h.$2}',
+        child: InkWell(
+          onTap: () => _call(h.$2),
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 64),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              border: Border.all(color: BL.hairline),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                      color: Color(0xFFFDEEEE), shape: BoxShape.circle),
+                  child: Icon(h.$3, color: BL.crimson, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(h.$1,
+                      style: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.w700)),
+                ),
+                Text(h.$2,
+                    style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: BL.crimson)),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  Widget _contactButtons() => Row(children: [
+        Expanded(
+          child: SizedBox(
+            height: 56,
+            child: FilledButton.icon(
+              onPressed: () => _call('+94112345678'),
+              icon: const Icon(Icons.phone, size: 22),
+              label: const Text('Call Support'),
+              style: FilledButton.styleFrom(
+                backgroundColor: BL.crimson,
+                shape: const StadiumBorder(),
+                textStyle:
+                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: SizedBox(
+            height: 56,
+            child: OutlinedButton(
+              onPressed: () => _mail(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: BL.crimson,
+                side: const BorderSide(color: BL.crimson, width: 2),
+                shape: const StadiumBorder(),
+                textStyle:
+                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+              ),
+              child: const Text('Email Us'),
+            ),
+          ),
+        ),
+      ]);
+
+  Widget _field(String label, TextEditingController c, String hint,
+      {int lines = 1, TextInputType? type}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 4),
+        TextField(
+          controller: c,
+          maxLines: lines,
+          keyboardType: type,
+          style: const TextStyle(fontSize: 17),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: BL.muted),
+            filled: true,
+            fillColor: const Color(0xFFF5F3F4),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: BL.crimson, width: 2)),
+          ),
+        ),
+      ],
     );
   }
+
+  Widget _form() => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: BL.hairline),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x1A660708), blurRadius: 24, offset: Offset(0, 6))
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Send us a message',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 14),
+            _field('Your Name', _name, 'Full name'),
+            const SizedBox(height: 12),
+            _field('Email Address', _email, 'name@example.com',
+                type: TextInputType.emailAddress),
+            const SizedBox(height: 12),
+            _field('Subject', _subject, 'Refund / Booking / Other'),
+            const SizedBox(height: 12),
+            _field(
+                'Message', _message, 'Describe your issue so we can help you.',
+                lines: 4),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 18, color: Color(0xFF7F1D14)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(_error!,
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF7F1D14))),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 16),
+            BlPrimaryButton(
+                label: 'Send message', color: BL.crimson, onTap: _send),
+            const SizedBox(height: 6),
+            const Text(
+                'This opens your email app with the message ready to send.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: BL.muted)),
+          ],
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black;
+    final isDesktop = MediaQuery.of(context).size.width > 900;
+    final faqs = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Frequently Asked Questions',
+            style: TextStyle(
+                fontSize: isDesktop ? 22 : 20, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 12),
+        for (final f in _faqs) _faq(f.$1, f.$2),
+      ],
+    );
+    final hotlines = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Emergency Hotlines',
+            style: TextStyle(
+                fontSize: isDesktop ? 22 : 20, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 12),
+        if (isDesktop)
+          Wrap(spacing: 10, runSpacing: 10, children: [
+            for (final h in _hotlines) SizedBox(width: 260, child: _hotline(h)),
+          ])
+        else
+          for (final h in _hotlines)
+            Padding(
+                padding: const EdgeInsets.only(bottom: 10), child: _hotline(h)),
+      ],
+    );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth > 800;
-
-        // Common Content
-        final content = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    if (!isDesktop) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Column(children: [
+          const BlHeader(title: 'Help & Support'),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                faqs,
+                const SizedBox(height: 14),
+                const Text('Contact Us Directly',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 12),
+                _contactButtons(),
+                const SizedBox(height: 22),
+                hotlines,
+                const SizedBox(height: 10),
+                _form(),
+              ],
+            ),
+          ),
+        ]),
+      );
+    }
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Column(
           children: [
-            _buildHeader(context, isDesktop),
-            const SizedBox(height: 32),
-
-            // Layout: Desktop has Side-by-Side (FAQ + Form), Mobile has stacked
-            if (isDesktop)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 2, child: _buildFAQSection(context)),
-                  const SizedBox(width: 40),
-                  Expanded(flex: 3, child: _buildContactForm(context)),
-                ],
-              )
-            else ...[
-              _buildFAQSection(context),
-              const SizedBox(height: 32),
-              _buildContactForm(context),
-            ],
-
-            const SizedBox(height: 32),
-            Text("Emergency Hotlines",
-                style: TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: textColor)),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                _buildContactCard(
-                    context,
-                    Icons.local_police,
-                    "Police Emergency",
-                    "119",
-                    () => launchUrl(Uri.parse("tel:119"))),
-                _buildContactCard(
-                    context,
-                    Icons.medical_services,
-                    "Suwaseriya Ambulance",
-                    "1990",
-                    () => launchUrl(Uri.parse("tel:1990"))),
-                _buildContactCard(context, Icons.fire_truck, "Fire & Rescue",
-                    "110", () => launchUrl(Uri.parse("tel:110"))),
-                _buildContactCard(context, Icons.directions_bus, "NTC Hotline",
-                    "1955", () => launchUrl(Uri.parse("tel:1955"))),
-              ],
-            ),
-            const SizedBox(height: 32),
-            Text("Contact Us Directly",
-                style: TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: textColor)),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                _buildContactCard(
-                    context, Icons.phone, "Call Support", "+94 11 234 5678",
-                    () async {
-                  final Uri launchUri =
-                      Uri(scheme: 'tel', path: '+94112345678');
-                  if (await canLaunchUrl(launchUri)) {
-                    await launchUrl(launchUri);
-                  }
-                }),
-                _buildContactCard(context, Icons.email_outlined, "Email Us",
-                    "support@buslink.com", () async {
-                  final Uri launchUri =
-                      Uri(scheme: 'mailto', path: 'support@buslink.com');
-                  if (await canLaunchUrl(launchUri)) {
-                    await launchUrl(launchUri);
-                  }
-                }),
-              ],
-            ),
-          ],
-        );
-
-        if (isDesktop) {
-          return Scaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: Column(
-              children: [
-                const DesktopNavBar(selectedIndex: -1), // No active tab
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1000),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 40),
-                            child: content,
+            const DesktopNavBar(selectedIndex: -2),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 56),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Help & Support',
+                          style: TextStyle(
+                              fontSize: 34, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 22),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                faqs,
+                                const SizedBox(height: 18),
+                                hotlines,
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 60),
-                        const AppFooter(),
-                      ],
-                    ),
+                          const SizedBox(width: 32),
+                          SizedBox(
+                            width: 500,
+                            child: Column(
+                              children: [
+                                _form(),
+                                const SizedBox(height: 14),
+                                _contactButtons(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          );
-        } else {
-          // Mobile View
-          return Scaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            appBar: AppBar(
-              title: Text("Help & Support",
-                  style: TextStyle(
-                      fontFamily: 'Outfit',
-                      color: textColor,
-                      fontWeight: FontWeight.bold)),
-              backgroundColor: Theme.of(context).cardColor,
-              centerTitle: true,
-              elevation: 0,
-              iconTheme: IconThemeData(color: textColor),
-            ),
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: content,
-            ),
-          );
-        }
-      },
-    );
-  }
-
-  Widget _buildFAQSection(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("Frequently Asked Questions",
-            style: TextStyle(
-                fontFamily: 'Outfit',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: textColor)),
-        const SizedBox(height: 16),
-        _buildFAQItem(context, "How do I cancel a ticket?",
-            "You can cancel your ticket from the 'My Trips' section up to 24 hours before departure."),
-        _buildFAQItem(context, "Where is my refund?",
-            "Refunds are processed within 5-7 business days to your original payment method."),
-        _buildFAQItem(context, "Can I change my seat?",
-            "Seat changes are allowed depending on availability. Please contact support."),
-      ],
-    );
-  }
-
-  Widget _buildContactForm(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E2126) : Colors.white;
-    final textColor = isDark ? Colors.white : Colors.black;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("Send us a message",
-            style: TextStyle(
-                fontFamily: 'Outfit',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: textColor)),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5))
-              ]),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              _buildTextField("Your Name", _nameController),
-              const SizedBox(height: 16),
-              _buildTextField("Email Address", _emailController),
-              const SizedBox(height: 16),
-              _buildTextField("Subject", _subjectController),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _messageController,
-                maxLines: 4,
-                style: TextStyle(
-                    fontFamily: 'Inter', color: textColor), // Input text color
-                decoration: _inputDecoration("Describe your issue..."),
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _validateAndSubmit,
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    elevation: 0),
-                child: const Text("SEND MESSAGE",
-                    style: TextStyle(
-                        fontFamily: 'Outfit',
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
-              )
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField(String hint, TextEditingController controller) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black;
-
-    return TextField(
-      controller: controller,
-      style:
-          TextStyle(fontFamily: 'Inter', color: textColor), // Input text color
-      decoration: _inputDecoration(hint),
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final inputColor = isDark ? const Color(0xFF2B2D33) : Colors.grey.shade50;
-    final borderColor = isDark ? Colors.white10 : Colors.grey.shade200;
-    final hintColor = isDark ? Colors.grey.shade500 : Colors.grey.shade400;
-
-    return InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(fontFamily: 'Inter', color: hintColor),
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: borderColor)),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: borderColor)),
-        focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppTheme.primaryColor)),
-        filled: true,
-        fillColor: inputColor);
-  }
-
-  Widget _buildHeader(BuildContext context, bool isDesktop) {
-    // Header stays Red, always.
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isDesktop ? 40 : 24),
-      decoration: BoxDecoration(
-          color: AppTheme.primaryColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                blurRadius: 15,
-                offset: const Offset(0, 5))
-          ]),
-      child: Column(
-        children: [
-          const Icon(Icons.headset_mic_rounded, size: 48, color: Colors.white),
-          const SizedBox(height: 16),
-          Text("How can we help you?",
-              style: TextStyle(
-                  fontFamily: 'Outfit',
-                  fontSize: isDesktop ? 32 : 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white)),
-          const SizedBox(height: 8),
-          Text("Our team is available 24/7 to assist you.",
-              style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: isDesktop ? 16 : 14,
-                  color: Colors.white.withValues(alpha: 0.9))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFAQItem(BuildContext context, String question, String answer) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E2126) : Colors.white;
-    final borderColor = isDark ? Colors.white10 : Colors.grey.shade200;
-    final textColor = isDark ? Colors.white : Colors.black;
-    final answerColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor)),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          title: Text(question,
-              style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                  color: textColor)),
-          iconColor: textColor,
-          collapsedIconColor: textColor,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Text(answer,
-                  style: TextStyle(
-                      fontFamily: 'Inter', color: answerColor, height: 1.5)),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContactCard(BuildContext context, IconData icon, String title,
-      String subtitle, VoidCallback onTap) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E2126) : Colors.white;
-    final borderColor = isDark ? Colors.white10 : Colors.grey.shade200;
-    final textColor = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 250),
-      child: Container(
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor),
-        ),
-        child: ListTile(
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: AppTheme.primaryColor),
-          ),
-          title: Text(title,
-              style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w600,
-                  color: textColor)),
-          subtitle: Text(subtitle,
-              style: TextStyle(fontFamily: 'Inter', color: subTextColor)),
-          trailing: Icon(Icons.chevron_right, size: 16, color: subTextColor),
-          onTap: onTap,
+            const AppFooter(),
+          ],
         ),
       ),
     );

@@ -11,7 +11,7 @@ import '../layout/app_footer.dart';
 import '../widgets/bl_widgets.dart';
 import '../widgets/language_selector.dart';
 //  // Removed
-import 'support_screen.dart';
+import '../support/support_screen.dart';
 import 'feedback_dialog.dart';
 import '../layout/desktop_navbar.dart';
 import '../favorites/favorites_screen.dart';
