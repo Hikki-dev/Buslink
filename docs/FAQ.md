@@ -61,7 +61,7 @@ Yes. The code is under the MIT licence. See [LICENSE](../LICENSE).
 ## Money
 
 **Which currency?**
-Sri Lankan rupees (LKR). The smallest card payment is LKR 150.
+Sri Lankan rupees (LKR). The app asks for at least LKR 150, and Stripe itself needs about 50 US cents (around LKR 165).
 
 **Does BusLink store card numbers?**
 No. Card details go to Stripe.
@@ -75,7 +75,7 @@ An admin approves it, and the money goes back to the card through Stripe. See th
 ## Safety
 
 **Can someone make themselves an admin?**
-Not with the rules in this repository: a user cannot create or change their own role. Make sure those rules are deployed. See [Security](../SECURITY.md).
+No. The database rules refuse a user creating or changing their own role, and automatic tests check it. Make sure you have deployed the rules from the repository exactly as they are. See [Security](../SECURITY.md).
 
 **What is still not safe enough for real money?**
 The honest list is in [Security](../SECURITY.md#what-still-needs-doing-before-real-money).

@@ -4,6 +4,20 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 ## Unreleased
 
+### Database rules fixed, tested and deployed (23 October 2026)
+
+* **The rules that were live had real holes, and the rules in the repository would have broken the app.** The live rules let anyone write their own `role` (so any signed-in person could make themselves an admin), edit the price, seats and owner of their own ticket, and mark it boarded. The repository's rules fixed that but refused the ticket update that confirms a payment, so deploying them would have stopped every booking.
+* New `firestore.rules`: roles can only be set by an admin, a passenger can confirm payment and request a refund on their own ticket but not change its owner, price, seats or boarding, a conductor can stamp a boarding once as themselves, and conductors can create the notifications that tell passengers about a delay (the live rules refused those). `firestore.rules.proposed` is folded in and removed.
+* **`tool/rules-test`:** 43 cases in the Firebase emulator, run on every pull request as the `rules` job.
+* **Deployed to the BusLink Firebase project and checked:** the live rules equal the repository file.
+* The three demo accounts whose password (`123456`) was public in the git history had their passwords changed.
+* The Firebase web API key is now restricted to this project's web addresses.
+* Docs: the Stripe minimum is about 50 US cents (around LKR 165), not LKR 150; SECURITY.md lists the open items, including that payment is confirmed by the app.
+
+### Repository cleanup
+
+* Removed ten one-off Python scripts from the top level (`final_fix.py`, `fix_*.py`, `repair_*.py`, `restore_ui_text.py`) that were used once to rewrite source files, and 90 Xcode build cache files under `scripts/build/`. Nothing used them, and git history still has them. `scripts/build/` is now git-ignored.
+
 ### Licence
 
 * Added the MIT licence (`LICENSE`), the same one as the media-server-setup repository, and a licence badge in the README.
@@ -35,7 +49,7 @@ What changed in each step, newest first. Each heading names the pull request it 
 * **Approve Boarding** stamps the ticket with `boardedAt` and `boardedBy` in a single Firestore transaction.
 * A ticket that was already boarded is refused with "Already boarded" and the time. This is checked when the ticket is looked up and again when it is approved, so two conductors cannot both succeed.
 * The button shows a spinner while saving. If there is no connection, the card stays open with a retry message instead of pretending it worked.
-* `firestore.rules.proposed`: an optional, reviewable tightening so a boarding can only be stamped once. `firestore.rules` itself is not changed. See [Security](SECURITY.md#the-proposed-boarding-rule).
+* `firestore.rules.proposed` held an optional rule so a boarding can be stamped only once. It has since been folded into `firestore.rules` and removed (see the 23 October entry above).
 
 ### Conductor screens (#4)
 
