@@ -68,6 +68,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/home/
     - .env
 
   fonts:

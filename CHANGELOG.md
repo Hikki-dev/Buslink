@@ -2,6 +2,18 @@
 
 What changed in each step, newest first. Each heading names the pull request it came from. The redesign was built as pull requests on top of each other (#2 to #7) and merged in that order on 22 October 2026.
 
+## 23 October 2026 (the designs, screen by screen)
+
+The first redesign pass kept most of the old screens and only dressed some of them. This pass builds each screen from its mockup board, on phone and on desktop, one batch at a time.
+
+### Home, top bar, footer and bottom bar
+
+* **Home** follows the boards "Main" and "Desktop-Home": the Ella train photo with the crimson wash, "Where would you like to go?" on phones and "Travel Sri Lanka by bus, the easy way" on desktop, and a white search card with named fields (Leaving from, Going to, Day of travel), a swap button between the cities and one big Search Buses button. Choosing the same city twice now says "Pick two different places" instead of a raw key.
+* **Popular journeys** are four photo cards (Kandy, Galle, Nuwara Eliya, Polonnaruwa). The price and time on each card are the cheapest fare and the journey time from the real routes and schedules; a place with no bus yet shows no price. The old cards used stock photos from the internet and a made-up "buses daily" number from a random generator. Tapping a card searches Colombo to that place. "How it works" (three steps) is on desktop.
+* **The desktop top bar** is the white bar from the mockups: BusLink, Home, My Trips, Favourites, Support, the traveller's initials (with the account menu) and a plain Log out button. **The footer** is dark red with the photo credits the licences require (the old footer had links to pages that did not exist). **The phone's bottom bar** is 80 px high with a blush pill behind the current page.
+* Removed: the home screen's rotating web photos, the old features strip, the unused round-trip leftovers, the unused `MobileBottomNav`, and lower-case city names (`nuwara_eliya`) in the suggestion list.
+* Five photos (about 0.9 MB) are bundled in `assets/images/home/`. New file `lib/utils/bl_colors.dart` holds the mockup colours. 6 new tests.
+
 ## 23 October 2026 (rules, cleanup, licence, project structure, the README story and starting up)
 
 ### Starting up (#13)

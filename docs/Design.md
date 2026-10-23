@@ -48,6 +48,9 @@ Nothing is set smaller than 12 pixels. Body text is 14 to 17.
 
 | Piece | Where | What it is |
 |---|---|---|
+| `HomeHero`, `PopularJourneys`, `HowItWorks` | `lib/views/home/home_hero.dart`, `home_sections.dart` | The photo header with the search form, the journey cards (real prices and times) and the three steps |
+| `DesktopNavBar`, `AppFooter`, `BlBottomBar` | `lib/views/layout/` | The white desktop top bar, the dark red footer with photo credits, the phone's bottom bar |
+| `BL` | `lib/utils/bl_colors.dart` | The colours of the mockups, for new screens |
 | `StatusChip` | `lib/views/admin/widgets/status_chip.dart` | Icon, word and colour for any status |
 | `TripFormSteps` | same file | The 1, 2, 3 progress strip on the trip form |
 | `BusTicketCard` | `lib/views/results/bus_list_screen.dart` | The result card in search |
@@ -77,7 +80,7 @@ English, Sinhala and Tamil. Words live in `lib/l10n/app_en.arb`, `app_si.arb` an
 
 ## Photo credits
 
-The design mockups use photographs of Sri Lanka from Wikimedia Commons. They are not part of the app code.
+The home screen and the design mockups use photographs of Sri Lanka from Wikimedia Commons. Five are bundled in `assets/images/home/` (the Ella train, Kandy, Galle, Nuwara Eliya and Sigiriya), resized for the web. The credit line below is shown in the footer of the desktop pages (`AppFooter.credits`).
 
 | Photographer | Licence |
 |---|---|
@@ -88,4 +91,6 @@ The design mockups use photographs of Sri Lanka from Wikimedia Commons. They are
 | Prasanna Tharaka | CC BY-SA 4.0 |
 | Alagiyawanna | CC0 |
 
-The repository does not record where the photos in `assets/images/` came from. Check the origin and licence of any photo before reusing it.
+Which photo is whose: Nine Arches Bridge near Ella (A. Savin), Temple of the Tooth in Kandy (Argenberg), Galle Fort (calflier001), tea hills near Nuwara Eliya (Bergentroll), Sigiriya (Prasanna Tharaka).
+
+The repository does not record where the other photos in `assets/images/` (outside `home/`) came from. Check the origin and licence of any photo before reusing it.

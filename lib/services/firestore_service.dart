@@ -454,6 +454,42 @@ class FirestoreService {
     }
   }
 
+  /// Cheapest fare and journey time for every route leaving [origin], keyed by
+  /// destination city. Used by the home screen's "Popular journeys".
+  Future<Map<String, JourneyHint>> getJourneyHints(String origin) async {
+    try {
+      final routes = await _db
+          .collection(routeCollection)
+          .where('originCity', isEqualTo: origin)
+          .get();
+      if (routes.docs.isEmpty) return {};
+      final schedules = await _db.collection(scheduleCollection).get();
+      final cheapest = <String, double>{};
+      for (final s in schedules.docs) {
+        final routeId = s.data()['routeId']?.toString();
+        final price = (s.data()['basePrice'] as num?)?.toDouble();
+        if (routeId == null || price == null) continue;
+        final old = cheapest[routeId];
+        if (old == null || price < old) cheapest[routeId] = price;
+      }
+      final hints = <String, JourneyHint>{};
+      for (final r in routes.docs) {
+        final dest = r.data()['destinationCity']?.toString();
+        final price = cheapest[r.id];
+        if (dest == null || price == null) continue;
+        final mins = (r.data()['estimatedDurationMins'] as num?)?.toInt() ?? 0;
+        final old = hints[dest];
+        if (old == null || price < old.fromPrice) {
+          hints[dest] = JourneyHint(price, mins);
+        }
+      }
+      return hints;
+    } catch (e) {
+      debugPrint('Journey hints unavailable: $e');
+      return {};
+    }
+  }
+
   // ... (Keeping generic User Management methods as is) ...
 
   Stream<List<Map<String, dynamic>>> getAllUsers() {
@@ -840,4 +876,11 @@ class FirestoreService {
 
     return phones;
   }
+}
+
+/// Cheapest fare (LKR) and travel time of a route; see [FirestoreService.getJourneyHints].
+class JourneyHint {
+  final double fromPrice;
+  final int durationMins;
+  const JourneyHint(this.fromPrice, this.durationMins);
 }
