@@ -5,7 +5,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
-import '../../utils/app_theme.dart';
+import '../../utils/app_theme.dart' show ThemeController;
+import '../../utils/bl_colors.dart';
+import '../layout/app_footer.dart';
+import '../widgets/bl_widgets.dart';
+import '../widgets/language_selector.dart';
 //  // Removed
 import 'support_screen.dart';
 import 'feedback_dialog.dart';
@@ -16,7 +20,6 @@ import 'package:buslink/l10n/app_localizations.dart'; // Added
 // import '../settings/language_selection_screen.dart'; // Removed
 
 // import '../layout/mobile_navbar.dart';
-import '../layout/custom_app_bar.dart';
 // IMPORTS FOR PROFILE UPLOAD & SETTINGS
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -50,559 +53,302 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Provider.of<FirestoreService>(context, listen: false);
     final themeController = Provider.of<ThemeController>(context);
     final user = Provider.of<User?>(context);
-    //  // Removed
 
     if (user == null) {
-      return const Center(
-        child: Text(
-          "No account logged in",
-          style: TextStyle(fontFamily: 'Inter', color: Colors.grey),
-        ),
-      );
+      return const BlEmpty(
+          icon: Icons.lock_outline,
+          title: 'Please log in to continue',
+          message: 'Your trips and favourites are saved to your account.');
     }
-
-    // Check for desktop
-    final bool isDesktop = MediaQuery.of(context).size.width > 900;
+    final isDesktop = MediaQuery.of(context).size.width > 900;
 
     return FutureBuilder<DocumentSnapshot>(
-      // Key changes to force rebuild
       key: ValueKey(_refreshKey),
       future: firestoreService.getUserData(user.uid),
       builder: (context, snapshot) {
-        String name = user.displayName ?? "Traveller";
-        String email = user.email ?? "No Email";
-        String phone = user.phoneNumber ?? "No Phone Linked";
-        String role = "Customer";
-        String initial = name.isNotEmpty ? name[0].toUpperCase() : "T";
+        var name = user.displayName ?? 'Traveller';
+        var email = user.email ?? '';
+        var role = 'customer';
         String? photoUrl = user.photoURL;
-
         if (snapshot.hasData && snapshot.data!.exists) {
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          // Use 'displayName' or 'name' (legacy)
-          name = data['displayName'] ?? data['name'] ?? name;
-          email = data['email'] ?? email;
-          // Use 'phoneNumber' or 'phone' (legacy)
-          phone = data['phoneNumber'] ?? data['phone'] ?? phone;
-          role = (data['role'] ?? "Customer").toString().toUpperCase();
-          // Use Firestore photoURL if available, else user.photoURL
-          if (data['photoURL'] != null &&
-              data['photoURL'].toString().isNotEmpty) {
-            photoUrl = data['photoURL'];
+          final d = snapshot.data!.data() as Map<String, dynamic>;
+          name = d['displayName'] ?? d['name'] ?? name;
+          email = d['email'] ?? email;
+          role = (d['role'] ?? 'customer').toString().toLowerCase();
+          if ((d['photoURL'] ?? '').toString().isNotEmpty) {
+            photoUrl = d['photoURL'];
           }
         }
+        final initials = name
+            .trim()
+            .split(RegExp(r'\s+'))
+            .where((p) => p.isNotEmpty)
+            .take(2)
+            .map((p) => p[0].toUpperCase())
+            .join();
+        final dark = themeController.themeMode == ThemeMode.dark;
 
-        return Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          appBar: isDesktop
-              ? null
-              : CustomAppBar(
-                  automaticallyImplyLeading: widget.showBackButton,
-                  leading: widget.showBackButton
-                      ? BackButton(
-                          onPressed: () {
-                            if (widget.onBack != null) {
-                              widget.onBack!();
-                            } else {
-                              Navigator.pop(context);
-                            }
-                          },
-                        )
-                      : null,
-                ),
-          // bottomNavigationBar:
-          //    isDesktop ? null : const MobileBottomNav(selectedIndex: 3),
-          body: Column(
-            children: [
-              if (isDesktop)
-                Material(
-                  elevation: 4,
-                  child: DesktopNavBar(
-                      selectedIndex: 3, isAdminView: widget.isAdminView),
-                ), // Profile is index 3
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 600),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 20),
-                          Container(
-                            padding: const EdgeInsets.all(32),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.05),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                // PROFILE PICTURE
-                                MouseRegion(
-                                  cursor: SystemMouseCursors.click,
-                                  child: GestureDetector(
-                                    onTap: () async {
-                                      debugPrint("Profile Avatar Clicked");
-                                      await _pickAndUploadImage(context, user);
-                                    },
-                                    child: Stack(
-                                      alignment: Alignment.bottomRight,
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 60,
-                                          backgroundColor: AppTheme.primaryColor
-                                              .withValues(alpha: 0.1),
-                                          backgroundImage: (photoUrl != null)
-                                              ? NetworkImage(photoUrl)
-                                              : null,
-                                          child: (photoUrl == null)
-                                              ? Text(
-                                                  initial,
-                                                  style: const TextStyle(
-                                                    fontFamily: 'Outfit',
-                                                    fontSize: 48,
-                                                    fontWeight: FontWeight.bold,
-                                                    color:
-                                                        AppTheme.primaryColor,
-                                                  ),
-                                                )
-                                              : null,
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: const BoxDecoration(
-                                            color: AppTheme.primaryColor,
-                                            shape: BoxShape.circle,
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black26,
-                                                blurRadius: 4,
-                                                offset: Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: const Icon(Icons.edit,
-                                              size: 20, color: Colors.white),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 24),
-                                Text(
-                                  name,
-                                  style: const TextStyle(
-                                    fontFamily: 'Outfit',
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor
-                                        .withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    role,
-                                    style: const TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryColor,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                const Divider(),
-                                const SizedBox(height: 16),
-                                _infoRow(context, Icons.email_outlined, "Email",
-                                    email),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                  color: Colors.grey.withValues(alpha: 0.2)),
-                            ),
-                            child: Material(
-                              type: MaterialType.transparency,
-                              child: Column(
-                                children: [
-                                  SwitchListTile(
-                                    secondary: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.purple
-                                            .withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.dark_mode,
-                                          color: Colors.purple),
-                                    ),
-                                    value: themeController.themeMode ==
-                                        ThemeMode.dark,
-                                    title: Text(
-                                      themeController.themeMode ==
-                                              ThemeMode.dark
-                                          ? "Light Mode"
-                                          : "Dark Mode",
-                                      style: const TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                    activeTrackColor: AppTheme.primaryColor,
-                                    onChanged: (val) {
-                                      themeController.setTheme(val
-                                          ? ThemeMode.dark
-                                          : ThemeMode.light);
-                                    },
-                                  ),
-                                  const Divider(height: 1),
-                                  ListTile(
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Colors.blue.withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                          Icons.notifications_outlined,
-                                          color: Colors.blue),
-                                    ),
-                                    title: const Text(
-                                      "Notifications",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                    trailing: const Icon(Icons.chevron_right,
-                                        color: Colors.grey),
-                                    onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const NotificationSettingsScreen()));
-                                    },
-                                  ),
-                                  ListTile(
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.indigo
-                                            .withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.language,
-                                          color: Colors.indigo),
-                                    ),
-                                    title: Text(
-                                      AppLocalizations.of(context)!
-                                          .selectLanguage,
-                                      style: const TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                    subtitle: Consumer<LanguageProvider>(
-                                      builder: (context, provider, child) {
-                                        String lang = "English";
-                                        if (provider
-                                                .currentLocale.languageCode ==
-                                            'si') {
-                                          lang = "Sinhala";
-                                        }
-                                        if (provider
-                                                .currentLocale.languageCode ==
-                                            'ta') {
-                                          lang = "Tamil";
-                                        }
-                                        return Text(lang,
-                                            style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey));
-                                      },
-                                    ),
-                                    trailing: const Icon(Icons.chevron_right,
-                                        color: Colors.grey),
-                                    onTap: () {
-                                      // Reuse the dialog from LanguageSelector widget logic
-                                      // Or just show dialog here directly
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) {
-                                          return AlertDialog(
-                                            title: Text(
-                                                AppLocalizations.of(context)!
-                                                    .selectLanguage),
-                                            content: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                _buildLanguageOption(
-                                                    context, 'en', 'English'),
-                                                _buildLanguageOption(
-                                                    context, 'si', 'Sinhala'),
-                                                _buildLanguageOption(
-                                                    context, 'ta', 'Tamil'),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                  const Divider(height: 1),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                  color: Colors.grey.withValues(alpha: 0.2)),
-                            ),
-                            child: Material(
-                              type: MaterialType.transparency,
-                              child: Column(
-                                children: [
-                                  ListTile(
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Colors.blue.withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.person,
-                                          color: Colors.blue),
-                                    ),
-                                    title: const Text(
-                                      "Account Settings",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                    subtitle: const Text(
-                                        "Name, Phone, Linked Accounts",
-                                        style: TextStyle(
-                                            fontSize: 12, color: Colors.grey)),
-                                    trailing: const Icon(Icons.chevron_right,
-                                        size: 18, color: Colors.grey),
-                                    onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const AccountSettingsScreen())),
-                                  ),
-                                  const Divider(height: 1),
-                                  ListTile(
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Colors.red.withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.favorite,
-                                          color: Colors.red),
-                                    ),
-                                    title: const Text(
-                                      "My Favourites",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                    trailing: const Icon(Icons.chevron_right,
-                                        size: 18, color: Colors.grey),
-                                    onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const FavoritesScreen())),
-                                  ),
-                                  const Divider(height: 1),
-                                  ListTile(
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange
-                                            .withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.support_agent,
-                                          color: Colors.orange),
-                                    ),
-                                    title: const Text(
-                                      "Help & Support",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                    trailing: const Icon(Icons.chevron_right,
-                                        size: 18, color: Colors.grey),
-                                    onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const SupportScreen())),
-                                  ),
-                                  const Divider(height: 1),
-                                  ListTile(
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Colors.blue.withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.rate_review,
-                                          color: Colors.blue),
-                                    ),
-                                    title: const Text(
-                                      "Send Feedback",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                    trailing: const Icon(Icons.chevron_right,
-                                        size: 18, color: Colors.grey),
-                                    onTap: () {
-                                      showDialog(
-                                          context: context,
-                                          builder: (_) =>
-                                              const FeedbackDialog());
-                                    },
-                                  ),
-                                  const Divider(height: 1),
-                                  ListTile(
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Colors.red.withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.logout,
-                                          color: Colors.red),
-                                    ),
-                                    title: const Text(
-                                      "Log Out",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.red),
-                                    ),
-                                    onTap: () async {
-                                      // Show Loading Dialog
-                                      showDialog(
-                                          context: context,
-                                          barrierDismissible: false,
-                                          builder: (context) => const Center(
-                                              child:
-                                                  CircularProgressIndicator()));
-
-                                      try {
-                                        // Minimum delay to show visual feedback
-                                        await Future.delayed(
-                                            const Duration(milliseconds: 500));
-                                        await authService.signOut();
-                                        if (context.mounted) {
-                                          Navigator.of(context,
-                                                  rootNavigator: true)
-                                              .pushAndRemoveUntil(
-                                                  MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          const LoginScreen()),
-                                                  (route) => false);
-                                        }
-                                      } catch (e) {
-                                        // Close dialog if error
-                                        if (context.mounted) {
-                                          Navigator.pop(context);
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(SnackBar(
-                                                  content: Text(
-                                                      "Logout failed: $e")));
-                                        }
-                                      }
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 40),
-                          Text(
-                            "Version 1.0.0",
-                            style: TextStyle(
-                                fontFamily: 'Inter',
-                                color: Colors.grey.shade400,
-                                fontSize: 12),
-                          ),
-                        ],
-                      ),
+        Widget avatar = Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 76,
+              height: 76,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: BL.blush,
+                shape: BoxShape.circle,
+                image: photoUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(photoUrl), fit: BoxFit.cover)
+                    : null,
+              ),
+              child: photoUrl == null
+                  ? Text(initials.isEmpty ? '?' : initials,
+                      style: const TextStyle(
+                          color: BL.crimsonDark,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800))
+                  : null,
+            ),
+            Positioned(
+              right: -4,
+              bottom: -4,
+              child: Semantics(
+                button: true,
+                label: 'Change profile picture',
+                child: Material(
+                  color: Colors.white,
+                  shape: const CircleBorder(
+                      side: BorderSide(color: BL.crimson, width: 3)),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => _pickAndUploadImage(context, user),
+                    child: const SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: Icon(Icons.photo_camera_outlined,
+                          size: 18, color: BL.crimson),
                     ),
                   ),
                 ),
               ),
+            ),
+          ],
+        );
+
+        Widget tile(IconData icon, String label, VoidCallback onTap,
+                {String? value, Widget? trailing}) =>
+            InkWell(
+              onTap: onTap,
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 64),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: const BoxDecoration(
+                    border:
+                        Border(bottom: BorderSide(color: Color(0xFFF0E8E9)))),
+                child: Row(
+                  children: [
+                    Icon(icon, color: BL.crimson, size: 26),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(label,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w500)),
+                    ),
+                    if (value != null)
+                      Text(value,
+                          style:
+                              const TextStyle(fontSize: 17, color: BL.muted)),
+                    trailing ??
+                        const Icon(Icons.chevron_right,
+                            color: BL.muted, size: 26),
+                  ],
+                ),
+              ),
+            );
+
+        void go(Widget w) =>
+            Navigator.push(context, MaterialPageRoute(builder: (_) => w));
+
+        final list = Column(
+          children: [
+            tile(Icons.person_outline, 'Account Settings',
+                () => go(const AccountSettingsScreen())),
+            tile(Icons.notifications_none, 'Notification Settings',
+                () => go(const NotificationSettingsScreen())),
+            Consumer<LanguageProvider>(
+              builder: (context, lp, _) => tile(
+                Icons.language,
+                AppLocalizations.of(context)!.selectLanguage,
+                () => LanguageSelector.showLanguageDialog(context),
+                value: {
+                      'si': 'Sinhala',
+                      'ta': 'Tamil'
+                    }[lp.currentLocale.languageCode] ??
+                    'English',
+              ),
+            ),
+            tile(
+              Icons.dark_mode_outlined,
+              'Dark Mode',
+              () => themeController
+                  .setTheme(dark ? ThemeMode.light : ThemeMode.dark),
+              trailing: Semantics(
+                toggled: dark,
+                label: dark ? 'Dark mode on' : 'Dark mode off',
+                child: ExcludeSemantics(
+                  child: Switch(
+                    value: dark,
+                    activeTrackColor: BL.crimson,
+                    onChanged: (v) => themeController
+                        .setTheme(v ? ThemeMode.dark : ThemeMode.light),
+                  ),
+                ),
+              ),
+            ),
+            tile(Icons.favorite_border, 'My Favourites',
+                () => go(const FavoritesScreen())),
+            tile(Icons.help_outline, 'Support & FAQs',
+                () => go(const SupportScreen())),
+            tile(Icons.chat_bubble_outline, 'Send Feedback', () {
+              showDialog(
+                  context: context, builder: (_) => const FeedbackDialog());
+            }),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: OutlinedButton.icon(
+                  onPressed: () => _logOut(context, authService),
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Log Out'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: BL.crimson,
+                    side: const BorderSide(color: BL.crimson, width: 2),
+                    shape: const StadiumBorder(),
+                    textStyle: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+
+        final header = Container(
+          color: BL.crimson,
+          padding: EdgeInsets.fromLTRB(
+              widget.showBackButton ? 8 : 20,
+              MediaQuery.paddingOf(context).top + (isDesktop ? 24 : 12),
+              20,
+              22),
+          child: Row(
+            children: [
+              if (widget.showBackButton)
+                IconButton(
+                  tooltip: 'Go back',
+                  color: Colors.white,
+                  onPressed: widget.onBack ?? () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                ),
+              avatar,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800)),
+                    if (email.isNotEmpty)
+                      Text(email,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16)),
+                    if (role != 'customer')
+                      Text(role == 'admin' ? 'Administrator' : 'Conductor',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
             ],
+          ),
+        );
+
+        if (!isDesktop) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Column(children: [
+              header,
+              Expanded(child: SingleChildScrollView(child: list)),
+            ]),
+          );
+        }
+        return Scaffold(
+          backgroundColor: Colors.white,
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                DesktopNavBar(
+                    selectedIndex: 3, isAdminView: widget.isAdminView),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 32),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: BL.hairline),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(children: [header, list]),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const AppFooter(),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _infoRow(
-      BuildContext context, IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.grey.shade400),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 2),
-                Text(value,
-                    style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w500,
-                        fontSize: 15)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  Future<void> _logOut(BuildContext context, AuthService authService) async {
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) =>
+            const Center(child: CircularProgressIndicator(color: BL.crimson)));
+    try {
+      await Future.delayed(const Duration(milliseconds: 400));
+      await authService.signOut();
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not log out: $e')));
+      }
+    }
   }
 
   Future<void> _pickAndUploadImage(BuildContext context, User user) async {
@@ -685,33 +431,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .showSnackBar(SnackBar(content: Text("Upload failed: $e")));
       }
     }
-  }
-
-  Widget _buildLanguageOption(BuildContext context, String code, String label) {
-    final languageProvider =
-        Provider.of<LanguageProvider>(context, listen: false);
-    final isSelected = languageProvider.currentLocale.languageCode == code;
-
-    return ListTile(
-      title: Text(
-        label,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : Colors.black,
-        ),
-      ),
-      trailing: isSelected
-          ? Icon(
-              Icons.check,
-              color: Theme.of(context).colorScheme.primary,
-            )
-          : null,
-      onTap: () {
-        languageProvider.changeLanguage(code);
-        Navigator.pop(context);
-      },
-    );
   }
 }
