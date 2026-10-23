@@ -1,33 +1,22 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-// import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart'; // Added for Google Maps link
+import 'package:provider/provider.dart';
+
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
-import '../../models/trip_view_model.dart'; // Import EnrichedTrip
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart' as latlng;
-import '../booking/seat_selection_screen.dart';
+import '../../models/trip_view_model.dart';
+import '../../services/firestore_service.dart';
+import '../../utils/bl_colors.dart';
 import '../booking/bulk_confirmation_screen.dart';
 import '../booking/bulk_quantity_dialog.dart';
-import '../../utils/app_theme.dart';
-import '../layout/desktop_navbar.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../booking/seat_selection_screen.dart';
+import 'bus_details_screen.dart';
+import '../home/home_sections.dart' show cityPhoto;
 import '../layout/app_footer.dart';
-// import '../../services/auth_service.dart'; // Unused
-import '../../services/firestore_service.dart';
-
-import 'package:rxdart/rxdart.dart'; // For Stream Merging
-import '../../services/location_service.dart'; // For Live Locations
+import '../layout/desktop_navbar.dart';
 import '../widgets/animated_favorite_button.dart';
 
-part 'parts/clock_widget.dart';
-
+/// "Choose a bus" (mockups "Results" and "Desktop-Results").
 class BusListScreen extends StatefulWidget {
   const BusListScreen({super.key});
 
@@ -37,904 +26,413 @@ class BusListScreen extends StatefulWidget {
 
 class _BusListScreenState extends State<BusListScreen> {
   String _sortBy = 'price_asc';
-  final List<String> _selectedFilters = [];
+  final Set<String> _times = {'morning', 'afternoon', 'evening'};
+  final Set<String> _types = {};
+  bool _hideFull = false;
 
-  // Weather & Time State
-  final MapController _mapController = MapController();
-  String _weatherCondition = "Sunny";
-  int _temperature = 29;
+  static bool _isFull(EnrichedTrip t) =>
+      t.totalSeats - t.bookedSeats.length <= 0 ||
+      t.status.toLowerCase() == 'cancelled';
 
-  @override
-  void initState() {
-    super.initState();
-    // Fetch real weather
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchWeather();
+  List<EnrichedTrip> _visible(TripController c) {
+    final all = List<EnrichedTrip>.from(c.searchResults);
+    final types = _types.isEmpty ? all.map((t) => t.busType).toSet() : _types;
+    final out = all.where((t) {
+      final h = t.departureTime.hour;
+      final slot = h < 12 ? 'morning' : (h < 18 ? 'afternoon' : 'evening');
+      if (!_times.contains(slot)) return false;
+      if (!types.contains(t.busType)) return false;
+      if (_hideFull && _isFull(t)) return false;
+      return true;
+    }).toList();
+    // Buses you can book come first, full ones sink to the bottom.
+    out.sort((a, b) {
+      if (_isFull(a) != _isFull(b)) return _isFull(a) ? 1 : -1;
+      return _sortBy == 'time_asc'
+          ? a.departureTime.compareTo(b.departureTime)
+          : a.price.compareTo(b.price);
     });
-  }
-
-  Future<void> _fetchWeather() async {
-    final controller = Provider.of<TripController>(context, listen: false);
-    // Prioritize destination for weather as it's more relevant for travelers
-    final city = controller.toCity ?? controller.fromCity ?? "Colombo";
-    // Fallback if env not loaded
-    final apiKey = dotenv.env['OPENWEATHER_API_KEY'];
-
-    if (apiKey == null || apiKey.isEmpty) {
-      debugPrint("Warning: OPENWEATHER_API_KEY not found in .env");
-      return;
-    }
-
-    try {
-      final url = Uri.parse(
-          'https://api.openweathermap.org/data/2.5/weather?q=$city&units=metric&appid=$apiKey');
-
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (mounted) {
-          setState(() {
-            _temperature = (data['main']['temp'] as num).round();
-            // Capitalize first letter
-            String desc = data['weather'][0]['main'];
-            _weatherCondition = desc; // "Clouds", "Clear", "Rain" etc.
-          });
-        }
-      } else {
-        debugPrint("Weather API Error: ${response.body}");
-      }
-    } catch (e) {
-      debugPrint("Error fetching weather: $e");
-    }
-  }
-
-  void _recenterMap() {
-    final controller = Provider.of<TripController>(context, listen: false);
-    if (controller.fromCity != null &&
-        controller.toCity != null &&
-        _cityCoordinates.containsKey(controller.fromCity) &&
-        _cityCoordinates.containsKey(controller.toCity)) {
-      final p1 = _cityCoordinates[controller.fromCity]!;
-      final p2 = _cityCoordinates[controller.toCity]!;
-
-      // Create bounds that include both points
-      final bounds = LatLngBounds(p1, p2);
-
-      _mapController.fitCamera(CameraFit.bounds(
-        bounds: bounds,
-        padding: const EdgeInsets.all(50),
-      ));
-    } else {
-      // Default center
-      _mapController.move(const latlng.LatLng(7.8731, 80.7718), 7);
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
+    return out;
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Provider.of<TripController>(context);
+    final c = Provider.of<TripController>(context);
     final isDesktop = MediaQuery.of(context).size.width > 1000;
-
-    List<EnrichedTrip> trips = List.from(controller.searchResults);
-
-    // Filter Logic
-    if (_selectedFilters.isNotEmpty) {
-      trips = trips.where((trip) {
-        final timeOptions = [
-          "Before 6 AM",
-          "6 AM to 12 PM",
-          "12 PM to 6 PM",
-          "After 6 PM"
-        ];
-
-        final selectedTimes =
-            _selectedFilters.where((f) => timeOptions.contains(f)).toList();
-
-        if (selectedTimes.isNotEmpty) {
-          bool timeMatch = false;
-          final hour = trip.departureTime.hour;
-          for (final filter in selectedTimes) {
-            if (filter == "Before 6 AM" && hour < 6) {
-              timeMatch = true;
-            }
-            if (filter == "6 AM to 12 PM" && hour >= 6 && hour < 12) {
-              timeMatch = true;
-            }
-            if (filter == "12 PM to 6 PM" && hour >= 12 && hour < 18) {
-              timeMatch = true;
-            }
-            if (filter == "After 6 PM" && hour >= 18) {
-              timeMatch = true;
-            }
-          }
-          if (!timeMatch) return false;
-        }
-
-        return true;
-      }).toList();
-    }
-
-    // Sort Logic
-    if (_sortBy == 'price_asc') {
-      trips.sort((a, b) => a.price.compareTo(b.price));
-    } else if (_sortBy == 'time_asc') {
-      trips.sort((a, b) => a.departureTime.compareTo(b.departureTime));
-    }
-
-    // Get translations
-    //  // Already provided? No, context is sufficient later.
-    // Actually we need to pass lp down or use Consumer.
-    // Since this is build method, we can access provider.
-
+    final trips = _visible(c);
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: isDesktop
-          ? _buildDesktopLayout(context, isDesktop, trips, controller)
-          : _buildMobileLayout(context, trips, controller),
+      backgroundColor: Colors.white,
+      body: isDesktop ? _desktop(c, trips) : _phone(c, trips),
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context, bool isDesktop,
-      List<EnrichedTrip> trips, TripController controller) {
+  String _title(TripController c) => '${c.fromCity ?? ''} to ${c.toCity ?? ''}';
+
+  // --------------------------------------------------------------- phone
+  Widget _phone(TripController c, List<EnrichedTrip> trips) {
+    final date = c.travelDate;
+    return Column(
+      children: [
+        _Banner(
+          height: 124 + MediaQuery.paddingOf(context).top - 24,
+          photo: cityPhoto(c.toCity),
+          horizontal: true,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+                8, MediaQuery.paddingOf(context).top + 2, 8, 0),
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: 'Go back',
+                  onPressed: () => Navigator.maybePop(context),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white),
+                  iconSize: 24,
+                  constraints:
+                      const BoxConstraints(minWidth: 48, minHeight: 48),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_title(c),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700)),
+                      if (date != null)
+                        Text(DateFormat('EEEE, d MMM').format(date),
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(_countText(trips.length),
+                        style: const TextStyle(fontSize: 16, color: BL.muted)),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _showFilterSheet,
+                    icon: const Icon(Icons.tune),
+                    label: const Text('Narrow it down'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                      foregroundColor: BL.crimson,
+                      side: const BorderSide(color: BL.border, width: 1.5),
+                      shape: const StadiumBorder(),
+                      textStyle: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              ..._cards(c, trips),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _countText(int n) => n == 1 ? '1 bus found' : '$n buses found';
+
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => StatefulBuilder(
+        builder: (context, setSheet) => SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(22),
+            child: _filters(onChanged: () {
+              setState(() {});
+              setSheet(() {});
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------- desktop
+  Widget _desktop(TripController c, List<EnrichedTrip> trips) {
+    final date = c.travelDate;
     return CustomScrollView(
       slivers: [
         const SliverToBoxAdapter(child: DesktopNavBar()),
-        if (controller.isPreviewMode)
-          SliverToBoxAdapter(
-            child: Container(
-              width: double.infinity,
-              color: Colors.amber,
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              child: const Text("Welcome Admin - Preview Mode",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black)),
+        SliverToBoxAdapter(
+          child: _Banner(
+            photo: cityPhoto(c.toCity),
+            horizontal: true,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (date != null)
+                              Text(DateFormat('EEEE, d MMMM yyyy').format(date),
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 18)),
+                            const SizedBox(height: 4),
+                            Text(_title(c),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 4),
+                            Text(
+                                c.isLoading
+                                    ? 'Looking for buses...'
+                                    : _countText(trips.length),
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 18)),
+                          ],
+                        ),
+                      ),
+                      OutlinedButton(
+                        onPressed: () => Navigator.maybePop(context),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 52),
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white, width: 2),
+                          shape: const StadiumBorder(),
+                          textStyle: const TextStyle(
+                              fontSize: 17, fontWeight: FontWeight.w700),
+                        ),
+                        child: const Text('Change search'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-        // Replaced Date Bar with Weather/Map Header
-        SliverToBoxAdapter(child: _buildInfoHeader(context, controller)),
+        ),
         SliverToBoxAdapter(
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1200),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 56),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
                       width: 280,
-                      child: _buildFilters(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(22),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: BL.hairline),
+                        ),
+                        child: _filters(onChanged: () => setState(() {})),
+                      ),
                     ),
                     const SizedBox(width: 24),
                     Expanded(
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildResultsHeader(trips.length),
-                          const SizedBox(height: 16),
-                          if (controller.isLoading)
-                            const Center(
-                                child: Padding(
-                                    padding: EdgeInsets.all(40),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        CircularProgressIndicator(
-                                            color: AppTheme.primaryColor),
-                                        SizedBox(height: 16),
-                                        Text("Finding best routes...",
-                                            style: TextStyle(
-                                                fontFamily: 'Inter',
-                                                color: Colors.grey))
-                                      ],
-                                    )))
-                          else if (trips.isEmpty)
-                            _buildEmptyState()
-                          else
-                            ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: trips.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: 16),
-                              itemBuilder: (context, index) =>
-                                  BusTicketCard(trip: trips[index]),
-                            ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: _sortMenu(),
+                          ),
+                          const SizedBox(height: 8),
+                          ..._cards(c, trips),
                         ],
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
             ),
           ),
         ),
-        SliverFillRemaining(
+        const SliverFillRemaining(
           hasScrollBody: false,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              const SizedBox(height: 40),
-              if (isDesktop) const AppFooter(),
-            ],
-          ),
+          child: Align(alignment: Alignment.bottomCenter, child: AppFooter()),
         ),
       ],
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, List<EnrichedTrip> trips,
-      TripController controller) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-            '${(controller.fromCity ?? "").toLowerCase()} -> ${(controller.toCity ?? "").toLowerCase()}',
-            style: const TextStyle(
-                fontFamily: 'Outfit',
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: Colors.black)),
-        backgroundColor: Colors.white,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
-        elevation: 0,
-        actions: const [],
-        // Using info header in mobile too, maybe simplified?
-      ),
-      bottomSheet: controller.isPreviewMode
-          ? Container(
-              width: double.infinity,
-              color: Colors.amber,
-              padding: const EdgeInsets.all(8),
-              child: const Text("Admin Preview Mode",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            )
-          : null,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showMobileFilterModal(context),
-        label: Text("Filters"),
-        icon: const Icon(Icons.tune),
-        backgroundColor: AppTheme.primaryColor,
-      ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: trips.length + 1, // +1 for Header
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (_, index) {
-          if (index == 0) {
-            return _buildInfoHeader(context, controller, isMobile: true);
-          }
-          return BusTicketCard(trip: trips[index - 1]);
-        },
-      ),
-    );
-  }
-
-  // --- NEW: Info Header with Weather, Time & Map ---
-  Widget _buildInfoHeader(BuildContext context, TripController controller,
-      {bool isMobile = false}) {
-    // Determine which city's weather is being shown
-    final weatherCity = controller.toCity ?? controller.fromCity ?? "Colombo";
-    final weatherCityKey = weatherCity.toLowerCase().replaceAll(' ', '_');
-
-    // ... (Weather UI same but translation for headers?)
-    // No specific headers yet mostly dynamic data.
-
-    return Container(
-      width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Column(
-            children: [
-              // 1. Weather & Time Row
-              if (isMobile)
-                Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(_getWeatherIcon(_weatherCondition),
-                            color: _getWeatherColor(_weatherCondition),
-                            size: 32),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("$_temperature°C, $_weatherCondition",
-                                style: const TextStyle(
-                                    fontFamily: 'Outfit',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18)),
-                            Text(weatherCityKey,
-                                style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600))
-                          ],
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Column(
-                      children: [
-                        const _ClockWidget(fontSize: 24),
-                        Text(
-                            DateFormat('EEEE, d MMMM yyyy').format(DateTime
-                                .now()), // Date doesn't change every second, safe enough or can move inside
-                            style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: Colors.grey.shade600))
-                      ],
-                    ),
-                  ],
-                )
-              else
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Weather
-                    Row(
-                      children: [
-                        Icon(_getWeatherIcon(_weatherCondition),
-                            color: _getWeatherColor(_weatherCondition),
-                            size: 32),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("$_temperature°C, $_weatherCondition",
-                                style: const TextStyle(
-                                    fontFamily: 'Outfit',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    color: Colors.black)),
-                            Text(weatherCityKey,
-                                style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600))
-                          ],
-                        )
-                      ],
-                    ),
-                    // Time
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          // Time
-                          children: [
-                            // const SizedBox(width: 8),
-                            // const SizedBox(width: 8),
-                            const _ClockWidget(fontSize: 24),
-                          ],
-                        ),
-                        Text(
-                            DateFormat('EEEE, d MMMM yyyy')
-                                .format(DateTime.now()),
-                            style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: Colors.grey.shade600))
-                      ],
-                    )
-                  ],
-                ),
-              const SizedBox(height: 24),
-              // 2. Map Route Preview
-              RepaintBoundary(
-                child: Container(
-                  height: isMobile ? 200 : 300,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.grey.shade200,
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
-                      children: [
-                        // Map Layer
-                        RepaintBoundary(
-                          child: FlutterMap(
-                            mapController: _mapController,
-                            options: MapOptions(
-                              initialCenter: controller.fromCity != null &&
-                                      _cityCoordinates
-                                          .containsKey(controller.fromCity)
-                                  ? _cityCoordinates[controller.fromCity]!
-                                  : const latlng.LatLng(
-                                      7.8731, 80.7718), // Center of SL
-                              initialZoom: 7.5,
-                              interactionOptions: InteractionOptions(
-                                  flags: InteractiveFlag.all &
-                                      ~InteractiveFlag.rotate),
-                            ),
-                            children: [
-                              TileLayer(
-                                urlTemplate:
-                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                userAgentPackageName: 'com.example.buslink',
-                              ),
-                              PolylineLayer(
-                                polylines: _createPolylines(controller),
-                              ),
-                              MarkerLayer(
-                                markers: _createMarkers(controller),
-                              ),
-                              _buildLiveBusLayer(
-                                  controller.searchResults), // Add Live Layer
-                            ],
-                          ),
-                        ),
-                        // Overlays
-                        Positioned(
-                            top: 16,
-                            left: 16,
-                            child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                          color: Colors.black12, blurRadius: 4)
-                                    ]),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.map,
-                                        size: 16, color: AppTheme.primaryColor),
-                                    const SizedBox(width: 8),
-                                    Text("Live Route Preview",
-                                        style: const TextStyle(
-                                            fontFamily: 'Outfit',
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black87)),
-                                  ],
-                                ))),
-                        Positioned(
-                          bottom: 16,
-                          right: 16,
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              final query =
-                                  "${controller.fromCity} to ${controller.toCity}";
-                              final googleMapsUrl = Uri.parse(
-                                  "https://www.google.com/maps/search/?api=1&query=$query");
-                              if (await canLaunchUrl(googleMapsUrl)) {
-                                await launchUrl(googleMapsUrl);
-                              }
-                            },
-                            icon: const Icon(Icons.map, size: 16),
-                            label: const Text("Open in Google Maps"),
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.black,
-                                elevation: 2),
-                          ),
-                        ),
-                        Positioned(
-                          top: 16,
-                          right: 16,
-                          child: FloatingActionButton.small(
-                            heroTag: "recenter_map_btn",
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            onPressed: _recenterMap,
-                            tooltip: "Recenter Map",
-                            child: const Icon(Icons.my_location),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            ],
-          ),
+  Widget _sortMenu() => DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _sortBy,
+          style: const TextStyle(fontSize: 17, color: BL.ink),
+          icon: const Icon(Icons.expand_more),
+          items: const [
+            DropdownMenuItem(value: 'price_asc', child: Text('Cheapest first')),
+            DropdownMenuItem(value: 'time_asc', child: Text('Earliest first')),
+          ],
+          onChanged: (v) => setState(() => _sortBy = v!),
         ),
-      ),
-    );
-  }
+      );
 
-  // --- Map Helper Methods ---
-
-  final Map<String, latlng.LatLng> _cityCoordinates = {
-    "Colombo": const latlng.LatLng(6.9271, 79.8612),
-    "Kandy": const latlng.LatLng(7.2906, 80.6337),
-    "Galle": const latlng.LatLng(6.0535, 80.2210),
-    "Jaffna": const latlng.LatLng(9.6615, 80.0255),
-    "Matara": const latlng.LatLng(5.9549, 80.5550),
-    "Ella": const latlng.LatLng(6.8667, 81.0466),
-    "Trincomalee": const latlng.LatLng(8.5874, 81.2152),
-    "Anuradhapura": const latlng.LatLng(8.3114, 80.4037),
-    "Negombo": const latlng.LatLng(7.2008, 79.8737),
-    "Hambantota": const latlng.LatLng(6.1429, 81.1212),
-    "Badulla": const latlng.LatLng(6.9897, 81.0558),
-    "Ratnapura": const latlng.LatLng(6.6939, 80.3982),
-    "Sigiriya": const latlng.LatLng(7.9570, 80.7603),
-    "Mirissa": const latlng.LatLng(5.9482, 80.4716),
-  };
-
-  List<Marker> _createMarkers(TripController controller) {
-    // Collect unique cities involved in the search results to mark key points
-    final Set<String> markedCities = {};
-    if (controller.fromCity != null) markedCities.add(controller.fromCity!);
-    if (controller.toCity != null) markedCities.add(controller.toCity!);
-
-    // Add intermediate cities from search results
-    for (var trip in controller.searchResults) {
-      if (trip.via.isNotEmpty) {
-        // Simple substring matching for known cities in 'via'
-        for (var city in _cityCoordinates.keys) {
-          if (trip.via.contains(city)) markedCities.add(city);
-        }
-      }
-    }
-
-    final List<Marker> markers = [];
-    for (var city in markedCities) {
-      if (_cityCoordinates.containsKey(city)) {
-        bool isSource = city == controller.fromCity;
-        bool isDest = city == controller.toCity;
-        Color color =
-            isSource ? Colors.blue : (isDest ? Colors.red : Colors.orange);
-
-        markers.add(Marker(
-          point: _cityCoordinates[city]!,
-          width: 40,
-          height: 40,
-          child: Icon(Icons.location_on, color: color, size: 40),
-        ));
-      }
-    }
-    return markers;
-  }
-
-  Widget _buildLiveBusLayer(List<EnrichedTrip> trips) {
-    if (trips.isEmpty) return const SizedBox.shrink();
-
-    // Create a list of streams, one for each trip
-    List<Stream<Map<String, dynamic>>> streams = trips.map((trip) {
-      return LocationService().getBusLocationStream(trip.id).map((pos) {
-        return {
-          'tripId': trip.id,
-          'pos': pos,
-          'heading':
-              0.0, // LocationService stream currently returns only LatLng? update if heading needed
-        };
-      });
-    }).toList();
-
-    // Combine them into a single stream of List
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: Rx.combineLatestList(streams),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const SizedBox.shrink();
-
-        final updates = snapshot.data!;
-        final List<Marker> markers = [];
-
-        for (var i = 0; i < updates.length; i++) {
-          final data = updates[i];
-          final latlng.LatLng? pos = data['pos'];
-          if (pos == null) continue;
-
-          markers.add(Marker(
-            point: pos,
-            width: 50,
-            height: 50,
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black26, blurRadius: 4)
-                    ],
-                    border: Border.all(color: AppTheme.primaryColor, width: 2),
-                  ),
-                  child: const Icon(Icons.directions_bus,
-                      color: AppTheme.primaryColor, size: 20),
-                ),
-                // Optional: Label
-                // Container(
-                //   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                //   decoration: BoxDecoration(
-                //     color: Colors.white,
-                //     borderRadius: BorderRadius.circular(4)
-                //   ),
-                Text("Bus",
-                    style:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                // )
-              ],
-            ),
-          ));
-        }
-
-        return MarkerLayer(markers: markers);
-      },
-    );
-  }
-
-  List<Polyline> _createPolylines(TripController controller) {
-    if (controller.searchResults.isEmpty) {
-      // Fallback to simple line if no results but query exists
-      if (controller.fromCity != null &&
-          controller.toCity != null &&
-          _cityCoordinates.containsKey(controller.fromCity) &&
-          _cityCoordinates.containsKey(controller.toCity)) {
-        return [
-          Polyline(
-              points: [
-                _cityCoordinates[controller.fromCity]!,
-                _cityCoordinates[controller.toCity]!
-              ],
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              strokeWidth: 3.0,
-              pattern: StrokePattern.dashed(segments: const [5.0, 5.0]))
-        ];
-      }
-      return [];
-    }
-
-    List<Polyline> lines = [];
-    int index = 0;
-
-    for (var trip in controller.searchResults) {
-      List<latlng.LatLng> points = [];
-      // Start
-      if (_cityCoordinates.containsKey(trip.fromCity)) {
-        points.add(_cityCoordinates[trip.fromCity]!);
-      }
-
-      // Via logic: try to find intermediate city in 'via' string
-      for (var city in _cityCoordinates.keys) {
-        if (trip.via.contains(city) &&
-            city != trip.fromCity &&
-            city != trip.toCity) {
-          points.add(_cityCoordinates[city]!);
-        }
-      }
-
-      // End
-      if (_cityCoordinates.containsKey(trip.toCity)) {
-        points.add(_cityCoordinates[trip.toCity]!);
-      }
-
-      if (points.length >= 2) {
-        lines.add(Polyline(
-          points: points,
-          color: index == 0
-              ? AppTheme.primaryColor
-              : Colors.indigoAccent, // Highlight first result primarily?
-          strokeWidth: 4.0,
-        ));
-      }
-      index++;
-    }
-    return lines;
-  }
-
-  Widget _buildResultsHeader(int count) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white12
-                : Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("$count ${"buses found"}",
-                  style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface)),
-              if (Provider.of<TripController>(context).isBulkBooking)
-                Text(
-                  "${"Showing valid options for"} ${Provider.of<TripController>(context).bulkDates.length} ${"consecutive days"}",
-                  style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor),
-                ),
-            ],
+  List<Widget> _cards(TripController c, List<EnrichedTrip> trips) {
+    if (c.isLoading) {
+      return const [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: Center(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              CircularProgressIndicator(color: BL.crimson),
+              SizedBox(height: 16),
+              Text('Looking for buses...',
+                  style: TextStyle(fontSize: 18, color: BL.muted)),
+            ]),
           ),
-          const Spacer(),
-          // Sort Dropdown
-          DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _sortBy,
-              style: const TextStyle(
-                  fontFamily: 'Inter', fontSize: 14, color: Colors.black),
-              icon: const Icon(Icons.sort_rounded, size: 20),
-              items: [
-                DropdownMenuItem(
-                    value: 'price_asc', child: Text("Cheapest First")),
-                DropdownMenuItem(
-                    value: 'time_asc', child: Text("Earliest First")),
+        )
+      ];
+    }
+    if (trips.isEmpty) {
+      return const [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: Column(children: [
+            Icon(Icons.directions_bus_outlined, size: 64, color: BL.border),
+            SizedBox(height: 12),
+            Text('No buses match',
+                style: TextStyle(
+                    fontSize: 22, fontWeight: FontWeight.w700, color: BL.ink)),
+            SizedBox(height: 6),
+            Text(
+                'Try another day, or loosen the choices under "Narrow it down".',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 17, color: BL.muted)),
+          ]),
+        )
+      ];
+    }
+    return [
+      for (final t in trips) ...[
+        BusTicketCard(trip: t),
+        const SizedBox(height: 16),
+      ]
+    ];
+  }
+
+  // ------------------------------------------------------------- filters
+  Widget _filters({required VoidCallback onChanged}) {
+    final types = <String>{
+      for (final t in context.read<TripController>().searchResults)
+        if (t.busType.isNotEmpty) t.busType
+    };
+    Widget box(String label, bool value, ValueChanged<bool> set) => InkWell(
+          onTap: () {
+            set(!value);
+            onChanged();
+          },
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44),
+            child: Row(
+              children: [
+                Icon(value ? Icons.check_box : Icons.check_box_outline_blank,
+                    size: 26, color: value ? BL.crimson : BL.muted),
+                const SizedBox(width: 12),
+                Expanded(
+                    child: Text(label, style: const TextStyle(fontSize: 17))),
               ],
-              onChanged: (v) => setState(() => _sortBy = v!),
             ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilters(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white12
-                  : Colors.grey.shade200)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Filters",
-              style: const TextStyle(
-                  fontFamily: 'Outfit',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  letterSpacing: 1.2)),
-          const Divider(height: 32),
-          _filterSection("Departure Time",
-              ["Before 6 AM", "6 AM to 12 PM", "12 PM to 6 PM", "After 6 PM"]),
-        ],
-      ),
-    );
-  }
-
-  Widget _filterSection(String title, List<String> options) {
+          ),
+        );
+    Widget heading(String t) => Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Text(t,
+              style:
+                  const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+        );
+    void toggle(Set<String> s, String v, bool on) =>
+        on ? s.add(v) : s.remove(v);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(title,
-            style: const TextStyle(
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w600,
-                fontSize: 15)),
-        const SizedBox(height: 12),
-        ...options.map((opt) => Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: Transform.scale(
-                      scale: 1.3,
-                      child: Checkbox(
-                        value: _selectedFilters.contains(opt),
-                        onChanged: (val) {
-                          setState(() {
-                            if (val!) {
-                              _selectedFilters.add(opt);
-                            } else {
-                              _selectedFilters.remove(opt);
-                            }
-                          });
-                        },
-                        activeColor: AppTheme.primaryColor,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(opt,
-                      style: TextStyle(
-                          fontFamily: 'Inter',
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 15)) // Increased font size
-                ],
-              ),
-            ))
+        const Text('Narrow it down',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 16),
+        heading('When do you want to leave?'),
+        box('Morning (before 12 noon)', _times.contains('morning'),
+            (v) => toggle(_times, 'morning', v)),
+        box('Afternoon', _times.contains('afternoon'),
+            (v) => toggle(_times, 'afternoon', v)),
+        box('Evening and night', _times.contains('evening'),
+            (v) => toggle(_times, 'evening', v)),
+        if (types.length > 1) ...[
+          const SizedBox(height: 18),
+          heading('Type of bus'),
+          for (final t in types)
+            box(t, _types.isEmpty || _types.contains(t), (v) {
+              if (_types.isEmpty) _types.addAll(types);
+              toggle(_types, t, v);
+              if (_types.length == types.length) _types.clear();
+            }),
+        ],
+        const SizedBox(height: 18),
+        box('Hide full buses', _hideFull, (v) => _hideFull = v),
       ],
     );
   }
+}
 
-  void _showMobileFilterModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.7,
-            child: _buildFilters(context)),
-      ),
-    );
-  }
+class _Banner extends StatelessWidget {
+  final String photo;
+  final Widget child;
+  final bool horizontal;
+  final double? height;
+  const _Banner(
+      {required this.photo,
+      required this.child,
+      required this.horizontal,
+      this.height});
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 60),
-        child: Column(
-          children: [
-            Icon(Icons.directions_bus_outlined,
-                size: 64, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-            Text("No buses found",
-                style: TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade600)),
-          ],
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(photo,
+              fit: BoxFit.cover, alignment: const Alignment(0, -0.3)),
         ),
-      ),
+        const Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xEB460405), Color(0x99960E12)],
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: height, width: double.infinity, child: child),
+      ],
     );
-  }
-
-  IconData _getWeatherIcon(String condition) {
-    if (condition.toLowerCase().contains("clear") || condition == "Sunny") {
-      return Icons.wb_sunny;
-    }
-    if (condition.toLowerCase().contains("cloud")) {
-      return Icons.cloud;
-    }
-    if (condition.toLowerCase().contains("rain")) {
-      return Icons.grain;
-    }
-    if (condition.toLowerCase().contains("drizzle")) {
-      return Icons.grain;
-    }
-    if (condition.toLowerCase().contains("snow")) {
-      return Icons.ac_unit;
-    }
-    if (condition.toLowerCase().contains("thunder")) {
-      return Icons.flash_on;
-    }
-    return Icons.wb_cloudy;
-  }
-
-  Color _getWeatherColor(String condition) {
-    if (condition.toLowerCase().contains("clear") || condition == "Sunny") {
-      return Colors.orange;
-    }
-    if (condition.toLowerCase().contains("cloud")) {
-      return Colors.blueGrey;
-    }
-    if (condition.toLowerCase().contains("rain")) {
-      return Colors.blue;
-    }
-    return Colors.grey.shade600;
   }
 }
 
@@ -963,486 +461,320 @@ class BusTicketCard extends StatefulWidget {
 }
 
 class _BusTicketCardState extends State<BusTicketCard> {
-  bool isHovered = false;
-
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
-
-    // Use StreamBuilder to ensure real-time updates for seat availability
+    // Live seat counts: merge the newest trip from the database.
     return StreamBuilder<Trip>(
-        stream: Provider.of<FirestoreService>(context, listen: false)
-            .getTripStream(widget.trip.id),
-        builder: (context, snapshot) {
-          // If stream has data (Trip), merge it. Else use widget.trip.
-          EnrichedTrip trip = widget.trip;
-          if (snapshot.hasData) {
-            trip = EnrichedTrip(
-                trip: snapshot.data!,
-                schedule: widget.trip.schedule,
-                route: widget.trip.route);
-          }
-          final duration = trip.arrivalTime.difference(trip.departureTime);
-          final isMobile = MediaQuery.of(context).size.width < 700;
-
-          // Bulk Logic
-          final totalPrice = controller.isBulkBooking
-              ? trip.price * controller.bulkDates.length
-              : trip.price;
-
-          final priceLabel = controller.isBulkBooking
-              ? "LKR ${totalPrice.toStringAsFixed(0)} (x${controller.bulkDates.length} Days)"
-              : "LKR ${trip.price.toStringAsFixed(0)}";
-
-          final dark = Theme.of(context).brightness == Brightness.dark;
-          final status = trip.status.toLowerCase();
-          final unavailable = status == 'cancelled' ||
-              trip.totalSeats - trip.bookedSeats.length <= 0;
-
-          return RepaintBoundary(
-            child: MouseRegion(
-              onEnter: (_) => setState(() => isHovered = true),
-              onExit: (_) => setState(() => isHovered = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  color: unavailable && !dark
-                      ? Colors.grey.shade100
-                      : Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: isHovered
-                          ? AppTheme.primaryColor.withValues(alpha: 0.5)
-                          : (dark ? Colors.white12 : Colors.grey.shade300),
-                      width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black
-                            .withValues(alpha: isHovered ? 0.1 : 0.04),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5))
-                  ],
-                ),
-                child: isMobile
-                    ? Column(
-                        children: [
-                          _buildMobileContent(trip, duration),
-                          _buildBookButton(
-                              trip, context, controller, isMobile, priceLabel),
-                        ],
-                      )
-                    : IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                                child: _buildDesktopContent(trip, duration)),
-                            _buildBookButton(trip, context, controller,
-                                isMobile, priceLabel),
-                          ],
-                        ),
-                      ),
-              ),
-            ),
-          );
-        });
-  }
-
-  Widget _buildDesktopContent(EnrichedTrip trip, Duration duration) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildCardHeader(trip),
-          _buildStatusBanner(trip),
-          const SizedBox(height: 14),
-          _buildTimeline(trip, duration),
-          const SizedBox(height: 4),
-          _buildAmenities(trip),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileContent(EnrichedTrip trip, Duration duration) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildCardHeader(trip),
-          _buildStatusBanner(trip),
-          const SizedBox(height: 14),
-          _buildTimeline(trip, duration),
-          const SizedBox(height: 4),
-          _buildAmenities(trip),
-        ],
-      ),
-    );
-  }
-
-  /// Cancelled, delayed or full: said in words, with an icon, not colour alone.
-  Widget _buildStatusBanner(EnrichedTrip trip) {
-    final status = trip.status.toLowerCase();
-    final left = trip.totalSeats - trip.bookedSeats.length;
-    String? text;
-    IconData? icon;
-    Color fg = Colors.black87;
-    Color bg = Colors.grey.shade200;
-    if (status == 'cancelled') {
-      text = 'This trip is cancelled';
-      icon = Icons.cancel;
-      fg = const Color(0xFF7F1D14);
-      bg = const Color(0xFFFBE0DC);
-    } else if (left <= 0) {
-      text = 'This bus is full';
-      icon = Icons.block;
-      fg = const Color(0xFF3A3A3A);
-      bg = Colors.grey.shade300;
-    } else if (status == 'delayed' || trip.delayMinutes > 0) {
-      text = trip.delayMinutes > 0
-          ? 'Running ${trip.delayMinutes} minutes late'
-          : 'Delayed';
-      icon = Icons.schedule;
-      fg = const Color(0xFF7A4300);
-      bg = const Color(0xFFFFF1DB);
-    }
-    if (text == null) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration:
-            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: fg),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(text,
-                  style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700, color: fg)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCardHeader(EnrichedTrip trip) {
-    return FutureBuilder<bool>(
-        future: Provider.of<TripController>(context, listen: false)
-            .isRouteFavorite(trip.originCity, trip.destinationCity),
-        builder: (context, snapshot) {
-          final isFavorite = snapshot.data ?? false;
-          final onSurface = Theme.of(context).colorScheme.onSurface;
-          final bus = [
-            if (trip.busType.isNotEmpty) trip.busType,
-            if (trip.busNumber.isNotEmpty) trip.busNumber,
-          ].join(' · ');
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Operator Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        trip.operatorName.isEmpty
-                            ? "BusLink Operator"
-                            : trip.operatorName,
-                        style: TextStyle(
-                            fontFamily: 'Outfit',
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: onSurface)),
-                    if (bus.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(bus,
-                          style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 15,
-                              color: Colors.grey.shade700)),
-                    ],
-                    if (trip.via.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      _detailChip(Icons.route, "via ${trip.via}"),
-                    ],
-                  ],
-                ),
-              ),
-
-              // Animated Favorite Button
-              AnimatedFavoriteButton(
-                isFavorite: isFavorite,
-                onToggle: () async {
-                  await Provider.of<TripController>(context, listen: false)
-                      .toggleFavorite(trip);
-                  // Trigger rebuild to update local state
-                  setState(() {});
-                },
-              ),
-            ],
-          );
-        });
-  }
-
-  Widget _detailChip(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white12
-                : Colors.grey.shade300),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.grey.shade700),
-          const SizedBox(width: 4),
-          Text(label,
-              style: TextStyle(
-                  fontFamily: 'Inter',
-                  color: Colors.grey.shade700,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeline(EnrichedTrip trip, Duration duration) {
-    final grey = Colors.grey.shade700;
-    // Long city names (e.g. "Nuwara Eliya") are cut with "..." rather than
-    // squeezing the bus line in the middle below the width of its icons.
-    Widget stop(DateTime t, String city, CrossAxisAlignment align) => Flexible(
-          flex: 3,
-          child: Column(
-            crossAxisAlignment: align,
-            children: [
-              Text(DateFormat('h:mm a').format(t),
-                  style: const TextStyle(
-                      fontFamily: 'Outfit',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22)),
-              Text(city,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontFamily: 'Inter', fontSize: 14, color: grey)),
-            ],
-          ),
+      stream: Provider.of<FirestoreService>(context, listen: false)
+          .getTripStream(widget.trip.id),
+      builder: (context, snapshot) {
+        var trip = widget.trip;
+        if (snapshot.hasData) {
+          trip = EnrichedTrip(
+              trip: snapshot.data!,
+              schedule: widget.trip.schedule,
+              route: widget.trip.route);
+        }
+        final left = trip.totalSeats - trip.bookedSeats.length;
+        final cancelled = trip.status.toLowerCase() == 'cancelled';
+        if (cancelled || left <= 0) return _unavailable(trip, cancelled);
+        return LayoutBuilder(
+          builder: (context, box) =>
+              _available(trip, controller, left, wide: box.maxWidth >= 640),
         );
-
-    return Row(
-      children: [
-        stop(trip.departureTime, trip.fromCity, CrossAxisAlignment.start),
-        Expanded(
-          flex: 2,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(busDuration(duration),
-                      maxLines: 1,
-                      softWrap: false,
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: grey)),
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.circle, size: 8, color: grey),
-                    Expanded(child: Divider(color: Colors.grey.shade400)),
-                    Icon(Icons.directions_bus, size: 16, color: grey),
-                    Expanded(child: Divider(color: Colors.grey.shade400)),
-                    Icon(Icons.circle, size: 8, color: grey),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        stop(trip.arrivalTime, trip.toCity, CrossAxisAlignment.end),
-      ],
+      },
     );
   }
 
-  Widget _buildAmenities(EnrichedTrip trip) {
-    return const SizedBox.shrink(); // Amenities hidden as per request
+  Widget _unavailable(EnrichedTrip trip, bool cancelled) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+          color: const Color(0xFFE9EDF2),
+          borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(_operator(trip),
+                    style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: BL.muted)),
+              ),
+              Text(DateFormat('h:mm a').format(trip.departureTime),
+                  style: const TextStyle(fontSize: 16, color: BL.muted)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(cancelled ? Icons.cancel_outlined : Icons.block,
+                  size: 22, color: BL.ink),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                    cancelled
+                        ? 'This trip is cancelled. Please choose another bus.'
+                        : 'This bus is full. Please choose another one.',
+                    style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: BL.ink)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildBookButton(EnrichedTrip trip, BuildContext context,
-      TripController controller, bool isMobile, String priceLabel) {
-    // Filter Logic to translate "Days" if bulk
-    String displayPrice = priceLabel;
-    if (controller.isBulkBooking) {
-      displayPrice = priceLabel.replaceAll('Days', "days");
-    }
-    final left = trip.totalSeats - trip.bookedSeats.length;
+  String _operator(EnrichedTrip t) =>
+      t.operatorName.isEmpty ? 'BusLink Operator' : t.operatorName;
+
+  Widget _available(EnrichedTrip trip, TripController c, int left,
+      {required bool wide}) {
     final level = seatsLevel(left);
-    final cancelled = trip.status.toLowerCase() == 'cancelled';
+    final duration = trip.arrivalTime.difference(trip.departureTime);
+    final bus = [
+      if (trip.busType.isNotEmpty) trip.busType,
+      if (trip.busNumber.isNotEmpty) trip.busNumber,
+    ].join(' · ');
+    final late = trip.delayMinutes > 0
+        ? 'Running ${trip.delayMinutes} minutes late'
+        : (trip.status.toLowerCase() == 'delayed' ? 'Delayed' : null);
+    final total =
+        c.isBulkBooking ? trip.price * c.bulkDates.length : trip.price;
+    final price = 'LKR ${NumberFormat('#,###').format(total)}';
 
-    return Container(
-      width: isMobile ? double.infinity : 190,
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: isMobile
-            ? const BorderRadius.vertical(bottom: Radius.circular(16))
-            : const BorderRadius.horizontal(right: Radius.circular(16)),
-        border: isMobile
-            ? Border(
-                top: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey.withValues(alpha: 0.2)
-                        : Colors.grey.shade200))
-            : Border(
-                left: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey.withValues(alpha: 0.2)
-                        : Colors.grey.shade200)),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment:
-            isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.end,
-        children: [
-          Text(displayPrice,
-              style: const TextStyle(
-                  fontFamily: 'Outfit',
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor)),
-          const SizedBox(height: 2),
-          Text("per person",
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade700)),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () {
-                if (cancelled || level == SeatsLevel.none) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(cancelled
-                        ? "This trip is cancelled. Please choose another bus."
-                        : "This bus is full. Please choose another bus."),
-                    duration: const Duration(seconds: 4),
-                  ));
-                  return;
-                }
-                final now = DateTime.now();
-                final diff = trip.departureTime.difference(now).inMinutes;
-
-                if (diff <= 10) {
-                  // Block booking
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("Booking closes 10 minutes before departure"),
-                    backgroundColor: Colors.red,
-                    duration: const Duration(seconds: 4),
-                  ));
-                } else if (controller.isBulkBooking) {
-                  // Bulk Booking: Show Quantity Dialog
-                  showDialog(
-                    context: context,
-                    builder: (context) => BulkQuantityDialog(
-                      trip: trip.trip,
-                      days: controller.bulkDates.length,
-                      onConfirm: (qty) {
-                        Navigator.pop(context); // Close dialog
-
-                        // Proceed to Confirmation
-                        controller.selectedSeats =
-                            List.generate(qty, (index) => "-1");
-                        controller.selectedTrip = trip;
-                        controller.setBulkPassengers(qty);
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => BulkConfirmationScreen(trip: trip),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                } else {
-                  controller.selectTrip(trip);
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => SeatSelectionScreen(trip: trip)));
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: cancelled || level == SeatsLevel.none
-                      ? Colors.grey.shade500
-                      : AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  textStyle: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w800),
-                  side: BorderSide.none,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12))),
-              child: Text(cancelled
-                  ? "Cancelled"
-                  : level == SeatsLevel.none
-                      ? "Full"
-                      : "Select"),
-            ),
+    final head = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(_operator(trip),
+            style: TextStyle(
+                fontSize: wide ? 22 : 18, fontWeight: FontWeight.w700)),
+        if (bus.isNotEmpty)
+          Text(bus,
+              style: TextStyle(fontSize: wide ? 17 : 16, color: BL.muted)),
+        if (trip.via.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text('via ${trip.via}',
+                style: const TextStyle(fontSize: 15, color: BL.muted)),
           ),
-          const SizedBox(height: 10),
-          if (!cancelled)
-            Center(
+        if (late != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1DB),
+                  borderRadius: BorderRadius.circular(10)),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    level == SeatsLevel.few
-                        ? Icons.local_fire_department
-                        : level == SeatsLevel.none
-                            ? Icons.block
-                            : Icons.event_seat,
-                    size: 16,
-                    color: level == SeatsLevel.few
-                        ? const Color(0xFFB3261E)
-                        : level == SeatsLevel.none
-                            ? Colors.grey.shade700
-                            : Colors.green.shade800,
+                  const Icon(Icons.schedule,
+                      size: 22, color: Color(0xFF7A4300)),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(late,
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF7A4300))),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                      level == SeatsLevel.none
-                          ? "No seats left"
-                          : level == SeatsLevel.few
-                              ? "Only $left seats left"
-                              : "$left seats left",
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: level == SeatsLevel.few
-                              ? const Color(0xFFB3261E)
-                              : level == SeatsLevel.none
-                                  ? Colors.grey.shade700
-                                  : Colors.green.shade800)),
                 ],
               ),
             ),
-        ],
+          ),
+      ],
+    );
+
+    Widget stop(String label, DateTime t, CrossAxisAlignment a) => Column(
+          crossAxisAlignment: a,
+          children: [
+            Text(label,
+                style: TextStyle(fontSize: wide ? 15 : 14, color: BL.muted)),
+            Text(DateFormat('hh:mm a').format(t),
+                style: TextStyle(
+                    fontSize: wide ? 26 : 20, fontWeight: FontWeight.w700)),
+          ],
+        );
+    final detailsLink = TextButton(
+      onPressed: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) => BusDetailsScreen(trip: trip))),
+      style: TextButton.styleFrom(
+          foregroundColor: BL.crimson,
+          minimumSize: const Size(0, 48),
+          padding: EdgeInsets.zero,
+          textStyle:
+              const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+      child: const Text('Stops and what is on the bus'),
+    );
+    final times = Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        stop('Leaves', trip.departureTime, CrossAxisAlignment.start),
+        Column(
+          children: [
+            Text(busDuration(duration),
+                style: TextStyle(fontSize: wide ? 15 : 14, color: BL.muted)),
+            const SizedBox(height: 4),
+            Container(width: wide ? 64 : 56, height: 2, color: BL.border),
+          ],
+        ),
+        stop('Arrives', trip.arrivalTime, CrossAxisAlignment.end),
+      ],
+    );
+
+    final fewColor = const Color(0xFFA3281C);
+    final seats = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(level == SeatsLevel.few ? Icons.error_outline : Icons.check,
+            size: 20, color: level == SeatsLevel.few ? fewColor : BL.success),
+        const SizedBox(width: 6),
+        Text(
+            level == SeatsLevel.few
+                ? 'Only $left seats left'
+                : '$left seats left',
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight:
+                    level == SeatsLevel.few ? FontWeight.w700 : FontWeight.w500,
+                color: level == SeatsLevel.few ? fewColor : BL.success)),
+      ],
+    );
+
+    final book = SizedBox(
+      height: 52,
+      width: double.infinity,
+      child: FilledButton(
+        onPressed: () => _book(trip, c),
+        style: FilledButton.styleFrom(
+          backgroundColor: BL.crimson,
+          shape: const StadiumBorder(),
+          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        child: const Text('Book Now'),
       ),
     );
+
+    final fav = FutureBuilder<bool>(
+      future: c.isRouteFavorite(trip.originCity, trip.destinationCity),
+      builder: (context, snap) => AnimatedFavoriteButton(
+        isFavorite: snap.data ?? false,
+        onToggle: () async {
+          await c.toggleFavorite(trip);
+          if (mounted) setState(() {});
+        },
+      ),
+    );
+
+    final priceText = Text(price,
+        style: TextStyle(
+            fontSize: wide ? 26 : 20,
+            fontWeight: FontWeight.w700,
+            color: BL.crimson));
+
+    return Container(
+      padding: EdgeInsets.all(wide ? 22 : 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x1A660708), blurRadius: 10, offset: Offset(0, 2))
+        ],
+      ),
+      child: wide
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                    flex: 4,
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [head, detailsLink])),
+                const SizedBox(width: 20),
+                Expanded(flex: 4, child: times),
+                const SizedBox(width: 20),
+                SizedBox(
+                  width: 200,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [fav, const SizedBox(width: 4), priceText],
+                      ),
+                      const SizedBox(height: 8),
+                      seats,
+                      const SizedBox(height: 8),
+                      book,
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: head),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [priceText, fav],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                times,
+                const SizedBox(height: 4),
+                detailsLink,
+                seats,
+                const SizedBox(height: 12),
+                book,
+              ],
+            ),
+    );
+  }
+
+  void _book(EnrichedTrip trip, TripController controller) {
+    void say(String m) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(m), duration: const Duration(seconds: 4)));
+    if (trip.departureTime.difference(DateTime.now()).inMinutes <= 10) {
+      say('Booking closes 10 minutes before departure');
+    } else if (controller.isBulkBooking) {
+      showDialog(
+        context: context,
+        builder: (context) => BulkQuantityDialog(
+          trip: trip.trip,
+          days: controller.bulkDates.length,
+          onConfirm: (qty) {
+            Navigator.pop(context);
+            controller.selectedSeats = List.generate(qty, (index) => '-1');
+            controller.selectedTrip = trip;
+            controller.setBulkPassengers(qty);
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => BulkConfirmationScreen(trip: trip)));
+          },
+        ),
+      );
+    } else {
+      controller.selectTrip(trip);
+      Navigator.push(context,
+          MaterialPageRoute(builder: (_) => SeatSelectionScreen(trip: trip)));
+    }
   }
 }

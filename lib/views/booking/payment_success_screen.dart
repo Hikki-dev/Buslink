@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import '../../utils/app_theme.dart'; // Added Import
+import '../../utils/bl_colors.dart';
+import '../home/home_sections.dart' show cityPhoto;
+import '../support/support_screen.dart';
+import 'payment_screen.dart' show PaymentStateCard;
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart'; // Corrected import for Ticket
 import '../../services/sms_service.dart'; // Added Import
@@ -22,7 +25,6 @@ import 'package:permission_handler/permission_handler.dart';
 
 // import '../../views/home/home_screen.dart'; // Unused
 import '../customer_main_screen.dart';
-import '../widgets/animated_favorite_button.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
   const PaymentSuccessScreen({super.key});
@@ -34,13 +36,12 @@ class PaymentSuccessScreen extends StatefulWidget {
 class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   bool _isLoading = true;
   bool _isSuccess = false;
-  String _message = "Verifying Payment...";
   List<Ticket> _verifiedTickets = [];
 
-  final PageController _pageController = PageController();
   int _currentIndex = 0;
 
   bool _isInit = true;
+  int _favTick = 0;
 
   @override
   void initState() {
@@ -104,7 +105,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       setState(() {
         _isLoading = false;
         _isSuccess = false;
-        _message = "Invalid booking reference found.";
       });
       return;
     }
@@ -179,7 +179,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         _isLoading = false;
         _isSuccess = true;
         _verifiedTickets = tickets;
-        _message = "Payment Confirmed!";
       });
 
       // Send Notifications (Fire & Forget, now with Push!)
@@ -200,7 +199,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         setState(() {
           _isLoading = false;
           _isSuccess = false;
-          _message = "Could not verify all bookings. Please contact support.";
         });
       }
     }
@@ -484,332 +482,120 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     }
   }
 
+  void _goTo(int index) => Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+          builder: (_) => CustomerMainScreen(initialIndex: index)),
+      (route) => false);
+
+  static DateTime _tripDate(Ticket t) {
+    final v = t.tripData['departureDateTime'] ?? t.tripData['departureTime'];
+    if (v is Timestamp) return v.toDate();
+    if (v is String) return DateTime.tryParse(v) ?? DateTime.now();
+    return DateTime.now();
+  }
+
+  static String _from(Ticket t) =>
+      (t.tripData['fromCity'] ?? t.tripData['originCity'] ?? '?').toString();
+  static String _to(Ticket t) =>
+      (t.tripData['toCity'] ?? t.tripData['destinationCity'] ?? '?').toString();
+
+  Future<void> _sms(Ticket t) async {
+    final ok = await SmsService.sendTicketCopy(t);
+    if (mounted && !ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open the messages app.')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDesktop = MediaQuery.of(context).size.width > 900;
 
+    if (_isLoading) {
+      return _stateScaffold(PaymentStateCard.verifying());
+    }
+    if (!_isSuccess || _verifiedTickets.isEmpty) {
+      return _stateScaffold(PaymentStateCard.failed(
+        onHome: () => _goTo(0),
+        onSupport: () => Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const SupportScreen())),
+      ));
+    }
+
+    final tickets = _verifiedTickets;
+    final t = tickets[_currentIndex.clamp(0, tickets.length - 1)];
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) =>
-                          const CustomerMainScreen(initialIndex: 0)),
-                  (route) => false);
-            },
-            child: const Text(
-              "Done",
-              style: TextStyle(
-                fontFamily: 'Outfit',
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: Center(
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          constraints: const BoxConstraints(maxWidth: 600),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: isDark
-                ? Border.all(color: Colors.white.withValues(alpha: 0.1))
-                : null,
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10))
-            ],
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 800),
-            child: SingleChildScrollView(
+      backgroundColor: BL.crimson,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 24 : 18, vertical: isDesktop ? 40 : 16),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: isDesktop ? 980 : 460),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (_isLoading) ...[
-                    const CircularProgressIndicator(color: Colors.black),
-                    const SizedBox(height: 24),
-                    Text(_message,
-                        style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 16,
-                            color: Colors.grey)),
-                  ] else if (_isSuccess && _verifiedTickets.isNotEmpty) ...[
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.check_rounded,
-                          color: Colors.green, size: 40),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Thank You for booking with BusLink,\n${(_verifiedTickets.first.passengerName.isNotEmpty ? _verifiedTickets.first.passengerName.split(' ')[0] : 'Traveler')}!",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontFamily: 'Outfit',
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "Here is your booking confirmation.\nYou can also view this in 'My Trips'.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontFamily: 'Outfit',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.white70 : Colors.black87,
-                          height: 1.2),
-                    ),
-                    const SizedBox(height: 24),
-                    const SizedBox(height: 24),
-
-                    // --- TICKET CAROUSEL ---
-                    if (_verifiedTickets.isNotEmpty) ...[
-                      SizedBox(
-                        height: 480,
-                        child: PageView.builder(
-                          controller: _pageController,
-                          itemCount: _verifiedTickets.length,
-                          onPageChanged: (index) =>
-                              setState(() => _currentIndex = index),
-                          itemBuilder: (context, index) {
-                            return _buildTicketCard(
-                                _verifiedTickets[index], isDark);
-                          },
-                        ),
-                      ),
-
-                      // Indicators / Arrows
-                      if (_verifiedTickets.length > 1)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            IconButton(
-                              tooltip: 'Previous ticket',
-                              icon: const Icon(Icons.arrow_back_ios_rounded),
-                              onPressed: _currentIndex > 0
-                                  ? () => _pageController.previousPage(
-                                      duration:
-                                          const Duration(milliseconds: 300),
-                                      curve: Curves.ease)
-                                  : null,
-                            ),
-                            Text(
-                                "${_currentIndex + 1} / ${_verifiedTickets.length}",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            IconButton(
-                              tooltip: 'Next ticket',
-                              icon: const Icon(Icons.arrow_forward_ios_rounded),
-                              onPressed:
-                                  _currentIndex < _verifiedTickets.length - 1
-                                      ? () => _pageController.nextPage(
-                                          duration:
-                                              const Duration(milliseconds: 300),
-                                          curve: Curves.ease)
-                                      : null,
-                            ),
-                          ],
-                        ),
-
-                      const SizedBox(height: 24),
-
-                      // Download Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: OutlinedButton.icon(
-                          onPressed: () => _downloadTickets(_verifiedTickets),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppTheme.primaryColor),
-                            foregroundColor: AppTheme.primaryColor,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
+                  if (tickets.length > 1)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            tooltip: 'Previous ticket',
+                            color: Colors.white,
+                            icon: const Icon(Icons.arrow_back_ios_rounded),
+                            onPressed: _currentIndex > 0
+                                ? () => setState(() => _currentIndex--)
+                                : null,
                           ),
-                          icon: const Icon(Icons.picture_as_pdf),
-                          label: Text(
-                              _verifiedTickets.length > 1
-                                  ? "Download Consolidated PDF"
-                                  : "Download PDF",
+                          Text(
+                              'Ticket ${_currentIndex + 1} of ${tickets.length}',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
-                        ),
+                                  color: Colors.white,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700)),
+                          IconButton(
+                            tooltip: 'Next ticket',
+                            color: Colors.white,
+                            icon: const Icon(Icons.arrow_forward_ios_rounded),
+                            onPressed: _currentIndex < tickets.length - 1
+                                ? () => setState(() => _currentIndex++)
+                                : null,
+                          ),
+                        ],
                       ),
-                    ],
-                    const SizedBox(height: 16),
-                    // Add to Favorites Button
-                    if (_verifiedTickets.isNotEmpty)
-                      StatefulBuilder(builder: (context, setInternalState) {
-                        return FutureBuilder<bool>(
-                          future: Provider.of<TripController>(context,
-                                  listen: false)
-                              .isRouteFavorite(
-                            _verifiedTickets.first.tripData['originCity'] ??
-                                _verifiedTickets.first.tripData['fromCity'] ??
-                                '',
-                            _verifiedTickets
-                                    .first.tripData['destinationCity'] ??
-                                _verifiedTickets.first.tripData['toCity'] ??
-                                '',
-                          ),
-                          builder: (context, snapshot) {
-                            return AnimatedFavoriteButton(
-                              isFavorite: snapshot.data ?? false,
-                              onToggle: () async {
-                                await Provider.of<TripController>(context,
-                                        listen: false)
-                                    .toggleRouteFavorite(
-                                  _verifiedTickets
-                                          .first.tripData['originCity'] ??
-                                      _verifiedTickets
-                                          .first.tripData['fromCity'] ??
-                                      '',
-                                  _verifiedTickets
-                                          .first.tripData['destinationCity'] ??
-                                      _verifiedTickets
-                                          .first.tripData['toCity'] ??
-                                      '',
-                                  operatorName: _verifiedTickets
-                                      .first.tripData['operatorName'],
-                                );
-                                setInternalState(() {});
-                              },
-                            );
-                          },
-                        );
-                      }),
-                    const SizedBox(height: 40),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 56,
-                            child: OutlinedButton(
-                              onPressed: () {
-                                Navigator.of(context).pushAndRemoveUntil(
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const CustomerMainScreen(
-                                                initialIndex: 1)),
-                                    (route) => false);
-                              },
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(
-                                    color: isDark
-                                        ? Colors.white24
-                                        : Colors.black12),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                              ),
-                              child: Text("My Trips",
-                                  style: TextStyle(
-                                      fontFamily: 'Outfit',
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.black)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: SizedBox(
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const CustomerMainScreen(
-                                                initialIndex: 0)),
-                                    (route) => false);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primaryColor,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12))),
-                              child: const Text("Home",
-                                  style: TextStyle(
-                                      fontFamily: 'Outfit',
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
-                  ] else ...[
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.error_outline,
-                          color: Colors.red, size: 40),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      "Verification Failed",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontFamily: 'Outfit',
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _message,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontFamily: 'Inter',
-                          color: isDark ? Colors.white70 : Colors.black54),
-                    ),
-                    const SizedBox(height: 32),
+                  isDesktop ? _desktopCard(t, tickets) : _phoneCard(t),
+                  const SizedBox(height: 14),
+                  _favRow(t),
+                  if (!isDesktop) ...[
+                    Row(children: [
+                      Expanded(
+                          child: _whiteButton('Download PDF', Icons.download,
+                              () => _downloadTickets(tickets))),
+                      const SizedBox(width: 10),
+                      Expanded(
+                          child: _whiteButton('Share via SMS',
+                              Icons.sms_outlined, () => _sms(t),
+                              outlined: true)),
+                    ]),
+                    const SizedBox(height: 14),
                     SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                  builder: (_) => const CustomerMainScreen(
-                                      initialIndex: 0)),
-                              (route) => false);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade200,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                      height: 56,
+                      child: FilledButton(
+                        onPressed: () => _goTo(1),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: BL.crimsonDark,
+                          shape: const StadiumBorder(),
+                          textStyle: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w800),
                         ),
-                        child: const Text("Go Home",
-                            style: TextStyle(
-                                fontFamily: 'Outfit',
-                                color: Colors.black87,
-                                fontWeight: FontWeight.bold)),
+                        child: const Text('Go to My Trips'),
                       ),
-                    )
-                  ]
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -819,88 +605,343 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     );
   }
 
-  Widget _buildTicketCard(Ticket ticket, bool isDark) {
-    // Extract date for display
-    // Extract date for display
-    final tData = ticket.tripData;
-    final tripDateVal = tData['departureDateTime'] ?? tData['departureTime'];
-    DateTime tripDate;
-    if (tripDateVal is Timestamp) {
-      tripDate = tripDateVal.toDate();
-    } else if (tripDateVal is String) {
-      tripDate = DateTime.tryParse(tripDateVal) ?? DateTime.now();
-    } else {
-      tripDate = DateTime.now();
+  /// "Save this route" under the ticket, so it is one tap next time.
+  Widget _favRow(Ticket t) {
+    final from =
+        (t.tripData['originCity'] ?? t.tripData['fromCity'] ?? '').toString();
+    final to = (t.tripData['destinationCity'] ?? t.tripData['toCity'] ?? '')
+        .toString();
+    final c = Provider.of<TripController>(context, listen: false);
+    return FutureBuilder<bool>(
+      key: ValueKey('fav$_favTick'),
+      future: c.isRouteFavorite(from, to),
+      builder: (context, snap) {
+        final fav = snap.data ?? false;
+        return Center(
+          child: TextButton.icon(
+            onPressed: () async {
+              await c.toggleRouteFavorite(from, to,
+                  operatorName: t.tripData['operatorName']);
+              if (mounted) setState(() => _favTick++);
+            },
+            icon: Icon(fav ? Icons.favorite : Icons.favorite_border,
+                color: Colors.white),
+            label: Text(
+                fav ? 'Saved in Favourites' : 'Save this route in Favourites'),
+            style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                minimumSize: const Size(0, 48),
+                textStyle:
+                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _stateScaffold(Widget card) => Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: card,
+              ),
+            ),
+          ),
+        ),
+      );
+
+  Widget _whiteButton(String label, IconData icon, VoidCallback onTap,
+      {bool outlined = false}) {
+    return SizedBox(
+      height: 56,
+      child: FilledButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, size: 22),
+        label: Text(label),
+        style: FilledButton.styleFrom(
+          backgroundColor: outlined ? Colors.transparent : Colors.white,
+          foregroundColor: outlined ? Colors.white : BL.crimson,
+          shape: StadiumBorder(
+              side: outlined
+                  ? const BorderSide(color: Colors.white, width: 2)
+                  : BorderSide.none),
+          textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+        ),
+      ),
+    );
+  }
+
+  Widget _qr(Ticket t, double size) => Semantics(
+        label: 'QR code for your ticket',
+        image: true,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: BL.hairline),
+          ),
+          child: QrImageView(
+              data: t.shortId ?? t.ticketId,
+              version: QrVersions.auto,
+              size: size),
+        ),
+      );
+
+  Widget _row(String l, String v, {bool last = false, bool line = false}) =>
+      Container(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: line && !last
+            ? const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFF3EDEE))))
+            : null,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l, style: const TextStyle(fontSize: 17, color: BL.muted)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(v,
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      );
+
+  String _seats(Ticket t) => (t.seatNumbers.toList()..sort())
+      .map((e) => e == -1 ? 'chosen for you' : '$e')
+      .join(', ');
+
+  Widget _phoneCard(Ticket t) {
+    final d = _tripDate(t);
+    final bus = (t.tripData['busNumber'] ?? '').toString();
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 72 + 26,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                SizedBox(
+                  height: 72,
+                  width: double.infinity,
+                  child: Image.asset(cityPhoto(_to(t)),
+                      fit: BoxFit.cover, alignment: const Alignment(0, -0.4)),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 72 - 26,
+                  child: Center(
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: BL.success,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                      ),
+                      child: const Icon(Icons.check,
+                          color: Colors.white, size: 28),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 8, 22, 18),
+            child: Column(
+              children: [
+                const Text('Booking Confirmed',
+                    style:
+                        TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+                const Text(
+                    'Show the 4-digit code or let the conductor scan the QR',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: BL.muted)),
+                const SizedBox(height: 10),
+                _qr(t, 112),
+                const SizedBox(height: 4),
+                Text('E-TICKET · ${t.shortId ?? t.ticketId.substring(0, 8)}',
+                    style: const TextStyle(fontSize: 14, color: BL.muted)),
+                const SizedBox(height: 10),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFFDEEEE),
+                      borderRadius: BorderRadius.circular(14)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('4-DIGIT CODE',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.6,
+                              color: BL.crimsonDark)),
+                      const SizedBox(width: 12),
+                      Semantics(
+                        label: 'Verified code ${t.shortId ?? ''}',
+                        excludeSemantics: true,
+                        child: Text(t.shortId ?? '----',
+                            style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 5,
+                                color: BL.crimson)),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 28, color: BL.hairline),
+                if (bus.isNotEmpty) _row('Bus number', bus),
+                _row('Trip', '${_from(t)} to ${_to(t)}'),
+                _row('Leaves', DateFormat('EEE d MMM, hh:mm a').format(d)),
+                _row('Seats', _seats(t)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _desktopCard(Ticket t, List<Ticket> all) {
+    final d = _tripDate(t);
+    final bus = (t.tripData['busNumber'] ?? '').toString();
+    Widget action(String label, IconData? icon, VoidCallback onTap,
+        {required bool filled, Color? border}) {
+      final style = filled
+          ? FilledButton.styleFrom(
+              backgroundColor: BL.crimson,
+              minimumSize: const Size(0, 56),
+              padding: const EdgeInsets.symmetric(horizontal: 26),
+              shape: const StadiumBorder(),
+              textStyle:
+                  const TextStyle(fontSize: 17, fontWeight: FontWeight.w800))
+          : OutlinedButton.styleFrom(
+              foregroundColor: border == BL.crimson ? BL.crimson : BL.ink,
+              side: BorderSide(color: border ?? BL.border, width: 2),
+              minimumSize: const Size(0, 56),
+              padding: const EdgeInsets.symmetric(horizontal: 26),
+              shape: const StadiumBorder(),
+              textStyle:
+                  const TextStyle(fontSize: 17, fontWeight: FontWeight.w800));
+      final child = icon == null
+          ? Text(label)
+          : Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(icon, size: 20),
+              const SizedBox(width: 8),
+              Text(label)
+            ]);
+      return filled
+          ? FilledButton(onPressed: onTap, style: style, child: child)
+          : OutlinedButton(onPressed: onTap, style: style, child: child);
     }
 
-    final dateStr = DateFormat('MMM d, yyyy').format(tripDate);
-
     return Container(
-        margin: const EdgeInsets.only(bottom: 24),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-            border: Border.all(color: Colors.black12),
-            borderRadius: BorderRadius.circular(12)),
-        child: Column(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(28)),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(dateStr,
-                style: TextStyle(
-                    fontFamily: 'Outfit',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: isDark ? Colors.white : Colors.black)),
-            Text(
-                "${tData['fromCity'] ?? tData['originCity'] ?? '?'} ➔ ${tData['toCity'] ?? tData['destinationCity'] ?? '?'}",
-                style: const TextStyle(
-                    fontFamily: 'Inter', fontSize: 14, color: Colors.black54)),
-            const SizedBox(height: 12),
-            QrImageView(
-              data: ticket.shortId ?? ticket.ticketId,
-              version: QrVersions.auto,
-              size: 150,
+            Expanded(
+              flex: 6,
+              child: Padding(
+                padding: const EdgeInsets.all(36),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: const BoxDecoration(
+                          color: BL.success, shape: BoxShape.circle),
+                      child: const Icon(Icons.check,
+                          color: Colors.white, size: 34),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('Booking Confirmed',
+                        style: TextStyle(
+                            fontSize: 34, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 4),
+                    const Text(
+                        'Payment Confirmed! Your ticket is saved in My Trips.',
+                        style: TextStyle(fontSize: 18, color: BL.muted)),
+                    const SizedBox(height: 18),
+                    _row('Trip', '${_from(t)} to ${_to(t)}', line: true),
+                    _row('Leaves',
+                        DateFormat('EEE d MMM yyyy, hh:mm a').format(d),
+                        line: true),
+                    if (bus.isNotEmpty) _row('Bus', bus, line: true),
+                    _row('Seats', _seats(t), line: true),
+                    _row('Passenger', t.passengerName, last: true, line: true),
+                    const SizedBox(height: 22),
+                    Wrap(spacing: 10, runSpacing: 10, children: [
+                      action('Download PDF', Icons.download,
+                          () => _downloadTickets(all),
+                          filled: true),
+                      action('Share via SMS', null, () => _sms(t),
+                          filled: false, border: BL.crimson),
+                      action('My Trips', null, () => _goTo(1), filled: false),
+                    ]),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              "SHOW 4-DIGIT CODE OR SCAN QR",
-              style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red),
+            Expanded(
+              flex: 5,
+              child: Container(
+                color: const Color(0xFFFDEEEE),
+                padding: const EdgeInsets.all(36),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('E-TICKET',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.1,
+                            color: BL.crimsonDark)),
+                    const SizedBox(height: 12),
+                    _qr(t, 200),
+                    const SizedBox(height: 12),
+                    const Text(
+                        'Show the 4-digit code or let the conductor scan the QR',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16, color: BL.muted)),
+                    const SizedBox(height: 8),
+                    Semantics(
+                      label: 'Verified code ${t.shortId ?? ''}',
+                      excludeSemantics: true,
+                      child: Text(t.shortId ?? '----',
+                          style: const TextStyle(
+                              fontSize: 44,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 9,
+                              color: BL.crimson)),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
-            Text("TICKET CODE: ${ticket.shortId ?? 'N/A'}",
-                style: const TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black)),
-            const SizedBox(height: 4),
-            SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    final success = await SmsService.sendTicketCopy(ticket);
-                    if (mounted) {
-                      if (!success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text("Could not launch SMS app."),
-                                backgroundColor: Colors.red));
-                      }
-                    }
-                  },
-                  icon: const Icon(Icons.sms_outlined),
-                  label: const Text("Share via SMS"),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: isDark ? Colors.white : Colors.black,
-                    side: BorderSide(color: Colors.grey.shade400),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                )),
           ],
-        ));
+        ),
+      ),
+    );
   }
 }

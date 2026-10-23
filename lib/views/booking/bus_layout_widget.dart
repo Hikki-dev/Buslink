@@ -4,7 +4,7 @@ import '../../utils/app_theme.dart';
 import '../../services/firestore_service.dart';
 
 /// Seat button size. 48px meets the usual minimum touch target.
-const double _kSeat = 48;
+const double _kSeat = 52;
 
 class BusLayoutWidget extends StatefulWidget {
   final Trip trip;
@@ -39,28 +39,14 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 320, // seats are 48px tall/wide: easy to tap
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-      decoration: BoxDecoration(
-        color: widget.isDark ? const Color(0xFF2D3142) : Colors.white,
-        borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(50), bottom: Radius.circular(30)),
-        border: Border.all(
-            color: widget.isDark ? Colors.white10 : Colors.grey.shade200,
-            width: 2),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 30,
-              offset: const Offset(0, 10))
-        ],
-      ),
+      width: 320,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Column(
         children: [
           _buildDriverArea(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           _buildSeatGrid(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
           _buildBackOfBus(),
         ],
       ),
@@ -68,56 +54,20 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
   }
 
   Widget _buildDriverArea() {
+    const grey = Color(0xFF4A5560);
     return Container(
-      padding: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-          border: Border(
-              bottom: BorderSide(
-                  color: widget.isDark ? Colors.white10 : Colors.black12))),
-      child: Row(
+      padding: const EdgeInsets.only(bottom: 8),
+      decoration: const BoxDecoration(
+          border:
+              Border(bottom: BorderSide(color: Color(0xFFCFC4C5), width: 2))),
+      child: const Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // FRONT ENTRANCE
-          Column(
-            children: [
-              const Icon(Icons.sensor_door_outlined,
-                  color: Colors.green,
-                  size: 24), // Changed to Green for Entrance
-              const SizedBox(height: 4),
-              Text("Entrance",
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: widget.isDark ? Colors.white70 : Colors.black54,
-                      fontWeight: FontWeight.bold)),
-            ],
+          Expanded(
+            child: Text('Front of bus (driver)',
+                style: TextStyle(fontSize: 16, color: grey)),
           ),
-
-          // DRIVER (Steering Wheel)
-          Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                      color: widget.isDark ? Colors.white24 : Colors.black12,
-                      width: 2),
-                ),
-                child: Icon(
-                  Icons.directions_car,
-                  size: 24,
-                  color: widget.isDark ? Colors.white54 : Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text("Driver",
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: widget.isDark ? Colors.white70 : Colors.black54,
-                      fontWeight: FontWeight.bold)),
-            ],
-          )
+          Icon(Icons.sports_motorsports_outlined, size: 26, color: grey),
         ],
       ),
     );
@@ -316,15 +266,7 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
     );
   }
 
-  Widget _buildBackOfBus() {
-    return Container(
-      height: 10,
-      width: double.infinity,
-      decoration: BoxDecoration(
-          color: widget.isDark ? Colors.white10 : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(10)),
-    );
-  }
+  Widget _buildBackOfBus() => const SizedBox(height: 4);
 }
 
 class _SeatItem extends StatefulWidget {
@@ -374,13 +316,11 @@ class _SeatItemState extends State<_SeatItem> {
     } else if (isBlocked) {
       seatColor = Colors.amber;
     } else if (isBooked) {
-      seatColor = Colors.grey.shade300; // taken: grey, not an alarming red
+      seatColor = const Color(0xFFD5DAE0); // taken: grey, not an alarming red
     } else if (widget.isSelected) {
       seatColor = AppTheme.primaryColor;
     } else {
-      seatColor = isHovered
-          ? AppTheme.primaryColor.withValues(alpha: 0.1)
-          : Colors.white;
+      seatColor = isHovered ? const Color(0xFFFDEEEE) : Colors.white;
     }
 
     final String stateLabel = widget.isHighlighted
@@ -422,51 +362,39 @@ class _SeatItemState extends State<_SeatItem> {
                           : AppTheme.primaryColor)
                       : isUnavailable
                           ? Colors.transparent
-                          : Colors.grey.shade500,
-                  width: 2),
-              boxShadow: widget.isSelected || widget.isHighlighted
-                  ? [
-                      BoxShadow(
-                          color: (widget.isHighlighted
-                                  ? Colors.green
-                                  : AppTheme.primaryColor)
-                              .withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4))
-                    ]
-                  : null,
+                          : const Color(0xFF8A95A3),
+                  width: 1.5),
             ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Center(
-                  child: isBlocked
-                      ? const Icon(Icons.block, size: 20, color: Colors.black54)
-                      : (isBooked && !widget.isHighlighted)
-                          ? Icon(Icons.close,
-                              size: 22, color: Colors.grey.shade700)
-                          : Text(
+            child: Center(
+              child: isBlocked
+                  ? const Icon(Icons.block, size: 20, color: Colors.black54)
+                  : (isBooked && !widget.isHighlighted)
+                      ? const Icon(Icons.close,
+                          size: 22, color: Color(0xFF4A5560))
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // A tick as well as the colour, so "selected"
+                            // never depends on colour alone.
+                            if (widget.isSelected && !widget.isHighlighted)
+                              const Padding(
+                                padding: EdgeInsets.only(right: 2),
+                                child: Icon(Icons.check,
+                                    size: 16, color: Colors.white),
+                              ),
+                            Text(
                               "${widget.seatNum}",
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
                                 color:
                                     (widget.isSelected || widget.isHighlighted)
                                         ? Colors.white
-                                        : Colors.black,
+                                        : const Color(0xFF0B090A),
                               ),
                             ),
-                ),
-                // A tick as well as the colour, so "selected" never depends
-                // on colour alone.
-                if (widget.isSelected && !widget.isHighlighted)
-                  const Positioned(
-                    top: 2,
-                    right: 2,
-                    child:
-                        Icon(Icons.check_circle, size: 14, color: Colors.white),
-                  ),
-              ],
+                          ],
+                        ),
             ),
           ),
         ),

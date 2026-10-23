@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_view_model.dart'; // EnrichedTrip
-import '../../utils/app_theme.dart';
 import '../../services/firestore_service.dart';
 import '../../services/sms_service.dart'; // Added for SMS
 
@@ -16,6 +15,10 @@ import 'payment_success_screen.dart';
 import 'bus_layout_widget.dart';
 import '../auth/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import '../widgets/bl_widgets.dart';
+import '../../utils/bl_colors.dart';
+import '../home/home_sections.dart' show cityPhoto;
 
 class SeatSelectionScreen extends StatefulWidget {
   final EnrichedTrip trip;
@@ -41,365 +44,267 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     });
   }
 
+  static const _maxSeats = 6;
+
+  void _toggle(TripController c, int seat) {
+    final has = c.selectedSeats.contains(seat.toString());
+    if (!has &&
+        !widget.isConductorMode &&
+        !c.isBulkBooking &&
+        c.selectedSeats.length >= _maxSeats) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You can choose up to 6 seats.')));
+      return;
+    }
+    c.toggleSeat(seat.toString());
+  }
+
+  void _continue(BuildContext context, TripController controller) {
+    if (widget.isConductorMode) {
+      _handleConductorBooking(context, controller);
+      return;
+    }
+    final user = Provider.of<User?>(context, listen: false);
+    if (user == null) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Please sign in',
+              style: TextStyle(fontWeight: FontWeight.w700)),
+          content: const Text(
+              'To keep your seats and get your ticket, sign in to your BusLink account.',
+              style: TextStyle(fontSize: 17)),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Not now', style: TextStyle(fontSize: 16))),
+            FilledButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()));
+                },
+                style: FilledButton.styleFrom(backgroundColor: BL.crimson),
+                child: const Text('Sign in', style: TextStyle(fontSize: 16))),
+          ],
+        ),
+      );
+    } else if (controller.isBulkBooking) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => BulkConfirmationScreen(trip: widget.trip)));
+    } else {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (_) => const PaymentScreen()));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
     final isDesktop = MediaQuery.of(context).size.width > 900;
-    List<int> selectedSeats =
-        controller.selectedSeats.map((e) => int.tryParse(e) ?? 0).toList();
+    final selected = controller.selectedSeats
+        .map((e) => int.tryParse(e) ?? 0)
+        .toList()
+      ..sort();
+    final trip = widget.trip;
+    final total = trip.price *
+        selected.length *
+        (controller.isBulkBooking && controller.bulkDates.isNotEmpty
+            ? controller.bulkDates.length
+            : 1);
+    final totalText = 'LKR ${NumberFormat('#,###').format(total)}';
+    final cta =
+        widget.isConductorMode ? 'Issue ticket (cash)' : 'Continue to payment';
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Determine if we need an AppBar
-    // - On Mobile: Yes (unless specific case?)
-    // - On Desktop: Only if showBackButton is true
-    final bool showAppBar = !isDesktop || widget.showBackButton;
-
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: showAppBar
-          ? AppBar(
-              title: Text("Select Seats",
-                  style: TextStyle(
-                      fontFamily: 'Outfit',
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black)),
-              centerTitle: true,
-              backgroundColor: Theme.of(context).appBarTheme.backgroundColor ??
-                  Theme.of(context).scaffoldBackgroundColor,
-              elevation: 0,
-              iconTheme:
-                  IconThemeData(color: isDark ? Colors.white : Colors.black),
-              leading: widget.showBackButton
-                  ? const BackButton()
-                  : null, // Default auto-leading is usually fine
-            )
-          : null,
-      body: Column(
-        children: [
-          if (isDesktop) const DesktopNavBar(),
-          Expanded(
-            child: Stack(
-              children: [
-                // Scrollable Content
-                SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 140),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 40),
-                      Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1200),
-                          child: Column(
-                            children: [
-                              _buildHeader(context, widget.trip, isDark),
-                              const SizedBox(height: 40),
-                              _buildLegend(isDark),
-                              const SizedBox(height: 40),
-
-                              // The Bus Visual (Refactored)
-                              StreamBuilder<EnrichedTrip?>(
-                                stream: controller
-                                    .getTripRealtimeStream(widget.trip.trip.id),
-                                initialData: widget.trip,
-                                builder: (context, snapshot) {
-                                  final currentTrip =
-                                      snapshot.data?.trip ?? widget.trip.trip;
-                                  return BusLayoutWidget(
-                                    trip: currentTrip,
-                                    totalSeats: widget.trip.totalSeats,
-                                    selectedSeats: selectedSeats,
-                                    isDark: isDark,
-                                    onSeatToggle: (seatNum) {
-                                      controller.toggleSeat(seatNum.toString());
-                                    },
-                                  );
-                                },
-                              ),
-
-                              const SizedBox(height: 100),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (isDesktop) const AppFooter(),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+    final map = StreamBuilder<EnrichedTrip?>(
+      stream: controller.getTripRealtimeStream(trip.trip.id),
+      initialData: trip,
+      builder: (context, snapshot) => BusLayoutWidget(
+        trip: snapshot.data?.trip ?? trip.trip,
+        totalSeats: trip.totalSeats,
+        selectedSeats: selected,
+        isDark: false,
+        onSeatToggle: (n) => _toggle(controller, n),
       ),
-      bottomNavigationBar: selectedSeats.isNotEmpty
-          ? Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 30,
-                      offset: const Offset(0, -5))
+    );
+
+    if (!isDesktop) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Column(
+          children: [
+            Container(
+              color: BL.crimson,
+              padding: EdgeInsets.fromLTRB(
+                  8, MediaQuery.paddingOf(context).top + 4, 8, 16),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Go back',
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white),
+                    constraints:
+                        const BoxConstraints(minWidth: 48, minHeight: 48),
+                  ),
+                  const SizedBox(width: 4),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Choose your seats',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700)),
+                        Text('You can pick up to 6',
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 16)),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-              padding: const EdgeInsets.all(24),
-              child: SafeArea(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1200),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "${selectedSeats.length} Seats Selected",
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.7)
-                                    : Colors.black
-                                        .withValues(alpha: 0.7), // No Grey
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "LKR ${(widget.trip.price * selectedSeats.length).toStringAsFixed(0)}",
-                              style: TextStyle(
-                                fontFamily: 'Outfit',
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? Colors.white
-                                    : Colors.black, // Strict
-                              ),
-                            ),
-                            Text(
-                              selectedSeats.join(", "),
-                              overflow: TextOverflow.ellipsis,
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+              decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: BL.hairline))),
+              child: const _Legend(yours: 'Yours', spaced: true),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: map),
+              ),
+            ),
+            if (selected.isNotEmpty)
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                    20, 16, 20, 12 + MediaQuery.paddingOf(context).bottom),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: BL.hairline)),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Color(0x14660708),
+                        blurRadius: 14,
+                        offset: Offset(0, -4))
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Expanded(
+                          child: Text(
+                              '${selected.length} seat${selected.length == 1 ? '' : 's'}: ${selected.join(', ')}',
                               style: const TextStyle(
-                                fontFamily: 'Outfit',
-                                color: AppTheme.primaryColor,
+                                  fontSize: 18, fontWeight: FontWeight.w500)),
+                        ),
+                        Text(totalText,
+                            style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                                color: BL.crimson)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    BlPrimaryButton(
+                        label: cta,
+                        color: widget.isConductorMode ? BL.success : BL.crimson,
+                        onTap: () => _continue(context, controller)),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+
+    // ---------------------------------------------------------- desktop
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const DesktopNavBar(),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 56),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const BookingSteps(current: 1),
+                      const SizedBox(height: 24),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(28),
+                              decoration: blCard(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Wrap(
+                                    alignment: WrapAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    runSpacing: 12,
+                                    children: const [
+                                      Text('Choose your seats',
+                                          style: TextStyle(
+                                              fontSize: 30,
+                                              fontWeight: FontWeight.w700)),
+                                      _Legend(yours: 'Your choice'),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  const Text('You can choose up to 6 seats.',
+                                      style: TextStyle(
+                                          fontSize: 17, color: BL.muted)),
+                                  const SizedBox(height: 28),
+                                  Center(child: map),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 24),
+                          SizedBox(
+                            width: 380,
+                            child: _Summary(
+                              trip: trip,
+                              selected: selected,
+                              unitPrice: trip.price,
+                              totalText: totalText,
+                              cta: cta,
+                              ctaColor: widget.isConductorMode
+                                  ? BL.success
+                                  : BL.crimson,
+                              onContinue: selected.isEmpty
+                                  ? null
+                                  : () => _continue(context, controller),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          if (widget.isConductorMode) {
-                            _handleConductorBooking(context, controller);
-                          } else {
-                            final user =
-                                Provider.of<User?>(context, listen: false);
-                            if (user == null) {
-                              // GUEST BOOKING ATTEMPT
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  backgroundColor: Theme.of(context).cardColor,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16)),
-                                  title: Text("Sign In Required",
-                                      style: TextStyle(
-                                          fontFamily: 'Outfit',
-                                          fontWeight: FontWeight.bold,
-                                          color: isDark
-                                              ? Colors.white
-                                              : Colors.black)),
-                                  content: Text(
-                                      "To confirm your booking, you need to sign in to your BusLink account.",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 15,
-                                          color: isDark
-                                              ? Colors.white
-                                              : Colors.black)),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () => Navigator.pop(ctx),
-                                        child: Text("Close",
-                                            style: TextStyle(
-                                                color: isDark
-                                                    ? Colors.white
-                                                    : Colors.black))),
-                                    ElevatedButton(
-                                        onPressed: () {
-                                          Navigator.pop(ctx);
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      const LoginScreen()));
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                AppTheme.primaryColor,
-                                            foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8))),
-                                        child: const Text("Sign In"))
-                                  ],
-                                ),
-                              );
-                            } else {
-                              if (controller.isBulkBooking) {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) => BulkConfirmationScreen(
-                                            trip: widget.trip)));
-                              } else {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) => const PaymentScreen()));
-                              }
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: widget.isConductorMode
-                                ? Colors.green
-                                : AppTheme.primaryColor,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 32, vertical: 20),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12))),
-                        child: Text(
-                            widget.isConductorMode
-                                ? "Issue Ticket (Cash)"
-                                : "Proceed to Pay",
-                            style: const TextStyle(
-                                fontFamily: 'Outfit',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.white)),
-                      )
                     ],
                   ),
                 ),
               ),
-            )
-          : null,
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, EnrichedTrip trip, bool isDark) {
-    final controller = Provider.of<TripController>(context);
-    final isBulk = controller.isBulkBooking && controller.bulkDates.length > 1;
-
-    return Column(
-      children: [
-        if (isBulk)
-          Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor,
-              borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(
-                "Multi-Day Booking (${controller.bulkDates.length} Days)",
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold)),
-          ),
-        Text(trip.operatorName,
-            style: TextStyle(
-                fontFamily: 'Outfit',
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black)),
-        const SizedBox(height: 8),
-        Text("${trip.fromCity} ➔ ${trip.toCity}",
-            style: TextStyle(
-                fontFamily: 'Inter',
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.7)
-                    : Colors.black.withValues(alpha: 0.7), // No Grey
-                fontSize: 16)),
-      ],
-    );
-  }
-
-  // Helper for legend items
-  Widget _buildLegendItem(
-      Color color, Color borderColor, String label, bool isDark,
-      {IconData? icon}) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 32, // Increased size for visibility
-          height: 32,
-          decoration: BoxDecoration(
-            color: color,
-            border: Border.all(
-                color: borderColor.withValues(alpha: 0.5),
-                width: 2), // High contrast border
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: icon != null
-              ? Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.9))
-              : null,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.7)
-                : Colors.black.withValues(alpha: 0.7), // No Grey
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLegend(bool isDark) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildLegendItem(
-              isDark ? Colors.transparent : Colors.white,
-              isDark ? Colors.white : Colors.black, // High contrast border
-              "Available",
-              isDark,
-            ),
-            _buildLegendItem(
-              AppTheme.primaryColor,
-              AppTheme.primaryColor,
-              "Selected",
-              isDark,
-            ),
-            _buildLegendItem(
-              Colors.red.shade300,
-              Colors.red.shade300,
-              "Booked",
-              isDark,
-              icon: Icons.close,
-            ),
-            _buildLegendItem(
-              Colors.amber,
-              Colors.amber,
-              "Blocked",
-              isDark,
-              icon: Icons.block,
-            ),
+            const AppFooter(),
           ],
         ),
       ),
@@ -545,5 +450,203 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                     child: const Text("Confirm & Send SMS"))
               ],
             ));
+  }
+}
+
+/// Free / Yours / Taken key. Each has a shape as well as a colour.
+class _Legend extends StatelessWidget {
+  final String yours;
+  final bool spaced;
+  const _Legend({required this.yours, this.spaced = false});
+
+  Widget _chip(Color fill, Color? border, IconData? icon, Color iconColor,
+          String label) =>
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: BorderRadius.circular(6),
+              border:
+                  border == null ? null : Border.all(color: border, width: 1.5),
+            ),
+            child: icon == null ? null : Icon(icon, size: 14, color: iconColor),
+          ),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(fontSize: 15)),
+        ],
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      _chip(Colors.white, const Color(0xFF8A95A3), null, BL.ink, 'Free'),
+      _chip(BL.crimson, null, Icons.check, Colors.white, yours),
+      _chip(const Color(0xFFD5DAE0), null, Icons.close, BL.muted, 'Taken'),
+    ];
+    return spaced
+        ? Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: items)
+        : Wrap(spacing: 20, runSpacing: 8, children: items);
+  }
+}
+
+class _Summary extends StatelessWidget {
+  final EnrichedTrip trip;
+  final List<int> selected;
+  final double unitPrice;
+  final String totalText;
+  final String cta;
+  final Color ctaColor;
+  final VoidCallback? onContinue;
+  const _Summary({
+    required this.trip,
+    required this.selected,
+    required this.unitPrice,
+    required this.totalText,
+    required this.cta,
+    required this.ctaColor,
+    required this.onContinue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fmt = NumberFormat('#,###');
+    final bus = [
+      if (trip.busType.isNotEmpty) trip.busType,
+      if (trip.busNumber.isNotEmpty) trip.busNumber,
+    ].join(' · ');
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: blCard(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 150,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(cityPhoto(trip.toCity),
+                    fit: BoxFit.cover, alignment: const Alignment(0, -0.4)),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x0D000000), Color(0xD9320304)],
+                      stops: [0.2, 1],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 22,
+                  right: 22,
+                  bottom: 16,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('${trip.fromCity} to ${trip.toCity}',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700)),
+                      Text(
+                          '${DateFormat('EEE d MMM').format(trip.departureTime)} · ${DateFormat('hh:mm a').format(trip.departureTime)}',
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(trip.operatorName,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w700)),
+                if (bus.isNotEmpty)
+                  Text(bus,
+                      style: const TextStyle(fontSize: 16, color: BL.muted)),
+                const Divider(height: 36, color: BL.hairline),
+                const Text('Your seats',
+                    style: TextStyle(fontSize: 16, color: BL.muted)),
+                const SizedBox(height: 8),
+                if (selected.isEmpty)
+                  const Text('Tap a seat on the map to choose it.',
+                      style: TextStyle(fontSize: 17))
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final n in selected)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                              color: BL.blush,
+                              borderRadius: BorderRadius.circular(20)),
+                          child: Text('Seat $n',
+                              style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: BL.crimsonDark)),
+                        ),
+                    ],
+                  ),
+                const Divider(height: 36, color: BL.hairline),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                        '${selected.length} seat${selected.length == 1 ? '' : 's'} × LKR ${fmt.format(unitPrice)}',
+                        style: const TextStyle(fontSize: 17)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    const Text('Total',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w700)),
+                    Text(totalText,
+                        style: const TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                            color: BL.crimson)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                BlPrimaryButton(label: cta, color: ctaColor, onTap: onContinue),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: TextButton(
+                    onPressed: () => Navigator.maybePop(context),
+                    style: TextButton.styleFrom(
+                        foregroundColor: BL.crimson,
+                        textStyle: const TextStyle(
+                            fontSize: 17, fontWeight: FontWeight.w700)),
+                    child: const Text('Back to buses'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

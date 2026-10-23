@@ -14,11 +14,11 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
-import '../../utils/app_theme.dart';
+import '../../utils/bl_colors.dart';
+import '../home/home_sections.dart' show cityPhoto;
 import '../../services/auth_service.dart';
 import '../../services/notification_service.dart'; // Added
 import '../tracking/track_bus_screen.dart'; // Added
-import '../widgets/animated_favorite_button.dart';
 // Added
 
 // import '../home/home_screen.dart'; // Unused
@@ -36,15 +36,14 @@ class TicketScreen extends StatefulWidget {
 }
 
 class _TicketScreenState extends State<TicketScreen> {
+  int _index = 0;
+  int _favTick = 0;
+
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TripController>(context);
-    // Added
-    // final authService = Provider.of<AuthService>(context, listen: false); // Unused
-    // final user = authService.currentUser; // Unused
     final Trip? trip = widget.tripArg ?? controller.selectedTrip?.trip;
 
-    // Determine if single or bulk
     List<Ticket> tickets = [];
     if (widget.ticketsArg != null && widget.ticketsArg!.isNotEmpty) {
       tickets = widget.ticketsArg!;
@@ -56,115 +55,305 @@ class _TicketScreenState extends State<TicketScreen> {
 
     if (trip == null || tickets.isEmpty) {
       return Scaffold(
-        backgroundColor: Colors.grey.shade50,
-        body: const Center(child: Text("Error loading ticket details.")),
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+            backgroundColor: Colors.white,
+            iconTheme: const IconThemeData(color: BL.ink)),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+                'We could not open this ticket. Go back to My Trips and try again.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18)),
+          ),
+        ),
       );
     }
 
     final isBulk = tickets.length > 1;
-    final mainTicket = tickets.first;
+    final ticket = tickets[_index.clamp(0, tickets.length - 1)];
+    final isDesktop = MediaQuery.of(context).size.width > 900;
+    final live = trip.status != 'completed' && trip.status != 'cancelled';
+    final code = ticket.shortId ?? ticket.ticketId.substring(0, 4);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Theme.of(context).cardColor,
-        leading: IconButton(
-          tooltip: 'Close',
-          icon:
-              Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(isBulk ? "${"Bulk Booking"} (${tickets.length})" : "Route",
-            style: TextStyle(
-                fontFamily: 'Outfit',
-                color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        actions: [
-          FutureBuilder<bool>(
-            future: Provider.of<TripController>(context, listen: false)
-                .isRouteFavorite(trip.fromCity, trip.toCity),
-            builder: (context, snapshot) {
-              return AnimatedFavoriteButton(
-                isFavorite: snapshot.data ?? false,
-                onToggle: () async {
-                  await Provider.of<TripController>(context, listen: false)
-                      .toggleRouteFavorite(trip.fromCity, trip.toCity);
-                  // Trigger rebuild to update local state
-                  (context as Element).markNeedsBuild();
-                },
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.chat_bubble_outline,
-                color: Theme.of(context).colorScheme.onSurface),
-            onPressed: () => _showFeedbackDialog(context),
-            tooltip: "App Feedback",
-          ),
-          IconButton(
-            icon: Icon(Icons.download_rounded,
-                color: Theme.of(context).colorScheme.onSurface),
-            onPressed: () => _downloadPdf(context, trip, tickets),
-            tooltip: "Download PDF",
-          )
-        ],
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+    Widget row(String l, String v) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(isBulk ? "${"Bundle"} (${tickets.length})" : "E-Ticket",
-                  style: TextStyle(
-                      fontFamily: 'Outfit',
-                      letterSpacing: 2,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant
-                          .withValues(alpha: 0.5))),
-              const SizedBox(height: 16),
-              if (isBulk)
-                SizedBox(
-                  height: 600,
-                  child: PageView.builder(
-                    itemCount: tickets.length,
-                    controller: PageController(viewportFraction: 0.9),
-                    itemBuilder: (ctx, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: SingleChildScrollView(
-                          child:
-                              _buildTicketCard(context, trip, tickets[index]),
-                        ),
-                      );
-                    },
-                  ),
-                )
-              else
-                _buildTicketCard(context, trip, mainTicket),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _downloadPdf(context, trip, tickets),
-                  icon: const Icon(Icons.picture_as_pdf),
-                  label: Text(
-                      isBulk ? "Download Consolidated PDF" : "Download PDF"),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 20),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12))),
-                ),
-              )
+              Text(l, style: const TextStyle(fontSize: 16, color: BL.muted)),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(v,
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
+              ),
             ],
           ),
+        );
+
+    final seats = (ticket.seatNumbers.toList()..sort()).join(', ');
+    final card = Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 98,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                SizedBox(
+                  height: 72,
+                  width: double.infinity,
+                  child: Image.asset(cityPhoto(trip.toCity),
+                      fit: BoxFit.cover, alignment: const Alignment(0, -0.4)),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 46,
+                  child: Center(
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: BL.success,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                      ),
+                      child: const Icon(Icons.check,
+                          color: Colors.white, size: 28),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 8, 22, 18),
+            child: Column(
+              children: [
+                Text(
+                    isBulk
+                        ? 'Ticket ${_index + 1} of ${tickets.length}'
+                        : 'Your ticket',
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.w800)),
+                const Text(
+                    'Show the 4-digit code or let the conductor scan the QR',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: BL.muted)),
+                const SizedBox(height: 10),
+                Semantics(
+                  label: 'QR code for your ticket',
+                  image: true,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: BL.hairline),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: QrImageView(
+                      data: ticket.ticketId,
+                      version: QrVersions.auto,
+                      size: isDesktop ? 180 : 130,
+                      eyeStyle: const QrEyeStyle(
+                          eyeShape: QrEyeShape.square, color: Colors.black),
+                      dataModuleStyle: const QrDataModuleStyle(
+                          dataModuleShape: QrDataModuleShape.square,
+                          color: Colors.black),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFFDEEEE),
+                      borderRadius: BorderRadius.circular(14)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('4-DIGIT CODE',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.6,
+                              color: BL.crimsonDark)),
+                      const SizedBox(width: 12),
+                      Semantics(
+                        label: 'Verified code $code',
+                        excludeSemantics: true,
+                        child: Text(code,
+                            style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 5,
+                                color: BL.crimson)),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 28, color: BL.hairline),
+                row('Trip', '${trip.fromCity} to ${trip.toCity}'),
+                if (trip.via.isNotEmpty && trip.via != 'Direct')
+                  row('Via', trip.via),
+                row(
+                    'Leaves',
+                    DateFormat('EEE d MMM, hh:mm a')
+                        .format(trip.departureTime)),
+                row('Seats', seats),
+                row('Passenger', ticket.passengerName),
+                row('Total paid',
+                    'LKR ${NumberFormat('#,###').format(ticket.totalAmount)}'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    Widget pill(String label, IconData icon, VoidCallback onTap,
+            {bool outlined = false}) =>
+        SizedBox(
+          height: 56,
+          child: FilledButton.icon(
+            onPressed: onTap,
+            icon: Icon(icon, size: 22),
+            label: Text(label),
+            style: FilledButton.styleFrom(
+              backgroundColor: outlined ? Colors.transparent : Colors.white,
+              foregroundColor: outlined ? Colors.white : BL.crimson,
+              shape: StadiumBorder(
+                  side: outlined
+                      ? const BorderSide(color: Colors.white, width: 2)
+                      : BorderSide.none),
+              textStyle:
+                  const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
+          ),
+        );
+
+    return Scaffold(
+      backgroundColor: BL.crimson,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Close',
+                    color: Colors.white,
+                    iconSize: 28,
+                    constraints:
+                        const BoxConstraints(minWidth: 48, minHeight: 48),
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Spacer(),
+                  FutureBuilder<bool>(
+                    key: ValueKey('fav$_favTick'),
+                    future:
+                        controller.isRouteFavorite(trip.fromCity, trip.toCity),
+                    builder: (context, snap) => IconButton(
+                      tooltip: (snap.data ?? false)
+                          ? 'Remove route from Favourites'
+                          : 'Save route in Favourites',
+                      color: Colors.white,
+                      constraints:
+                          const BoxConstraints(minWidth: 48, minHeight: 48),
+                      icon: Icon((snap.data ?? false)
+                          ? Icons.favorite
+                          : Icons.favorite_border),
+                      onPressed: () async {
+                        await controller.toggleRouteFavorite(
+                            trip.fromCity, trip.toCity);
+                        if (mounted) setState(() => _favTick++);
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Tell us what you think of the app',
+                    color: Colors.white,
+                    constraints:
+                        const BoxConstraints(minWidth: 48, minHeight: 48),
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    onPressed: () => _showFeedbackDialog(context),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(18, 6, 18, 24),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (isBulk)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                tooltip: 'Previous ticket',
+                                color: Colors.white,
+                                icon: const Icon(Icons.arrow_back_ios_rounded),
+                                onPressed: _index > 0
+                                    ? () => setState(() => _index--)
+                                    : null,
+                              ),
+                              Text('${_index + 1} / ${tickets.length}',
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w700)),
+                              IconButton(
+                                tooltip: 'Next ticket',
+                                color: Colors.white,
+                                icon:
+                                    const Icon(Icons.arrow_forward_ios_rounded),
+                                onPressed: _index < tickets.length - 1
+                                    ? () => setState(() => _index++)
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        card,
+                        const SizedBox(height: 14),
+                        Row(children: [
+                          Expanded(
+                              child: pill(
+                                  isBulk ? 'Download all' : 'Download PDF',
+                                  Icons.download,
+                                  () => _downloadPdf(context, trip, tickets))),
+                          if (live) ...[
+                            const SizedBox(width: 10),
+                            Expanded(
+                                child: pill('Track bus', Icons.gps_fixed, () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          TrackBusScreen(trip: trip)));
+                            }, outlined: true)),
+                          ],
+                        ]),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -174,307 +363,6 @@ class _TicketScreenState extends State<TicketScreen> {
     showDialog(
       context: context,
       builder: (ctx) => _FeedbackDialog(),
-    );
-  }
-
-  Widget _buildTicketCard(BuildContext context, Trip trip, Ticket ticket) {
-    // Added
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 400),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 40,
-              offset: const Offset(0, 20))
-        ],
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-                color: AppTheme.primaryColor,
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24))),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Boarding Pass",
-                    style: TextStyle(
-                        fontFamily: 'Outfit',
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18)),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(4)),
-                  child: Text("Confirmed".toUpperCase(),
-                      style: TextStyle(
-                          fontFamily: 'Inter',
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold)),
-                )
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              children: [
-                // Route
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("FROM",
-                            style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant)),
-                        Text(trip.fromCity.toLowerCase(), // Translated City
-                            style: const TextStyle(
-                                fontFamily: 'Outfit',
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Icon(Icons.directions_bus,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant
-                                .withValues(alpha: 0.3),
-                            size: 32),
-                        if (trip.via.isNotEmpty && trip.via != 'Direct')
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
-                            child: Text(
-                              "Via ${trip.via}",
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant
-                                    .withValues(alpha: 0.7),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text("TO",
-                            style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant)),
-                        Text(trip.toCity.toLowerCase(), // Translated City
-                            style: const TextStyle(
-                                fontFamily: 'Outfit',
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold)),
-                      ],
-                    )
-                  ],
-                ),
-                const SizedBox(height: 32),
-
-                // Info Grid
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _infoCol("TRAVEL DATES",
-                        DateFormat('MMM d').format(trip.departureTime)),
-                    _infoCol("TIME",
-                        DateFormat('hh:mm a').format(trip.departureTime)),
-                    _infoCol("SEATS", "${ticket.seatNumbers.length}"),
-                  ],
-                ),
-
-                const SizedBox(height: 32),
-                Container(
-                    height: 1,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.1)),
-                const SizedBox(height: 32),
-
-                // QR
-                QrImageView(
-                  data: ticket.ticketId,
-                  version: QrVersions.auto,
-                  size: 140,
-                  eyeStyle: const QrEyeStyle(
-                    eyeShape: QrEyeShape.square,
-                    color: Colors.black,
-                  ),
-                  dataModuleStyle: const QrDataModuleStyle(
-                    dataModuleShape: QrDataModuleShape.square,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const SizedBox(height: 16),
-                Text(
-                  "Show QR Code",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontFamily: 'Outfit',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.red,
-                      height: 1.2),
-                ),
-                const SizedBox(height: 8),
-                // Code Removed
-                const SizedBox(height: 24),
-
-                // TRACK BUS BUTTON (New Feature)
-                if (trip.status != 'completed' &&
-                    trip.status != 'cancelled') ...[
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => TrackBusScreen(trip: trip)));
-                      },
-                      icon: const Icon(Icons.gps_fixed, color: Colors.blue),
-                      label: Text("Track Bus Live",
-                          style: TextStyle(
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue)),
-                      style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.blue),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // Passenger & Total
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("PASSENGER",
-                            style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant)),
-                        Text(ticket.passengerName,
-                            style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text("TOTAL PRICE",
-                            style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant)),
-                        Text(
-                          "LKR ${ticket.totalAmount.toStringAsFixed(0)}",
-                          style: TextStyle(
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: AppTheme.primaryColor),
-                        ),
-                      ],
-                    )
-                  ],
-                )
-              ],
-            ),
-          ),
-
-          // Cutout Effect
-          SizedBox(
-            height: 20,
-            child: Stack(
-              children: [
-                Positioned(
-                    bottom: -10,
-                    left: -10,
-                    child: CircleAvatar(
-                        radius: 10, backgroundColor: Colors.grey.shade100)),
-                Positioned(
-                    bottom: -10,
-                    right: -10,
-                    child: CircleAvatar(
-                        radius: 10, backgroundColor: Colors.grey.shade100)),
-                // Dashed line
-                Center(
-                    child: Text("- - - - - - - - - - - - - - - - - - - -",
-                        style: TextStyle(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant
-                                .withValues(alpha: 0.3))))
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoCol(String label, String val) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label.toUpperCase(),
-            style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        Text(val,
-            style: TextStyle(
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface))
-      ],
     );
   }
 
