@@ -1,6 +1,8 @@
 # Getting started
 
-A walk through BusLink from the first screen to a boarded ticket, as each person would meet it. Pick your role, or read all three to see how they fit together. Every picture is drawn by the real app code.
+A walk through BusLink from the first screen to a boarded ticket, as each person would meet it. Pick your role, or read all three to see how they fit together. The sign-in picture is the live app, and every other picture is drawn by the real app code. The [README](../README.md#the-story-step-by-step) tells the same story in twelve numbered steps.
+
+<p align="center"><img src="images/journey.gif" alt="A short tour from sign-in to a refused second boarding" width="100%"></p>
 
 ## On this page
 
@@ -20,6 +22,8 @@ A walk through BusLink from the first screen to a boarded ticket, as each person
 ## As a passenger: book a seat
 
 **1. Sign in.** Choose English, Sinhala or Tamil with the three buttons at the top, then sign in with email, Google or your phone number.
+
+<img src="images/login-live.png" alt="The sign-in page with three language buttons and a Continue with Google button" width="320">
 
 **2. Search.** Choose where from, where to and the date. Press **Search**.
 

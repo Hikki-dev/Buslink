@@ -2,7 +2,14 @@
 
 What changed in each step, newest first. Each heading names the pull request it came from. The redesign was built as pull requests on top of each other (#2 to #7) and merged in that order on 22 October 2026.
 
-## 23 October 2026 (rules, cleanup, licence and project structure; all live)
+## 23 October 2026 (rules, cleanup, licence, project structure and the README story; all live)
+
+### The README tells the story
+
+* The README now reads as one story in twelve numbered steps: the passenger (sign in, find a bus, seats, pay, My Trips, refunds), the conductor (check a ticket, once only, running late) and the admin (add a trip, bookings and refunds, roles). Each part leads into the next, and every step has a picture.
+* A hero animation (`docs/images/journey.gif`) opens the README, and a real screenshot of the live sign-in page is step 1. The real Flutter, Dart, Firebase, Google, Stripe and Vercel logos are in a "What it is built with" table.
+* A social preview image (`docs/images/social-preview.png`) for the repository.
+* `tool/make_story_images.py` makes the animation and the social image from the pictures.
 
 ### Database rules fixed, tested and deployed (#9)
 

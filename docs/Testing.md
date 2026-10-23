@@ -90,6 +90,14 @@ python3 tool/trim_screenshots.py
 
 The second command needs Python with Pillow (`python3 -m pip install pillow`). It trims the empty space under each picture.
 
+`docs/images/login-live.png` is not drawn by a test. It is a real screenshot of the live sign-in page, taken at 390 by 844 pixels at 2x. To retake it, open https://buslink-eta.vercel.app in a browser with a phone-sized window (the Chrome DevTools device toolbar works) and save the screenshot.
+
+The hero animation `journey.gif` and `social-preview.png` are made from those pictures:
+
+```bash
+python3 tool/make_story_images.py
+```
+
 The test uses Roboto in place of the app's own fonts, because the app's variable fonts do not pick a weight in the test engine. The layout is the real layout; only the letter shapes differ from a phone. A few pictures stop just above a button for the same reason: some button labels draw as blank boxes in the test engine.
 
 `tool/check_docs.py` is the checker for the written docs. It needs only Python, no packages.
