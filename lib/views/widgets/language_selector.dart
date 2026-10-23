@@ -11,11 +11,11 @@ class LanguageSelector extends StatelessWidget {
     return IconButton(
       icon: const Icon(Icons.language),
       tooltip: AppLocalizations.of(context)!.selectLanguage,
-      onPressed: () => _showLanguageDialog(context),
+      onPressed: () => showLanguageDialog(context),
     );
   }
 
-  void _showLanguageDialog(BuildContext context) {
+  static void showLanguageDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -42,7 +42,8 @@ class LanguageSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildLanguageOption(BuildContext context, String code, String label) {
+  static Widget _buildLanguageOption(
+      BuildContext context, String code, String label) {
     final languageProvider =
         Provider.of<LanguageProvider>(context, listen: false);
     final isSelected = languageProvider.currentLocale.languageCode == code;

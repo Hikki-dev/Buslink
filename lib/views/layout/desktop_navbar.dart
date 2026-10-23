@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/bl_colors.dart';
 import '../support/support_screen.dart';
 import '../auth/login_screen.dart';
 import '../customer_main_screen.dart';
@@ -11,6 +12,8 @@ import 'package:buslink/views/widgets/language_selector.dart';
 import 'package:buslink/views/settings/account_settings_screen.dart';
 import 'package:buslink/l10n/app_localizations.dart';
 
+/// The white top bar on desktop (mockup "Desktop-Home"): wordmark, four
+/// big links, the traveller's initials and a plain "Log out" button.
 class DesktopNavBar extends StatelessWidget {
   final int selectedIndex;
   final bool isAdminView;
@@ -22,503 +25,233 @@ class DesktopNavBar extends StatelessWidget {
       this.isAdminView = false,
       this.onTap});
 
+  void _go(BuildContext context, int index) {
+    if (onTap != null) {
+      onTap!(index);
+    } else {
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+              builder: (_) => CustomerMainScreen(
+                  initialIndex: index, isAdminView: isAdminView)),
+          (route) => false);
+    }
+  }
+
+  Future<void> _logOut(BuildContext context) async {
+    await Provider.of<AuthService>(context, listen: false).signOut();
+    if (context.mounted) {
+      Navigator.pushAndRemoveUntil(context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()), (r) => false);
+    }
+  }
+
+  static String _initials(String name) {
+    final parts =
+        name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final user = authService.currentUser;
+    final l10n = AppLocalizations.of(context)!;
+    final user = Provider.of<AuthService>(context, listen: false).currentUser;
 
-    return Material(
-      color: Theme.of(context).cardColor,
-      elevation: 4,
-      shadowColor: Theme.of(context).shadowColor.withValues(alpha: 0.1),
-      child: Container(
-        height: 80,
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: Row(
-          children: [
-            // Logo Area
-            GestureDetector(
-              onTap: () {
-                Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => CustomerMainScreen(
-                            initialIndex: 0, isAdminView: isAdminView)),
-                    (route) => false);
-              },
-              child: const Row(
-                children: [
-                  Icon(Icons.directions_bus,
-                      color: AppTheme.primaryColor, size: 30),
-                  SizedBox(width: 8),
-                  Text("BusLink",
-                      style: TextStyle(
-                          fontFamily: 'Outfit',
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor)),
-                ],
-              ),
-            ),
-
-            const Spacer(),
-
-            // Nav Items
-            Row(
-              mainAxisSize: MainAxisSize.min,
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: BL.hairline)),
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200, minHeight: 72),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
               children: [
-                _navItem(context, AppLocalizations.of(context)!.navHome, 0),
+                InkWell(
+                  onTap: () => _go(context, 0),
+                  child: const Text('BusLink',
+                      style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: BL.crimson)),
+                ),
+                const Spacer(),
+                _link(context, l10n.navHome, 0),
                 if (user != null) ...[
-                  _navItem(
-                      context, AppLocalizations.of(context)!.navMyTrips, 1),
-                  _navItem(
-                      context, AppLocalizations.of(context)!.navFavorites, 2),
-                  _navItem(
-                      context, AppLocalizations.of(context)!.navProfile, 3),
+                  _link(context, l10n.navMyTrips, 1),
+                  _link(context, l10n.navFavorites, 2),
                 ],
-              ],
-            ),
-
-            const SizedBox(width: 40),
-
-            // Language Selector
-            const LanguageSelector(),
-            const SizedBox(width: 20),
-
-            // Notification Icon
-            if (user != null) ...[
-              Padding(
-                padding: const EdgeInsets.only(right: 20),
-                child: IconButton(
-                  icon: const Icon(Icons.notifications_none_rounded,
-                      color: AppTheme.primaryColor),
-                  tooltip: 'Notifications',
-                  onPressed: () {
-                    Navigator.push(
+                _link(context, l10n.navSupport, -2, onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const SupportScreen()));
+                }),
+                const Spacer(),
+                const LanguageSelector(),
+                if (user != null) ...[
+                  IconButton(
+                    icon: const Icon(Icons.notifications_none_rounded,
+                        color: BL.crimson, size: 26),
+                    tooltip: 'Notifications',
+                    onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const NotificationsScreen()));
-                  },
-                ),
-              ),
-            ],
-
-            // User Greeting & Dropdown
-            if (user != null) ...[
-              StreamBuilder<DocumentSnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(user.uid)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  final userData =
-                      snapshot.data?.data() as Map<String, dynamic>?;
-
-                  String displayName = userData?['displayName'] ??
-                      user.displayName ??
-                      user.email?.split('@').first ??
-                      'Traveler';
-
-                  // Logic for "Hi, [Name]"
-                  final rawFirst = displayName.split(' ').first;
-                  final firstName = rawFirst.length > 12
-                      ? "${rawFirst.substring(0, 10)}..."
-                      : rawFirst;
-
-                  // Admin badge logic
-                  final bool isAdmin = userData?['role'] == 'admin';
-
-                  return Consumer<ThemeController>(
-                    builder: (context, themeController, _) {
-                      final isDark =
-                          Theme.of(context).brightness == Brightness.dark;
-
-                      return PopupMenuButton<String>(
-                        offset: const Offset(0, 50),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                        tooltip: "Account Menu",
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                                color: Theme.of(context).dividerColor),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.person_outline,
-                                  size: 20,
-                                  color: Theme.of(context).colorScheme.primary),
-                              const SizedBox(width: 8),
-                              Text("Welcome back, $firstName",
-                                  style: TextStyle(
-                                      fontFamily: 'Outfit',
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface)),
-                              const SizedBox(width: 4),
-                              Icon(Icons.keyboard_arrow_down,
-                                  size: 16, color: Theme.of(context).hintColor),
-                            ],
-                          ),
-                        ),
-                        itemBuilder: (BuildContext context) {
-                          return [
-                            PopupMenuItem(
-                              enabled: true,
-                              onTap: () {
-                                if (onTap != null) {
-                                  onTap!(3);
-                                } else {
-                                  Navigator.pushAndRemoveUntil(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (_) =>
-                                              const CustomerMainScreen(
-                                                  initialIndex: 3)),
-                                      (route) => false);
-                                }
-                              },
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(displayName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface)),
-                                  if (userData?['email'] != null)
-                                    Text(userData!['email'],
-                                        style: TextStyle(
-                                            fontFamily: 'Inter',
-                                            fontSize: 12,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface
-                                                .withValues(alpha: 0.5))),
-                                  if (isAdmin)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4.0),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                            color: Colors.red
-                                                .withValues(alpha: 0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(4)),
-                                        child: const Text("ADMIN",
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.red)),
-                                      ),
-                                    )
-                                ],
-                              ),
-                            ),
-                            const PopupMenuDivider(),
-                            PopupMenuItem(
-                              value: 'profile',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.person,
-                                      size: 20,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.7)),
-                                  const SizedBox(width: 12),
-                                  Text("Profile",
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      )),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'favorites',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.favorite,
-                                      size: 20,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.7)),
-                                  const SizedBox(width: 12),
-                                  Text("Favourites",
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      )),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'settings',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.settings,
-                                      size: 20,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.7)),
-                                  const SizedBox(width: 12),
-                                  Text("Settings",
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      )),
-                                ],
-                              ),
-                            ),
-                            const PopupMenuDivider(),
-                            PopupMenuItem(
-                              value: 'theme',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                      isDark
-                                          ? Icons.light_mode
-                                          : Icons.dark_mode,
-                                      size: 20,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.7)),
-                                  const SizedBox(width: 12),
-                                  Text(isDark ? "Light Mode" : "Dark Mode",
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      )),
-                                ],
-                              ),
-                            ),
-                            const PopupMenuDivider(),
-                            PopupMenuItem(
-                              value: 'logout',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.logout,
-                                      size: 20, color: Colors.red.shade400),
-                                  const SizedBox(width: 12),
-                                  Text("Log Out",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          color: Colors.red.shade400,
-                                          fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ),
-                          ];
-                        },
-                        onSelected: (value) async {
-                          switch (value) {
-                            case 'profile':
-                              if (onTap != null) {
-                                onTap!(3);
-                              } else {
-                                Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const CustomerMainScreen(
-                                                initialIndex: 3)),
-                                    (route) => false);
-                              }
-                              break;
-                            case 'favorites':
-                              if (onTap != null) {
-                                onTap!(2);
-                              } else {
-                                Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const CustomerMainScreen(
-                                                initialIndex: 2)),
-                                    (route) => false);
-                              }
-                              break;
-                            case 'settings':
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) =>
-                                          const AccountSettingsScreen()));
-                              break;
-                            case 'theme':
-                              themeController.setTheme(
-                                  isDark ? ThemeMode.light : ThemeMode.dark);
-                              break;
-                            case 'logout':
-                              await authService.signOut();
-                              if (context.mounted) {
-                                Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) => const LoginScreen()),
-                                    (r) => false);
-                              }
-                              break;
-                          }
-                        },
-                      );
-                    },
-                  );
-                },
-              ),
-              const SizedBox(width: 24),
-            ],
-
-            // Support & Actions
-            GestureDetector(
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const SupportScreen())),
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    border:
-                        Border.all(color: AppTheme.primaryColor, width: 1.5),
-                    borderRadius: BorderRadius.circular(8),
+                            builder: (_) => const NotificationsScreen())),
                   ),
-                  child: Text(
-                    AppLocalizations.of(context)!.navSupport,
-                    style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: AppTheme.primaryColor),
+                  const SizedBox(width: 4),
+                  _account(context, user.uid, user.displayName, user.email),
+                  const SizedBox(width: 12),
+                  OutlinedButton(
+                    onPressed: () => _logOut(context),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      foregroundColor: BL.ink,
+                      side: const BorderSide(color: BL.border, width: 1.5),
+                      shape: const StadiumBorder(),
+                      textStyle: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                    child: Text(l10n.navLogout),
                   ),
-                ),
-              ),
+                ] else
+                  FilledButton(
+                    onPressed: () => Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (r) => false),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                      padding: const EdgeInsets.symmetric(horizontal: 22),
+                      backgroundColor: BL.crimson,
+                      shape: const StadiumBorder(),
+                      textStyle: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                    child: Text(l10n.navLogin),
+                  ),
+              ],
             ),
-            const SizedBox(width: 20),
-
-            if (user != null)
-              GestureDetector(
-                onTap: () async {
-                  await authService.signOut();
-                  if (context.mounted) {
-                    Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        (r) => false);
-                  }
-                },
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, size: 18, color: Colors.red.shade700),
-                      const SizedBox(width: 6),
-                      Text(
-                        AppLocalizations.of(context)!.navLogout,
-                        style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: Colors.red.shade700),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              GestureDetector(
-                onTap: () async {
-                  if (context.mounted) {
-                    Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        (r) => false);
-                  }
-                },
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.login,
-                          size: 18, color: AppTheme.primaryColor),
-                      const SizedBox(width: 6),
-                      Text(
-                        AppLocalizations.of(context)!.navLogin,
-                        style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: AppTheme.primaryColor),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _navItem(BuildContext context, String label, int index) {
-    final bool isActive = selectedIndex == index;
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color textColor = isActive
-        ? AppTheme.primaryColor
-        : (isDark ? Colors.white : Colors.black);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GestureDetector(
-        onTap: () {
-          if (onTap != null) {
-            onTap!(index);
-          } else {
-            Widget page;
-            page = CustomerMainScreen(
-                initialIndex: index, isAdminView: isAdminView);
-            Navigator.pushAndRemoveUntil(context,
-                MaterialPageRoute(builder: (_) => page), (route) => false);
-          }
-        },
-        child: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Outfit',
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: textColor,
-            ),
+  Widget _link(BuildContext context, String label, int index,
+      {VoidCallback? onPressed}) {
+    final active = selectedIndex == index;
+    return Semantics(
+      button: true,
+      selected: active,
+      label: label,
+      child: InkWell(
+        onTap: onPressed ?? () => _go(context, index),
+        child: Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border(
+                bottom: BorderSide(
+                    color: active ? BL.crimson : Colors.transparent, width: 3)),
           ),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                  color: active ? BL.crimson : const Color(0xFF3A444F))),
         ),
       ),
+    );
+  }
+
+  /// Initials circle; tapping it opens the account menu (profile, settings,
+  /// light/dark mode).
+  Widget _account(
+      BuildContext context, String uid, String? authName, String? email) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream:
+          FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+      builder: (context, snapshot) {
+        final data = snapshot.data?.data() as Map<String, dynamic>?;
+        final name = (data?['displayName'] ?? data?['name'] ?? authName ?? '')
+            .toString();
+        final shown = name.isNotEmpty ? name : (email?.split('@').first ?? '');
+        final isAdmin = data?['role'] == 'admin';
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final theme = Provider.of<ThemeController>(context, listen: false);
+        return PopupMenuButton<String>(
+          tooltip: 'Account menu for $shown',
+          offset: const Offset(0, 52),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          onSelected: (v) {
+            switch (v) {
+              case 'profile':
+                _go(context, 3);
+              case 'settings':
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const AccountSettingsScreen()));
+              case 'theme':
+                theme.setTheme(isDark ? ThemeMode.light : ThemeMode.dark);
+            }
+          },
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              enabled: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(shown,
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: BL.ink)),
+                  if (email != null)
+                    Text(email,
+                        style: const TextStyle(fontSize: 14, color: BL.muted)),
+                  if (isAdmin)
+                    const Text('Administrator',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: BL.crimson)),
+                ],
+              ),
+            ),
+            const PopupMenuDivider(),
+            const PopupMenuItem(
+                value: 'profile',
+                height: 48,
+                child: Text('Profile', style: TextStyle(fontSize: 16))),
+            const PopupMenuItem(
+                value: 'settings',
+                height: 48,
+                child: Text('Settings', style: TextStyle(fontSize: 16))),
+            PopupMenuItem(
+                value: 'theme',
+                height: 48,
+                child: Text(isDark ? 'Light mode' : 'Dark mode',
+                    style: const TextStyle(fontSize: 16))),
+          ],
+          child: Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration:
+                const BoxDecoration(color: BL.blush, shape: BoxShape.circle),
+            child: Text(_initials(shown),
+                style: const TextStyle(
+                    color: BL.crimsonDark, fontWeight: FontWeight.w700)),
+          ),
+        );
+      },
     );
   }
 }

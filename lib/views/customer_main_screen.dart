@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'home/home_screen.dart';
+import 'layout/bl_bottom_bar.dart';
 import 'booking/my_trips_screen.dart';
 import 'favorites/favorites_screen.dart';
 import 'profile/profile_screen.dart';
@@ -389,50 +390,18 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         ),
         bottomNavigationBar: isDesktop
             ? null // Desktop usually handles its own or doesn't use bottom nav
-            : Container(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, -5),
-                    ),
-                  ],
-                ),
-                child: BottomNavigationBar(
-                  currentIndex:
-                      currentIndex >= navItems.length ? 0 : currentIndex,
-                  onTap: (index) {
-                    if (isGuest && index == 1) {
-                      // "Log In" tapped
-                      Navigator.pushNamed(context, '/login');
-                      return;
-                    }
-                    _onItemTapped(index);
-                  },
-                  type: BottomNavigationBarType.fixed,
-                  backgroundColor: Theme.of(context).cardColor,
-                  selectedItemColor:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : Colors.black,
-                  unselectedItemColor:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : Colors.black,
-                  showUnselectedLabels: true,
-                  selectedLabelStyle: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                  unselectedLabelStyle: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.bold, // Bold for unselected too
-                    fontSize: 12,
-                  ),
-                  items: navItems,
-                ),
+            : BlBottomBar(
+                items: navItems,
+                currentIndex:
+                    currentIndex >= navItems.length ? 0 : currentIndex,
+                onTap: (index) {
+                  if (isGuest && index == 1) {
+                    // "Log In" tapped
+                    Navigator.pushNamed(context, '/login');
+                    return;
+                  }
+                  _onItemTapped(index);
+                },
               ),
       );
     });
