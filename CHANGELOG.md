@@ -6,6 +6,15 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 The first redesign pass kept most of the old screens and only dressed some of them. This pass builds each screen from its mockup board, on phone and on desktop, one batch at a time.
 
+### Booking screens: results, bus details, seats, payment, confirmation, ticket
+
+* **Results** (`Results`, `Desktop-Results`): a photo banner for the destination, a "Narrow it down" panel (time of day, type of bus, hide full buses), and cards with Leaves, Arrives, price, seats left and one **Book Now** button. Delayed buses say "Running 30 minutes late"; full or cancelled buses become a quiet grey card that says so and sink to the bottom. The map, weather and clock header are gone (they are not in the designs).
+* **Bus details** (`BusDetails`) is now a real screen, reached from "Stops and what is on the bus" on a result card. It lists the stops and what is on the bus. The old screen was never opened from anywhere. The mockup's platform number is left out because the app has no real platform data.
+* **Seats** (`Seats`, `Desktop-Seats`): plain Free / Yours / Taken key, each with a shape as well as a colour, a flat seat map, "You can pick up to 6" (now enforced), and on desktop a summary card with the photo, your seats and the total.
+* **Payment** (`Payment`, `Desktop-Payment`, `PaymentStates`): booking summary with the destination photo, one card-payment choice, "Proceed to Pay · LKR 2,400", and the three states from the mockup: Verifying, Verification Failed ("Your seats are not lost") and Session Expired.
+* **Confirmation and ticket** (`Ticket`, `Desktop-Confirmed`): the red page with the white ticket, a big QR code, the 4-digit code, and Download PDF, Share via SMS and Go to My Trips. The same face is used when you open a ticket from My Trips. Saving the route to Favourites is still one tap.
+* 3 new tests, and the older ones updated to the new words.
+
 ### Home, top bar, footer and bottom bar
 
 * **Home** follows the boards "Main" and "Desktop-Home": the Ella train photo with the crimson wash, "Where would you like to go?" on phones and "Travel Sri Lanka by bus, the easy way" on desktop, and a white search card with named fields (Leaving from, Going to, Day of travel), a swap button between the cities and one big Search Buses button. Choosing the same city twice now says "Pick two different places" instead of a raw key.

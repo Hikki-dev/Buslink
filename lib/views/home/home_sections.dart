@@ -29,6 +29,14 @@ const _spots = [
       'Close to Sigiriya rock', 'Sigiriya rock fortress'),
 ];
 
+/// Photo for a city banner: the place's own photo, or the Ella train.
+String cityPhoto(String? city) {
+  for (final s in _spots) {
+    if (s.city.toLowerCase() == (city ?? '').toLowerCase()) return s.photo;
+  }
+  return 'assets/images/home/ella_train.jpg';
+}
+
 String formatDuration(int mins) {
   if (mins <= 0) return '';
   final h = mins ~/ 60, m = mins % 60;

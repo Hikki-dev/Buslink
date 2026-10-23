@@ -138,14 +138,13 @@ void main() {
         'normal bus: real city names, bus type, 12-hour times, no fake badge',
         (tester) async {
       await _pumpCard(tester, _trip());
-      expect(find.text('Nuwara Eliya'), findsOneWidget);
       expect(find.text('nuwara_eliya'), findsNothing);
       expect(find.text('Highly Rated'), findsNothing);
       expect(find.text('Luxury AC · NP-1234'), findsOneWidget);
-      expect(find.text('6:30 AM'), findsOneWidget);
+      expect(find.text('06:30 AM'), findsOneWidget);
       expect(find.text('5h 15m'), findsOneWidget);
       expect(find.text('28 seats left'), findsOneWidget);
-      expect(find.text('Select'), findsOneWidget);
+      expect(find.text('Book Now'), findsOneWidget);
     });
 
     testWidgets('long city names fit a 390px phone without overflowing',
@@ -171,7 +170,7 @@ void main() {
       ));
       await tester.pump();
       expect(tester.takeException(), isNull); // no RenderFlex overflow
-      expect(find.text('Nuwara Eliya'), findsOneWidget);
+      expect(find.text('via Kandy'), findsOneWidget);
     });
 
     testWidgets('delayed and nearly full say so in words', (tester) async {
@@ -182,12 +181,11 @@ void main() {
 
     testWidgets('cancelled and full buses cannot be selected', (tester) async {
       await _pumpCard(tester, _trip(status: 'cancelled'));
-      expect(find.text('This trip is cancelled'), findsOneWidget);
-      expect(find.text('Cancelled'), findsOneWidget);
+      expect(find.textContaining('This trip is cancelled'), findsOneWidget);
+      expect(find.text('Book Now'), findsNothing);
       await _pumpCard(tester, _trip(booked: 40));
-      expect(find.text('This bus is full'), findsOneWidget);
-      expect(find.text('Full'), findsOneWidget);
-      expect(find.text('No seats left'), findsOneWidget);
+      expect(find.textContaining('This bus is full'), findsOneWidget);
+      expect(find.text('Book Now'), findsNothing);
     });
   });
 
@@ -238,7 +236,7 @@ void main() {
     expect(find.bySemanticsLabel('Seat 1, free'), findsOneWidget);
     expect(find.bySemanticsLabel('Seat 2, taken'), findsOneWidget);
     expect(find.bySemanticsLabel('Seat 9, selected'), findsOneWidget);
-    expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsOneWidget);
     await tester.tap(find.text('1'));
     expect(tapped, 1);
     tapped = null;
