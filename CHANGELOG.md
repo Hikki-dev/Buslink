@@ -2,9 +2,9 @@
 
 What changed in each step, newest first. Each heading names the pull request it came from. The redesign was built as pull requests on top of each other (#2 to #7) and merged in that order on 22 October 2026.
 
-## Unreleased
+## 23 October 2026 (rules, cleanup, licence and project structure; all live)
 
-### Database rules fixed, tested and deployed (23 October 2026)
+### Database rules fixed, tested and deployed (#9)
 
 * **The rules that were live had real holes, and the rules in the repository would have broken the app.** The live rules let anyone write their own `role` (so any signed-in person could make themselves an admin), edit the price, seats and owner of their own ticket, and mark it boarded. The repository's rules fixed that but refused the ticket update that confirms a payment, so deploying them would have stopped every booking.
 * New `firestore.rules`: roles can only be set by an admin, a passenger can confirm payment and request a refund on their own ticket but not change its owner, price, seats or boarding, a conductor can stamp a boarding once as themselves, and conductors can create the notifications that tell passengers about a delay (the live rules refused those). `firestore.rules.proposed` is folded in and removed.
@@ -14,11 +14,15 @@ What changed in each step, newest first. Each heading names the pull request it 
 * The Firebase web API key is now restricted to this project's web addresses.
 * Docs: the Stripe minimum is about 50 US cents (around LKR 165), not LKR 150; SECURITY.md lists the open items, including that payment is confirmed by the app.
 
-### Repository cleanup
+### Repository cleanup (#10)
 
 * Removed ten one-off Python scripts from the top level (`final_fix.py`, `fix_*.py`, `repair_*.py`, `restore_ui_text.py`) that were used once to rewrite source files, and 90 Xcode build cache files under `scripts/build/`. Nothing used them, and git history still has them. `scripts/build/` is now git-ignored.
 
-### Project structure (this change)
+### Licence (#11)
+
+* Added the MIT licence (`LICENSE`), the same one as the media-server-setup repository, and a licence badge in the README.
+
+### Project structure (#8)
 
 * **Checks on every pull request** (`.github/workflows/checks.yml`): the docs check, `flutter analyze` and `flutter test`, with the **Checks** badge in the README.
 * `tool/check_docs.py` checks every link, picture and heading link in the docs, and that the README links to every page in `docs/`.

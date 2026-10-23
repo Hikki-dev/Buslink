@@ -3,6 +3,7 @@
 [![Checks](https://github.com/Hikki-dev/Buslink/actions/workflows/checks.yml/badge.svg)](https://github.com/Hikki-dev/Buslink/actions/workflows/checks.yml)
 [![Demo status](https://github.com/Hikki-dev/Buslink/actions/workflows/uptime.yml/badge.svg)](https://github.com/Hikki-dev/Buslink/actions/workflows/uptime.yml)
 [![Live demo](https://img.shields.io/badge/live-demo-BA181B)](https://buslink-eta.vercel.app)
+[![Licence: MIT](https://img.shields.io/github/license/Hikki-dev/Buslink)](LICENSE)
 ![Flutter](https://img.shields.io/badge/Flutter-3.38-02569B?logo=flutter&logoColor=white)
 ![Firebase](https://img.shields.io/badge/Firebase-Auth%20%7C%20Firestore%20%7C%20FCM-FFCA28?logo=firebase&logoColor=black)
 ![Stripe](https://img.shields.io/badge/Payments-Stripe-635BFF?logo=stripe&logoColor=white)
@@ -190,6 +191,7 @@ Some parts were built as coursework and need hardening before real money is invo
 ## Legal and responsibility
 
 * BusLink is a portfolio and learning project. It is not a licensed ticketing service.
+* The code is released under the [MIT licence](LICENSE). It is provided as it is, with no promises. You are responsible for how you use it, especially with real payments (see [Security](SECURITY.md)).
 * Use Stripe in test mode unless you have made the changes listed in [Security](SECURITY.md) first.
 * Photos in the design mockups are from Wikimedia Commons, with credit to the photographers in the [Design](docs/Design.md#photo-credits) page.
 * Built by [Yusuf (Hikki-dev)](https://github.com/Hikki-dev).

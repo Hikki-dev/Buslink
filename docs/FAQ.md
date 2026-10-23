@@ -56,7 +56,7 @@ Trips are made from timetables by a script. See [Installing](Installing.md#6-see
 3.38. The web deploy is pinned to 3.38.9.
 
 **Is there a licence?**
-Not yet. Until the owner adds one, the code is all rights reserved. See [Contributing](../CONTRIBUTING.md).
+Yes. The code is under the MIT licence. See [LICENSE](../LICENSE).
 
 ## Money
 
