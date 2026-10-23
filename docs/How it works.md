@@ -24,7 +24,8 @@ There is no separate backend to run. The rules in `firestore.rules` are the serv
 | Folder | What is in it |
 |---|---|
 | `lib/` | The app |
-| `lib/views/` | Screens, grouped by who uses them: `auth`, `home`, `results`, `booking`, `ticket`, `tracking`, `profile`, `settings`, `conductor`, `admin`, `analytics` and shared `layout` and `widgets` |
+| `lib/views/` | Screens, grouped by who uses them: `auth`, `home`, `results`, `booking`, `ticket`, `tracking`, `profile`, `settings`, `conductor`, `admin`, `analytics`, the start-up screen in `splash`, and shared `layout` and `widgets` |
+| `lib/app/` | Start-up and the shell of the app: `AppStartup`, the splash handover, the providers and the sign-in gate |
 | `lib/controllers/` | `TripController`, the one `ChangeNotifier` for search, the selected trip and seats |
 | `lib/services/` | Everything that talks to the outside: Firebase, Stripe, notifications, location, SMS |
 | `lib/models/` | Plain data classes (`Trip`, `Ticket`, `RouteModel`, `Refund`, ...) and `boarding_result.dart` |
@@ -41,9 +42,20 @@ There is no separate backend to run. The rules in `firestore.rules` are the serv
 
 ## Start-up
 
-`lib/main.dart` does this, in order: read `.env`, start Firebase, turn on Firestore's offline cache, set up local notifications, then Stripe and Google Sign-In. The screen draws early from a cached profile, so the app does not sit on a blank page while Firebase finishes.
+`lib/main.dart` is about 15 lines: it draws the start-up screen at once. The work is in `lib/app/`:
 
-After sign-in, `RoleDispatcher` watches `users/{uid}.role` live and shows the matching home: the passenger screens, the conductor dashboard or the admin dashboard.
+| File | What it does |
+|---|---|
+| `bootstrapper.dart` | Shows the splash, then the app, or "We couldn't start BusLink" with Try again |
+| `startup.dart` | `AppStartup`: runs the steps at the same time, says when it is slow, gives up after 30 seconds. It knows nothing about Firebase, so it is easy to test |
+| `startup_steps.dart` | The real steps: settings, dates, `.env`, Firebase, and who is signed in |
+| `background_services.dart` | Push notifications, Stripe and Google sign-in, started after the first screen |
+| `buslink_app.dart` | The providers, theme, languages and routes of the real app |
+| `auth_gate.dart` | `AuthWrapper` and `RoleDispatcher`: signed out goes to sign-in, signed in goes to the right home |
+
+The start-up screen itself is in `lib/views/splash/`, and the same picture is drawn by `web/index.html` while the web app downloads. Read [Starting up](Starting%20up.md) before adding anything that runs at launch.
+
+`RoleDispatcher` shows the role remembered on the device straight away and then checks `users/{uid}.role`. If the check disagrees, the screen switches.
 
 ## The layers
 
@@ -85,6 +97,9 @@ When you add a rule, put it in a small function like these and test that. See [T
 | Tracking map and time left | `lib/views/tracking/track_bus_screen.dart` |
 | Trip form (three steps) | `lib/views/admin/admin_screen.dart` |
 | Status chip and step strip | `lib/views/admin/widgets/status_chip.dart` |
+| Start-up steps | `lib/app/startup_steps.dart` |
+| Start-up screen (phones, desktop) | `lib/views/splash/splash_screen.dart` |
+| Start-up screen (web page) | `web/index.html` |
 | Theme and colours | `lib/utils/app_theme.dart` |
 
 ## Recipes
@@ -122,6 +137,7 @@ Do not edit the PNG files by hand. Change the widget, then redraw: see [Testing]
 
 * **Seat reservation is a transaction.** If you change how seats are reserved, keep the check and the write together. Otherwise two people can get the same seat.
 * **Boarding is a transaction too.** Keep the read, the `decideBoarding` call and the write in `recordBoarding` together.
+* **Nothing slow before the first screen.** Anything not needed to draw it belongs in `BackgroundServices`. See [Starting up](Starting%20up.md#the-rules-for-keeping-it-fast).
 * **Do not put secrets in the app.** Anything in `.env` is bundled into mobile and desktop builds. See [Security](../SECURITY.md).
 * **A conductor's phone location feeds tracking.** If you change what the conductor screen sends, check the tracking screen.
 * **`test/widget_test.dart` is expected to fail.** It was failing before the redesign. See [Testing](Testing.md).

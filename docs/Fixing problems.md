@@ -54,6 +54,8 @@ Start with the line that matches what you see.
 
 | You see | Do this |
 |---|---|
+| "We couldn't start BusLink" with a Try again button | Firebase did not start. Check the internet connection and press **Try again**. For the owner: the console shows which step failed. See [Starting up](Starting%20up.md#if-it-does-not-start) |
+| The start-up scene says "Still getting ready" | The connection is slow. Wait, or reload. See [Starting up](Starting%20up.md) |
 | A white page | Open the **Actions** tab on GitHub and look at the latest **Demo health check**. A red run means the build failed. Open the latest Vercel deployment's build log to see why. |
 | The badge in the README is red | Same as above. |
 | The build stops with `FIREBASE_... unbound variable` | A Vercel environment variable is missing. The message names it. See [Deploying](Deploying.md#environment-variables). |

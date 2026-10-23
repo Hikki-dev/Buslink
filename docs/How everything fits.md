@@ -26,11 +26,12 @@ Flutter app ──▶ Firebase Auth
 
 ## Start-up and routing
 
-`main.dart` bootstraps in this order: load `.env`, initialise Firebase, enable Firestore offline persistence, set up local notifications, then Stripe and Google Sign-In. The UI renders early from a cached profile while Firebase finishes.
+`main.dart` draws the start-up screen straight away, then `AppStartup` runs everything the app needs **at the same time**: the settings saved on the device, date names, the `.env` file, Firebase (with its offline cache) and "who is signed in". Only Firebase can stop the app; if it fails, there is a "We couldn't start BusLink" screen with a Try again button. Push notifications, Stripe and Google sign-in start after the first screen. The full story, and how fast it is, is in [Starting up](Starting%20up.md).
 
 ```
 signed out        -> LoginScreen (email, Google, phone OTP)
-signed in         -> RoleDispatcher, streams users/{uid}.role
+signed in         -> RoleDispatcher: the role remembered on this device shows at once,
+                     then users/{uid}.role is checked
    admin          -> admin screens
    conductor      -> ConductorDashboard
    customer/other -> CustomerMainScreen

@@ -2,7 +2,16 @@
 
 What changed in each step, newest first. Each heading names the pull request it came from. The redesign was built as pull requests on top of each other (#2 to #7) and merged in that order on 22 October 2026.
 
-## 23 October 2026 (rules, cleanup, licence, project structure and the README story; all live)
+## 23 October 2026 (rules, cleanup, licence, project structure, the README story and starting up)
+
+### Starting up (#13)
+
+* **An animated start-up screen** replaces the spinner: the logo pops in, then a bus drives from Colombo to Kandy to Ella while the app gets ready. It is on the design canvas (boards 35 and 36), drawn by the web page from the first paint and by Flutter on phones and desktop. After 8 seconds it says "Still getting ready"; if the app cannot start it shows "We couldn't start BusLink" with a Try again button. It holds still if the phone is set to reduce motion.
+* **Start-up runs in parallel** (`AppStartup`). Only Firebase can stop the app. Push notifications, Stripe and Google sign-in now start after the first screen. Signed-in people no longer see the sign-in page flash up, and a returning person's home screen shows at once from the role remembered on the device (it was never actually saved before).
+* **A lighter first load:** the unused Noto Sans font (1.1 MB compressed) and an unused 895 KB image are gone; the sign-in slideshow loads only the photo on screen, at web size; Firebase's scripts start downloading with the app; Stripe's script no longer holds the page up; fonts and images are reused for a day.
+* **Measured** cold, on a slowed-down phone profile: the first readable screen at 2.5 s instead of 6.0 s, and 0.7 MB downloaded instead of 3.2 MB. The sign-in screen itself is only about 0.3 s earlier. See [Starting up](docs/Starting%20up.md).
+* `main.dart` went from 532 lines to about 15. The rest is in `lib/app/`. 22 new tests.
+* New page: [Starting up](docs/Starting%20up.md).
 
 ### The README tells the story
 
