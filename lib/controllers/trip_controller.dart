@@ -235,6 +235,7 @@ class TripController extends ChangeNotifier {
     extraDetails['busNumber'] = enrichedTrip.busNumber;
     extraDetails['operatorName'] = enrichedTrip.operatorName;
     extraDetails['scheduleId'] = enrichedTrip.schedule.id;
+    extraDetails['platformNumber'] = enrichedTrip.platformNumber;
 
     return await _firestoreService.processBooking(
         enrichedTrip.trip, seatIds, currentUser, extraDetails);
@@ -255,6 +256,7 @@ class TripController extends ChangeNotifier {
           'busNumber': enrichedTrip.busNumber,
           'operatorName': enrichedTrip.operatorName,
           'scheduleId': enrichedTrip.schedule.id,
+          'platformNumber': enrichedTrip.platformNumber,
         });
   }
 
@@ -493,6 +495,7 @@ class TripController extends ChangeNotifier {
         departureTime: depTimeStr,
         basePrice: (tripData['price'] as num).toDouble(),
         totalSeats: (tripData['totalSeats'] as num).toInt(),
+        platform: (tripData['platformNumber'] ?? '').toString().trim(),
       );
 
       final docRef = await _firestoreService.addSchedule(schedule);

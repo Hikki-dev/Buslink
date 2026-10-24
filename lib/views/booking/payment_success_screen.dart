@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../utils/bl_colors.dart';
+import '../../utils/platform_text.dart';
 import '../home/home_sections.dart' show cityPhoto;
 import '../support/support_screen.dart';
 import 'payment_screen.dart' show PaymentStateCard;
@@ -315,7 +316,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         final fromCity = tData['fromCity'] ?? tData['originCity'] ?? '';
         final toCity = tData['toCity'] ?? tData['destinationCity'] ?? '';
         final busNum = tData['busNumber'] ?? '';
-        final platform = tData['platformNumber'] ?? 'TBD';
+        final platform = platformOf(tData);
 
         doc.addPage(
           pw.Page(
@@ -370,7 +371,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                               pw.Text("Bus: $busNum"),
                               pw.Text(
                                   "Departure: ${DateFormat('hh:mm a').format(tripDate)}"),
-                              pw.Text("Platform: $platform"),
+                              if (platform.isNotEmpty)
+                                pw.Text("Platform: $platform"),
                               pw.SizedBox(height: 10),
                               pw.Text("Passenger: ${ticket.passengerName}"),
                               pw.Text(
@@ -590,7 +592,9 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                           backgroundColor: BL.crimsonDark,
                           shape: const StadiumBorder(),
                           textStyle: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w800),
+                              fontFamily: 'Outfit',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800),
                         ),
                         child: const Text('Go to My Trips'),
                       ),
@@ -631,8 +635,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
             style: TextButton.styleFrom(
                 foregroundColor: Colors.white,
                 minimumSize: const Size(0, 48),
-                textStyle:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                textStyle: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700)),
           ),
         );
       },
@@ -669,7 +675,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
               side: outlined
                   ? const BorderSide(color: Colors.white, width: 2)
                   : BorderSide.none),
-          textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+          textStyle: const TextStyle(
+              fontFamily: 'Outfit', fontSize: 17, fontWeight: FontWeight.w800),
         ),
       ),
     );
@@ -807,6 +814,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                 ),
                 const Divider(height: 28, color: BL.hairline),
                 if (bus.isNotEmpty) _row('Bus number', bus),
+                if (platformOf(t.tripData).isNotEmpty)
+                  _row('Platform', platformOf(t.tripData)),
                 _row('Trip', '${_from(t)} to ${_to(t)}'),
                 _row('Leaves', DateFormat('EEE d MMM, hh:mm a').format(d)),
                 _row('Seats', _seats(t)),
@@ -829,16 +838,20 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
               minimumSize: const Size(0, 56),
               padding: const EdgeInsets.symmetric(horizontal: 26),
               shape: const StadiumBorder(),
-              textStyle:
-                  const TextStyle(fontSize: 17, fontWeight: FontWeight.w800))
+              textStyle: const TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800))
           : OutlinedButton.styleFrom(
               foregroundColor: border == BL.crimson ? BL.crimson : BL.ink,
               side: BorderSide(color: border ?? BL.border, width: 2),
               minimumSize: const Size(0, 56),
               padding: const EdgeInsets.symmetric(horizontal: 26),
               shape: const StadiumBorder(),
-              textStyle:
-                  const TextStyle(fontSize: 17, fontWeight: FontWeight.w800));
+              textStyle: const TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800));
       final child = icon == null
           ? Text(label)
           : Row(mainAxisSize: MainAxisSize.min, children: [
@@ -888,6 +901,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                         DateFormat('EEE d MMM yyyy, hh:mm a').format(d),
                         line: true),
                     if (bus.isNotEmpty) _row('Bus', bus, line: true),
+                    if (platformOf(t.tripData).isNotEmpty)
+                      _row('Platform', platformOf(t.tripData), line: true),
                     _row('Seats', _seats(t), line: true),
                     _row('Passenger', t.passengerName, last: true, line: true),
                     const SizedBox(height: 22),

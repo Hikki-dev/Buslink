@@ -174,8 +174,10 @@ class _SupportScreenState extends State<SupportScreen> {
               style: FilledButton.styleFrom(
                 backgroundColor: BL.crimson,
                 shape: const StadiumBorder(),
-                textStyle:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                textStyle: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -190,8 +192,10 @@ class _SupportScreenState extends State<SupportScreen> {
                 foregroundColor: BL.crimson,
                 side: const BorderSide(color: BL.crimson, width: 2),
                 shape: const StadiumBorder(),
-                textStyle:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                textStyle: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800),
               ),
               child: const Text('Email Us'),
             ),

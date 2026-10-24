@@ -40,7 +40,9 @@ class EnrichedTrip {
   List<int> get operatingDays => schedule.recurrenceDays;
 
   // Computed Properties
-  String get platformNumber => "1";
+  /// The platform the schedule boards from; empty when nobody has set one.
+  String get platformNumber =>
+      trip.platform.isNotEmpty ? trip.platform : schedule.platform;
 
   // Route Proxies
   String get via => route.via;

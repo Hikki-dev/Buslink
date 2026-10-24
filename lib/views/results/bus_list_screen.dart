@@ -135,7 +135,9 @@ class _BusListScreenState extends State<BusListScreen> {
                       side: const BorderSide(color: BL.border, width: 1.5),
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w500),
+                          fontFamily: 'Outfit',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
@@ -223,7 +225,9 @@ class _BusListScreenState extends State<BusListScreen> {
                           side: const BorderSide(color: Colors.white, width: 2),
                           shape: const StadiumBorder(),
                           textStyle: const TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.w700),
+                              fontFamily: 'Outfit',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700),
                         ),
                         child: const Text('Change search'),
                       ),
@@ -612,8 +616,8 @@ class _BusTicketCardState extends State<BusTicketCard> {
           foregroundColor: BL.crimson,
           minimumSize: const Size(0, 48),
           padding: EdgeInsets.zero,
-          textStyle:
-              const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          textStyle: const TextStyle(
+              fontFamily: 'Outfit', fontSize: 16, fontWeight: FontWeight.w700)),
       child: const Text('Stops and what is on the bus'),
     );
     final times = Row(
@@ -659,7 +663,8 @@ class _BusTicketCardState extends State<BusTicketCard> {
         style: FilledButton.styleFrom(
           backgroundColor: BL.crimson,
           shape: const StadiumBorder(),
-          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(
+              fontFamily: 'Outfit', fontSize: 18, fontWeight: FontWeight.w700),
         ),
         child: const Text('Book Now'),
       ),

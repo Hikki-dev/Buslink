@@ -225,7 +225,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                 width: 2),
                             shape: const StadiumBorder(),
                             textStyle: const TextStyle(
-                                fontSize: 17, fontWeight: FontWeight.w800),
+                                fontFamily: 'Outfit',
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800),
                           ),
                           child: Text(_resendTimer > 0
                               ? 'Resend code in ${_resendTimer}s'

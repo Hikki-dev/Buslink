@@ -257,7 +257,9 @@ class _Body extends StatelessWidget {
                     side: const BorderSide(color: BL.crimson, width: 2),
                     shape: const StadiumBorder(),
                     textStyle: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w800),
+                        fontFamily: 'Outfit',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800),
                   ),
                   child: const Text('Back to My Trips'),
                 ),

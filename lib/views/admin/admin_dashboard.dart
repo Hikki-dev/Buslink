@@ -123,6 +123,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                                 horizontal: 28),
                                             shape: const StadiumBorder(),
                                             textStyle: const TextStyle(
+                                                fontFamily: 'Outfit',
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.w700),
                                           ),

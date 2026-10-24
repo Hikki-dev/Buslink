@@ -237,6 +237,7 @@ class BookingDetailsScreen extends StatelessWidget {
                                   foregroundColor: Colors.white,
                                   shape: const StadiumBorder(),
                                   textStyle: const TextStyle(
+                                      fontFamily: 'Outfit',
                                       fontSize: 18,
                                       fontWeight: FontWeight.w800),
                                 ),

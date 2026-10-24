@@ -638,7 +638,9 @@ class _Summary extends StatelessWidget {
                     style: TextButton.styleFrom(
                         foregroundColor: BL.crimson,
                         textStyle: const TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.w700)),
+                            fontFamily: 'Outfit',
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700)),
                     child: const Text('Back to buses'),
                   ),
                 ),

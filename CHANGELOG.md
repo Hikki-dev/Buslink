@@ -6,13 +6,18 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 The first redesign pass kept most of the old screens and only dressed some of them. This pass builds each screen from its mockup board, on phone and on desktop, one batch at a time.
 
+### Platform number, "Next stop" and polish
+
+* **Platform number** is real now and optional. Admins can type it on the trip form and on the schedule dialog (schedules pass it to the trips they generate). It is saved on the trip and copied onto the ticket. The confirmation, ticket, PDF, My Trips and bus details show it only when it is set, so nobody sees a made-up number. The old "TBD" value counts as not set.
+* **Next stop** on the tracking sheet is a timetable estimate: the route's stops spread evenly along the journey, so it says "Next stop: X, about N min". It is not a live GPS reading.
+* Buttons and cards that set their own text style lost the Outfit font and fell back to the system font; they keep Outfit again. The swap button on the search card has a cleaner ring, and the failed-payment card's button reads "Get help" so it no longer wraps.
+
 ### Admin page bodies and the "almost here" tracking state
 
 * **Trips** (`Desktop-Admin`): a real table of the next 30 days of trips (route with photo, leaves, bus, seats taken, status chip, Edit, Seats, Delete). Deleting says how many seats are already booked before it asks you to confirm. The old trip search stays below it. The three-step trip form already matched `Desktop-AdminTripForm`.
 * **Routes and schedules** (`Desktop-AdminRoutes`): two pill tabs and tables, with Add Route, Add Schedule, Edit, Generate Trips and Delete. **Users and roles** (`Desktop-AdminUsers`): a search box, a table with a role chip, Edit User and Delete, and Add User.
 * **Bookings** (`Desktop-AdminBookings`, `Desktop-AdminBookingDetails`), **Refunds** (`Desktop-AdminRefunds`, `Desktop-AdminRefundDetails`), **Feedback** (`Desktop-AdminFeedback`) and **Analytics** (`Desktop-Analytics`, `Desktop-AdminLate`) follow their boards: red page headers on phones, big titles on desktop, bordered cards, pill tabs and status chips with words. The reject-refund box now has its title and question back (they had been commented out) and a reason menu that must be chosen.
 * **Tracking**: within five minutes of arriving the page shows "Your bus is almost here", "4 min away" in red and a **Show my ticket** button.
-* Still left out on purpose: the platform number and "Next stop" (the app has no real data for them).
 
 ### Conductor and admin
 

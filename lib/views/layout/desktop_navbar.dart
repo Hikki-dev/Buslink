@@ -113,7 +113,9 @@ class DesktopNavBar extends StatelessWidget {
                       side: const BorderSide(color: BL.border, width: 1.5),
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w500),
+                          fontFamily: 'Outfit',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500),
                     ),
                     child: Text(l10n.navLogout),
                   ),
@@ -129,7 +131,9 @@ class DesktopNavBar extends StatelessWidget {
                       backgroundColor: BL.crimson,
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700),
+                          fontFamily: 'Outfit',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700),
                     ),
                     child: Text(l10n.navLogin),
                   ),

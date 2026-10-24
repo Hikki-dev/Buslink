@@ -189,9 +189,7 @@ class _AdminScreenState extends State<AdminScreen> {
           ? _operatorController.text
           : 'BusLink',
       'totalSeats': int.tryParse(_seatsController.text) ?? 40,
-      'platformNumber': _platformController.text.isNotEmpty
-          ? _platformController.text
-          : 'TBD',
+      'platformNumber': _platformController.text.trim(),
       'blockedSeats': _blockedSeats,
       'status': _tripStatus.name,
       'routeId': _selectedRoute?.id, // Saving Route ID

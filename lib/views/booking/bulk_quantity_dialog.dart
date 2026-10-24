@@ -148,7 +148,8 @@ class _BulkQuantityDialogState extends State<BulkQuantityDialog> {
                 style: TextButton.styleFrom(
                     foregroundColor: BL.muted,
                     minimumSize: const Size(0, 48),
-                    textStyle: const TextStyle(fontSize: 16)),
+                    textStyle:
+                        const TextStyle(fontFamily: 'Outfit', fontSize: 16)),
                 child: const Text('Cancel'),
               ),
             ],

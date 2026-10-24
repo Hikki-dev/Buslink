@@ -266,8 +266,10 @@ class AdminTripsTableState extends State<AdminTripsTable> {
             side: BorderSide(color: c, width: 1.5),
             padding: const EdgeInsets.symmetric(horizontal: 14),
             shape: const StadiumBorder(),
-            textStyle:
-                const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            textStyle: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 16,
+                fontWeight: FontWeight.w700),
           ),
           child: Text(label),
         ),

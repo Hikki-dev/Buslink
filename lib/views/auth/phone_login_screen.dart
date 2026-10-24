@@ -172,7 +172,9 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                               foregroundColor: BL.crimson,
                               minimumSize: const Size(0, 52),
                               textStyle: const TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.w700)),
+                                  fontFamily: 'Outfit',
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700)),
                           child: const Text('Use email instead'),
                         ),
                       ],

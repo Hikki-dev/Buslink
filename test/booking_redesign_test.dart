@@ -69,7 +69,7 @@ void main() {
     expect(find.text('Verification Failed'), findsOneWidget);
     expect(find.textContaining('Your seats are not lost'), findsOneWidget);
     expect(find.text('Session Expired'), findsOneWidget);
-    await tester.tap(find.text('Contact support'));
+    await tester.tap(find.text('Get help'));
     await tester.tap(find.text('Go Home'));
     await tester.tap(find.text('Return to Home'));
     expect(support, 1);

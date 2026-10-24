@@ -288,6 +288,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                                                   color: BL.crimson, width: 2),
                                               shape: const StadiumBorder(),
                                               textStyle: const TextStyle(
+                                                  fontFamily: 'Outfit',
                                                   fontSize: 17,
                                                   fontWeight: FontWeight.w800),
                                             ),

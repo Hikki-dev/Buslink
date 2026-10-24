@@ -541,20 +541,33 @@ class _SwapButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Swap the two cities',
-      child: Material(
-        color: Colors.white,
-        shape: CircleBorder(
-            side: BorderSide(
-                color: outlined ? BL.crimson : BL.border, width: 1.5)),
-        elevation: outlined ? 0 : 2,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: SizedBox(
-            width: size,
-            height: size,
-            child: Icon(outlined ? Icons.swap_horiz : Icons.swap_vert,
-                color: BL.crimson, size: 26),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: outlined
+              ? null
+              : const [
+                  BoxShadow(color: Colors.white, spreadRadius: 4),
+                  BoxShadow(
+                      color: Color(0x2E660708),
+                      blurRadius: 6,
+                      offset: Offset(0, 2)),
+                ],
+        ),
+        child: Material(
+          color: Colors.white,
+          shape: CircleBorder(
+              side: BorderSide(
+                  color: outlined ? BL.crimson : BL.border, width: 1.5)),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: Icon(outlined ? Icons.swap_horiz : Icons.swap_vert,
+                  color: BL.crimson, size: 26),
+            ),
           ),
         ),
       ),
@@ -615,7 +628,8 @@ class _SearchButton extends StatelessWidget {
           disabledBackgroundColor: const Color(0xFFE3DADB),
           disabledForegroundColor: BL.muted,
           shape: const StadiumBorder(),
-          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(
+              fontFamily: 'Outfit', fontSize: 18, fontWeight: FontWeight.w700),
         ),
         child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),

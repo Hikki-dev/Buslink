@@ -229,7 +229,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     side: const BorderSide(color: BL.crimson, width: 2),
                     shape: const StadiumBorder(),
                     textStyle: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w800),
+                        fontFamily: 'Outfit',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800),
                   ),
                 ),
               ),

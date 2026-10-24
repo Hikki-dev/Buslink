@@ -32,8 +32,10 @@ class BlPrimaryButton extends StatelessWidget {
             backgroundColor: color,
             disabledBackgroundColor: const Color(0xFFE3DADB),
             shape: const StadiumBorder(),
-            textStyle:
-                const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            textStyle: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 18,
+                fontWeight: FontWeight.w700),
           ),
           child: Text(label),
         ),
