@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 
 import '../../../models/refund_model.dart';
+import '../../../utils/bl_colors.dart';
+import '../../widgets/bl_widgets.dart';
 import '../../../models/refund_transaction_model.dart';
 import '../../../services/stripe_service.dart';
 
@@ -24,77 +26,80 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Refund Details')),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('refunds')
-            .doc(widget.refundId)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final refund = RefundRequest.fromFirestore(snapshot.data!);
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(refund),
-                const SizedBox(height: 24),
-                _buildDetailsCard(refund),
-                const SizedBox(height: 32),
-                if (refund.status == RefundStatus.pending)
-                  _buildActionButtons(refund),
-                if (refund.status != RefundStatus.pending)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    width: double.infinity,
-                    color: refund.status == RefundStatus.approved
-                        ? Colors.green.withValues(alpha: 0.1)
-                        : Colors.red.withValues(alpha: 0.1),
-                    child: Text(
-                      "${"Refund Status:"} ${refund.status.name.toUpperCase()}",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: refund.status == RefundStatus.approved
-                              ? Colors.green
-                              : Colors.red),
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          const BlHeader(title: 'Refund Details'),
+          Expanded(
+            child: StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('refunds')
+                  .doc(widget.refundId)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(
+                      child: CircularProgressIndicator(color: BL.crimson));
+                }
+                final refund = RefundRequest.fromFirestore(snapshot.data!);
+                final pending = refund.status == RefundStatus.pending;
+                final approved = refund.status == RefundStatus.approved ||
+                    refund.status == RefundStatus.processed;
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 800),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 8,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(refund.passengerName,
+                                  style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: pending
+                                      ? const Color(0xFFFFF1DB)
+                                      : (approved
+                                          ? const Color(0xFFDDF1E3)
+                                          : const Color(0xFFFBE0DC)),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                    'Refund Status: ${pending ? 'Pending' : approved ? 'Approved' : 'Rejected'}',
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: pending
+                                            ? const Color(0xFF7A4300)
+                                            : (approved
+                                                ? const Color(0xFF14532D)
+                                                : const Color(0xFF7F1D14)))),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          _buildDetailsCard(refund),
+                          const SizedBox(height: 24),
+                          if (pending) _buildActionButtons(refund),
+                        ],
+                      ),
                     ),
-                  )
-              ],
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildHeader(RefundRequest refund) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 30,
-          backgroundColor:
-              Theme.of(context).colorScheme.surfaceContainerHighest,
-          child: Text(refund.passengerName[0],
-              style:
-                  const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(refund.passengerName,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
-            ],
           ),
-        )
-      ],
+        ],
+      ),
     );
   }
 
@@ -102,9 +107,9 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Theme.of(context).dividerColor)),
+          border: Border.all(color: BL.hairline)),
       child: Column(
         children: [
           // Email with copy icon
@@ -209,18 +214,19 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
 
   Widget _row(String label, String value, {bool isBold = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 9),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle()),
+          Text(label, style: const TextStyle(fontSize: 17, color: BL.muted)),
           const SizedBox(width: 16),
-          Flexible(
+          Expanded(
             child: Text(value,
                 textAlign: TextAlign.end,
                 style: TextStyle(
-                    fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-                    fontSize: isBold ? 18 : 16)),
+                    fontWeight: isBold ? FontWeight.w800 : FontWeight.w700,
+                    color: isBold ? BL.crimson : BL.ink,
+                    fontSize: isBold ? 26 : 17)),
           ),
         ],
       ),
@@ -228,28 +234,43 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
   }
 
   Widget _buildActionButtons(RefundRequest refund) {
-    return Row(
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
       children: [
-        Expanded(
+        SizedBox(
+          height: 56,
           child: OutlinedButton(
             onPressed: () => _showRejectDialog(refund),
             style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                foregroundColor: Colors.red,
-                side: const BorderSide(color: Colors.red)),
-            child: Text('Reject'),
+              padding: const EdgeInsets.symmetric(horizontal: 36),
+              foregroundColor: const Color(0xFFA3281C),
+              side: const BorderSide(color: Color(0xFFA3281C), width: 2),
+              shape: const StadiumBorder(),
+              textStyle:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            child: const Text('Reject'),
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () => _handleApprove(refund),
-            style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.green),
+        SizedBox(
+          height: 56,
+          child: FilledButton(
+            onPressed: _isLoading ? null : () => _handleApprove(refund),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 36),
+              backgroundColor: BL.success,
+              shape: const StadiumBorder(),
+              textStyle:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
             child: _isLoading
-                ? const CircularProgressIndicator(color: Colors.white)
-                : Text('Approve Refund', style: TextStyle(color: Colors.white)),
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2.5))
+                : const Text('Approve Refund'),
           ),
         ),
       ],
@@ -330,55 +351,88 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
   }
 
   void _showRejectDialog(RefundRequest refund) {
+    _rejectReasonController.clear();
+    String? reason;
+    final comment = TextEditingController();
     showDialog(
         context: context,
-        builder: (ctx) => AlertDialog(
-//               title: Text('Reject Refund'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-//                   Text('Are you sure you want to reject this refund?'),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    items: [
-                      DropdownMenuItem(
-                          value: "Policy Violation",
-                          child: Text('Policy Violation')),
-                      DropdownMenuItem(
-                          value: "Already Used", child: Text('Ticket Used')),
-                      DropdownMenuItem(value: "Other", child: Text('Other')),
+        builder: (ctx) => StatefulBuilder(
+              builder: (ctx, setD) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+                title: const Text('Reject Refund',
+                    style:
+                        TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+                content: SizedBox(
+                  width: 440,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Are you sure you want to reject this refund?',
+                          style: TextStyle(fontSize: 16, color: BL.muted)),
+                      const SizedBox(height: 16),
+                      const Text('Select Reason *',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        initialValue: reason,
+                        isExpanded: true,
+                        hint: const Text('Select Reason'),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'Policy Violation',
+                              child: Text('Policy Violation')),
+                          DropdownMenuItem(
+                              value: 'Already Used',
+                              child: Text('Already Used')),
+                          DropdownMenuItem(
+                              value: 'Ticket Used', child: Text('Ticket Used')),
+                          DropdownMenuItem(
+                              value: 'Other', child: Text('Other')),
+                        ],
+                        onChanged: (v) => setD(() => reason = v),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text('Comment',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: comment,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          hintText: 'Comment box',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
                     ],
-                    onChanged: (v) {
-                      // If using dropdown, state handling needed. Simple text field for now as per spec "Comment box".
-                      // Spec says "Reason dropdown (mandatory)".
-                      _rejectReasonController.text = v ?? "";
-                    },
-                    hint: Text('Select Reason'),
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _rejectReasonController,
-                    decoration: InputDecoration(
-//                         labelText: 'Comment',
-                        border: const OutlineInputBorder()),
-                    maxLines: 3,
-                  )
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Cancel')),
+                  FilledButton(
+                      onPressed: reason == null
+                          ? null
+                          : () {
+                              Navigator.pop(ctx);
+                              final c = comment.text.trim();
+                              _handleReject(
+                                  refund, c.isEmpty ? reason! : '$reason: $c');
+                            },
+                      style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFA3281C)),
+                      child: const Text('Confirm Reject')),
                 ],
               ),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
-                ElevatedButton(
-                    onPressed: () async {
-                      if (_rejectReasonController.text.isEmpty) return;
-                      Navigator.pop(ctx);
-                      _handleReject(refund, _rejectReasonController.text);
-                    },
-                    style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    child: Text('Confirm Reject',
-                        style: TextStyle(color: Colors.white)))
-              ],
             ));
   }
 

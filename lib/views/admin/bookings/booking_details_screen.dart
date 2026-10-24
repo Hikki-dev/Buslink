@@ -1,8 +1,9 @@
+import '../../../utils/bl_colors.dart';
+import '../../widgets/bl_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import '../../../utils/app_theme.dart';
 import '../refunds/admin_refund_list.dart'; // Import for navigation
 
 class BookingDetailsScreen extends StatelessWidget {
@@ -114,130 +115,140 @@ class BookingDetailsScreen extends StatelessWidget {
               (emailVal == null || emailVal.isEmpty) ? 'N/A' : emailVal;
 
           return Scaffold(
-            appBar: AppBar(
-              title: const Text("Booking Details"),
-              elevation: 0,
-              backgroundColor: Theme.of(context).cardColor,
-              foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
-            ),
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // 1. Status Banner
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border:
-                          Border.all(color: statusColor.withValues(alpha: 0.3)),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                            status == 'CONFIRMED'
-                                ? Icons.check_circle
-                                : (status == 'REFUNDED'
-                                    ? Icons.money_off
-                                    : Icons.info),
-                            color: statusColor,
-                            size: 32),
-                        const SizedBox(height: 8),
-                        Text(status,
-                            style: TextStyle(
-                                color: statusColor,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // 2. Trip Details Card
-                  _buildSectionCard(
-                    context,
-                    title: "Trip Information",
-                    icon: Icons.directions_bus,
-                    children: [
-                      const Divider(),
-                      _buildInfoRow(context, "Route", route),
-                      _buildInfoRow(context, "Date", dateStr),
-                      _buildInfoRow(context, "Bus Number", busNumber),
-                      _buildInfoRow(
-                          context,
-                          "Seat Numbers",
-                          (data['seatNumbers'] as List<dynamic>?)?.join(", ") ??
-                              "N/A"),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // 3. Passenger Details Card
-                  _buildSectionCard(
-                    context,
-                    title: "Passenger Details",
-                    icon: Icons.person,
-                    children: [
-                      _buildInfoRow(context, "Name", resolvedName),
-                      if (finalEmail != 'N/A')
-                        _buildCopyRow(context, "Email", finalEmail),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // 4. Payment Details Card
-                  _buildSectionCard(
-                    context,
-                    title: "Payment Summary",
-                    icon: Icons.receipt_long,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            backgroundColor: Colors.white,
+            body: Column(children: [
+              const BlHeader(title: 'Booking Details'),
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
                         children: [
-                          const Text("Total Amount", style: TextStyle()),
-                          Text("LKR $price",
-                              style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green)),
+                          // 1. Status Banner
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: statusColor.withValues(alpha: 0.3)),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                    status == 'CONFIRMED'
+                                        ? Icons.check_circle
+                                        : (status == 'REFUNDED'
+                                            ? Icons.money_off
+                                            : Icons.info),
+                                    color: statusColor,
+                                    size: 32),
+                                const SizedBox(height: 8),
+                                Text(status,
+                                    style: TextStyle(
+                                        color: statusColor,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.2)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // 2. Trip Details Card
+                          _buildSectionCard(
+                            context,
+                            title: "Trip Information",
+                            icon: Icons.directions_bus,
+                            children: [
+                              const Divider(),
+                              _buildInfoRow(context, "Route", route),
+                              _buildInfoRow(context, "Date", dateStr),
+                              _buildInfoRow(context, "Bus Number", busNumber),
+                              _buildInfoRow(
+                                  context,
+                                  "Seat Numbers",
+                                  (data['seatNumbers'] as List<dynamic>?)
+                                          ?.join(", ") ??
+                                      "N/A"),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // 3. Passenger Details Card
+                          _buildSectionCard(
+                            context,
+                            title: "Passenger Details",
+                            icon: Icons.person,
+                            children: [
+                              _buildInfoRow(context, "Name", resolvedName),
+                              if (finalEmail != 'N/A')
+                                _buildCopyRow(context, "Email", finalEmail),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // 4. Payment Details Card
+                          _buildSectionCard(
+                            context,
+                            title: "Payment Summary",
+                            icon: Icons.receipt_long,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text("Total Amount",
+                                      style: TextStyle()),
+                                  Text("LKR $price",
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: BL.crimson)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              _buildInfoRow(context, "Status", paymentStatus),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
+
+                          // 5. Actions
+                          if (status == 'REFUNDED' ||
+                              status == 'REFUND_REQUESTED')
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const AdminRefundListScreen()));
+                                },
+                                icon: const Icon(Icons.currency_exchange),
+                                label: const Text("Manage Refund"),
+                                style: ElevatedButton.styleFrom(
+                                  minimumSize: const Size(0, 56),
+                                  backgroundColor: BL.crimson,
+                                  foregroundColor: Colors.white,
+                                  shape: const StadiumBorder(),
+                                  textStyle: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      _buildInfoRow(context, "Status", paymentStatus),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-
-                  // 5. Actions
-                  if (status == 'REFUNDED' || status == 'REFUND_REQUESTED')
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      const AdminRefundListScreen()));
-                        },
-                        icon: const Icon(Icons.currency_exchange),
-                        label: const Text("Manage Refund"),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: Colors.orange,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
                     ),
-                ],
+                  ),
+                ),
               ),
-            ),
+            ]),
           );
         });
   }
@@ -249,25 +260,21 @@ class BookingDetailsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
-        ],
+        border: Border.all(color: BL.hairline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 24, color: AppTheme.primaryColor),
-              const SizedBox(width: 8),
-              Text(title,
+              Text(title.toUpperCase(),
                   style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                      color: BL.crimson)),
             ],
           ),
           const SizedBox(height: 16),

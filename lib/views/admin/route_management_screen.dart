@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../models/route_model.dart';
 import '../../models/schedule_model.dart';
 import '../../services/firestore_service.dart';
-import '../../utils/app_theme.dart';
+import '../../utils/bl_colors.dart';
+import '../widgets/bl_widgets.dart';
 import '../../utils/app_constants.dart';
 
 class RouteManagementScreen extends StatefulWidget {
@@ -34,108 +35,219 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
   Widget build(BuildContext context) =>
       AdminShell(selected: 2, child: _buildPage(context));
 
+  int _tab = 0; // 0 routes, 1 schedules
+
+  Widget _pill(String label, bool on, VoidCallback onTap) => Semantics(
+        button: true,
+        selected: on,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 22),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: on ? BL.crimson : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border:
+                  Border.all(color: on ? BL.crimson : BL.border, width: 1.5),
+            ),
+            child: Text(label,
+                style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: on ? Colors.white : BL.ink)),
+          ),
+        ),
+      );
+
+  Widget _obtn(String label, VoidCallback onTap, {Color color = BL.ink}) =>
+      SizedBox(
+        height: 44,
+        child: OutlinedButton(
+          onPressed: onTap,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: color,
+            side: BorderSide(color: color, width: 1.5),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            shape: const StadiumBorder(),
+            textStyle:
+                const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          child: Text(label),
+        ),
+      );
+
+  /// A bordered table: [head] titles with flex widths, then one row per item.
+  Widget _table(List<(String, int)> head, List<List<Widget>> rows) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: BL.hairline),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(children: [
+        Container(
+          color: const Color(0xFFF5F3F4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(children: [
+            for (final h in head)
+              Expanded(
+                flex: h.$2,
+                child: Text(h.$1,
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: BL.muted)),
+              ),
+          ]),
+        ),
+        for (final r in rows)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Color(0xFFEDE6E7)))),
+            child: Row(children: [
+              for (var i = 0; i < r.length; i++)
+                Expanded(flex: head[i].$2, child: r[i]),
+            ]),
+          ),
+      ]),
+    );
+  }
+
   Widget _buildPage(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Route & Schedule Management",
-            style:
-                TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppTheme.primaryColor,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: AppTheme.primaryColor,
-          tabs: const [
-            Tab(text: "Routes (Paths)", icon: Icon(Icons.map)),
-            Tab(text: "Schedules (Operations)", icon: Icon(Icons.schedule)),
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(36, 32, 36, 48),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Route & Schedule Management',
+                        style: TextStyle(
+                            fontSize: 34, fontWeight: FontWeight.w800)),
+                    SizedBox(height: 4),
+                    Text(
+                        'A route is the path. A schedule says which bus runs it and when.',
+                        style: TextStyle(fontSize: 17, color: BL.muted)),
+                  ],
+                ),
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  SizedBox(
+                    height: 52,
+                    child: OutlinedButton(
+                      onPressed: () => _showRouteDialog(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: BL.crimson,
+                        side: const BorderSide(color: BL.crimson, width: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 22),
+                        shape: const StadiumBorder(),
+                        textStyle: const TextStyle(
+                            fontSize: 17, fontWeight: FontWeight.w800),
+                      ),
+                      child: const Text('Add Route'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    height: 52,
+                    child: FilledButton(
+                      onPressed: () async {
+                        final routes = await _service.getRoutesStream().first;
+                        if (mounted) _showScheduleDialog(routes);
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: BL.crimson,
+                        padding: const EdgeInsets.symmetric(horizontal: 22),
+                        shape: const StadiumBorder(),
+                        textStyle: const TextStyle(
+                            fontSize: 17, fontWeight: FontWeight.w800),
+                      ),
+                      child: const Text('Add Schedule'),
+                    ),
+                  ),
+                ]),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(children: [
+              _pill(
+                  'Routes (Paths)', _tab == 0, () => setState(() => _tab = 0)),
+              const SizedBox(width: 8),
+              _pill('Schedules (Operations)', _tab == 1,
+                  () => setState(() => _tab = 1)),
+            ]),
+            const SizedBox(height: 18),
+            _tab == 0 ? _buildRouteTab() : _buildScheduleTab(),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildRouteTab(),
-          _buildScheduleTab(),
-        ],
       ),
     );
   }
 
-  // --- TAB 1: ROUTES ---
+  // --- ROUTES ---
 
   Widget _buildRouteTab() {
     return StreamBuilder<List<RouteModel>>(
       stream: _service.getRoutesStream(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text("Error: ${snapshot.error}"));
+          return const BlEmpty(
+              icon: Icons.cloud_off,
+              title: 'We could not load the routes',
+              message: 'Check the connection and try again.');
         }
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const Padding(
+              padding: EdgeInsets.all(40),
+              child:
+                  Center(child: CircularProgressIndicator(color: BL.crimson)));
         }
-
         final routes = snapshot.data!;
         if (routes.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("No routes defined."),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => _showRouteDialog(),
-                  child: const Text("Add First Route"),
-                )
-              ],
+          return Column(children: [
+            const BlEmpty(
+                icon: Icons.map_outlined, title: 'No routes defined.'),
+            FilledButton(
+              onPressed: () => _showRouteDialog(),
+              style: FilledButton.styleFrom(backgroundColor: BL.crimson),
+              child: const Text('Add First Route'),
             ),
-          );
+          ]);
         }
-
-        return Scaffold(
-          floatingActionButton: FloatingActionButton(
-            heroTag: 'addRouteBtn',
-            onPressed: () => _showRouteDialog(),
-            backgroundColor: AppTheme.primaryColor,
-            child: const Icon(Icons.add),
-          ),
-          body: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: routes.length,
-            itemBuilder: (context, index) {
-              final route = routes[index];
-              return Card(
-                elevation: 2,
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: AppTheme.primaryColor,
-                    child: Icon(Icons.directions, color: Colors.white),
-                  ),
-                  title: Text("${route.originCity} ➝ ${route.destinationCity}",
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(
-                      "Via: ${route.via.isEmpty ? 'Direct' : route.via}\nDuration: ${_formatDuration(route.estimatedDurationMins)}"),
-                  isThreeLine: true,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        tooltip: 'Edit',
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showRouteDialog(route: route),
-                      ),
-                      IconButton(
-                        tooltip: 'Delete',
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _confirmDelete(routeId: route.id),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        );
+        return _table(const [
+          ('Route', 4),
+          ('Via', 3),
+          ('Duration', 2),
+          ('Actions', 3)
+        ], [
+          for (final r in routes)
+            [
+              Text('${r.originCity} to ${r.destinationCity}',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700)),
+              Text(r.via.isEmpty ? 'Direct' : r.via,
+                  style: const TextStyle(fontSize: 16, color: BL.muted)),
+              Text(_formatDuration(r.estimatedDurationMins),
+                  style: const TextStyle(fontSize: 16)),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                _obtn('Edit', () => _showRouteDialog(route: r)),
+                _obtn('Delete', () => _confirmDelete(routeId: r.id),
+                    color: const Color(0xFFA3281C)),
+              ]),
+            ]
+        ]);
       },
     );
   }
@@ -280,122 +392,84 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
       stream: _service.getSchedulesStream(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text("Error: ${snapshot.error}"));
+          return const BlEmpty(
+              icon: Icons.cloud_off,
+              title: 'We could not load the schedules',
+              message: 'Check the connection and try again.');
         }
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const Padding(
+              padding: EdgeInsets.all(40),
+              child:
+                  Center(child: CircularProgressIndicator(color: BL.crimson)));
         }
-
         final schedules = snapshot.data!;
-        // Need to fetch routes to display from/to
-        // Ideally we would join this data. For now, we will just show schedule ID or fetch async.
-        // Actually, fetching all routes to map ID -> Name is better.
-
         return StreamBuilder<List<RouteModel>>(
           stream: _service.getRoutesStream(),
           builder: (context, routeSnap) {
             if (!routeSnap.hasData) return const SizedBox();
             final routeMap = {for (var r in routeSnap.data!) r.id: r};
-
             if (schedules.isEmpty) {
-              return Center(
-                child: ElevatedButton(
+              return Column(children: [
+                const BlEmpty(icon: Icons.schedule, title: 'No schedules yet.'),
+                FilledButton(
                   onPressed: () =>
                       _showScheduleDialog(routeMap.values.toList()),
-                  child: const Text("Create First Schedule"),
+                  style: FilledButton.styleFrom(backgroundColor: BL.crimson),
+                  child: const Text('Create First Schedule'),
                 ),
-              );
+              ]);
             }
-
-            return Scaffold(
-              floatingActionButton: FloatingActionButton(
-                heroTag: 'addScheduleBtn',
-                onPressed: () => _showScheduleDialog(routeMap.values.toList()),
-                backgroundColor: AppTheme.primaryColor,
-                child: const Icon(Icons.add),
-              ),
-              body: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: schedules.length,
-                itemBuilder: (context, index) {
-                  final schedule = schedules[index];
-                  final route = routeMap[schedule.routeId];
-                  final routeName = route != null
-                      ? "${route.originCity} ➝ ${route.destinationCity}"
-                      : "Route ID: ${schedule.routeId}"; // Fallback for deleted routes
-
-                  return Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(routeName,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16)),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(schedule.departureTime,
-                                    style: const TextStyle(
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.bold)),
-                              )
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          // Removed Operator Name as requested
-                          Text("Bus: ${schedule.busNumber}"),
-                          Text("Price: LKR ${schedule.basePrice}"),
-                          Text(
-                              "Days: ${_getDaysString(schedule.recurrenceDays)}"),
-                          const Divider(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton.icon(
-                                icon: const Icon(Icons.autorenew, size: 18),
-                                label: const Text("Generate Trips"),
-                                onPressed: () =>
-                                    _showGenerateDialog(schedule, route),
-                              ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                tooltip: 'Edit',
-                                icon:
-                                    const Icon(Icons.edit, color: Colors.blue),
-                                onPressed: () => _showScheduleDialog(
-                                    routeMap.values.toList(),
-                                    schedule: schedule),
-                              ),
-                              IconButton(
-                                tooltip: 'Delete',
-                                icon:
-                                    const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () =>
-                                    _confirmDelete(scheduleId: schedule.id),
-                              ),
-                            ],
-                          )
-                        ],
-                      ),
+            return _table(const [
+              ('Route', 3),
+              ('Operator', 2),
+              ('Bus No', 2),
+              ('Departure', 2),
+              ('Operating Days', 3),
+              ('Price', 2),
+              ('Actions', 4)
+            ], [
+              for (final sc in schedules)
+                () {
+                  final route = routeMap[sc.routeId];
+                  return <Widget>[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                            route != null
+                                ? '${route.originCity} to ${route.destinationCity}'
+                                : 'A route that was deleted',
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w700)),
+                        if (route != null)
+                          Text(route.via.isEmpty ? 'Direct' : route.via,
+                              style: const TextStyle(
+                                  fontSize: 15, color: BL.muted)),
+                      ],
                     ),
-                  );
-                },
-              ),
-            );
+                    Text(sc.operatorName, style: const TextStyle(fontSize: 16)),
+                    Text(sc.busNumber, style: const TextStyle(fontSize: 16)),
+                    Text(sc.departureTime,
+                        style: const TextStyle(fontSize: 16)),
+                    Text(_getDaysString(sc.recurrenceDays),
+                        style: const TextStyle(fontSize: 16)),
+                    Text('LKR ${sc.basePrice.toStringAsFixed(0)}',
+                        style: const TextStyle(fontSize: 16)),
+                    Wrap(spacing: 8, runSpacing: 8, children: [
+                      _obtn(
+                          'Edit',
+                          () => _showScheduleDialog(routeMap.values.toList(),
+                              schedule: sc)),
+                      _obtn('Generate Trips',
+                          () => _showGenerateDialog(sc, route),
+                          color: BL.crimson),
+                      _obtn('Delete', () => _confirmDelete(scheduleId: sc.id),
+                          color: const Color(0xFFA3281C)),
+                    ]),
+                  ];
+                }()
+            ]);
           },
         );
       },

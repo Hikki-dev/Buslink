@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../../utils/app_theme.dart';
+import '../../../utils/bl_colors.dart';
+import '../../widgets/bl_widgets.dart';
 
 import 'booking_details_screen.dart';
 import '../widgets/status_chip.dart';
@@ -129,26 +131,38 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
       AdminShell(selected: 3, child: _buildPage(context));
 
   Widget _buildPage(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width > 900;
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Booking Management'),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-        elevation: 1,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _clearFilters,
-            tooltip: "Clear Filters",
-          )
-        ],
-      ),
+      backgroundColor: Colors.white,
       body: Column(
         children: [
+          if (isDesktop)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(36, 32, 36, 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Booking Management',
+                    style:
+                        TextStyle(fontSize: 34, fontWeight: FontWeight.w800)),
+              ),
+            )
+          else
+            BlHeader(
+              title: 'Booking Management',
+              actions: [
+                IconButton(
+                  tooltip: 'Clear filters',
+                  color: Colors.white,
+                  icon: const Icon(Icons.filter_alt_off_outlined),
+                  onPressed: _clearFilters,
+                ),
+              ],
+            ),
           // FILTERS SECTION
           Container(
-            padding: const EdgeInsets.all(16.0),
-            color: Theme.of(context).cardColor,
+            padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 36 : 16, vertical: 12),
+            color: Colors.white,
             child: Column(
               children: [
                 // Search Row
@@ -247,7 +261,9 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
             child: _isLoading && _bookings.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : _bookings.isEmpty
-                    ? Center(child: Text('No bookings found'))
+                    ? const BlEmpty(
+                        icon: Icons.confirmation_number_outlined,
+                        title: 'No bookings found')
                     : ListView.builder(
                         padding: const EdgeInsets.all(8),
                         itemCount: _bookings.length + 1,
@@ -260,10 +276,25 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                                 child: _hasMore
                                     ? _isLoading
                                         ? const CircularProgressIndicator()
-                                        : ElevatedButton(
+                                        : OutlinedButton(
                                             onPressed: () => _fetchBookings(),
+                                            style: OutlinedButton.styleFrom(
+                                              minimumSize: const Size(0, 52),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 32),
+                                              foregroundColor: BL.crimson,
+                                              side: const BorderSide(
+                                                  color: BL.crimson, width: 2),
+                                              shape: const StadiumBorder(),
+                                              textStyle: const TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.w800),
+                                            ),
                                             child: const Text("Load More"))
-                                    : const Text("No more bookings"),
+                                    : const Text("No more bookings",
+                                        style: TextStyle(
+                                            fontSize: 15, color: BL.muted)),
                               ),
                             );
                           }
@@ -435,10 +466,17 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
         getString(data, ['passengerName', 'userName', 'name', 'user_name']);
     if (pName.isEmpty) pName = 'Unknown User';
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: BL.hairline),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x14660708), blurRadius: 10, offset: Offset(0, 2))
+        ],
+      ),
       child: FutureBuilder<DocumentSnapshot?>(
         future: (data['passengerEmail'] == null ||
                     data['passengerEmail'].toString().isEmpty ||

@@ -416,14 +416,9 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
-        ],
+        border: Border.all(color: const Color(0xFFE8E0E1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -450,11 +445,11 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
           const SizedBox(height: 16),
           Text(value,
               style:
-                  const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
           Text(title,
-              style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
+              style: const TextStyle(
+                  color: Color(0xFF4A5560),
+                  fontSize: 16,
                   fontWeight: FontWeight.w500)),
         ],
       ),

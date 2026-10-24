@@ -1,12 +1,13 @@
 import 'layout/admin_shell.dart';
+import 'admin_dashboard.dart';
+import '../../utils/bl_colors.dart';
+import '../widgets/bl_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // import 'package:google_fonts/google_fonts.dart';
 
 import '../../controllers/trip_controller.dart';
 import '../../utils/app_theme.dart';
-import 'layout/admin_navbar.dart';
-import 'layout/admin_footer.dart';
 import 'layout/admin_bottom_nav.dart';
 
 class AdminUserManagementScreen extends StatefulWidget {
@@ -33,401 +34,263 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
 
   Widget _buildPage(BuildContext context) {
     final controller = Provider.of<TripController>(context, listen: false);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDesktop = MediaQuery.of(context).size.width > 900;
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final isDesktop = constraints.maxWidth > 800;
-      return Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        bottomNavigationBar: isDesktop
-            ? null
-            : const AdminBottomNav(selectedIndex: 1), // Index 1 for Roles
-        body: Column(
-          children: [
-            if (isDesktop) const AdminNavBar(selectedIndex: 3), // Desktop Nav
-            if (!isDesktop)
-              const AdminNavBar(selectedIndex: 3), // Mobile Header
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                    vertical: isDesktop ? 40 : 20,
-                    horizontal: isDesktop ? 24 : 16),
-                child: Column(
-                  children: [
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 20,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        padding: EdgeInsets.all(isDesktop ? 32 : 16),
-                        child: Column(
+    final search = TextField(
+      controller: _searchController,
+      onChanged: (v) => setState(() => _searchQuery = v),
+      style: const TextStyle(fontSize: 17),
+      decoration: InputDecoration(
+        hintText: 'Search by email or name...',
+        prefixIcon: const Icon(Icons.search),
+        filled: true,
+        fillColor: const Color(0xFFF5F3F4),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: BL.crimson, width: 2)),
+      ),
+    );
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      bottomNavigationBar:
+          isDesktop ? null : const AdminBottomNav(selectedIndex: 1),
+      body: Column(
+        children: [
+          if (!isDesktop)
+            const BlHeader(title: 'User Management', showBack: false),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(isDesktop ? 36 : 16,
+                  isDesktop ? 32 : 16, isDesktop ? 36 : 16, 48),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (isDesktop)
+                        const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Header
-                            if (isDesktop)
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildHeaderTitle(isDark),
-                                  Row(
-                                    children: [
-                                      ElevatedButton.icon(
-                                        onPressed: () =>
-                                            _showAddUserDialog(context),
-                                        icon: const Icon(Icons.add),
-                                        label: const Text("Add User"),
-                                        style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                AppTheme.primaryColor,
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 20, vertical: 16)),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      _buildSearchBar(isDark),
-                                    ],
-                                  ),
-                                ],
-                              )
-                            else
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  _buildHeaderTitle(isDark),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                          child: _buildSearchBar(isDark,
-                                              fullWidth: true)),
-                                      const SizedBox(width: 8),
-                                      ElevatedButton(
-                                        onPressed: () =>
-                                            _showAddUserDialog(context),
-                                        style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                AppTheme.primaryColor,
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.all(16)),
-                                        child: const Icon(Icons.add),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            const SizedBox(height: 32),
-                            const Divider(),
-                            const SizedBox(height: 16),
-
-                            // User List Stream
-                            StreamBuilder<List<Map<String, dynamic>>>(
-                              stream: controller.getAllUsers(),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return Center(
-                                      child: CircularProgressIndicator(
-                                          color: isDark
-                                              ? Colors.white
-                                              : AppTheme.primaryColor));
-                                }
-                                if (snapshot.hasError) {
-                                  return Center(
-                                      child: Padding(
-                                    padding: const EdgeInsets.all(40.0),
-                                    child: SelectableText(
-                                        "Error loading users:\n${snapshot.error}",
-                                        textAlign: TextAlign.center,
-                                        style:
-                                            const TextStyle(color: Colors.red)),
-                                  ));
-                                }
-                                if (!snapshot.hasData ||
-                                    snapshot.data!.isEmpty) {
-                                  return Center(
-                                      child: Padding(
-                                    padding: const EdgeInsets.all(40.0),
-                                    child: Text("No users found",
-                                        style: TextStyle(
-                                            color: isDark
-                                                ? Colors.white70
-                                                : Colors.grey)),
-                                  ));
-                                }
-
-                                // Filter
-                                final users = snapshot.data!.where((u) {
-                                  final email = (u['email'] ?? "")
-                                      .toString()
-                                      .toLowerCase();
-                                  final name = (u['displayName'] ?? "")
-                                      .toString()
-                                      .toLowerCase();
-                                  final q = _searchQuery.toLowerCase();
-                                  return email.contains(q) || name.contains(q);
-                                }).toList();
-
-                                return ListView.separated(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: users.length,
-                                  separatorBuilder: (context, index) => Divider(
-                                      color: isDark
-                                          ? Colors.white10
-                                          : Theme.of(context).dividerColor),
-                                  itemBuilder: (context, index) {
-                                    final user = users[index];
-                                    return _buildUserRow(context, user, isDark);
-                                  },
-                                );
-                              },
-                            ),
+                            Text('User Management',
+                                style: TextStyle(
+                                    fontSize: 34, fontWeight: FontWeight.w800)),
+                            SizedBox(height: 4),
+                            Text('Manage roles and permissions for all users',
+                                style:
+                                    TextStyle(fontSize: 17, color: BL.muted)),
                           ],
                         ),
+                      SizedBox(
+                        height: 56,
+                        child: FilledButton(
+                          onPressed: () => _showAddUserDialog(context),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: BL.crimson,
+                            padding: const EdgeInsets.symmetric(horizontal: 26),
+                            shape: const StadiumBorder(),
+                            textStyle: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w800),
+                          ),
+                          child: const Text('Add User'),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 60),
-                    const AdminFooter(),
-                  ],
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 520),
+                      child: search),
+                  const SizedBox(height: 18),
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: controller.getAllUsers(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                            padding: EdgeInsets.all(40),
+                            child: Center(
+                                child: CircularProgressIndicator(
+                                    color: BL.crimson)));
+                      }
+                      if (snapshot.hasError) {
+                        return const BlEmpty(
+                            icon: Icons.cloud_off,
+                            title: 'We could not load the users',
+                            message: 'Check the connection and try again.');
+                      }
+                      final q = _searchQuery.trim().toLowerCase();
+                      final users = (snapshot.data ?? []).where((u) {
+                        final email =
+                            (u['email'] ?? '').toString().toLowerCase();
+                        final name =
+                            (u['displayName'] ?? '').toString().toLowerCase();
+                        return email.contains(q) || name.contains(q);
+                      }).toList();
+                      if (users.isEmpty) {
+                        return Column(children: [
+                          const BlEmpty(
+                              icon: Icons.person_search,
+                              title: 'No users found'),
+                          OutlinedButton(
+                            onPressed: () => Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const AdminDashboard())),
+                            child: const Text('Back to Dashboard'),
+                          ),
+                        ]);
+                      }
+                      return Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: BL.hairline),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(children: [
+                          Container(
+                            color: const Color(0xFFF5F3F4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                            child: const Row(children: [
+                              Expanded(
+                                  flex: 5,
+                                  child: Text('User',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: BL.muted))),
+                              Expanded(
+                                  flex: 2,
+                                  child: Text('Role',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: BL.muted))),
+                              Expanded(
+                                  flex: 3,
+                                  child: Text('Actions',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: BL.muted))),
+                            ]),
+                          ),
+                          for (final u in users) _buildUserRow(context, u),
+                        ]),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _buildHeaderTitle(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(Icons.arrow_back,
-                  color: isDark ? Colors.white : Colors.black),
-              onPressed: () => Navigator.of(context).pop(),
-              tooltip: "Back to Dashboard",
-            ),
-            const SizedBox(width: 8),
-            Text(
-              "User Management",
-              style: TextStyle(
-                fontFamily: 'Outfit',
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : AppTheme.darkText,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.only(left: 48.0),
-          child: Text(
-            "Manage roles and permissions for all users",
-            style: TextStyle(
-              fontFamily: 'Inter',
-              color: isDark ? Colors.white70 : Theme.of(context).disabledColor,
-              fontSize: 16,
-            ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar(bool isDark, {bool fullWidth = false}) {
-    return SizedBox(
-      width: fullWidth ? double.infinity : 300,
-      child: TextField(
-        controller: _searchController,
-        onChanged: (val) {
-          setState(() => _searchQuery = val);
-        },
-        style: TextStyle(color: isDark ? Colors.white : Colors.black),
-        decoration: InputDecoration(
-          hintText: "Search by email or name...",
-          hintStyle: TextStyle(
-              color: isDark ? Colors.white54 : Theme.of(context).disabledColor),
-          prefixIcon: Icon(Icons.search,
-              color:
-                  isDark ? Colors.white70 : Theme.of(context).iconTheme.color),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-                color: isDark ? Colors.white24 : Colors.grey.shade200),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-                color: isDark ? Colors.white24 : Colors.grey.shade200),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppTheme.primaryColor),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildUserRow(
-      BuildContext context, Map<String, dynamic> user, bool isDark) {
-    final String role = user['role'] ?? 'customer';
-    final String email = user['email'] ?? 'No Email';
-    String name = user['displayName'] ?? '';
-    // Fix: Derive name from email if missing or explicit "Unknown User" default
+  Widget _buildUserRow(BuildContext context, Map<String, dynamic> user) {
+    final String role = (user['role'] ?? 'customer').toString();
+    final String email = (user['email'] ?? 'No Email').toString();
+    var name = (user['displayName'] ?? '').toString();
     if (name.isEmpty || name == 'Unknown User') {
-      if (email.contains('@')) {
-        final rawName = email.split('@')[0];
-        // Capitalize first letter
-        if (rawName.isNotEmpty) {
-          name = rawName[0].toUpperCase() + rawName.substring(1);
-        } else {
-          name = rawName;
-        }
-      } else {
-        name = 'Unknown User';
-      }
+      final raw = email.contains('@') ? email.split('@')[0] : '';
+      name = raw.isEmpty
+          ? 'Unknown User'
+          : raw[0].toUpperCase() + raw.substring(1);
     }
-    final String uid = user['uid'] ?? '';
+    final uid = (user['uid'] ?? '').toString();
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final isMobile = constraints.maxWidth < 600;
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(
-            vertical: 16.0, horizontal: 8), // Adjusted padding
-        child: Row(
-          crossAxisAlignment:
-              isMobile ? CrossAxisAlignment.start : CrossAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-              child: Text(
-                name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                style: const TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    name,
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: isDark ? Colors.white : Colors.black87),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                  Text(
-                    email,
-                    style: TextStyle(
-                        color: Theme.of(context).disabledColor, fontSize: 12),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                  if (isMobile) ...[
-                    const SizedBox(height: 8),
-                    _buildRoleBadge(context, role),
-                  ]
-                ],
-              ),
-            ),
-            if (!isMobile)
-              Flexible(
-                flex: 2,
-                fit:
-                    FlexFit.loose, // Loose allows it to shrink instead of force
-                child: _buildRoleBadge(context, role),
-              ),
-            // Actions
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: Icon(Icons.edit_outlined,
-                      size: 20, color: Theme.of(context).disabledColor),
-                  tooltip: "Edit User",
-                  onPressed: () =>
-                      _showEditUserDialog(context, uid, name, role),
-                ),
-                const SizedBox(width: 16), // More space between icons
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.delete_outline,
-                      size: 20, color: Colors.red),
-                  tooltip: "Delete User Profile",
-                  onPressed: () => _confirmDeleteUser(context, uid, name),
-                ),
-              ],
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: Color(0xFFEDE6E7)))),
+      child: Row(children: [
+        Expanded(
+          flex: 5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700)),
+              Text(email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 15, color: BL.muted)),
+            ],
+          ),
         ),
-      );
-    });
+        Expanded(flex: 2, child: _buildRoleBadge(context, role)),
+        Expanded(
+          flex: 3,
+          child: Wrap(spacing: 8, runSpacing: 8, children: [
+            SizedBox(
+              height: 44,
+              child: OutlinedButton(
+                onPressed: () => _showEditUserDialog(context, uid, name, role),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: BL.ink,
+                  side: const BorderSide(color: BL.ink, width: 1.5),
+                  shape: const StadiumBorder(),
+                  textStyle: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                child: const Text('Edit User'),
+              ),
+            ),
+            SizedBox(
+              height: 44,
+              child: OutlinedButton(
+                onPressed: () => _confirmDeleteUser(context, uid, name),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFA3281C),
+                  side: const BorderSide(color: Color(0xFFA3281C), width: 1.5),
+                  shape: const StadiumBorder(),
+                  textStyle: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                child: const Text('Delete'),
+              ),
+            ),
+          ]),
+        ),
+      ]),
+    );
   }
 
   Widget _buildRoleBadge(BuildContext context, String role) {
-    Color bg;
-    Color text;
-    String label = role.toUpperCase();
-
-    switch (role.toLowerCase()) {
-      case 'admin':
-        bg = Colors.red.shade100;
-        text = Colors.red.shade800;
-        break;
-      case 'conductor':
-        bg = Colors.blue.shade100;
-        text = Colors.blue.shade800;
-        break;
-      default:
-        bg = Theme.of(context).disabledColor.withValues(alpha: 0.1);
-        text = Theme.of(context).disabledColor;
-        label = "CUSTOMER";
-    }
-
+    final (label, bg, fg) = switch (role.toLowerCase()) {
+      'admin' => ('Admin', const Color(0xFFFBE3E4), BL.crimsonDark),
+      'conductor' => (
+          'Conductor',
+          const Color(0xFFFFF1DB),
+          const Color(0xFF7A4300)
+        ),
+      _ => ('Customer', const Color(0xFFE9EDF2), const Color(0xFF3A444F)),
+    };
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style:
-              TextStyle(color: text, fontWeight: FontWeight.bold, fontSize: 12),
-        ),
+        decoration:
+            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 14, fontWeight: FontWeight.w700, color: fg)),
       ),
     );
   }

@@ -145,6 +145,7 @@ class _TrackBusScreenState extends State<TrackBusScreen>
             children: [
               _buildMap(),
               _buildTopControls(eta),
+              if (_almostHere(eta)) _buildHeadsUp(),
               _buildSheet(context, eta),
             ],
           );
@@ -236,6 +237,40 @@ class _TrackBusScreenState extends State<TrackBusScreen>
     );
   }
 
+  /// Within five minutes of arriving (and not cancelled): the "almost here" look.
+  bool _almostHere(TripEta eta) =>
+      !eta.arrived &&
+      eta.remaining.inMinutes <= 5 &&
+      !_trip.status.toLowerCase().contains('cancel');
+
+  Widget _buildHeadsUp() {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(76, 12, 12, 0),
+        child: Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 12)],
+          ),
+          child: const Row(children: [
+            Icon(Icons.notifications_none, color: Colors.white, size: 20),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text('Your bus is almost here',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700)),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTopControls(TripEta eta) {
     return SafeArea(
       child: Padding(
@@ -276,11 +311,14 @@ class _TrackBusScreenState extends State<TrackBusScreen>
         !cancelled && (_trip.delayMinutes > 0 || status.contains('delay'));
     final hasSignal = _busPos != null;
 
+    final almost = _almostHere(eta);
     final headline = cancelled
         ? 'This trip was cancelled'
         : eta.arrived
             ? 'Arrived in ${_trip.toCity}'
-            : 'Arriving in ${_trip.toCity}';
+            : almost
+                ? 'Your bus is'
+                : 'Arriving in ${_trip.toCity}';
 
     // Wide screens: a floating card on the left, so the map stays the star.
     final wide = MediaQuery.of(context).size.width > 900;
@@ -331,13 +369,18 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                       children: [
                         Expanded(
                           child: Text(
-                            eta.arrived ? 'Arrived' : formatEta(eta.remaining),
-                            style: const TextStyle(
+                            eta.arrived
+                                ? 'Arrived'
+                                : almost
+                                    ? '${formatEta(eta.remaining)} away'
+                                    : formatEta(eta.remaining),
+                            style: TextStyle(
                               fontFamily: 'Outfit',
-                              fontSize: 44,
+                              fontSize: almost ? 52 : 44,
                               height: 1.1,
                               fontWeight: FontWeight.w800,
                               letterSpacing: -0.5,
+                              color: almost ? AppTheme.primaryColor : null,
                             ),
                           ),
                         ),
@@ -409,6 +452,30 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                   ),
                   const SizedBox(height: 14),
                   _SignalRow(hasSignal: hasSignal),
+                  if (almost) ...[
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 58,
+                      child: FilledButton.icon(
+                        onPressed: () => Navigator.maybePop(context),
+                        icon: const Icon(Icons.qr_code_2),
+                        label: const Text('Show my ticket'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          shape: const StadiumBorder(),
+                          textStyle: const TextStyle(
+                              fontSize: 19, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Center(
+                      child: Text('Get your ticket ready to show the conductor',
+                          style:
+                              TextStyle(fontSize: 16, color: Colors.black54)),
+                    ),
+                  ],
                 ],
               ),
             ),

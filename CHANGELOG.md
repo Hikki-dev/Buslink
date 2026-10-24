@@ -6,12 +6,19 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 The first redesign pass kept most of the old screens and only dressed some of them. This pass builds each screen from its mockup board, on phone and on desktop, one batch at a time.
 
+### Admin page bodies and the "almost here" tracking state
+
+* **Trips** (`Desktop-Admin`): a real table of the next 30 days of trips (route with photo, leaves, bus, seats taken, status chip, Edit, Seats, Delete). Deleting says how many seats are already booked before it asks you to confirm. The old trip search stays below it. The three-step trip form already matched `Desktop-AdminTripForm`.
+* **Routes and schedules** (`Desktop-AdminRoutes`): two pill tabs and tables, with Add Route, Add Schedule, Edit, Generate Trips and Delete. **Users and roles** (`Desktop-AdminUsers`): a search box, a table with a role chip, Edit User and Delete, and Add User.
+* **Bookings** (`Desktop-AdminBookings`, `Desktop-AdminBookingDetails`), **Refunds** (`Desktop-AdminRefunds`, `Desktop-AdminRefundDetails`), **Feedback** (`Desktop-AdminFeedback`) and **Analytics** (`Desktop-Analytics`, `Desktop-AdminLate`) follow their boards: red page headers on phones, big titles on desktop, bordered cards, pill tabs and status chips with words. The reject-refund box now has its title and question back (they had been commented out) and a reason menu that must be chosen.
+* **Tracking**: within five minutes of arriving the page shows "Your bus is almost here", "4 min away" in red and a **Show my ticket** button.
+* Still left out on purpose: the platform number and "Next stop" (the app has no real data for them).
+
 ### Conductor and admin
 
 * **Conductor** screens (`Conductor`, `ConductorStatus`, `ConductorVerify`, `ConductorDelay`) were already built from their boards in the first redesign pass and are unchanged here.
 * **Admin on a wide screen** now has the dark red side menu from `Desktop-Admin`: Dashboard, Trips, Routes, Bookings, Refunds, Feedback, Analytics, Users and roles, plus Passenger view, Conductor view and Log out. Every admin page sits inside it (`AdminShell`); the old top bar only shows on phones. The Trips page header is now "Upcoming trips" with one **Add new trip** button, and the row of seven duplicate buttons is gone. The phone's admin bottom bar matches the passenger one.
 * Pictures in `docs/images/` were regenerated from the real widgets.
-* **Not done yet:** the bodies of the admin pages (the trips table, the three-step trip form, routes, users, bookings, refunds, feedback, analytics, late departures) still use the earlier layout inside the new menu, and the "bus almost here" tracking state. See the open items in the pull request.
 
 ### Account, sign-in, support and bulk booking
 
