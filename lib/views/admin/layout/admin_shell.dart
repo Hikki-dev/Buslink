@@ -50,7 +50,11 @@ class AdminShell extends StatelessWidget {
     if (MediaQuery.of(context).size.width <= 900) return child;
     return Row(
       children: [
-        _Side(selected: selected, items: _items, pageFor: _page),
+        // The menu sits outside the page's Scaffold, so it needs its own
+        // Material for text styles and ink.
+        Material(
+            type: MaterialType.transparency,
+            child: _Side(selected: selected, items: _items, pageFor: _page)),
         Expanded(child: child),
       ],
     );

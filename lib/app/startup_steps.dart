@@ -50,6 +50,11 @@ Future<void> _startFirebase() async {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
   }
+  // Local testing only: flutter build web --dart-define=USE_EMULATOR=true
+  if (const bool.fromEnvironment('USE_EMULATOR')) {
+    await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+    FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+  }
   try {
     // Keep data on the device so the app works with a poor connection.
     FirebaseFirestore.instance.settings = const Settings(
