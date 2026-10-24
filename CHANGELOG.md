@@ -51,6 +51,11 @@ The first redesign pass kept most of the old screens and only dressed some of th
 * Removed: the home screen's rotating web photos, the old features strip, the unused round-trip leftovers, the unused `MobileBottomNav`, and lower-case city names (`nuwara_eliya`) in the suggestion list.
 * Five photos (about 0.9 MB) are bundled in `assets/images/home/`. New file `lib/utils/bl_colors.dart` holds the mockup colours. 6 new tests.
 
+## 24 October 2026 (hosting)
+
+* **Netlify is switched off for this repository.** It had been building a deploy preview on every pull request with no Flutter build set up, so every preview was a blank "Page not found". `netlify.toml` now tells it to skip builds. Vercel stays the only host (the live site and the previews). To remove the Netlify checks completely, delete the `neon-cocada-9d5a9e` site in the Netlify dashboard.
+* **Vercel skips builds that cannot change the app** (changes to documentation, tests or CI only): `ignoreCommand` in `vercel.json` compares `lib`, `web`, `assets`, the pubspec files, the build script and `api`. Faster, and less build time used.
+
 ## 23 October 2026 (rules, cleanup, licence, project structure, the README story and starting up)
 
 ### Starting up (#13)

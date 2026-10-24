@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- lib web assets pubspec.yaml pubspec.lock vercel.json build_vercel.sh api l10n.yaml",
   "routes": [
     {
       "src": "/(assets/.*\\.(ttf|otf|woff2?|jpe?g|png|webp|gif|svg)|icons/.*|favicon\\.png)$",

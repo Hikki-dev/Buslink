@@ -1,0 +1,7 @@
+# BusLink is hosted on Vercel (see vercel.json and docs/Getting started.md).
+# Netlify has no Flutter build set up for this repository, so any Netlify
+# deploy preview was a blank "Page not found". This file tells Netlify to skip
+# every build. To remove the Netlify checks completely, delete the site in the
+# Netlify dashboard (Site configuration > Delete this site).
+[build]
+  ignore = "exit 0"
