@@ -595,8 +595,8 @@ class _Detail extends StatelessWidget {
           child: Row(
             children: [
               Text(l, style: const TextStyle(fontSize: 18, color: BL.muted)),
-              const Spacer(),
-              Flexible(
+              const SizedBox(width: 16),
+              Expanded(
                 child: Text(v,
                     textAlign: TextAlign.end,
                     style: const TextStyle(

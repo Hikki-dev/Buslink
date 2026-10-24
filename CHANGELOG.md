@@ -2,6 +2,14 @@
 
 What changed in each step, newest first. Each heading names the pull request it came from. The redesign was built as pull requests on top of each other (#2 to #7) and merged in that order on 22 October 2026.
 
+## 24 October 2026 (checked while signed in)
+
+The app was run against the local Firebase emulators (`scripts/seed_emulator.py` makes test accounts and a little data; build with `--dart-define=USE_EMULATOR=true`) and clicked through as a customer and as an admin. It found three things the tests could not:
+
+* The admin side menu had yellow double underlines under every label (it sat outside any `Material`). Fixed.
+* The "Stay Updated" notification prompt could appear twice, and came back after tapping Later, because two screens asked. It now asks once per run.
+* The values in the My Trips detail card (time, bus, platform, seats) did not line up on the right. Fixed.
+
 ## 23 October 2026 (the designs, screen by screen)
 
 The first redesign pass kept most of the old screens and only dressed some of them. This pass builds each screen from its mockup board, on phone and on desktop, one batch at a time.

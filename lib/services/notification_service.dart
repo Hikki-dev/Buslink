@@ -107,9 +107,13 @@ class NotificationService {
     });
   }
 
+  // The prompt is requested from more than one screen; ask once per run.
+  static bool _asked = false;
+
   /// UX-Friendly Permission Request
   static Future<void> requestPermissionWithDialog(BuildContext context) async {
-    if (const bool.fromEnvironment('IS_TESTING')) return;
+    if (const bool.fromEnvironment('IS_TESTING') || _asked) return;
+    _asked = true;
     NotificationSettings settings =
         await _firebaseMessaging.getNotificationSettings();
 
