@@ -2,6 +2,8 @@ import '../layout/admin_shell.dart';
 import 'package:flutter/material.dart';
 import '../widgets/status_chip.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../utils/bl_colors.dart';
+import '../../widgets/bl_widgets.dart';
 import 'package:intl/intl.dart';
 import '../../../models/refund_model.dart';
 import '../../../utils/app_theme.dart';
@@ -30,88 +32,97 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
       AdminShell(selected: 4, child: _buildPage(context));
 
   Widget _buildPage(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Refund Management',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
+    final isDesktop = MediaQuery.of(context).size.width > 900;
+    Widget tab(RefundStatus st, String label) {
+      final on = _selectedStatus == st;
+      return Semantics(
+        button: true,
+        selected: on,
+        child: InkWell(
+          onTap: () => setState(() => _selectedStatus = st),
+          borderRadius: BorderRadius.circular(24),
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 22),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: on ? BL.crimson : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border:
+                  Border.all(color: on ? BL.crimson : BL.border, width: 1.5),
+            ),
+            child: Text(label,
+                style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: on ? Colors.white : BL.ink)),
+          ),
+        ),
+      );
+    }
+
+    final search = TextField(
+      controller: _searchController,
+      onChanged: (_) => setState(() {}),
+      style: const TextStyle(fontSize: 17),
+      decoration: InputDecoration(
+        hintText: 'Enter name or email',
+        prefixIcon: const Icon(Icons.search),
+        filled: true,
+        fillColor: const Color(0xFFF5F3F4),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: BL.crimson, width: 2)),
       ),
+    );
+
+    return Scaffold(
+      backgroundColor: Colors.white,
       body: Column(
         children: [
-          // Search Bar
+          if (!isDesktop) const BlHeader(title: 'Refund Management'),
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: "Enter name or email",
-                prefixIcon: const Icon(Icons.search),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.fromLTRB(isDesktop ? 36 : 16,
+                isDesktop ? 32 : 16, isDesktop ? 36 : 16, 12),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (isDesktop)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 18),
+                      child: Text('Refund Management',
+                          style: TextStyle(
+                              fontSize: 34, fontWeight: FontWeight.w800)),
+                    ),
+                  Wrap(
+                    spacing: 14,
+                    runSpacing: 12,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        tab(RefundStatus.pending, 'Pending'),
+                        const SizedBox(width: 8),
+                        tab(RefundStatus.approved, 'Approved'),
+                        const SizedBox(width: 8),
+                        tab(RefundStatus.rejected, 'Rejected'),
+                      ]),
+                      SizedBox(width: 420, child: search),
+                    ],
+                  ),
+                ],
               ),
-              onChanged: (val) => setState(() {}),
             ),
           ),
-          const Divider(height: 1),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isMobile = constraints.maxWidth < 800;
-
-                if (isMobile) {
-                  // Mobile: Horizontal Filter + Vertical List
-                  return Column(
-                    children: [
-                      Container(
-                        color: Theme.of(context).cardColor,
-                        height: 60,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          children: [
-                            _buildFilterItemMobile(RefundStatus.pending,
-                                Icons.hourglass_top, 'Pending'),
-                            const SizedBox(width: 8),
-                            _buildFilterItemMobile(RefundStatus.approved,
-                                Icons.check_circle_outline, 'Approved'),
-                            const SizedBox(width: 8),
-                            _buildFilterItemMobile(RefundStatus.rejected,
-                                Icons.cancel_outlined, 'Rejected'),
-                          ],
-                        ),
-                      ),
-                      Expanded(child: _buildRefundList()),
-                    ],
-                  );
-                } else {
-                  // Desktop: Sidebar + List
-                  return Row(
-                    children: [
-                      Container(
-                        width: 250,
-                        color: Theme.of(context).cardColor,
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 20),
-                            _buildFilterItem(RefundStatus.pending,
-                                Icons.hourglass_top, 'Pending'),
-                            _buildFilterItem(RefundStatus.approved,
-                                Icons.check_circle_outline, 'Approved'),
-                            _buildFilterItem(RefundStatus.rejected,
-                                Icons.cancel_outlined, 'Rejected'),
-                          ],
-                        ),
-                      ),
-                      Expanded(child: _buildRefundList()),
-                    ],
-                  );
-                }
-              },
-            ),
-          ),
+          Expanded(child: _buildRefundList()),
         ],
       ),
     );
@@ -145,7 +156,8 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('No refunds found'));
+          return const BlEmpty(
+              icon: Icons.payments_outlined, title: 'No refunds found');
         }
 
         List<DocumentSnapshot> docs = snapshot.data!.docs;
@@ -191,7 +203,8 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
         }
 
         if (docs.isEmpty) {
-          return const Center(child: Text('No refunds match your search'));
+          return const BlEmpty(
+              icon: Icons.search_off, title: 'No refunds match your search');
         }
 
         return ListView.builder(
@@ -206,78 +219,17 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
     );
   }
 
-  Widget _buildFilterItemMobile(
-      RefundStatus status, IconData icon, String label) {
-    final bool isSelected = _selectedStatus == status;
-    return InkWell(
-      onTap: () => setState(() => _selectedStatus = status),
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? AppTheme.primaryColor.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            border: isSelected
-                ? Border.all(color: AppTheme.primaryColor)
-                : Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon,
-                  size: 16, color: isSelected ? AppTheme.primaryColor : null),
-              const SizedBox(width: 8),
-              Text(label,
-                  style: TextStyle(
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? AppTheme.primaryColor : null)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterItem(RefundStatus status, IconData icon, String label) {
-    final bool isSelected = _selectedStatus == status;
-    return InkWell(
-      onTap: () => setState(() => _selectedStatus = status),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        color: isSelected
-            ? AppTheme.primaryColor.withValues(alpha: 0.1)
-            : Colors.transparent,
-        child: Row(
-          children: [
-            Icon(icon, color: isSelected ? AppTheme.primaryColor : null),
-            const SizedBox(width: 12),
-            Text(label,
-                style: TextStyle(
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? AppTheme.primaryColor : null))
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildRefundCard(RefundRequest refund) {
-    Color stripColor = Theme.of(context).disabledColor;
-    if (refund.status == RefundStatus.pending) stripColor = Colors.orange;
-    if (refund.status == RefundStatus.approved) stripColor = Colors.green;
-    if (refund.status == RefundStatus.rejected) stripColor = Colors.red;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: BL.hairline),
+      ),
       child: IntrinsicHeight(
         child: Row(
           children: [
-            Container(width: 6, color: stripColor),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -363,9 +315,17 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                 ),
               ),
             ),
-            IconButton(
-              tooltip: 'Open',
-              icon: const Icon(Icons.arrow_forward_ios, size: 16),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(0, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 22),
+                foregroundColor: BL.crimson,
+                side: const BorderSide(color: BL.crimson, width: 2),
+                shape: const StadiumBorder(),
+                textStyle:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              child: const Text('Review'),
               onPressed: () {
                 Navigator.push(
                     context,

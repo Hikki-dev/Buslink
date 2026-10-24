@@ -1,4 +1,5 @@
 import 'layout/admin_shell.dart';
+import 'widgets/admin_trips_table.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -294,6 +295,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ),
                       ),
                       const SizedBox(height: 32),
+
+                      if (isDesktop)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1200),
+                            child: AdminTripsTable(
+                              onEdit: (t) => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => AdminScreen(trip: t))),
+                              onSeats: (t) => _showSeatLayout(context, t),
+                            ),
+                          ),
+                        ),
+                      if (isDesktop) const SizedBox(height: 32),
 
                       // Search Section
                       _buildSearchSection(context, controller, isDesktop),

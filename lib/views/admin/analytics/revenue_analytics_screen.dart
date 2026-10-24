@@ -315,24 +315,23 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
-        ],
-        border: Border(left: BorderSide(color: color, width: 4)),
+        border: Border.all(color: const Color(0xFFE8E0E1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 14)),
-          const SizedBox(height: 8),
+          Text(title,
+              style: const TextStyle(fontSize: 16, color: Color(0xFF4A5560))),
+          const SizedBox(height: 4),
           Text(value,
-              style: const TextStyle(
-                  fontSize: 26, fontWeight: FontWeight.bold)), // Increased
+              style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  color: color == Colors.green
+                      ? const Color(0xFFBA181B)
+                      : const Color(0xFF0B090A))),
         ],
       ),
     );
