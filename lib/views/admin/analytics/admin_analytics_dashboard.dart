@@ -1,3 +1,4 @@
+import '../layout/admin_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../utils/app_theme.dart';
@@ -9,7 +10,10 @@ class AdminAnalyticsDashboard extends StatelessWidget {
   const AdminAnalyticsDashboard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      AdminShell(selected: 6, child: _buildPage(context));
+
+  Widget _buildPage(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(

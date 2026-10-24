@@ -1,3 +1,4 @@
+import 'layout/admin_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/app_theme.dart';
@@ -7,7 +8,10 @@ class AdminFeedbackScreen extends StatelessWidget {
   const AdminFeedbackScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      AdminShell(selected: 5, child: _buildPage(context));
+
+  Widget _buildPage(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Customer Feedback"),
