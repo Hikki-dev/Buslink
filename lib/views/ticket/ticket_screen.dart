@@ -15,6 +15,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../utils/bl_colors.dart';
+import '../../utils/platform_text.dart';
 import '../home/home_sections.dart' show cityPhoto;
 import '../../services/notification_service.dart'; // Added
 import '../tracking/track_bus_screen.dart'; // Added
@@ -207,6 +208,8 @@ class _TicketScreenState extends State<TicketScreen> {
                     'Leaves',
                     DateFormat('EEE d MMM, hh:mm a')
                         .format(trip.departureTime)),
+                if (platformOf(ticket.tripData).isNotEmpty)
+                  row('Platform', platformOf(ticket.tripData)),
                 row('Seats', seats),
                 row('Passenger', ticket.passengerName),
                 row('Total paid',
@@ -233,8 +236,10 @@ class _TicketScreenState extends State<TicketScreen> {
                   side: outlined
                       ? const BorderSide(color: Colors.white, width: 2)
                       : BorderSide.none),
-              textStyle:
-                  const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+              textStyle: const TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800),
             ),
           ),
         );

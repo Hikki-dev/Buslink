@@ -181,6 +181,24 @@ class BusDetailsScreen extends StatelessWidget {
                                         trip.toCity,
                                         CrossAxisAlignment.end),
                                   ),
+                                  if (trip.platformNumber.isNotEmpty)
+                                    Flexible(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('Platform',
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: BL.muted)),
+                                          Text(trip.platformNumber,
+                                              style: const TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: BL.crimson)),
+                                        ],
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),

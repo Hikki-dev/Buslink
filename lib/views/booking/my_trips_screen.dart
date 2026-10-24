@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/trip_model.dart';
 import '../../controllers/trip_controller.dart';
 import '../../utils/bl_colors.dart';
+import '../../utils/platform_text.dart';
 import '../home/home_sections.dart' show cityPhoto;
 import '../ticket/ticket_screen.dart';
 import '../tracking/track_bus_screen.dart';
@@ -402,7 +403,9 @@ class _DesktopTripsState extends State<_DesktopTrips> {
                               foregroundColor: BL.crimson,
                               minimumSize: const Size(0, 48),
                               textStyle: const TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.w700)),
+                                  fontFamily: 'Outfit',
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700)),
                         ),
                       ],
                     ),
@@ -670,6 +673,8 @@ class _Detail extends StatelessWidget {
                       if (arrival != null)
                         row('Arrives', DateFormat('hh:mm a').format(arrival)),
                       if (bus.isNotEmpty) row('Bus number', bus),
+                      if (platformOf(t.tripData).isNotEmpty)
+                        row('Platform', platformOf(t.tripData)),
                       row('Seats', (t.seatNumbers.toList()..sort()).join(', ')),
                       row('Passenger', t.passengerName),
                       const SizedBox(height: 10),
@@ -831,7 +836,9 @@ class _TicketActions extends StatelessWidget {
                     backgroundColor: BL.crimson,
                     shape: const StadiumBorder(),
                     textStyle: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w800),
+                        fontFamily: 'Outfit',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800),
                   ),
                   child: Text(l10n.viewTicket.toUpperCase()),
                 ),
@@ -852,7 +859,9 @@ class _TicketActions extends StatelessWidget {
                       side: const BorderSide(color: BL.crimson, width: 2),
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w800),
+                          fontFamily: 'Outfit',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800),
                     ),
                     child: const Text('TRACK NOW'),
                   ),
@@ -874,6 +883,7 @@ class _TicketActions extends StatelessWidget {
               style: TextButton.styleFrom(
                   foregroundColor: BL.muted,
                   textStyle: const TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       decoration: TextDecoration.underline)),
@@ -1041,7 +1051,9 @@ class _BulkBoardingPassCard extends StatelessWidget {
                       side: const BorderSide(color: BL.crimson, width: 2),
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w800),
+                          fontFamily: 'Outfit',
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800),
                     ),
                   ),
                 ),

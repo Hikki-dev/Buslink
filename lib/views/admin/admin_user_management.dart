@@ -101,7 +101,9 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 26),
                             shape: const StadiumBorder(),
                             textStyle: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w800),
+                                fontFamily: 'Outfit',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800),
                           ),
                           child: const Text('Add User'),
                         ),
@@ -247,7 +249,9 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                   side: const BorderSide(color: BL.ink, width: 1.5),
                   shape: const StadiumBorder(),
                   textStyle: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700),
+                      fontFamily: 'Outfit',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700),
                 ),
                 child: const Text('Edit User'),
               ),
@@ -261,7 +265,9 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                   side: const BorderSide(color: Color(0xFFA3281C), width: 1.5),
                   shape: const StadiumBorder(),
                   textStyle: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700),
+                      fontFamily: 'Outfit',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700),
                 ),
                 child: const Text('Delete'),
               ),

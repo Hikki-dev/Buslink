@@ -35,6 +35,7 @@ class Trip {
       currentLocation; // { "lat": double, "lng": double }
   final String? conductorId; // Denormalized from Schedule for easy query
   final String via; // Added via field
+  final String platform; // Boarding platform; empty when not set
 
   // Legacy/Helper fields that might be useful or were in original model
   // We keep them if they don't conflict, but prioritize the strict schema.
@@ -55,7 +56,6 @@ class Trip {
       "${arrivalDateTime.difference(departureDateTime).inHours}h ${arrivalDateTime.difference(departureDateTime).inMinutes % 60}m";
   String get operatorName => 'Buslink'; // Default
   String get busNumber => 'BUS-001'; // Default
-  String get platformNumber => '1';
   int get blockedSeats => 0;
   List<String> get operatingDays => ['Daily'];
 
@@ -75,6 +75,7 @@ class Trip {
     this.currentLocation,
     this.conductorId,
     this.via = 'Direct',
+    this.platform = '',
   });
 
   // CopyWith
@@ -94,6 +95,7 @@ class Trip {
     Map<String, double>? currentLocation,
     String? conductorId,
     String? via,
+    String? platform,
   }) {
     return Trip(
       id: id ?? this.id,
@@ -111,6 +113,7 @@ class Trip {
       currentLocation: currentLocation ?? this.currentLocation,
       conductorId: conductorId ?? this.conductorId,
       via: via ?? this.via,
+      platform: platform ?? this.platform,
     );
   }
 
@@ -131,6 +134,7 @@ class Trip {
       'currentLocation': currentLocation,
       'conductorId': conductorId,
       'via': via,
+      'platformNumber': platform,
     };
   }
 
@@ -179,7 +183,14 @@ class Trip {
       currentLocation: _parseGeoPoint(data['currentLocation']),
       conductorId: data['conductorId'],
       via: data['via'] ?? 'Direct',
+      platform: _cleanPlatform(data['platformNumber']),
     );
+  }
+
+  /// Old trips saved the word "TBD" when no platform was set; that is "unknown".
+  static String _cleanPlatform(dynamic v) {
+    final s = (v ?? '').toString().trim();
+    return s.toUpperCase() == 'TBD' ? '' : s;
   }
 
   static String? _getString(Map<String, dynamic> data, List<String> keys) {

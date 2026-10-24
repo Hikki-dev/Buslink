@@ -673,8 +673,10 @@ class TicketVerifiedCard extends StatelessWidget {
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade700,
                 foregroundColor: Colors.white,
-                textStyle:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                textStyle: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
             child: busy
                 ? const SizedBox(
                     width: 24,
@@ -756,8 +758,10 @@ class TicketRejectedCard extends StatelessWidget {
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
-                textStyle:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                textStyle: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold)),
             child: const Text("Try again"),
           ),
         ),

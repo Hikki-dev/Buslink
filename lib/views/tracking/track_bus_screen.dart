@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../data/city_coords.dart';
 import '../../models/trip_model.dart';
+import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
 import '../../utils/app_theme.dart';
 
@@ -37,6 +38,26 @@ class TripEta {
   }
 }
 
+/// The next stop before the end of the line, and about how long until the bus
+/// reaches it. The timetable gives no times per stop, so stops are spread
+/// evenly along the journey. Null when the route has no stop in between.
+(String, Duration)? nextStopAfter(
+    List<String> stops, double progress, TripEta eta) {
+  if (stops.length < 3) return null;
+  final total =
+      eta.remaining.inSeconds / (1 - progress <= 0.0001 ? 1 : (1 - progress));
+  for (var i = 1; i < stops.length - 1; i++) {
+    final at = i / (stops.length - 1);
+    if (at > progress) {
+      return (
+        stops[i],
+        Duration(seconds: ((at - progress) * total).round()),
+      );
+    }
+  }
+  return null;
+}
+
 /// "42 min", "1 h 05 min", "Now".
 String formatEta(Duration d) {
   if (d.inMinutes < 1) return 'Now';
@@ -61,12 +82,26 @@ class _TrackBusScreenState extends State<TrackBusScreen>
   late final AnimationController _pulse =
       AnimationController(vsync: this, duration: const Duration(seconds: 2));
   Timer? _clock;
+  late final Future<List<String>> _stops = _loadStops();
   LatLng? _busPos;
   bool _centered = false;
 
   Trip get _trip => widget.trip;
   LatLng? get _origin => kCityCoords[_trip.fromCity];
   LatLng? get _destination => kCityCoords[_trip.toCity];
+
+  /// The stops of this trip's route, in order (empty when the route has none).
+  Future<List<String>> _loadStops() async {
+    try {
+      final fs = FirestoreService();
+      final schedule = await fs.getScheduleForTrip(_trip.scheduleId);
+      if (schedule == null) return [];
+      final route = await fs.getRoute(schedule.routeId);
+      return route?.stops ?? [];
+    } catch (_) {
+      return [];
+    }
+  }
 
   @override
   void initState() {
@@ -452,6 +487,47 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                   ),
                   const SizedBox(height: 14),
                   _SignalRow(hasSignal: hasSignal),
+                  if (!cancelled && !eta.arrived)
+                    FutureBuilder<List<String>>(
+                      future: _stops,
+                      builder: (context, snap) {
+                        final next = nextStopAfter(
+                            snap.data ?? const [], eta.progress, eta);
+                        if (next == null) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceColor,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(children: [
+                              const Icon(Icons.place_outlined,
+                                  size: 22, color: AppTheme.primaryColor),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text.rich(TextSpan(
+                                    style: const TextStyle(fontSize: 17),
+                                    children: [
+                                      const TextSpan(text: 'Next stop: '),
+                                      TextSpan(
+                                          text: next.$1,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w700)),
+                                    ])),
+                              ),
+                              Text('about ${formatEta(next.$2)}',
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.primaryColor)),
+                            ]),
+                          ),
+                        );
+                      },
+                    ),
                   if (almost) ...[
                     const SizedBox(height: 14),
                     SizedBox(
@@ -465,7 +541,9 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                           backgroundColor: AppTheme.primaryColor,
                           shape: const StadiumBorder(),
                           textStyle: const TextStyle(
-                              fontSize: 19, fontWeight: FontWeight.w800),
+                              fontFamily: 'Outfit',
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800),
                         ),
                       ),
                     ),

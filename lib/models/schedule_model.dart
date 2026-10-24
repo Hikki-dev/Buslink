@@ -12,6 +12,7 @@ class ScheduleModel {
   final double basePrice;
   final int totalSeats;
   final String? conductorId; // Nullable, as it might not be assigned yet
+  final String platform; // Boarding platform; empty when not set
 
   ScheduleModel({
     required this.id,
@@ -25,6 +26,7 @@ class ScheduleModel {
     required this.basePrice,
     required this.totalSeats,
     this.conductorId,
+    this.platform = '',
   });
 
   // CopyWith
@@ -40,6 +42,7 @@ class ScheduleModel {
     double? basePrice,
     int? totalSeats,
     String? conductorId,
+    String? platform,
   }) {
     return ScheduleModel(
       id: id ?? this.id,
@@ -53,6 +56,7 @@ class ScheduleModel {
       basePrice: basePrice ?? this.basePrice,
       totalSeats: totalSeats ?? this.totalSeats,
       conductorId: conductorId ?? this.conductorId,
+      platform: platform ?? this.platform,
     );
   }
 
@@ -69,6 +73,7 @@ class ScheduleModel {
       'basePrice': basePrice,
       'totalSeats': totalSeats,
       'conductorId': conductorId,
+      'platform': platform,
     };
   }
 
@@ -86,6 +91,7 @@ class ScheduleModel {
       basePrice: (map['basePrice'] ?? 0).toDouble(),
       totalSeats: (map['totalSeats'] ?? 0).toInt(),
       conductorId: map['conductorId'],
+      platform: (map['platform'] ?? '').toString(),
     );
   }
 }

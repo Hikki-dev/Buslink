@@ -322,8 +322,10 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                 foregroundColor: BL.crimson,
                 side: const BorderSide(color: BL.crimson, width: 2),
                 shape: const StadiumBorder(),
-                textStyle:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                textStyle: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800),
               ),
               child: const Text('Review'),
               onPressed: () {

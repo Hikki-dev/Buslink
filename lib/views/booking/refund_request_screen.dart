@@ -398,8 +398,10 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
               backgroundColor: BL.crimson,
               disabledBackgroundColor: const Color(0xFFE3DADB),
               shape: const StadiumBorder(),
-              textStyle:
-                  const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+              textStyle: const TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800),
             ),
             child: _isLoading
                 ? const SizedBox(

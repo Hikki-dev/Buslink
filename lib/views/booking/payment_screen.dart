@@ -251,8 +251,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
             onPressed: () => Navigator.pop(context),
             style: TextButton.styleFrom(
                 foregroundColor: BL.crimson,
-                textStyle:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                textStyle: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700)),
             child: const Text('Back'),
           ),
         ),
@@ -579,9 +581,7 @@ class PaymentStateCard extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
               child: BlPrimaryButton(
-                  label: 'Contact support',
-                  color: BL.crimson,
-                  onTap: onSupport)),
+                  label: 'Get help', color: BL.crimson, onTap: onSupport)),
         ],
       );
 
@@ -614,8 +614,10 @@ class PaymentStateCard extends StatelessWidget {
             foregroundColor: BL.crimson,
             side: const BorderSide(color: BL.crimson, width: 2),
             shape: const StadiumBorder(),
-            textStyle:
-                const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            textStyle: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 17,
+                fontWeight: FontWeight.w800),
           ),
           child: Text(label),
         ),

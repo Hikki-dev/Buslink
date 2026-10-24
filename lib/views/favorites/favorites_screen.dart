@@ -245,7 +245,9 @@ class _FavCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 18),
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w800),
+                          fontFamily: 'Outfit',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800),
                     ),
                     child: const Text('BOOK AGAIN'),
                   ),

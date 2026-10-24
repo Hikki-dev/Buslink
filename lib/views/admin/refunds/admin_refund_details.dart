@@ -247,8 +247,10 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
               foregroundColor: const Color(0xFFA3281C),
               side: const BorderSide(color: Color(0xFFA3281C), width: 2),
               shape: const StadiumBorder(),
-              textStyle:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              textStyle: const TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800),
             ),
             child: const Text('Reject'),
           ),
@@ -261,8 +263,10 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 36),
               backgroundColor: BL.success,
               shape: const StadiumBorder(),
-              textStyle:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              textStyle: const TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800),
             ),
             child: _isLoading
                 ? const SizedBox(

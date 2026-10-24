@@ -248,6 +248,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                         color: BL.crimson, width: 2),
                                     shape: const StadiumBorder(),
                                     textStyle: const TextStyle(
+                                        fontFamily: 'Outfit',
                                         fontSize: 16,
                                         fontWeight: FontWeight.w800),
                                   ),

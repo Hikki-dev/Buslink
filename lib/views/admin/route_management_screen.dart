@@ -72,8 +72,10 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
             side: BorderSide(color: color, width: 1.5),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             shape: const StadiumBorder(),
-            textStyle:
-                const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            textStyle: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 16,
+                fontWeight: FontWeight.w700),
           ),
           child: Text(label),
         ),
@@ -154,7 +156,9 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 22),
                         shape: const StadiumBorder(),
                         textStyle: const TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.w800),
+                            fontFamily: 'Outfit',
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800),
                       ),
                       child: const Text('Add Route'),
                     ),
@@ -172,7 +176,9 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 22),
                         shape: const StadiumBorder(),
                         textStyle: const TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.w800),
+                            fontFamily: 'Outfit',
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800),
                       ),
                       child: const Text('Add Schedule'),
                     ),
@@ -493,6 +499,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
     final operatorCtrl =
         TextEditingController(text: schedule?.operatorName ?? '');
     final busNumCtrl = TextEditingController(text: schedule?.busNumber ?? '');
+    final platformCtrl = TextEditingController(text: schedule?.platform ?? '');
     final priceCtrl = TextEditingController(
         text: schedule?.basePrice.toStringAsFixed(0) ?? '');
     final conductorIdCtrl =
@@ -528,6 +535,13 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                     }).toList(),
                     onChanged: (v) => setState(() => selectedRouteId = v),
                     decoration: const InputDecoration(labelText: "Route"),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: platformCtrl,
+                    decoration: const InputDecoration(
+                        labelText: "Platform (optional)",
+                        helperText: "Shown on tickets when set"),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -618,6 +632,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                     id: schedule?.id ?? '',
                     routeId: selectedRouteId!,
                     busNumber: busNumCtrl.text,
+                    platform: platformCtrl.text.trim(),
                     operatorName: operatorCtrl.text,
                     departureTime: timeStr,
                     basePrice: double.parse(priceCtrl.text),

@@ -329,7 +329,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     foregroundColor: BL.crimson,
                     minimumSize: const Size(0, 44),
                     textStyle: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700)),
+                        fontFamily: 'Outfit',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700)),
                 child: Text(l10n.forgotPassword),
               ),
             )
@@ -342,8 +344,10 @@ class _LoginScreenState extends State<LoginScreen> {
               style: FilledButton.styleFrom(
                 backgroundColor: BL.crimson,
                 shape: const StadiumBorder(),
-                textStyle:
-                    const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+                textStyle: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800),
               ),
               child: _isLoading
                   ? const SizedBox(
@@ -402,7 +406,8 @@ class _LoginScreenState extends State<LoginScreen> {
         foregroundColor: BL.ink,
         side: const BorderSide(color: BL.border, width: 1.5),
         shape: const StadiumBorder(),
-        textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+        textStyle: const TextStyle(
+            fontFamily: 'Outfit', fontSize: 17, fontWeight: FontWeight.w700),
       );
 
   Widget _switchMode() {
@@ -420,8 +425,10 @@ class _LoginScreenState extends State<LoginScreen> {
             style: TextButton.styleFrom(
                 foregroundColor: BL.crimson,
                 minimumSize: const Size(0, 48),
-                textStyle:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                textStyle: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800)),
             child: Text(_isLogin ? l10n.signup : l10n.login),
           ),
         ],

@@ -320,7 +320,8 @@ class _QRScanScreenState extends State<QRScanScreen> {
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 12),
-                    textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                    textStyle: const TextStyle(
+                        fontFamily: 'Outfit', fontWeight: FontWeight.bold),
                   ),
                 ),
               ),

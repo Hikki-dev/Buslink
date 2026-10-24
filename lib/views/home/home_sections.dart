@@ -179,7 +179,7 @@ class _SpotCard extends StatelessWidget {
               left: compact ? 12 : 20,
               right: compact ? 8 : 20,
               bottom: compact ? 10 : 18,
-              child: DefaultTextStyle(
+              child: DefaultTextStyle.merge(
                 style: const TextStyle(color: Colors.white),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
