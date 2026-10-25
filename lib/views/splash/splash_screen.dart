@@ -322,7 +322,7 @@ class _StatusLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final base = TextStyle(
-      fontFamily: 'Inter',
+      fontFamily: 'Outfit',
       fontSize: 18,
       fontWeight: FontWeight.w500,
       color: colors.muted,
@@ -369,7 +369,7 @@ class _SlowMessage extends StatelessWidget {
           'Still getting ready',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: 'Outfit',
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: colors.ink,
@@ -380,7 +380,7 @@ class _SlowMessage extends StatelessWidget {
           'Your connection looks slow. The first time can take a little longer.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: 'Outfit',
             fontSize: 17,
             height: 1.45,
             color: colors.muted,
@@ -439,7 +439,7 @@ class StartupFailedScreen extends StatelessWidget {
                   'Check your internet connection, then try again.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'Inter',
+                    fontFamily: 'Outfit',
                     fontSize: 18,
                     height: 1.45,
                     color: c.muted,
@@ -457,7 +457,7 @@ class StartupFailedScreen extends StatelessWidget {
                       backgroundColor: const Color(0xFFBA181B),
                       foregroundColor: Colors.white,
                       textStyle: const TextStyle(
-                          fontFamily: 'Inter',
+                          fontFamily: 'Outfit',
                           fontSize: 19,
                           fontWeight: FontWeight.w700),
                       shape: RoundedRectangleBorder(

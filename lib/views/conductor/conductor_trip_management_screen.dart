@@ -122,7 +122,7 @@ class _ConductorTripManagementScreenState
                           Text(
                               "TRIP T${currentTrip.id.substring(0, 4).toUpperCase()}",
                               style: TextStyle(
-                                  fontFamily: 'Inter',
+                                  fontFamily: 'Outfit',
                                   color: isDark
                                       ? Colors.white70
                                       : Colors.grey.shade500,
@@ -150,7 +150,7 @@ class _ConductorTripManagementScreenState
                               DateFormat('hh:mm a')
                                   .format(currentTrip.departureTime),
                               style: TextStyle(
-                                  fontFamily: 'Inter',
+                                  fontFamily: 'Outfit',
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color:
@@ -162,7 +162,7 @@ class _ConductorTripManagementScreenState
                           const SizedBox(width: 8),
                           Text(currentTrip.busNumber,
                               style: TextStyle(
-                                  fontFamily: 'Inter',
+                                  fontFamily: 'Outfit',
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color:
@@ -191,7 +191,7 @@ class _ConductorTripManagementScreenState
                     icon: const Icon(Icons.attach_money),
                     label: const Text("Issue Cash Ticket",
                         style: TextStyle(
-                            fontFamily: 'Inter',
+                            fontFamily: 'Outfit',
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white)),
@@ -257,7 +257,7 @@ class _ConductorTripManagementScreenState
                   child: Text(
                     "Current Status: ${_getStatusLabel(currentTrip.status)}",
                     style: TextStyle(
-                        fontFamily: 'Inter',
+                        fontFamily: 'Outfit',
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: _getStatusColor(currentTrip.status)),
@@ -331,7 +331,7 @@ class _ConductorTripManagementScreenState
         icon: Icon(icon, color: Colors.white),
         label: Text(label,
             style: const TextStyle(
-                fontFamily: 'Inter',
+                fontFamily: 'Outfit',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white)),

@@ -4,6 +4,8 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 ## 25 October 2026
 
+* **Text weights now work.** The fonts were variable files that start at weight 100, so every bold and medium style drew as thin text. Outfit, Montserrat and Cormorant are now static files with real weights (300 to 800), so headings are bold and body text is regular, as in the mockups. `Inter-Variable.ttf` was not a font at all (a saved web page from a failed download), so Inter is gone and those styles use Outfit.
+
 * **"Stay Updated" prompt** is remembered on the device. After **Allow** it never comes back; after **Later** it waits a week. Before, it came back on every start.
 
 ## 24 October 2026 (checked while signed in)

@@ -147,7 +147,7 @@ class RoutePainter extends CustomPainter {
       text: TextSpan(
         text: text,
         style: TextStyle(
-          fontFamily: 'Inter',
+          fontFamily: 'Outfit',
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: colors.muted,

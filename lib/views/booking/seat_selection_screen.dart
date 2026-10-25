@@ -340,7 +340,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                   children: [
                     const Text("Review Booking:",
                         style: TextStyle(
-                            fontFamily: 'Inter', fontWeight: FontWeight.bold)),
+                            fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Text("Seats: ${controller.selectedSeats.join(', ')}"),
                     Text("Total Amount: LKR ${total.toStringAsFixed(0)}",

@@ -498,7 +498,7 @@ class _HomeFavoriteCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(AppLocalizations.of(context)!.tapToQuickBook,
                 style: TextStyle(
-                    fontFamily: 'Inter',
+                    fontFamily: 'Outfit',
                     fontSize: 12,
                     color: Theme.of(context)
                         .colorScheme

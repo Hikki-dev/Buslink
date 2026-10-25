@@ -36,7 +36,7 @@ class AppTheme {
     primaryColor: primaryColor,
     scaffoldBackgroundColor: Colors.white,
     fontFamily: 'Outfit',
-    fontFamilyFallback: const ['Montserrat', 'Inter', 'sans-serif'],
+    fontFamilyFallback: const ['Montserrat', 'sans-serif'],
     useMaterial3: true,
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
@@ -91,7 +91,7 @@ class AppTheme {
           color: Colors.black,
           fontWeight: FontWeight.w600), // Semi-Bold
       labelLarge: TextStyle(
-        fontFamily: 'Inter',
+        fontFamily: 'Outfit',
         fontSize: 18,
         fontWeight: FontWeight.w800, // Extra Bold
         color: Colors.white,
@@ -144,12 +144,12 @@ class AppTheme {
         borderSide: const BorderSide(color: Colors.redAccent, width: 2),
       ),
       hintStyle: const TextStyle(
-          fontFamily: 'Inter',
+          fontFamily: 'Outfit',
           fontSize: 16,
           color: Colors.black54, // Darker hint
           fontWeight: FontWeight.w600),
       labelStyle: const TextStyle(
-          fontFamily: 'Inter',
+          fontFamily: 'Outfit',
           fontSize: 16,
           color: Colors.black,
           fontWeight: FontWeight.w800),
@@ -176,7 +176,7 @@ class AppTheme {
     primaryColor: primaryColor,
     scaffoldBackgroundColor: const Color(0xFF0D0D0D), // Almost Black
     fontFamily: 'Outfit',
-    fontFamilyFallback: const ['Montserrat', 'Inter', 'sans-serif'],
+    fontFamilyFallback: const ['Montserrat', 'sans-serif'],
     useMaterial3: true,
     brightness: Brightness.dark,
     appBarTheme: const AppBarTheme(
@@ -237,7 +237,7 @@ class AppTheme {
           color: Colors.white,
           fontWeight: FontWeight.w600),
       labelLarge: TextStyle(
-        fontFamily: 'Inter',
+        fontFamily: 'Outfit',
         fontSize: 18,
         fontWeight: FontWeight.w800,
         color: Colors.white,
@@ -284,12 +284,12 @@ class AppTheme {
         borderSide: const BorderSide(color: primaryColor, width: 2.5),
       ),
       hintStyle: const TextStyle(
-          fontFamily: 'Inter',
+          fontFamily: 'Outfit',
           fontSize: 16,
           color: Colors.white60, // Clearer hint
           fontWeight: FontWeight.w600),
       labelStyle: const TextStyle(
-          fontFamily: 'Inter',
+          fontFamily: 'Outfit',
           fontSize: 16,
           color: Colors.white,
           fontWeight: FontWeight.w800),

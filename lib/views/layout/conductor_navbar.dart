@@ -55,7 +55,7 @@ class ConductorNavBar extends StatelessWidget {
                             color: Theme.of(context).colorScheme.onSurface)),
                     Text("CONDUCTOR",
                         style: TextStyle(
-                            fontFamily: 'Inter',
+                            fontFamily: 'Outfit',
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.primaryColor,
@@ -191,7 +191,7 @@ class ConductorNavBar extends StatelessWidget {
               const SizedBox(width: 8),
               Text(label,
                   style: TextStyle(
-                      fontFamily: 'Inter',
+                      fontFamily: 'Outfit',
                       fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                       color: isActive
                           ? AppTheme.primaryColor
