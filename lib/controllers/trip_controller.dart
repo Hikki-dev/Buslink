@@ -705,7 +705,6 @@ class TripController extends ChangeNotifier {
 
   User? get _currentUser => _auth.currentUser;
 
-
   void setDepartureDate(DateTime date) {
     tripDate = date;
     notifyListeners();

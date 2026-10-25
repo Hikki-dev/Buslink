@@ -438,6 +438,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       }
 
       if (ticket.isBoarded) {
+        _ticketIdController.clear();
         if (mounted) _showAlreadyBoarded(ticket.boardedAt!);
         return;
       }
@@ -502,6 +503,8 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                       return;
                     }
                     Navigator.pop(dialogContext);
+                    // Done with this ticket: empty the box for the next one.
+                    _ticketIdController.clear();
                     _announceBoarding(result);
                   },
                 ),

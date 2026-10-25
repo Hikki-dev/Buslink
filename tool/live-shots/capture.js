@@ -117,6 +117,31 @@ scenes.phoneProfile = async b => {
   await L.tap(p, 'Go back'); await L.sleep(1500);
   await L.tap(p, 'Send Feedback'); await L.sleep(2000); await snap(p, 'feedback');
 };
+scenes.otp = async b => {
+  const p = await L.open(b, ...dims);
+  await L.tap(p, 'Log in with phone number'); await L.sleep(2000);
+  await L.fill(p, 0, '771234567');
+  await L.tap(p, 'Send Code'); await L.sleep(5000); await snap(p, 'otp');
+  // the pretend Firebase lists the code it "texted"
+  const list = await (await fetch('http://localhost:9099/emulator/v1/projects/buslink-416e1/verificationCodes')).json();
+  const code = list.verificationCodes[list.verificationCodes.length - 1].code;
+  await L.fill(p, 0, code); await L.sleep(2500); await snap(p, 'otp-filled');
+};
+scenes.boardTwice = async b => {
+  const p = await L.open(b, ...dims);
+  await L.login(p, 'conductor'); await L.sleep(2000);
+  await L.tap(p, 'Decline').catch(() => {}); await L.sleep(2000);
+  await L.fill(p, 0, 'K7M2'); await L.tap(p, 'Verify'); await L.sleep(3000);
+  await L.tap(p, 'Approve Boarding'); await L.sleep(3000); await snap(p, 'board-approved');
+  await L.fill(p, 0, 'K7M2'); await L.tap(p, 'Verify'); await L.sleep(3000); await snap(p, 'board-again');
+};
+scenes.refundSubmit = async b => {
+  const p = await L.open(b, ...dims);
+  await L.login(p, 'customer');
+  await L.tap(p, 'My Trips'); await L.sleep(2000);
+  await L.tap(p, 'Refund'); await L.sleep(2500);
+  await L.tap(p, 'Choose a reason'); await L.sleep(1200); await snap(p, 'refund-reasons');
+};
 scenes.empty = async b => {
   const p = await L.open(b, ...dims);
   await L.login(p, 'newcomer');

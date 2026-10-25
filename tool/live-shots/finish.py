@@ -22,6 +22,8 @@ names = {
  'd-empty-trips': 'empty-trips', 'd-empty-favourites': 'empty-favourites', 'd-empty-notifications': 'empty-notifications',
  'd-bulk-search': 'bulk-1-search', 'd-bulk-dates': 'bulk-2-dates', 'd-bulk-passengers-2': 'bulk-3-passengers', 'd-bulk-payment': 'bulk-4-summary',
  'd-admin-booking-details': 'admin-4-booking-details', 'd-confirmed': 'passenger-8-confirmed',
+ 'd-otp': 'passenger-1-code', 'd-otp-filled': 'passenger-1-code-filled', 'd-conductor-manage': 'conductor-5-update-status',
+ 'd-board-again': 'conductor-3-already-boarded', 'd-refund-reasons': 'passenger-11-refund-reasons',
  'd-notification-settings': 'passenger-14-notification-settings', 'd-feedback': 'passenger-14-feedback',
 }
 tot = 0

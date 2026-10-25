@@ -22,6 +22,9 @@ The computer size is 1600 by 1000 at twice the sharpness (3200 by 2000 pixels). 
 | `phoneAccount`, `phoneProfile` | Customer | the same screens at phone size |
 | `admin`, `adminPhone`, `adminMore` | Admin | every admin page |
 | `conductor` | Conductor | scan, verified, boarded, find a trip |
+| `otp` | Nobody | phone sign-in: the code boxes, empty and filled (the code is read from the pretend Firebase) |
+| `boardTwice` | Conductor | approve a boarding, then try the same ticket again |
+| `refundSubmit` | Customer | the list of refund reasons |
 | `empty` | Newcomer | My Trips, Favourites and Notifications with nothing in them |
 | `bulk` | Customer | booking several days: calendar, passengers, summary |
 | `confirmed` | Customer | Booking Confirmed, reached the way Stripe's return link reaches it |

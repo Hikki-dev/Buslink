@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 // For debugPrint
 import 'dart:io';
+import '../utils/text_utils.dart';
 
 class SmsService {
   static final CollectionReference _outboundMessages =
@@ -113,7 +114,7 @@ class SmsService {
       if (phone.isEmpty) return false;
 
       final tripData = ticket.tripData as Map<String, dynamic>;
-      final messageBody = "BusLink Ticket: ${ticket.ticketId.substring(0, 4)} "
+      final messageBody = "BusLink Ticket: ${firstChars(ticket.ticketId, 4)} "
           "From ${tripData['originCity'] ?? tripData['fromCity']} To ${tripData['destinationCity'] ?? tripData['toCity']}. "
           "Bus: ${tripData['busNumber']}. Seat: ${(ticket.seatNumbers as List).join(',')}. "
           "Show to conductor.";
