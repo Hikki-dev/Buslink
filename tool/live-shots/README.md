@@ -23,11 +23,13 @@ The computer size is 1600 by 1000 at twice the sharpness (3200 by 2000 pixels). 
 | `admin`, `adminPhone`, `adminMore` | Admin | every admin page |
 | `conductor` | Conductor | scan, verified, boarded, find a trip |
 | `empty` | Newcomer | My Trips, Favourites and Notifications with nothing in them |
-| `bulk` | Customer | booking several days |
+| `bulk` | Customer | booking several days: calendar, passengers, summary |
+| `confirmed` | Customer | Booking Confirmed, reached the way Stripe's return link reaches it |
+| `adminPhoneMore` | Admin | a booking's details on a phone |
 | `extras` | Nobody | sign up, phone login |
 
 ## Things to know
 
 * Run `python3 scripts/seed_emulator.py` before each scene, so every scene starts from the same data.
-* The payment page itself is Stripe's, so the scenes stop at the page before it.
+* The card form is Stripe's own page, so the scenes stop at the page before it. The page Stripe sends people back to (Booking Confirmed) is reached by going straight to its address, using a waiting ticket from the seed script.
 * The picture of a map may be grey when the computer is offline.

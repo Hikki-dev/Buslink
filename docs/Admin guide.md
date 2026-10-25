@@ -74,6 +74,8 @@ Create and edit routes from the routes screens on the dashboard. A script (`scri
 <a href="images/admin-4-bookings-phone.png"><img src="images/admin-4-bookings-phone.png" alt="Bookings on a phone" width="31%"></a>
 </p>
 
+<p align="center"><a href="images/admin-4-booking-details.png"><img src="images/admin-4-booking-details.png" alt="Booking details: the trip, the passenger and the payment" width="100%"></a></p>
+
 The bookings list shows every ticket. Search by passenger, and filter by status.
 
 Each row shows the passenger, the route, the departure time, the amount and a **status chip**. A confirmed ticket that has been checked in shows **Boarded**. Open a row for the full details.

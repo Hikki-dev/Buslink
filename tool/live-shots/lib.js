@@ -74,3 +74,10 @@ exports.tapAt = async (page, x, y) => {
   await sleep(1500);
 };
 exports.dump = async (p, n) => console.log('--', n, '\n' + (await exports.labels(p)).filter(l=>!/^(BusLink|Home|My Trips|Favorites|Support|Select Language|Notifications|Account menu|Log Out) /.test(l)).join('\n'));
+
+// Go to another route of the app without reloading, so the person stays signed in
+// (for the page Stripe returns to: /payment_success?booking_id=...).
+exports.gotoRoute = async (page, route) => {
+  await page.evaluate(r => { window.location.hash = '#' + r; }, route);
+  await sleep(5000);
+};

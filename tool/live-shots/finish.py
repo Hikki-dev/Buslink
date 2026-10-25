@@ -3,6 +3,7 @@ import sys, os, glob
 from PIL import Image
 SRC = os.environ.get('SHOTS_OUT', 'out')
 DST = sys.argv[1]            # e.g. ../../docs/images
+ONLY = sys.argv[2:]          # optional: only names that contain one of these words
 names = {
  # desktop
  'd-login': 'passenger-1-sign-in', 'd-signup': 'passenger-1-sign-up', 'd-phone-login': 'passenger-1-phone',
@@ -19,11 +20,14 @@ names = {
  'd-admin-analytics': 'admin-7-analytics', 'd-admin-users': 'admin-8-users',
  'd-admin-refund-details': 'admin-5-refund-details', 'd-admin-late': 'admin-7-late',
  'd-empty-trips': 'empty-trips', 'd-empty-favourites': 'empty-favourites', 'd-empty-notifications': 'empty-notifications',
+ 'd-bulk-search': 'bulk-1-search', 'd-bulk-dates': 'bulk-2-dates', 'd-bulk-passengers-2': 'bulk-3-passengers', 'd-bulk-payment': 'bulk-4-summary',
+ 'd-admin-booking-details': 'admin-4-booking-details', 'd-confirmed': 'passenger-8-confirmed',
  'd-notification-settings': 'passenger-14-notification-settings', 'd-feedback': 'passenger-14-feedback',
 }
 tot = 0
 manifest = []
 for k, v in names.items():
+    if ONLY and not any(w in v for w in ONLY): continue
     for pre, suf in (('d-', ''), ('m-', '-phone')):
         src = f'{SRC}/{pre}{k[2:]}.png'
         if not os.path.exists(src): continue

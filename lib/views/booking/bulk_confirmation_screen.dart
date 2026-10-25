@@ -167,7 +167,7 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
                         children: [
                           row('Price per ticket',
                               'LKR ${fmt.format(widget.trip.price)}'),
-                          row('Passengers', '${tripCtrl.seatsPerTrip}'),
+                          row('Passengers', '${tripCtrl.bulkPassengers}'),
                           row('Total days', '${dates.length}'),
                           const Divider(height: 22, color: BL.hairline),
                           Row(

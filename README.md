@@ -139,6 +139,16 @@ Choose English, Sinhala or Tamil with the three buttons at the top. Sign in with
 
 Choose where from, where to and the day, then press **Search Buses**. The little arrows swap the two cities. Tick **Bulk booking** to book several days in one go. Below the search, your favourite routes and your next trips are one tap away.
 
+**Booking several days at once.** Tick **Bulk booking**, press the box that now says "days chosen", and tap each day you travel. Press **Search Buses**, choose a bus, and say how many people are travelling each day. A summary lists every date, the price per ticket and the total before you pay once. Each day gets its own ticket.
+
+<p align="center"><a href="docs/images/bulk-2-dates.jpg"><img src="docs/images/bulk-2-dates.jpg" alt="Choosing several days on a calendar: three days are selected" width="100%"></a></p>
+
+<p align="center">
+<a href="docs/images/bulk-2-dates-phone.png"><img src="docs/images/bulk-2-dates-phone.png" alt="The calendar on a phone" width="31%"></a>
+<a href="docs/images/bulk-3-passengers-phone.png"><img src="docs/images/bulk-3-passengers-phone.png" alt="Choosing how many people travel each day, with the total price" width="31%"></a>
+<a href="docs/images/bulk-4-summary-phone.png"><img src="docs/images/bulk-4-summary-phone.png" alt="The bulk booking summary: the dates, the price per ticket, the number of passengers and the total" width="31%"></a>
+</p>
+
 #### 3. Your favourite routes
 
 <p align="center"><a href="docs/images/passenger-3-favourites.png"><img src="docs/images/passenger-3-favourites.png" alt="My favourites: a card for each saved route with a Book again button" width="100%"></a></p>
@@ -209,6 +219,14 @@ Check the summary, then press **Proceed to Pay**. On the phone a payment sheet o
 </p>
 
 You are shown **Payment Confirmed** and your ticket: a **QR code** for the conductor to scan, and a **4-character code** to read out if scanning does not work. The ticket is also kept in **My Trips**, and can be saved as a PDF.
+
+Straight after paying you land on **Booking Confirmed**, with the same QR code and code, a button to save the ticket as a PDF, one to send it by text message, and a link to keep the route in your favourites.
+
+<p align="center"><a href="docs/images/passenger-8-confirmed.png"><img src="docs/images/passenger-8-confirmed.png" alt="Booking Confirmed: the trip, the platform, the seats and a QR code with the code beside it" width="100%"></a></p>
+
+<p align="center">
+<a href="docs/images/passenger-8-confirmed-phone.png"><img src="docs/images/passenger-8-confirmed-phone.png" alt="Booking Confirmed on a phone" width="31%"></a>
+</p>
 
 #### 9. Follow the bus
 
@@ -392,6 +410,14 @@ A **route** is the path. A **schedule** says which bus runs it and when, and can
 </p>
 
 Every booking has a status you can read at a glance. Each is an icon, a word and a colour together, so it works for everyone, including people who cannot tell red from green. A checked-in ticket shows **Boarded**.
+
+Open a booking to see the trip, the passenger and what was paid.
+
+<p align="center"><a href="docs/images/admin-4-booking-details.png"><img src="docs/images/admin-4-booking-details.png" alt="Booking details: the route, date, bus and seats, the passenger, and the payment summary" width="100%"></a></p>
+
+<p align="center">
+<a href="docs/images/admin-4-booking-details-phone.png"><img src="docs/images/admin-4-booking-details-phone.png" alt="Booking details on a phone" width="31%"></a>
+</p>
 
 <img src="docs/images/status-chips.png" alt="Status chips: Confirmed, Boarded, Cancelled, Refund requested, Refunded, Pending, Approved, Rejected and Delayed" width="360">
 
