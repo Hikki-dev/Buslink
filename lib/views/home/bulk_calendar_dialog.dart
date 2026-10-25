@@ -56,7 +56,7 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
                   const Text(
                     "SELECT DATES",
                     style: TextStyle(
-                      fontFamily: 'Inter',
+                      fontFamily: 'Outfit',
                       fontSize: 12,
                       color: Colors.white70,
                       fontWeight: FontWeight.w600,

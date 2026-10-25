@@ -72,15 +72,29 @@ flutter:
     - .env
 
   fonts:
+    # Static weights. The old variable files started at weight 100, so every
+    # bold or medium style drew as thin text.
     - family: Outfit
       fonts:
-        - asset: assets/fonts/Outfit-Variable.ttf
-    - family: Inter
-      fonts:
-        - asset: assets/fonts/Inter-Variable.ttf
+        - asset: assets/fonts/Outfit/Outfit-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Outfit/Outfit-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Outfit/Outfit-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Outfit/Outfit-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Outfit/Outfit-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Outfit/Outfit-ExtraBold.ttf
+          weight: 800
     - family: Montserrat
       fonts:
-        - asset: assets/fonts/Montserrat/Montserrat-VariableFont_wght.ttf
+        - asset: assets/fonts/Montserrat/Montserrat-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Montserrat/Montserrat-Bold.ttf
+          weight: 700
     - family: Cormorant
       fonts:
-        - asset: assets/fonts/Cormorant_Garamond/CormorantGaramond-VariableFont_wght.ttf
+        - asset: assets/fonts/Cormorant/Cormorant-Bold.ttf
+          weight: 700

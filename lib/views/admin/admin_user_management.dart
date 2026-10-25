@@ -413,7 +413,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                               child: Text(
                             "Creates a NEW login in Firebase Auth + Database Profile.",
                             style: TextStyle(
-                                fontFamily: 'Inter',
+                                fontFamily: 'Outfit',
                                 fontSize: 12,
                                 color: Colors
                                     .black87), // Creating user info always dark on light bg
@@ -568,7 +568,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
             const SizedBox(width: 12),
             Text(label,
                 style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Outfit',
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   color: isDark
                       ? Colors.white

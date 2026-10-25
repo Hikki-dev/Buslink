@@ -24,7 +24,7 @@ class FavoritesSection extends StatelessWidget {
             Text(
               "Your Favorites",
               style: TextStyle(
-                fontFamily: 'Inter',
+                fontFamily: 'Outfit',
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: isDark ? Colors.white : const Color(0xFF2D3142),
@@ -47,10 +47,10 @@ class FavoritesSection extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text("No favorites yet",
                       style: TextStyle(
-                          fontFamily: 'Inter', fontWeight: FontWeight.bold)),
+                          fontFamily: 'Outfit', fontWeight: FontWeight.bold)),
                   Text("Mark routes as favorites for quick access",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontFamily: 'Inter', fontSize: 12)),
+                      style: TextStyle(fontFamily: 'Outfit', fontSize: 12)),
                 ],
               ),
             )
@@ -70,7 +70,7 @@ class FavoritesSection extends StatelessWidget {
               Text(
                 "Your Favorites",
                 style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Outfit',
                   fontSize: 22,
                   fontWeight: FontWeight.w800, // Extra Bold
                   color: isDark
@@ -144,7 +144,7 @@ class FavoritesSection extends StatelessWidget {
                     child: Text(
                       fav['operatorName'] ?? 'Bus Route',
                       style: TextStyle(
-                        fontFamily: 'Inter',
+                        fontFamily: 'Outfit',
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: isDark ? Colors.white : Colors.black87,
@@ -161,7 +161,7 @@ class FavoritesSection extends StatelessWidget {
                   Text(
                     fav['fromCity'] ?? '',
                     style: TextStyle(
-                      fontFamily: 'Inter',
+                      fontFamily: 'Outfit',
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white70 : Colors.black87,
@@ -171,7 +171,7 @@ class FavoritesSection extends StatelessWidget {
                   Text(
                     fav['toCity'] ?? '',
                     style: TextStyle(
-                      fontFamily: 'Inter',
+                      fontFamily: 'Outfit',
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white70 : Colors.black87,
@@ -184,7 +184,7 @@ class FavoritesSection extends StatelessWidget {
                 Text(
                   "LKR ${fav['price']}",
                   style: TextStyle(
-                    fontFamily: 'Inter',
+                    fontFamily: 'Outfit',
                     fontSize: 12,
                     color: AppTheme.primaryColor,
                     fontWeight: FontWeight.bold,

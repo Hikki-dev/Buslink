@@ -287,7 +287,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                                   // Removing const from Text and parent widgets.
                                   // String interpolation is not const.
                                   style: TextStyle(
-                                    fontFamily: 'Inter',
+                                    fontFamily: 'Outfit',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13, // Reduced size
                                     color: Colors.black87,
@@ -317,7 +317,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                               color: Colors.black87),
                           label: Text(AppLocalizations.of(context)!.exitPreview,
                               style: const TextStyle(
-                                  fontFamily: 'Inter',
+                                  fontFamily: 'Outfit',
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black87)),
                           style: TextButton.styleFrom(

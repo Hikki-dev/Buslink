@@ -82,7 +82,7 @@ class NewsCarousel extends StatelessWidget {
                             style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
-                                fontFamily: 'Inter'),
+                                fontFamily: 'Outfit'),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis),
                       ],

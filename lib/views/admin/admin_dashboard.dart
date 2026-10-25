@@ -180,7 +180,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           AppLocalizations.of(context)!
                                               .manageSubtitle,
                                           style: TextStyle(
-                                              fontFamily: 'Inter',
+                                              fontFamily: 'Outfit',
                                               color: Theme.of(context)
                                                   .colorScheme
                                                   .onSurface
@@ -350,7 +350,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           AppLocalizations.of(context)!
                                               .noRoutesFound,
                                           style: TextStyle(
-                                              fontFamily: 'Inter',
+                                              fontFamily: 'Outfit',
                                               fontSize: 16,
                                               color: Colors.grey
                                                   .withValues(alpha: 0.2))),
@@ -359,7 +359,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           AppLocalizations.of(context)!
                                               .adjustFilters,
                                           style: TextStyle(
-                                              fontFamily: 'Inter',
+                                              fontFamily: 'Outfit',
                                               fontSize: 14,
                                               color: Colors.grey)),
                                       const SizedBox(height: 24),
@@ -494,7 +494,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             AppLocalizations.of(context)!
                                 .search, // search key exists
                             style: TextStyle(
-                                fontFamily: 'Inter',
+                                fontFamily: 'Outfit',
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16)),
                       ),
@@ -525,7 +525,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ),
                         child: Text(AppLocalizations.of(context)!.search,
                             style: TextStyle(
-                                fontFamily: 'Inter',
+                                fontFamily: 'Outfit',
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16)),
                       ),
@@ -581,7 +581,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ? DateFormat('yyyy-MM-dd').format(controller.travelDate!)
                   : AppLocalizations.of(context)!.selectDate,
               style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Outfit',
                   color: Theme.of(context).colorScheme.onSurface),
             )
           ],
@@ -740,13 +740,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 Text(
                   "Departs: ${DateFormat('HH:mm').format(trip.departureTime)} • Arrives: ${DateFormat('HH:mm').format(trip.arrivalTime)}",
                   style: TextStyle(
-                      fontFamily: 'Inter', color: Colors.grey.shade600),
+                      fontFamily: 'Outfit', color: Colors.grey.shade600),
                 ),
                 if (trip.via.isNotEmpty)
                   Text(
                     "Via: ${trip.via}",
                     style: TextStyle(
-                        fontFamily: 'Inter',
+                        fontFamily: 'Outfit',
                         color: Colors.grey.shade500,
                         fontSize: 12),
                   ),

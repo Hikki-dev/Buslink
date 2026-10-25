@@ -73,7 +73,7 @@ class AdminNavBar extends StatelessWidget {
                                         .onSurface)),
                             Text("ADMIN CONSOLE",
                                 style: TextStyle(
-                                    fontFamily: 'Inter',
+                                    fontFamily: 'Outfit',
                                     fontSize: 12,
                                     color: Theme.of(context).brightness ==
                                             Brightness.dark

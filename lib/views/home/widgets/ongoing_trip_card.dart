@@ -124,7 +124,7 @@ class OngoingTripCard extends StatelessWidget {
                   Text(
                     "${AppLocalizations.of(context)!.busNo}: ${trip.busNumber}",
                     style: TextStyle(
-                      fontFamily: 'Inter',
+                      fontFamily: 'Outfit',
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,

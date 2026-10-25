@@ -206,7 +206,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
           Text(AppLocalizations.of(context)!.manageSubtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Outfit',
                   color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 32),
           SizedBox(
@@ -302,7 +302,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
           Text(AppLocalizations.of(context)!.scanTicketSubtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Outfit',
                   color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 32),
           Row(
@@ -589,7 +589,7 @@ class TicketVerifiedCard extends StatelessWidget {
         const SizedBox(height: 18),
         Text("Passenger",
             style: TextStyle(
-                fontFamily: 'Inter',
+                fontFamily: 'Outfit',
                 fontSize: 14,
                 color: Colors.grey.shade700)),
         Text(ticket.passengerName.isEmpty ? 'N/A' : ticket.passengerName,
@@ -698,12 +698,12 @@ class TicketVerifiedCard extends StatelessWidget {
         children: [
           Text(label,
               style: TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Outfit',
                   fontSize: 16,
                   color: Colors.grey.shade700)),
           Text(value,
               style: const TextStyle(
-                  fontFamily: 'Inter',
+                  fontFamily: 'Outfit',
                   fontSize: 16,
                   fontWeight: FontWeight.bold)),
         ],

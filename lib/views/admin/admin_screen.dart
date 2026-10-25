@@ -465,7 +465,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                               children: [
                                                 Text("Schedule Type:",
                                                     style: TextStyle(
-                                                        fontFamily: 'Inter',
+                                                        fontFamily: 'Outfit',
                                                         fontWeight:
                                                             FontWeight.bold,
                                                         fontSize: 14,
@@ -519,7 +519,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                         if (_isRecurring) ...[
                                           Text("Operating Days (Weekly)",
                                               style: TextStyle(
-                                                  fontFamily: 'Inter',
+                                                  fontFamily: 'Outfit',
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 14,
                                                   color: textColor)),
@@ -560,7 +560,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                         ] else ...[
                                           Text("Trip Date",
                                               style: TextStyle(
-                                                  fontFamily: 'Inter',
+                                                  fontFamily: 'Outfit',
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 14,
                                                   color: textColor)),
@@ -603,7 +603,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                                 'EEE, MMM d, yyyy')
                                                             .format(_tripDate!),
                                                     style: TextStyle(
-                                                        fontFamily: 'Inter',
+                                                        fontFamily: 'Outfit',
                                                         fontSize: 16,
                                                         color: _tripDate == null
                                                             ? Colors.grey
@@ -1324,7 +1324,7 @@ class _AdminScreenState extends State<AdminScreen> {
           ),
         ),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 12)),
+        Text(label, style: const TextStyle(fontFamily: 'Outfit', fontSize: 12)),
       ],
     );
   }
@@ -1385,7 +1385,7 @@ class _AdminScreenState extends State<AdminScreen> {
           child: Text(
             "$seatNum",
             style: TextStyle(
-              fontFamily: 'Inter',
+              fontFamily: 'Outfit',
               fontWeight: FontWeight.bold,
               color: textColor,
               fontSize: 12,
