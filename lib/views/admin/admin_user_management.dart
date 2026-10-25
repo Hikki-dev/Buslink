@@ -294,9 +294,14 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration:
             BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w700, color: fg)),
+        // One line, and shrink a little rather than break the word.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(label,
+              maxLines: 1,
+              style: TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w700, color: fg)),
+        ),
       ),
     );
   }

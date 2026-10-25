@@ -50,42 +50,57 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
               final docs = snapshot.data!.docs;
               final stats = _calculateStats(docs);
 
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Status boxes
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 2.1,
+              // On a wide screen keep the page the width of a phone.
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _statusBox(context, 'Upcoming', "${stats['Upcoming']}",
-                            BL.ink, Icons.schedule),
-                        _statusBox(context, 'Arrived', "${stats['arrived']}",
-                            BL.ink, Icons.check_circle),
-                        _statusBox(context, 'Delayed', "${stats['delayed']}",
-                            const Color(0xFF7A4300), Icons.timer_off),
-                        _statusBox(
-                            context,
-                            'Cancelled',
-                            "${stats['cancelled']}",
-                            const Color(0xFF7F1D14),
-                            Icons.cancel),
+                        // Status boxes
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 2.1,
+                          children: [
+                            _statusBox(context, 'Upcoming',
+                                "${stats['Upcoming']}", BL.ink, Icons.schedule),
+                            _statusBox(
+                                context,
+                                'Arrived',
+                                "${stats['arrived']}",
+                                BL.ink,
+                                Icons.check_circle),
+                            _statusBox(
+                                context,
+                                'Delayed',
+                                "${stats['delayed']}",
+                                const Color(0xFF7A4300),
+                                Icons.timer_off),
+                            _statusBox(
+                                context,
+                                'Cancelled',
+                                "${stats['cancelled']}",
+                                const Color(0xFF7F1D14),
+                                Icons.cancel),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        _buildHeader(stats, languageCode),
+                        const SizedBox(height: 24),
+                        _buildTrendsAccordion(stats, languageCode),
+                        const SizedBox(height: 16),
+                        _buildInsightsAccordion(stats, languageCode),
                       ],
                     ),
-                    const SizedBox(height: 24),
-
-                    _buildHeader(stats, languageCode),
-                    const SizedBox(height: 24),
-                    _buildTrendsAccordion(stats, languageCode),
-                    const SizedBox(height: 16),
-                    _buildInsightsAccordion(stats, languageCode),
-                  ],
+                  ),
                 ),
               );
             },

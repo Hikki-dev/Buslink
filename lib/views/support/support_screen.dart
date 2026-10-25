@@ -355,57 +355,52 @@ class _SupportScreenState extends State<SupportScreen> {
     }
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const DesktopNavBar(selectedIndex: -2),
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 56),
-                  child: Column(
+      body: FooterScroll(children: [
+        const DesktopNavBar(selectedIndex: -2),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 56),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Help & Support',
+                      style:
+                          TextStyle(fontSize: 34, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 22),
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Help & Support',
-                          style: TextStyle(
-                              fontSize: 34, fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 22),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                faqs,
-                                const SizedBox(height: 18),
-                                hotlines,
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 32),
-                          SizedBox(
-                            width: 500,
-                            child: Column(
-                              children: [
-                                _form(),
-                                const SizedBox(height: 14),
-                                _contactButtons(),
-                              ],
-                            ),
-                          ),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            faqs,
+                            const SizedBox(height: 18),
+                            hotlines,
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 32),
+                      SizedBox(
+                        width: 500,
+                        child: Column(
+                          children: [
+                            _form(),
+                            const SizedBox(height: 14),
+                            _contactButtons(),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
             ),
-            const AppFooter(),
-          ],
+          ),
         ),
-      ),
+      ]),
     );
   }
 }

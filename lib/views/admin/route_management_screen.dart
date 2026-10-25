@@ -83,7 +83,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
 
   /// A bordered table: [head] titles with flex widths, then one row per item.
   Widget _table(List<(String, int)> head, List<List<Widget>> rows) {
-    return Container(
+    final box = Container(
       decoration: BoxDecoration(
         border: Border.all(color: BL.hairline),
         borderRadius: BorderRadius.circular(16),
@@ -117,88 +117,104 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
           ),
       ]),
     );
+    if (MediaQuery.sizeOf(context).width >= 700) return box;
+    // On a phone the columns keep their width and the table slides sideways.
+    return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(width: 720, child: box));
   }
 
   Widget _buildPage(BuildContext context) {
+    final desktop = MediaQuery.sizeOf(context).width > 900;
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(36, 32, 36, 48),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Route & Schedule Management',
-                        style: TextStyle(
-                            fontSize: 34, fontWeight: FontWeight.w800)),
-                    SizedBox(height: 4),
-                    Text(
-                        'A route is the path. A schedule says which bus runs it and when.',
-                        style: TextStyle(fontSize: 17, color: BL.muted)),
-                  ],
-                ),
-                Row(mainAxisSize: MainAxisSize.min, children: [
-                  SizedBox(
-                    height: 52,
-                    child: OutlinedButton(
-                      onPressed: () => _showRouteDialog(),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: BL.crimson,
-                        side: const BorderSide(color: BL.crimson, width: 2),
-                        padding: const EdgeInsets.symmetric(horizontal: 22),
-                        shape: const StadiumBorder(),
-                        textStyle: const TextStyle(
-                            fontFamily: 'Outfit',
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800),
-                      ),
-                      child: const Text('Add Route'),
-                    ),
+      body: Column(children: [
+        if (!desktop) const BlHeader(title: 'Routes and schedules'),
+        Expanded(
+            child: SingleChildScrollView(
+          padding: desktop
+              ? const EdgeInsets.fromLTRB(36, 32, 36, 48)
+              : const EdgeInsets.fromLTRB(16, 20, 16, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Route & Schedule Management',
+                          style: TextStyle(
+                              fontSize: desktop ? 34 : 24,
+                              fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 4),
+                      const Text(
+                          'A route is the path. A schedule says which bus runs it and when.',
+                          style: TextStyle(fontSize: 17, color: BL.muted)),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    height: 52,
-                    child: FilledButton(
-                      onPressed: () async {
-                        final routes = await _service.getRoutesStream().first;
-                        if (mounted) _showScheduleDialog(routes);
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: BL.crimson,
-                        padding: const EdgeInsets.symmetric(horizontal: 22),
-                        shape: const StadiumBorder(),
-                        textStyle: const TextStyle(
-                            fontFamily: 'Outfit',
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800),
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    SizedBox(
+                      height: 52,
+                      child: OutlinedButton(
+                        onPressed: () => _showRouteDialog(),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: BL.crimson,
+                          side: const BorderSide(color: BL.crimson, width: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 22),
+                          shape: const StadiumBorder(),
+                          textStyle: const TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800),
+                        ),
+                        child: const Text('Add Route'),
                       ),
-                      child: const Text('Add Schedule'),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      height: 52,
+                      child: FilledButton(
+                        onPressed: () async {
+                          final routes = await _service.getRoutesStream().first;
+                          if (mounted) _showScheduleDialog(routes);
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: BL.crimson,
+                          padding: const EdgeInsets.symmetric(horizontal: 22),
+                          shape: const StadiumBorder(),
+                          textStyle: const TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800),
+                        ),
+                        child: const Text('Add Schedule'),
+                      ),
+                    ),
+                  ]),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(children: [
+                  _pill('Routes (Paths)', _tab == 0,
+                      () => setState(() => _tab = 0)),
+                  const SizedBox(width: 8),
+                  _pill('Schedules (Operations)', _tab == 1,
+                      () => setState(() => _tab = 1)),
                 ]),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(children: [
-              _pill(
-                  'Routes (Paths)', _tab == 0, () => setState(() => _tab = 0)),
-              const SizedBox(width: 8),
-              _pill('Schedules (Operations)', _tab == 1,
-                  () => setState(() => _tab = 1)),
-            ]),
-            const SizedBox(height: 18),
-            _tab == 0 ? _buildRouteTab() : _buildScheduleTab(),
-          ],
-        ),
-      ),
+              ),
+              const SizedBox(height: 18),
+              _tab == 0 ? _buildRouteTab() : _buildScheduleTab(),
+            ],
+          ),
+        ))
+      ]),
     );
   }
 

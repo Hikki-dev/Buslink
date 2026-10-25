@@ -4,6 +4,8 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 ## 25 October 2026
 
+* **Phone layout fixes found by looking at every screen.** The admin Routes page had no header or way back on a phone, and its title and table headings broke words ("Dura tion"); it now has the red header with a back button, a smaller title, tabs that slide sideways and a table that slides sideways. The role chip on the Users page no longer breaks "Customer" into two lines. On wide screens the footer now sits at the bottom of short pages (it floated half way up, with white space under it), and the Travel Trends page stays phone-width instead of stretching.
+
 * **Seats and the phone's bottom tabs work with screen readers.** Both hid their own tap from the accessibility tree, so a screen reader or switch device could not choose a seat or change tab. They now expose the tap (two new tests).
 * **Conductor can verify the 4 character code.** Passengers are shown a 4 character code (and the confirmation screen's QR can hold it), but the conductor lookup only searched by the long ticket id, so a typed code said "Ticket not found". It now tries the id first, then the code (ignoring cancelled tickets). The verified-ticket box also read old field names and showed N/A for origin and destination; it now shows the real cities.
 

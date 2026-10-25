@@ -233,81 +233,74 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     // ---------------------------------------------------------- desktop
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const DesktopNavBar(),
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 56),
-                  child: Column(
+      body: FooterScroll(children: [
+        const DesktopNavBar(),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 56),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const BookingSteps(current: 1),
+                  const SizedBox(height: 24),
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const BookingSteps(current: 1),
-                      const SizedBox(height: 24),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(28),
-                              decoration: blCard(20),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Wrap(
-                                    alignment: WrapAlignment.spaceBetween,
-                                    crossAxisAlignment:
-                                        WrapCrossAlignment.center,
-                                    runSpacing: 12,
-                                    children: const [
-                                      Text('Choose your seats',
-                                          style: TextStyle(
-                                              fontSize: 30,
-                                              fontWeight: FontWeight.w700)),
-                                      _Legend(yours: 'Your choice'),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  const Text('You can choose up to 6 seats.',
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(28),
+                          decoration: blCard(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Wrap(
+                                alignment: WrapAlignment.spaceBetween,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                runSpacing: 12,
+                                children: const [
+                                  Text('Choose your seats',
                                       style: TextStyle(
-                                          fontSize: 17, color: BL.muted)),
-                                  const SizedBox(height: 28),
-                                  Center(child: map),
+                                          fontSize: 30,
+                                          fontWeight: FontWeight.w700)),
+                                  _Legend(yours: 'Your choice'),
                                 ],
                               ),
-                            ),
+                              const SizedBox(height: 6),
+                              const Text('You can choose up to 6 seats.',
+                                  style:
+                                      TextStyle(fontSize: 17, color: BL.muted)),
+                              const SizedBox(height: 28),
+                              Center(child: map),
+                            ],
                           ),
-                          const SizedBox(width: 24),
-                          SizedBox(
-                            width: 380,
-                            child: _Summary(
-                              trip: trip,
-                              selected: selected,
-                              unitPrice: trip.price,
-                              totalText: totalText,
-                              cta: cta,
-                              ctaColor: widget.isConductorMode
-                                  ? BL.success
-                                  : BL.crimson,
-                              onContinue: selected.isEmpty
-                                  ? null
-                                  : () => _continue(context, controller),
-                            ),
-                          ),
-                        ],
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      SizedBox(
+                        width: 380,
+                        child: _Summary(
+                          trip: trip,
+                          selected: selected,
+                          unitPrice: trip.price,
+                          totalText: totalText,
+                          cta: cta,
+                          ctaColor:
+                              widget.isConductorMode ? BL.success : BL.crimson,
+                          onContinue: selected.isEmpty
+                              ? null
+                              : () => _continue(context, controller),
+                        ),
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
             ),
-            const AppFooter(),
-          ],
+          ),
         ),
-      ),
+      ]),
     );
   }
 
