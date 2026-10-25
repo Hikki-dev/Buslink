@@ -31,7 +31,7 @@ flutter test test/boarding_test.dart
 1. `python3 tool/check_docs.py`: every link and picture in the docs exists, every heading link lands on a heading, and the README links to every page in `docs/`.
 2. `flutter analyze`.
 3. `flutter test`, on every file in `test/` except `widget_test.dart` (see above).
-4. In a second job, the Firestore rules tests (below).
+4. In a second job, the Firestore rules tests (below) and the payment function tests: `node --test api/_lib/payments.test.js`, which needs no packages.
 
 It uses Flutter 3.38.9, the same version as the live site. `lib/firebase_options.dart` and `.env` are git-ignored because they hold your own keys, so the workflow creates placeholder copies. The tests only need them to exist.
 
@@ -39,7 +39,7 @@ Run the same three commands yourself before opening a pull request. The **Checks
 
 ## The rules tests
 
-`tool/rules-test` runs `firestore.rules` in the Firebase emulator, with 43 cases for a passenger, a conductor, an admin and a signed-out visitor. It needs Node and Java.
+`tool/rules-test` runs `firestore.rules` in the Firebase emulator, with 49 cases for a passenger, a conductor, an admin and a signed-out visitor. It needs Node and Java.
 
 ```bash
 cd tool/rules-test

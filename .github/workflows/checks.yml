@@ -2,7 +2,8 @@ name: Checks
 
 # The same checks you run before opening a pull request:
 #   flutter analyze, flutter test, python3 tool/check_docs.py, and the
-# Firestore rules tests (tool/rules-test) in the Firebase emulator
+# Firestore rules tests (tool/rules-test) in the Firebase emulator, and
+# the payment function tests (api/_lib)
 on:
   push:
     branches: [main]
@@ -63,3 +64,8 @@ jobs:
         run: |
           npm ci
           npm test
+
+      # Who may pay, who may confirm, a forged webhook, who may refund. Stripe
+      # and the database are small fakes, so this needs no packages or keys.
+      - name: Test the payment functions
+        run: node --test api/_lib/payments.test.js

@@ -2,6 +2,8 @@
 
 This project integrates Stripe for payments. Below is the step-by-step guide to configure the backend and environment variables required for processing real payments.
 
+> **How it works now.** The app never holds a Stripe secret key and never decides that a payment happened. The functions in `api/` (on Vercel) work out the price from the booking, create the Stripe payment, ask Stripe whether it was paid, and only then confirm the ticket. Put `STRIPE_SECRET_KEY`, `FIREBASE_SERVICE_ACCOUNT_BASE64` and (for the webhook) `STRIPE_WEBHOOK_SECRET` in the Vercel environment, as described in [Deploying](docs/Deploying.md#the-stripe-webhook). The `.env` file in the app needs only the publishable key. The older notes below are kept for reference.
+
 ## 1. Prerequisites
 - **Stripe Account**: Create one at [stripe.com](https://stripe.com).
 - **Stripe API Keys**: Get your `Publishable Key` and `Secret Key` from the Stripe Dashboard > Developers > API Keys.

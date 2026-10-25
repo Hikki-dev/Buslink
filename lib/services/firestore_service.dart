@@ -9,6 +9,7 @@ import '../models/schedule_model.dart'; // Added ScheduleModel
 import 'dart:math';
 import 'cache_service.dart';
 import '../models/boarding_result.dart';
+import 'payment_api.dart';
 
 class FirestoreService {
   FirebaseFirestore get _db => FirebaseFirestore.instance;
@@ -327,88 +328,6 @@ class FirestoreService {
     return null;
   }
 
-  // --- BOOKING (Updated for new Schema) ---
-
-  Future<Ticket> processBooking(
-      Trip trip,
-      List<String> seatIds, // Changed to List<String> to match new Seat Schema
-      User user,
-      Map<String, dynamic>
-          extraTripDetails // Passed from UI (merged Trip+Schedule)
-      ) async {
-    // 1. Fetch User Data from Firestore (Primary Source for Profile)
-    Map<String, dynamic> userData = {};
-    try {
-      final userDoc = await _db.collection(userCollection).doc(user.uid).get();
-      if (userDoc.exists) {
-        userData = userDoc.data()!;
-      }
-    } catch (e) {
-      debugPrint("Warning: Could not fetch user profile for booking: $e");
-    }
-
-    // 2. Resolve Contact Info (Firestore > Auth > Guest)
-    final String pName = userData['displayName'] ??
-        userData['name'] ??
-        user.displayName ??
-        'Guest';
-    final String pEmail = userData['email'] ?? user.email ?? '';
-    final String pPhone = userData['phoneNumber'] ??
-        userData['phone'] ??
-        user.phoneNumber ??
-        'N/A';
-
-    final ticketRef = _db.collection(ticketCollection).doc();
-    final tripRef = _db.collection(tripCollection).doc(trip.id);
-
-    // Fetch FCM Token - Critical for Conductor Notifications
-    String? fcmToken = userData['fcmToken'];
-
-    await _db.runTransaction((transaction) async {
-      DocumentSnapshot freshTripSnap = await transaction.get(tripRef);
-      if (!freshTripSnap.exists) {
-        throw Exception("Trip does not exist!");
-      }
-      Trip freshTrip = Trip.fromFirestore(freshTripSnap);
-
-      for (String seat in seatIds) {
-        if (freshTrip.bookedSeatNumbers.contains(seat)) {
-          throw Exception('Seat $seat is already booked.');
-        }
-      }
-
-      transaction.update(tripRef, {
-        'bookedSeatNumbers': FieldValue.arrayUnion(seatIds),
-      });
-    });
-
-    final newTicket = Ticket(
-      ticketId: ticketRef.id,
-      tripId: trip.id,
-      userId: user.uid,
-      seatNumbers: seatIds.map((e) => int.tryParse(e) ?? 0).toList(),
-      passengerName: pName,
-      passengerPhone: pPhone,
-      passengerEmail: pEmail,
-      bookingTime: DateTime.now(),
-      totalAmount: trip.price * seatIds.length,
-      tripData: extraTripDetails,
-      shortId: _generateShortId(),
-      fcmToken: fcmToken,
-    );
-
-    // Save with metadata for Search
-    final ticketMap = newTicket.toJson();
-    ticketMap['userData'] = {
-      'name': pName,
-      'email': pEmail,
-      'phone': pPhone,
-    };
-
-    await ticketRef.set(ticketMap);
-    return newTicket;
-  }
-
   // --- REMAINING METHODS (Legacy Support or Refactoring) ---
 
   // NOTE: Many legacy methods (getAvailableCities, etc.) rely on old fields.
@@ -671,48 +590,48 @@ class FirestoreService {
     return ids;
   }
 
-  Future<Ticket> confirmBooking(String bookingId,
-      {String? paymentIntentId}) async {
-    final ticketRef = _db.collection(ticketCollection).doc(bookingId);
+  PaymentApi? _paymentApiInstance;
+  PaymentApi get _paymentApi => _paymentApiInstance ??= PaymentApi();
 
-    final updateData = {'status': 'confirmed'};
-    if (paymentIntentId != null) {
-      updateData['paymentIntentId'] = paymentIntentId;
+  /// Confirms bookings after a payment. Nothing is written from here: the
+  /// server asks Stripe whether the payment happened, and only then marks the
+  /// tickets confirmed (a passenger's own phone is not allowed to). A ticket
+  /// that is already confirmed, such as a cash ticket from a conductor or a
+  /// second visit to the page, needs no call.
+  Future<List<Ticket>> confirmBookings(List<String> bookingIds,
+      {String? paymentIntentId, String? sessionId}) async {
+    Future<List<Ticket>> read() async {
+      final tickets = <Ticket>[];
+      for (final id in bookingIds) {
+        final snap = await _db.collection(ticketCollection).doc(id).get();
+        if (snap.exists) tickets.add(Ticket.fromFirestore(snap));
+      }
+      return tickets;
     }
 
-    await ticketRef.update(updateData);
+    var tickets = await read();
+    final allDone = tickets.length == bookingIds.length &&
+        tickets.every((t) => t.status == 'confirmed');
+    if (!allDone) {
+      await _paymentApi.confirm(bookingIds,
+          sessionId: sessionId, paymentIntentId: paymentIntentId);
+      tickets = await read();
+    }
+    return tickets;
+  }
 
-    final snap = await ticketRef.get();
-    return Ticket.fromFirestore(snap);
+  Future<Ticket> confirmBooking(String bookingId,
+      {String? paymentIntentId, String? sessionId}) async {
+    final tickets = await confirmBookings([bookingId],
+        paymentIntentId: paymentIntentId, sessionId: sessionId);
+    if (tickets.isEmpty) throw StateError('Booking $bookingId was not found.');
+    return tickets.first;
   }
 
   Future<List<Ticket>> confirmBulkBookings(List<String> bookingIds,
-      {String? paymentIntentId}) async {
-    final batch = _db.batch();
-    final updateData = {'status': 'confirmed'};
-    if (paymentIntentId != null) {
-      updateData['paymentIntentId'] = paymentIntentId;
-    }
-
-    for (var id in bookingIds) {
-      final ref = _db.collection(ticketCollection).doc(id);
-      batch.update(ref, updateData);
-    }
-
-    await batch.commit();
-
-    // Fetch updated tickets to return
-    // Note: Can't easily batch get, so loop get or whereIn (limit 10)
-    // For now, loop get is fine for reasonable bulk size (e.g. 5-30)
-    List<Ticket> confirmedTickets = [];
-    for (var id in bookingIds) {
-      final snap = await _db.collection(ticketCollection).doc(id).get();
-      if (snap.exists) {
-        confirmedTickets.add(Ticket.fromFirestore(snap));
-      }
-    }
-    return confirmedTickets;
-  }
+          {String? paymentIntentId, String? sessionId}) =>
+      confirmBookings(bookingIds,
+          paymentIntentId: paymentIntentId, sessionId: sessionId);
 
   Future<Ticket> createOfflineBooking(
       Trip trip, List<int> seatNumbers, String passengerName, User conductor,

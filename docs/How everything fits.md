@@ -60,10 +60,10 @@ Indexes are in `firestore.indexes.json` and security rules in `firestore.rules`.
 
 1. The user picks a trip and seats in the bus layout.
 2. `createPendingBooking` runs a **Firestore transaction**: it re-reads the trip, checks the seats are still free, adds them to `bookedSeatNumbers` and writes a ticket with `status: 'pending'`. Two people cannot take the same seat. Bulk booking repeats this per trip under a shared `batchId`.
-3. The user pays:
-   - **Mobile**: a Stripe PaymentIntent is created and confirmed with the Payment Sheet.
-   - **Web**: the app calls `/api/checkout_session`, which creates a Stripe Checkout Session, then redirects back to a success URL.
-4. `confirmBooking` sets the ticket to `confirmed` and stores the `paymentIntentId`.
+3. The user pays. The app only names the bookings; **the server works out the price** from them and checks the person is signed in and owns them:
+   - **Mobile**: `/api/payment_intent` creates a Stripe PaymentIntent for the Payment Sheet.
+   - **Web**: `/api/checkout_session` creates a Stripe Checkout Session, then the browser is sent back to a success address that carries the session id.
+4. The success screen calls `/api/confirm_booking`. **The server asks Stripe** whether the payment really happened, for how much and for which bookings, and only then sets the tickets to `confirmed` and stores the `paymentIntentId`. The database rules do not let a passenger do that themselves. `/api/stripe_webhook` does the same when Stripe calls it, so a ticket is confirmed even if the passenger closes the page.
 5. The ticket screen shows a QR code. The conductor scans it in `qr_scan_screen.dart`.
 
 Conductors can also create **offline bookings** (`createOfflineBooking`) for walk-up passengers.
@@ -103,4 +103,4 @@ Conductors can also create **offline bookings** (`createOfflineBooking`) for wal
 
 ## Known limitations
 
-See [Security](../SECURITY.md) for the full, current list. In short: on mobile and desktop a Stripe secret key and a service account can be read from the bundled `.env`, the web refund endpoint is unauthenticated, and the refund function lacks an admin check. The web demo build contains no secrets.
+See [Security](../SECURITY.md) for the full, current list. In short: on mobile and desktop the service account used for push messages can be read from the bundled `.env`, and the Cloud Function `processRefund` lacks an admin check. Payments are confirmed, priced and refunded by the server, and the app holds no Stripe secret key.

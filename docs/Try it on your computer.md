@@ -66,7 +66,7 @@ The password for all of them is `Test1234!`. They exist only in the pretend Fire
 | `newcomer@test.local` | Passenger with nothing yet | See the empty My Trips, Favourites and Notifications |
 | `nimali@`, `kasun@`, `dilani@`, `ruwan@` `test.local` | Passengers | Fill the admin lists with other people's bookings |
 
-Paying needs Stripe, which the pretend Firebase does not replace. To go through the payment page, put your Stripe **test** keys in `.env` as described in [Stripe setup](../STRIPE_SETUP.md), and use the test card `4242 4242 4242 4242`.
+Paying cannot be tried this way. Payment goes through the functions on Vercel, which ask Stripe and check the booking in your **real** database, and those cannot see the pretend one. The page Stripe sends people back to (Booking Confirmed) can still be opened, because the seed data holds a ticket that is already waiting for payment; the picture of it in this guide was taken that way. To try a real payment with the test card `4242 4242 4242 4242`, use your own deployed copy ([Deploying](Deploying.md)) and Stripe test keys.
 
 ## Taking the pictures again
 
