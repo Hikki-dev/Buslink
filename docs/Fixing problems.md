@@ -36,7 +36,9 @@ Start with the line that matches what you see.
 | You see | Do this |
 |---|---|
 | "Seat N is already booked" when continuing | Someone else just booked that seat. Pick another. This is the safety check working. |
-| Payment fails on the web | Check `STRIPE_SECRET_KEY` is set in Vercel and is a test key if you use test mode. |
+| Payment fails on the web | Check `STRIPE_SECRET_KEY` and `FIREBASE_SERVICE_ACCOUNT_BASE64` are set in Vercel, and that the first is a test key if you use test mode. |
+| "Verification Failed" after paying | The server could not confirm the payment with Stripe. Check the function logs in Vercel for `confirm_booking`. If money was taken, the passenger's seats are kept, and the Stripe webhook (see [Deploying](Deploying.md#the-stripe-webhook)) confirms the ticket on its own. |
+| "Please sign in" or "That booking is not yours" when paying | The payment functions only accept the passenger who made the booking, signed in. Sign out and in again, and check the booking belongs to that account. |
 | Stripe says the amount is too small | Stripe needs at least about 50 US cents (around LKR 165). The app's own minimum of LKR 150 is a little too low. |
 | A refund stays "In review" | An admin has not processed it yet. Admins process refunds from the refund list. |
 

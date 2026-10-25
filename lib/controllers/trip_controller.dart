@@ -225,22 +225,6 @@ class TripController extends ChangeNotifier {
 
   // --- BOOKING ---
 
-  Future<Ticket> processBooking(EnrichedTrip enrichedTrip, List<String> seatIds,
-      Map<String, dynamic> userDetails) async {
-    User? currentUser = _auth.currentUser;
-    if (currentUser == null) throw Exception("User not logged in");
-
-    // Pass Enriched details (denormalized) to ticket for history
-    final extraDetails = enrichedTrip.trip.toJson();
-    extraDetails['busNumber'] = enrichedTrip.busNumber;
-    extraDetails['operatorName'] = enrichedTrip.operatorName;
-    extraDetails['scheduleId'] = enrichedTrip.schedule.id;
-    extraDetails['platformNumber'] = enrichedTrip.platformNumber;
-
-    return await _firestoreService.processBooking(
-        enrichedTrip.trip, seatIds, currentUser, extraDetails);
-  }
-
   // Legacy wrappers for compilation compatibility
   // If UI calls with `Trip` object (e.g. from a stream), we might need to handle it.
   // But preferably UI uses EnrichedTrip.
@@ -713,14 +697,14 @@ class TripController extends ChangeNotifier {
   // Used by PaymentSuccessScreen
   // Used by PaymentSuccessScreen
   Future<bool> confirmBooking(String bookingId,
-      {String? paymentIntentId}) async {
+      {String? paymentIntentId, String? sessionId}) async {
     // Handle Bulk (Comma Separated)
     if (bookingId.contains(',')) {
       final ids =
           bookingId.split(',').where((s) => s.trim().isNotEmpty).toList();
       try {
         final tickets = await _firestoreService.confirmBulkBookings(ids,
-            paymentIntentId: paymentIntentId);
+            paymentIntentId: paymentIntentId, sessionId: sessionId);
 
         // Notify (Aggregated)
         // Group by User and Trip
@@ -778,7 +762,7 @@ class TripController extends ChangeNotifier {
     // Single Booking
     try {
       final ticket = await _firestoreService.confirmBooking(bookingId,
-          paymentIntentId: paymentIntentId);
+          paymentIntentId: paymentIntentId, sessionId: sessionId);
 
       // Notify User (Notification Center + Push)
       if (ticket.userId.isNotEmpty) {

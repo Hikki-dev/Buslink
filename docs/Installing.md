@@ -42,7 +42,6 @@ The rules do nothing until you deploy them, and they are tested: see [Data and r
 | Key | Needed for |
 |---|---|
 | `STRIPE_PUBLISHABLE_KEY` | Initialising Stripe (`pk_test_...`) |
-| `STRIPE_SECRET_KEY` | Prototype payments and refunds from the client (see the warning below) |
 | `OPENWEATHER_API_KEY` | Weather on the trip results list |
 | `FIREBASE_PROJECT_ID` | FCM push sending |
 | `FIREBASE_VAPID_KEY` | Web push |
@@ -50,20 +49,26 @@ The rules do nothing until you deploy them, and they are tested: see [Data and r
 
 ```env
 STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
 OPENWEATHER_API_KEY=...
 FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_VAPID_KEY=...
 FIREBASE_SERVICE_ACCOUNT_BASE64=...
 ```
 
-> **Warning.** Everything in `.env` is bundled into the app and can be extracted. Use **test-mode** keys only, and never a production secret key or a real service account. For production, move payment creation, refunds and push sending to server code (see [Security](../SECURITY.md#what-still-needs-doing-before-real-money)). Missing keys degrade the matching feature rather than crashing the whole app.
+> **Warning.** Everything in `.env` is bundled into the app and can be extracted. The Stripe **secret** key is deliberately not here: payments go through the server (step 5). Use a test-mode service account only. For production, move push sending to server code too (see [Security](../SECURITY.md#what-still-needs-doing-before-real-money)). Missing keys degrade the matching feature rather than crashing the whole app.
 
 ## 5. Stripe
 
-- **Mobile**: PaymentIntents via `flutter_stripe` (currency is LKR; the app asks for at least LKR 150, and Stripe itself needs about 50 US cents, around LKR 165).
-- **Web**: Checkout Sessions via the Vercel function `api/checkout_session.js`, and refunds via `api/refund.js`. Both need `STRIPE_SECRET_KEY` set as a **Vercel environment variable**.
-- **Cloud Function** `processRefund` (in `functions/`) needs `STRIPE_SECRET_KEY` as a function secret or environment value.
+The app never holds a Stripe secret key. Payments go through the small functions in `api/`, which run on Vercel:
+
+- `api/checkout_session.js` (web) and `api/payment_intent.js` (phone) start a payment. The **price comes from the booking in the database**, and the caller must be signed in and own the booking.
+- `api/confirm_booking.js` marks the booking confirmed, but only after asking Stripe whether it was paid.
+- `api/stripe_webhook.js` lets Stripe confirm a booking itself, even if the passenger closed the page. See [Deploying](Deploying.md#the-stripe-webhook).
+- `api/refund.js` sends money back to a card. Admins only.
+
+They need `STRIPE_SECRET_KEY` and `FIREBASE_SERVICE_ACCOUNT_BASE64` as **Vercel environment variables**. The phone app uses the live site's address for them (set in `lib/services/payment_api.dart`). Currency is LKR; the app asks for at least LKR 150, and Stripe itself needs about 50 US cents (around LKR 165).
+
+The Cloud Function `processRefund` (in `functions/`) is the older refund path and needs `STRIPE_SECRET_KEY` as a function secret or environment value.
 
 More background in [STRIPE_SETUP.md](../STRIPE_SETUP.md).
 

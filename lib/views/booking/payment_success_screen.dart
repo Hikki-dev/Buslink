@@ -66,11 +66,13 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   Future<void> _verifyBooking() async {
     String? bookingIdParam;
     String? paymentIntentId; // Added
+    String? sessionId; // Stripe Checkout (web)
 
     // Strategy A: Check standard URL query parameters
     if (kIsWeb) {
       bookingIdParam = Uri.base.queryParameters['booking_id'];
       paymentIntentId = Uri.base.queryParameters['payment_intent']; // Added
+      sessionId = Uri.base.queryParameters['session_id'];
     }
 
     // Strategy B: Check Flutter Route Name
@@ -81,6 +83,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         final uri = Uri.parse("https://buslink.app$routeName");
         bookingIdParam = uri.queryParameters['booking_id'];
         paymentIntentId = uri.queryParameters['payment_intent']; // Added
+        sessionId = uri.queryParameters['session_id'];
       }
     }
 
@@ -91,6 +94,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       final uri = Uri.parse("https://buslink.app$safeFragment");
       bookingIdParam = uri.queryParameters['booking_id'];
       paymentIntentId = uri.queryParameters['payment_intent']; // Added
+      sessionId = uri.queryParameters['session_id'];
     }
 
     // Strategy D: Fallback Args
@@ -100,6 +104,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         bookingIdParam = args['booking_id'];
         // Maybe passed in args if manual nav, but query param is standard for Stripe
         paymentIntentId = args['payment_intent'];
+        sessionId = args['session_id'];
       }
     }
 
@@ -119,18 +124,19 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     List<Ticket> tickets = [];
 
     try {
-      // 1. Confirm and Verify all bookings
-      for (final id in bookingIds) {
-        if (id.trim().isEmpty) continue;
-        final success = await controller.confirmBooking(id.trim(),
-            paymentIntentId: paymentIntentId);
-        if (!success) {
-          allSuccess = false;
-          break;
-        }
-        final ticket = await controller.verifyTicket(id.trim());
-        if (ticket != null) {
-          tickets.add(ticket);
+      // 1. Ask the server to confirm. It checks with Stripe that the payment
+      // really happened (one call for all the bookings, because one payment
+      // covers them together). A ticket that is already confirmed, such as a
+      // cash ticket from a conductor, needs no check.
+      final ids = bookingIds.map((e) => e.trim()).where((e) => e.isNotEmpty);
+      final success = await controller.confirmBooking(ids.join(','),
+          paymentIntentId: paymentIntentId, sessionId: sessionId);
+      if (!success) {
+        allSuccess = false;
+      } else {
+        for (final id in ids) {
+          final ticket = await controller.verifyTicket(id);
+          if (ticket != null) tickets.add(ticket);
         }
       }
 

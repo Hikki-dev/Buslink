@@ -4,6 +4,11 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 ## 25 October 2026
 
+* **Payments are now confirmed by the server, not by the passenger's phone.** Before, the app marked its own ticket `confirmed` after paying, so a passenger could do that without paying. Now the functions in `api/` do it: they work out the price from the booking in the database (the phone never sends an amount), start the Stripe payment, ask Stripe whether it really happened, for how much and for exactly which bookings, and only then confirm the ticket. A signed Stripe webhook (`api/stripe_webhook.js`) does the same if the passenger closes the page first.
+* **The database rules** no longer let a passenger confirm a ticket, set a payment id on it, start it as already confirmed, or cancel it directly; a refund can be asked for only on a paid ticket. Conductors and admins can still sell a cash ticket. 7 new rules cases (49 in all).
+* **The app holds no Stripe secret key.** The phone and the web both go through the server, signed in as the passenger. Refunds need a signed-in admin (the server checks), and `api/refund.js` and `api/checkout_session.js` no longer accept anyone from anywhere.
+* **Tests:** 18 for the payment functions (`node --test api/_lib/payments.test.js`, run in CI), 6 for the app's side of the conversation. The unused `processBooking`, which created a confirmed ticket without any payment, is gone.
+* **To switch it on** set `FIREBASE_SERVICE_ACCOUNT_BASE64` and `STRIPE_SECRET_KEY` in Vercel (both already there), and optionally add the webhook: see [Deploying](docs/Deploying.md#the-stripe-webhook).
 * **The conductor's code box empties after a boarding.** It kept the old code, so the next code typed was glued onto it ("K7M2K7M2") and said "Ticket not found". It now clears once a ticket is approved or found already boarded.
 * **Update Status no longer crashes on a short trip id.** Seven places cut the first few letters of an id with `substring`, which throws on a shorter id; they now use one safe helper (`firstChars`).
 * **Bus details:** the platform has its own line, so "Arrive 06:45 PM" no longer breaks onto two lines on a phone.

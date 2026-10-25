@@ -30,7 +30,7 @@ What BusLink keeps in its database, who is allowed to read and change each part,
 
 `recurrenceDays` uses 1 for Monday up to 7 for Sunday. A ticket's `tripData` is a copy of the trip as it was when booked, so the ticket still reads correctly if the trip changes.
 
-A ticket's `status` starts as `pending` when the seats are reserved, becomes `confirmed` after payment, and may later become `cancelled` or `refunded`. **Boarded is not a status.** A boarded ticket is one that has a `boardedAt` time, and the admin screens show it as the **Boarded** chip.
+A ticket's `status` starts as `pending` when the seats are reserved, becomes `confirmed` after payment (set by the server once Stripe says it was paid, never by the passenger's phone), and may later become `refund_requested`, `cancelled` or `refunded`. **Boarded is not a status.** A boarded ticket is one that has a `boardedAt` time, and the admin screens show it as the **Boarded** chip.
 
 ## Who can do what
 
@@ -94,7 +94,7 @@ node generate_trips.js
 
 ## Testing the rules
 
-`tool/rules-test` holds 43 cases that run the real `firestore.rules` in the Firebase emulator, as a passenger, a conductor, an admin and a signed-out visitor. They check that everything the app does still works (booking, paying, refunds, boarding, delay notifications) and that the things that must never work are refused (making yourself an admin, marking your own ticket boarded, boarding a ticket twice).
+`tool/rules-test` holds 49 cases that run the real `firestore.rules` in the Firebase emulator, as a passenger, a conductor, an admin and a signed-out visitor. They check that everything the app does still works (booking, paying, refunds, boarding, delay notifications) and that the things that must never work are refused (making yourself an admin, marking your own ticket boarded, boarding a ticket twice).
 
 ```bash
 cd tool/rules-test

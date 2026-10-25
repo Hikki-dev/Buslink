@@ -491,13 +491,14 @@ The design boards, one for each screen on a phone and on a computer, are listed 
 
 ## What keeps it safe
 
-Three checks run on the server in a single step each, so they cannot be skipped by a slow phone or a clever one.
+Four checks run on the server in a single step each, so they cannot be skipped by a slow phone or a clever one.
 
 * **No double booking.** Seats are checked and reserved together.
 * **One boarding per ticket.** The ticket is checked and stamped together, and the rules only let a conductor stamp it once, as themselves.
+* **No paying without paying.** Only the server marks a ticket confirmed, and only after it has asked Stripe whether that payment really happened, for the right amount, for exactly those bookings. The phone cannot say "I paid", and the price comes from the booking, not from the phone.
 * **No self-promotion.** Nobody can create or change their own role. A passenger cannot rewrite their own ticket's owner, price or seats, or mark it boarded.
 
-These are proven by 43 automatic cases that run on every change. The honest list of what still needs doing before real money is in [Security](SECURITY.md).
+These are proven by 49 database-rule cases and 18 payment-function cases that run on every change. The honest list of what still needs doing before real money is in [Security](SECURITY.md).
 
 ## Run it yourself
 
@@ -530,7 +531,7 @@ flutter test
 python3 tool/check_docs.py   # links and pictures in the docs
 ```
 
-The same checks run on every pull request (the **Checks** badge above), together with 43 cases that test the database rules in the Firebase emulator.
+The same checks run on every pull request (the **Checks** badge above), together with 49 cases that test the database rules (and 18 for the payment functions) in the Firebase emulator.
 
 The tests cover the parts that are easy to get wrong: the boarding rule, the arrival-time maths, the refund progress, the three-step trip form, the bus and ticket cards, and the status chips. See [Testing](docs/Testing.md), which also shows how to remake the pictures in this README.
 

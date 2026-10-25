@@ -55,10 +55,23 @@ To set it up:
 | `FIREBASE_MEASUREMENT_ID` | Analytics ID | No |
 | `STRIPE_PUBLISHABLE_KEY` | Starts with `pk_test_` in test mode | No |
 | `STRIPE_SECRET_KEY` | Used only by the functions in `api/` | **Yes.** Use a `sk_test_` key |
+| `FIREBASE_SERVICE_ACCOUNT_BASE64` | A Firebase service account (base64 of its JSON). The payment functions use it to confirm tickets | **Yes** |
+| `STRIPE_WEBHOOK_SECRET` | The signing secret of the Stripe webhook (`whsec_...`) | **Yes**, if you add the webhook below |
 
 If one of the first eight is missing, the build stops with "unbound variable" and names it.
 
 **Restrict the Firebase web API key.** In Google Cloud Console, open APIs and Services, then Credentials, then the browser key, and limit it to your own domains (HTTP referrers). The key is not a password, but restricting it stops other sites using your quota.
+
+## The Stripe webhook
+
+Without it, a ticket is confirmed when the passenger comes back to the site after paying. With it, Stripe also tells the server itself, so the ticket is confirmed even if the passenger closes the page first.
+
+1. In the Stripe dashboard (test mode first) open Developers, then Webhooks, then **Add endpoint**.
+2. The address is `https://YOUR-SITE/api/stripe_webhook`.
+3. Choose the events `checkout.session.completed` and `checkout.session.async_payment_succeeded`.
+4. Copy the endpoint's **signing secret** (it starts with `whsec_`) into the Vercel variable `STRIPE_WEBHOOK_SECRET`, and redeploy.
+
+The function refuses anything whose signature does not match, so nobody else can call it.
 
 ## Deploy the database rules
 

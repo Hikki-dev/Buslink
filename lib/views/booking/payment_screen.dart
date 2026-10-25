@@ -60,24 +60,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
         bookingId = id;
       }
 
-      final trip = widget.trip ?? controller.selectedTrip!;
-      final seats = controller.selectedSeats;
-
-      final double totalAmountVal = widget.amount ??
-          (trip.price *
-              seats.length *
-              (controller.isBulkBooking ? controller.bulkDates.length : 1));
-      final String totalAmountStr = totalAmountVal.toStringAsFixed(2);
+      // The server works out the price from these bookings. The app never
+      // tells it an amount.
+      final bookingIds =
+          bookingId.split(',').where((s) => s.trim().isNotEmpty).toList();
 
       if (!mounted) return;
       if (!kIsWeb) {
-        final success = await _paymentService.processPaymentMobile(
+        final paymentIntentId = await _paymentService.processPaymentMobile(
           context,
-          amount: totalAmountStr,
-          currency: 'LKR',
+          bookingIds: bookingIds,
         );
 
-        if (success) {
+        if (paymentIntentId != null) {
           // Native Payment Success
           if (mounted) {
             Navigator.of(context).pushReplacement(
@@ -85,7 +80,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 builder: (context) => const PaymentSuccessScreen(),
                 settings: RouteSettings(
                   name: '/payment_success',
-                  arguments: {'booking_id': bookingId},
+                  arguments: {
+                    'booking_id': bookingId,
+                    'payment_intent': paymentIntentId,
+                  },
                 ),
               ),
             );
@@ -109,20 +107,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       // 3. Create Stripe Checkout Session
       final redirectUrl = await _paymentService.createCheckoutSession(
-        amount: totalAmountStr,
-        currency: "LKR",
+        bookingIds: bookingIds,
         successUrl: successUrl,
         cancelUrl: cancelUrl,
-        bookingId: bookingId,
       );
 
-      if (redirectUrl != null) {
-        final uri = Uri.parse(redirectUrl);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, webOnlyWindowName: '_blank');
-        } else {
-          throw Exception("Could not launch Stripe Checkout.");
-        }
+      final uri = Uri.parse(redirectUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, webOnlyWindowName: '_blank');
+      } else {
+        throw Exception("Could not launch Stripe Checkout.");
       }
     } catch (e) {
       setState(() => _isProcessing = false);
