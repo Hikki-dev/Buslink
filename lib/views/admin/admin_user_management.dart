@@ -44,14 +44,14 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         hintText: 'Search by email or name...',
         prefixIcon: const Icon(Icons.search),
         filled: true,
-        fillColor: const Color(0xFFF5F3F4),
+        fillColor: BL.fill,
         contentPadding: const EdgeInsets.symmetric(vertical: 16),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+            borderSide: BorderSide(color: BL.hairline, width: 1.5)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+            borderSide: BorderSide(color: BL.hairline, width: 1.5)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: BL.crimson, width: 2)),
@@ -59,7 +59,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       bottomNavigationBar:
           isDesktop ? null : const AdminBottomNav(selectedIndex: 1),
       body: Column(
@@ -80,7 +80,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       if (isDesktop)
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('User Management',
@@ -161,10 +161,10 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                         clipBehavior: Clip.antiAlias,
                         child: Column(children: [
                           Container(
-                            color: const Color(0xFFF5F3F4),
+                            color: BL.fill,
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 14),
-                            child: const Row(children: [
+                            child: Row(children: [
                               Expanded(
                                   flex: 5,
                                   child: Text('User',
@@ -216,8 +216,8 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFFEDE6E7)))),
+      decoration:
+          BoxDecoration(border: Border(top: BorderSide(color: BL.fill))),
       child: Row(children: [
         Expanded(
           flex: 5,
@@ -232,7 +232,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
               Text(email,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 15, color: BL.muted)),
+                  style: TextStyle(fontSize: 15, color: BL.muted)),
             ],
           ),
         ),
@@ -246,7 +246,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                 onPressed: () => _showEditUserDialog(context, uid, name, role),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: BL.ink,
-                  side: const BorderSide(color: BL.ink, width: 1.5),
+                  side: BorderSide(color: BL.ink, width: 1.5),
                   shape: const StadiumBorder(),
                   textStyle: const TextStyle(
                       fontFamily: 'Outfit',
@@ -261,8 +261,8 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
               child: OutlinedButton(
                 onPressed: () => _confirmDeleteUser(context, uid, name),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFA3281C),
-                  side: const BorderSide(color: Color(0xFFA3281C), width: 1.5),
+                  foregroundColor: BL.dangerInk,
+                  side: BorderSide(color: BL.dangerInk, width: 1.5),
                   shape: const StadiumBorder(),
                   textStyle: const TextStyle(
                       fontFamily: 'Outfit',
@@ -280,13 +280,9 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
 
   Widget _buildRoleBadge(BuildContext context, String role) {
     final (label, bg, fg) = switch (role.toLowerCase()) {
-      'admin' => ('Admin', const Color(0xFFFBE3E4), BL.crimsonDark),
-      'conductor' => (
-          'Conductor',
-          const Color(0xFFFFF1DB),
-          const Color(0xFF7A4300)
-        ),
-      _ => ('Customer', const Color(0xFFE9EDF2), const Color(0xFF3A444F)),
+      'admin' => ('Admin', const Color(0xFFFBE3E4), BL.deep),
+      'conductor' => ('Conductor', BL.warnTint, BL.warnInk),
+      _ => ('Customer', BL.fill, BL.inkSoft),
     };
     return Align(
       alignment: Alignment.centerLeft,

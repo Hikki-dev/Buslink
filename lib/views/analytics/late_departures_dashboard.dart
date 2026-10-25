@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
@@ -237,8 +238,7 @@ class _LateDeparturesDashboardState extends State<LateDeparturesDashboard> {
             border: Border.all(color: color.withValues(alpha: 0.3))),
         child: Column(
           children: [
-            Text(title,
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 14)),
+            Text(title, style: TextStyle(color: BL.muted, fontSize: 14)),
             const SizedBox(height: 8),
             Text(value,
                 style: TextStyle(

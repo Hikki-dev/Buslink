@@ -133,7 +133,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
   Widget _buildPage(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 900;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           if (isDesktop)
@@ -162,7 +162,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
           Container(
             padding: EdgeInsets.symmetric(
                 horizontal: isDesktop ? 36 : 16, vertical: 12),
-            color: Colors.white,
+            color: BL.surface,
             child: Column(
               children: [
                 // Search Row
@@ -242,8 +242,8 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                                           : Colors.grey.shade600),
                                 ),
                               ),
-                              const Icon(Icons.calendar_today,
-                                  size: 16, color: Colors.grey),
+                              Icon(Icons.calendar_today,
+                                  size: 16, color: BL.faint),
                             ],
                           ),
                         ),
@@ -283,7 +283,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                                               padding:
                                                   const EdgeInsets.symmetric(
                                                       horizontal: 32),
-                                              foregroundColor: BL.crimson,
+                                              foregroundColor: BL.link,
                                               side: const BorderSide(
                                                   color: BL.crimson, width: 2),
                                               shape: const StadiumBorder(),
@@ -293,7 +293,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                                                   fontWeight: FontWeight.w800),
                                             ),
                                             child: const Text("Load More"))
-                                    : const Text("No more bookings",
+                                    : Text("No more bookings",
                                         style: TextStyle(
                                             fontSize: 15, color: BL.muted)),
                               ),
@@ -470,7 +470,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BL.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: BL.hairline),
         boxShadow: const [
@@ -576,8 +576,7 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                   if (contactParts.isNotEmpty)
                     Text(
                       contactParts.join(" ").trim(),
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      style: TextStyle(fontSize: 12, color: BL.muted),
                     ),
                   const SizedBox(height: 6),
                 ],

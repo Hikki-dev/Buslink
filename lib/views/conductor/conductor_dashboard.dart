@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import 'package:provider/provider.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -245,10 +246,9 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
+          Text(
             "Admin Preview Mode",
-            style:
-                TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+            style: TextStyle(fontWeight: FontWeight.bold, color: BL.ink),
           ),
           TextButton(
             onPressed: () {
@@ -257,7 +257,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
                   MaterialPageRoute(builder: (_) => const AdminDashboard()),
                   (route) => false);
             },
-            child: const Text("Exit", style: TextStyle(color: Colors.black87)),
+            child: Text("Exit", style: TextStyle(color: BL.ink)),
           )
         ],
       ),
@@ -591,10 +591,8 @@ class TicketVerifiedCard extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         Text("Passenger",
-            style: TextStyle(
-                fontFamily: 'Outfit',
-                fontSize: 14,
-                color: Colors.grey.shade700)),
+            style:
+                TextStyle(fontFamily: 'Outfit', fontSize: 14, color: BL.muted)),
         Text(ticket.passengerName.isEmpty ? 'N/A' : ticket.passengerName,
             style: const TextStyle(
                 fontFamily: 'Outfit',
@@ -709,9 +707,7 @@ class TicketVerifiedCard extends StatelessWidget {
         children: [
           Text(label,
               style: TextStyle(
-                  fontFamily: 'Outfit',
-                  fontSize: 16,
-                  color: Colors.grey.shade700)),
+                  fontFamily: 'Outfit', fontSize: 16, color: BL.muted)),
           Text(value,
               style: const TextStyle(
                   fontFamily: 'Outfit',
@@ -975,8 +971,7 @@ class _FindTripDialogState extends State<FindTripDialog> {
                     Center(
                       child: Column(
                         children: [
-                          const Icon(Icons.bus_alert,
-                              size: 48, color: Colors.grey),
+                          Icon(Icons.bus_alert, size: 48, color: BL.faint),
                           const SizedBox(height: 12),
                           const Text("No active trips found."),
                           const SizedBox(height: 12),

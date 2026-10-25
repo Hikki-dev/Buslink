@@ -50,7 +50,7 @@ class _AdminAnalyticsDashboardState extends State<AdminAnalyticsDashboard> {
   Widget _buildPage(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 900;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           if (!isDesktop) const BlHeader(title: 'Analytics'),
@@ -70,7 +70,7 @@ class _AdminAnalyticsDashboardState extends State<AdminAnalyticsDashboard> {
                         _tab == 0
                             ? 'How much money the buses brought in, after refunds.'
                             : 'Punctuality Overview',
-                        style: const TextStyle(fontSize: 17, color: BL.muted)),
+                        style: TextStyle(fontSize: 17, color: BL.muted)),
                     const SizedBox(height: 16),
                   ],
                   Wrap(spacing: 8, runSpacing: 8, children: [

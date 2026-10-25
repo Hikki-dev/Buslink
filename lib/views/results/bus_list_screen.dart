@@ -62,7 +62,7 @@ class _BusListScreenState extends State<BusListScreen> {
     final isDesktop = MediaQuery.of(context).size.width > 1000;
     final trips = _visible(c);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: isDesktop ? _desktop(c, trips) : _phone(c, trips),
     );
   }
@@ -124,7 +124,7 @@ class _BusListScreenState extends State<BusListScreen> {
                 children: [
                   Expanded(
                     child: Text(_countText(trips.length),
-                        style: const TextStyle(fontSize: 16, color: BL.muted)),
+                        style: TextStyle(fontSize: 16, color: BL.muted)),
                   ),
                   OutlinedButton.icon(
                     onPressed: _showFilterSheet,
@@ -132,8 +132,8 @@ class _BusListScreenState extends State<BusListScreen> {
                     label: const Text('Narrow it down'),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(0, 48),
-                      foregroundColor: BL.crimson,
-                      side: const BorderSide(color: BL.border, width: 1.5),
+                      foregroundColor: BL.link,
+                      side: BorderSide(color: BL.border, width: 1.5),
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(
                           fontFamily: 'Outfit',
@@ -158,7 +158,7 @@ class _BusListScreenState extends State<BusListScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => StatefulBuilder(
@@ -253,7 +253,7 @@ class _BusListScreenState extends State<BusListScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(22),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: BL.surface,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: BL.hairline),
                         ),
@@ -291,7 +291,7 @@ class _BusListScreenState extends State<BusListScreen> {
   Widget _sortMenu() => DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _sortBy,
-          style: const TextStyle(fontSize: 17, color: BL.ink),
+          style: TextStyle(fontSize: 17, color: BL.ink),
           icon: const Icon(Icons.expand_more),
           items: const [
             DropdownMenuItem(value: 'price_asc', child: Text('Cheapest first')),
@@ -498,8 +498,7 @@ class _BusTicketCardState extends State<BusTicketCard> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: const Color(0xFFE9EDF2),
-          borderRadius: BorderRadius.circular(16)),
+          color: BL.fill, borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -508,13 +507,13 @@ class _BusTicketCardState extends State<BusTicketCard> {
             children: [
               Expanded(
                 child: Text(_operator(trip),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: BL.muted)),
               ),
               Text(DateFormat('h:mm a').format(trip.departureTime),
-                  style: const TextStyle(fontSize: 16, color: BL.muted)),
+                  style: TextStyle(fontSize: 16, color: BL.muted)),
             ],
           ),
           const SizedBox(height: 8),
@@ -528,7 +527,7 @@ class _BusTicketCardState extends State<BusTicketCard> {
                     cancelled
                         ? 'This trip is cancelled. Please choose another bus.'
                         : 'This bus is full. Please choose another one.',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                         color: BL.ink)),
@@ -571,7 +570,7 @@ class _BusTicketCardState extends State<BusTicketCard> {
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text('via ${trip.via}',
-                style: const TextStyle(fontSize: 15, color: BL.muted)),
+                style: TextStyle(fontSize: 15, color: BL.muted)),
           ),
         if (late != null)
           Padding(
@@ -579,20 +578,18 @@ class _BusTicketCardState extends State<BusTicketCard> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1DB),
-                  borderRadius: BorderRadius.circular(10)),
+                  color: BL.warnTint, borderRadius: BorderRadius.circular(10)),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.schedule,
-                      size: 22, color: Color(0xFF7A4300)),
+                  Icon(Icons.schedule, size: 22, color: BL.warnInk),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(late,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF7A4300))),
+                            color: BL.warnInk)),
                   ),
                 ],
               ),
@@ -615,7 +612,7 @@ class _BusTicketCardState extends State<BusTicketCard> {
       onPressed: () => Navigator.push(context,
           MaterialPageRoute(builder: (_) => BusDetailsScreen(trip: trip))),
       style: TextButton.styleFrom(
-          foregroundColor: BL.crimson,
+          foregroundColor: BL.link,
           minimumSize: const Size(0, 48),
           padding: EdgeInsets.zero,
           textStyle: const TextStyle(
@@ -638,7 +635,7 @@ class _BusTicketCardState extends State<BusTicketCard> {
       ],
     );
 
-    final fewColor = const Color(0xFFA3281C);
+    final fewColor = BL.dangerInk;
     final seats = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -687,12 +684,12 @@ class _BusTicketCardState extends State<BusTicketCard> {
         style: TextStyle(
             fontSize: wide ? 26 : 20,
             fontWeight: FontWeight.w700,
-            color: BL.crimson));
+            color: BL.link));
 
     return Container(
       padding: EdgeInsets.all(wide ? 22 : 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BL.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -850,16 +847,16 @@ class _NoBusesState extends State<_NoBuses> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 8),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.directions_bus_outlined, size: 64, color: BL.border),
+        Icon(Icons.directions_bus_outlined, size: 64, color: BL.border),
         const SizedBox(height: 12),
         Text(title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 22, fontWeight: FontWeight.w700, color: BL.ink)),
         const SizedBox(height: 6),
         Text(reason,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 17, color: BL.muted)),
+            style: TextStyle(fontSize: 17, color: BL.muted)),
         const SizedBox(height: 18),
         if (widget.hiddenByFilters > 0)
           FilledButton(
@@ -888,7 +885,7 @@ class _NoBusesState extends State<_NoBuses> {
               }
               final days = snap.data ?? const <DateTime, int>{};
               if (days.isEmpty) {
-                return const Text(
+                return Text(
                     'There are no buses on this route in the next two weeks. Try a different route.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 17, color: BL.muted));
@@ -901,8 +898,7 @@ class _NoBusesState extends State<_NoBuses> {
                   for (final e in days.entries.take(8))
                     ActionChip(
                       onPressed: () => widget.controller.searchAgainOn(e.key),
-                      avatar:
-                          const Icon(Icons.event, size: 20, color: BL.crimson),
+                      avatar: Icon(Icons.event, size: 20, color: BL.link),
                       label: Text(
                           '${DateFormat('EEE d MMM').format(e.key)} · ${e.value} ${e.value == 1 ? 'bus' : 'buses'}'),
                       labelStyle: const TextStyle(

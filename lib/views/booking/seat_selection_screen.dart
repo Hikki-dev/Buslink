@@ -135,7 +135,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
     if (!isDesktop) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: BL.surface,
         body: Column(
           children: [
             Container(
@@ -173,7 +173,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
             ),
             Container(
               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                   border: Border(bottom: BorderSide(color: BL.hairline))),
               child: const _Legend(yours: 'Yours', spaced: true),
             ),
@@ -187,8 +187,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               Container(
                 padding: EdgeInsets.fromLTRB(
                     20, 16, 20, 12 + MediaQuery.paddingOf(context).bottom),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: BL.surface,
                   border: Border(top: BorderSide(color: BL.hairline)),
                   boxShadow: [
                     BoxShadow(
@@ -212,10 +212,10 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                   fontSize: 18, fontWeight: FontWeight.w500)),
                         ),
                         Text(totalText,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
-                                color: BL.crimson)),
+                                color: BL.link)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -233,7 +233,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
     // ---------------------------------------------------------- desktop
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: FooterScroll(children: [
         const DesktopNavBar(),
         Center(
@@ -269,7 +269,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                 ],
                               ),
                               const SizedBox(height: 6),
-                              const Text('You can choose up to 6 seats.',
+                              Text('You can choose up to 6 seats.',
                                   style:
                                       TextStyle(fontSize: 17, color: BL.muted)),
                               const SizedBox(height: 28),
@@ -477,7 +477,7 @@ class _Legend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _chip(Colors.white, const Color(0xFF8A95A3), null, BL.ink, 'Free'),
+      _chip(Colors.white, BL.faint, null, BL.ink, 'Free'),
       _chip(BL.crimson, null, Icons.check, Colors.white, yours),
       _chip(const Color(0xFFD5DAE0), null, Icons.close, BL.muted, 'Taken'),
     ];
@@ -567,10 +567,9 @@ class _Summary extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.w700)),
                 if (bus.isNotEmpty)
-                  Text(bus,
-                      style: const TextStyle(fontSize: 16, color: BL.muted)),
-                const Divider(height: 36, color: BL.hairline),
-                const Text('Your seats',
+                  Text(bus, style: TextStyle(fontSize: 16, color: BL.muted)),
+                Divider(height: 36, color: BL.hairline),
+                Text('Your seats',
                     style: TextStyle(fontSize: 16, color: BL.muted)),
                 const SizedBox(height: 8),
                 if (selected.isEmpty)
@@ -589,14 +588,14 @@ class _Summary extends StatelessWidget {
                               color: BL.blush,
                               borderRadius: BorderRadius.circular(20)),
                           child: Text('Seat $n',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
-                                  color: BL.crimsonDark)),
+                                  color: BL.deep)),
                         ),
                     ],
                   ),
-                const Divider(height: 36, color: BL.hairline),
+                Divider(height: 36, color: BL.hairline),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -615,10 +614,10 @@ class _Summary extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.w700)),
                     Text(totalText,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w700,
-                            color: BL.crimson)),
+                            color: BL.link)),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -630,7 +629,7 @@ class _Summary extends StatelessWidget {
                   child: TextButton(
                     onPressed: () => Navigator.maybePop(context),
                     style: TextButton.styleFrom(
-                        foregroundColor: BL.crimson,
+                        foregroundColor: BL.link,
                         textStyle: const TextStyle(
                             fontFamily: 'Outfit',
                             fontSize: 17,

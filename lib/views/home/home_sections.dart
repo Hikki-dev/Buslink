@@ -90,7 +90,7 @@ class _PopularJourneysState extends State<PopularJourneys> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
               child: Text(title,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                       color: BL.ink)),
@@ -256,7 +256,7 @@ class HowItWorks extends StatelessWidget {
               width: 370,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: BL.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: BL.hairline),
               ),
@@ -281,13 +281,13 @@ class HowItWorks extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(_steps[i].$1,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
                                 color: BL.ink)),
                         const SizedBox(height: 4),
                         Text(_steps[i].$2,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 17, height: 1.4, color: BL.muted)),
                       ],
                     ),
@@ -319,14 +319,14 @@ class _DesktopSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
                       color: BL.ink)),
               if (subtitle != null) ...[
                 const SizedBox(height: 6),
                 Text(subtitle!,
-                    style: const TextStyle(fontSize: 18, color: BL.muted)),
+                    style: TextStyle(fontSize: 18, color: BL.muted)),
               ],
               SizedBox(height: subtitle != null ? 24 : 20),
               child,

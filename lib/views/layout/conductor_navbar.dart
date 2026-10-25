@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_theme.dart';
@@ -99,8 +100,7 @@ class ConductorNavBar extends StatelessWidget {
                         fontSize: 14,
                         color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(width: 8),
-                const Icon(Icons.keyboard_arrow_down,
-                    size: 16, color: Colors.grey),
+                Icon(Icons.keyboard_arrow_down, size: 16, color: BL.faint),
               ],
             ),
             itemBuilder: (context) => [

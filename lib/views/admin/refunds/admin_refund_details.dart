@@ -26,7 +26,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           const BlHeader(title: 'Refund Details'),
@@ -67,10 +67,10 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                                     horizontal: 14, vertical: 7),
                                 decoration: BoxDecoration(
                                   color: pending
-                                      ? const Color(0xFFFFF1DB)
+                                      ? BL.warnTint
                                       : (approved
                                           ? const Color(0xFFDDF1E3)
-                                          : const Color(0xFFFBE0DC)),
+                                          : BL.tint),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Text(
@@ -79,10 +79,10 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                                         fontSize: 15,
                                         fontWeight: FontWeight.w700,
                                         color: pending
-                                            ? const Color(0xFF7A4300)
+                                            ? BL.warnInk
                                             : (approved
-                                                ? const Color(0xFF14532D)
-                                                : const Color(0xFF7F1D14)))),
+                                                ? BL.successInk
+                                                : BL.dangerInk))),
                               ),
                             ],
                           ),
@@ -107,7 +107,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: BL.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: BL.hairline)),
       child: Column(
@@ -218,7 +218,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 17, color: BL.muted)),
+          Text(label, style: TextStyle(fontSize: 17, color: BL.muted)),
           const SizedBox(width: 16),
           Expanded(
             child: Text(value,
@@ -244,8 +244,8 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
             onPressed: () => _showRejectDialog(refund),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 36),
-              foregroundColor: const Color(0xFFA3281C),
-              side: const BorderSide(color: Color(0xFFA3281C), width: 2),
+              foregroundColor: BL.dangerInk,
+              side: BorderSide(color: BL.dangerInk, width: 2),
               shape: const StadiumBorder(),
               textStyle: const TextStyle(
                   fontFamily: 'Outfit',
@@ -373,7 +373,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Are you sure you want to reject this refund?',
+                      Text('Are you sure you want to reject this refund?',
                           style: TextStyle(fontSize: 16, color: BL.muted)),
                       const SizedBox(height: 16),
                       const Text('Select Reason *',
@@ -432,8 +432,8 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                               _handleReject(
                                   refund, c.isEmpty ? reason! : '$reason: $c');
                             },
-                      style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFA3281C)),
+                      style:
+                          FilledButton.styleFrom(backgroundColor: BL.dangerInk),
                       child: const Text('Confirm Reject')),
                 ],
               ),

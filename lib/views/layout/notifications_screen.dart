@@ -16,7 +16,7 @@ class NotificationsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           BlHeader(
@@ -107,7 +107,7 @@ class _Item extends StatelessWidget {
         color = const Color(0xFFA64B00);
       case NotificationType.cancellation:
         icon = Icons.cancel_outlined;
-        color = const Color(0xFF7F1D14);
+        color = BL.dangerInk;
       case NotificationType.booking:
         icon = Icons.check;
         color = BL.success;
@@ -129,8 +129,8 @@ class _Item extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: n.isRead ? Colors.white : const Color(0xFFFDEEEE),
-            border: const Border(bottom: BorderSide(color: BL.hairline)),
+            color: n.isRead ? Colors.white : BL.tint,
+            border: Border(bottom: BorderSide(color: BL.hairline)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,8 +155,7 @@ class _Item extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(_ago(n.timestamp),
-                            style:
-                                const TextStyle(fontSize: 14, color: BL.muted)),
+                            style: TextStyle(fontSize: 14, color: BL.muted)),
                       ],
                     ),
                     const SizedBox(height: 2),

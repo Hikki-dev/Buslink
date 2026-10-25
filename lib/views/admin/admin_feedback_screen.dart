@@ -15,7 +15,7 @@ class AdminFeedbackScreen extends StatelessWidget {
   Widget _buildPage(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 900;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           if (!isDesktop) const BlHeader(title: 'Customer Feedback'),
@@ -72,16 +72,14 @@ class _FeedbackBodyState extends State<_FeedbackBody> {
                   hintText: 'Search by Email',
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
-                  fillColor: const Color(0xFFF5F3F4),
+                  fillColor: BL.fill,
                   contentPadding: const EdgeInsets.symmetric(vertical: 16),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: BL.hairline, width: 1.5)),
+                      borderSide: BorderSide(color: BL.hairline, width: 1.5)),
                   enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: BL.hairline, width: 1.5)),
+                      borderSide: BorderSide(color: BL.hairline, width: 1.5)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
@@ -164,8 +162,7 @@ class _FeedbackBodyState extends State<_FeedbackBody> {
                               date != null
                                   ? DateFormat('d MMM yyyy').format(date)
                                   : 'Unknown Date',
-                              style: const TextStyle(
-                                  fontSize: 15, color: BL.muted)),
+                              style: TextStyle(fontSize: 15, color: BL.muted)),
                         ]),
                         const SizedBox(height: 8),
                         Row(children: [
@@ -181,7 +178,7 @@ class _FeedbackBodyState extends State<_FeedbackBody> {
                         ]),
                         const SizedBox(height: 8),
                         comment.isEmpty
-                            ? const Text('No comment provided.',
+                            ? Text('No comment provided.',
                                 style: TextStyle(fontSize: 17, color: BL.muted))
                             : Text.rich(TextSpan(
                                 style:

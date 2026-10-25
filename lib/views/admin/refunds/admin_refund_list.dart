@@ -69,14 +69,14 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
         hintText: 'Enter name or email',
         prefixIcon: const Icon(Icons.search),
         filled: true,
-        fillColor: const Color(0xFFF5F3F4),
+        fillColor: BL.fill,
         contentPadding: const EdgeInsets.symmetric(vertical: 16),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+            borderSide: BorderSide(color: BL.hairline, width: 1.5)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+            borderSide: BorderSide(color: BL.hairline, width: 1.5)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: BL.crimson, width: 2)),
@@ -84,7 +84,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           if (!isDesktop) const BlHeader(title: 'Refund Management'),
@@ -223,7 +223,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BL.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: BL.hairline),
       ),
@@ -298,8 +298,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                                 fontWeight: FontWeight.bold, fontSize: 16)),
                         if (email != null && email.isNotEmpty && email != 'N/A')
                           Text(email,
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade600)),
+                              style: TextStyle(fontSize: 12, color: BL.muted)),
                         const SizedBox(height: 4),
                         Text(
                             "${"Refund Amount"}: LKR ${refund.refundAmount.toStringAsFixed(2)}",
@@ -319,7 +318,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(0, 48),
                 padding: const EdgeInsets.symmetric(horizontal: 22),
-                foregroundColor: BL.crimson,
+                foregroundColor: BL.link,
                 side: const BorderSide(color: BL.crimson, width: 2),
                 shape: const StadiumBorder(),
                 textStyle: const TextStyle(

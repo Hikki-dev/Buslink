@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'bus_glyph.dart';
@@ -13,15 +14,15 @@ class SplashColors {
 
   final Color background, blush, word, muted, ink, road, stop, accent;
 
-  static const light = SplashColors._(
+  static final light = SplashColors._(
     Color(0xFFFFFFFF),
-    Color(0xFFFDEEEE),
-    Color(0xFFBA181B),
+    BL.tint,
+    BL.crimson,
     Color(0xFF5A626A),
     Color(0xFF0B090A),
     Color(0xFFE7D3D4),
     Color(0xFFFFFFFF),
-    Color(0xFFBA181B),
+    BL.crimson,
   );
 
   static const dark = SplashColors._(
@@ -151,14 +152,14 @@ class _SplashScreenState extends State<SplashScreen>
                   opacity: pulse.opacity,
                   child: Transform.scale(
                     scale: pulse.scale,
-                    child: const _Tile(color: Color(0xFFBA181B), glyph: false),
+                    child: const _Tile(color: BL.crimson, glyph: false),
                   ),
                 ),
               Opacity(
                 opacity: intro.logo.clamp(0.0, 1.0),
                 child: Transform.scale(
                   scale: 0.7 + 0.3 * intro.logoScale,
-                  child: const _Tile(color: Color(0xFFBA181B), shadow: true),
+                  child: const _Tile(color: BL.crimson, shadow: true),
                 ),
               ),
             ],
@@ -292,9 +293,7 @@ class _Tile extends StatelessWidget {
         boxShadow: shadow
             ? const [
                 BoxShadow(
-                    color: Color(0x47BA181B),
-                    blurRadius: 30,
-                    offset: Offset(0, 14))
+                    color: BL.crimson, blurRadius: 30, offset: Offset(0, 14))
               ]
             : null,
       ),
@@ -421,7 +420,7 @@ class StartupFailedScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const _Tile(color: Color(0xFF8A8F95)),
+                _Tile(color: BL.faint),
                 const SizedBox(height: 28),
                 Text(
                   "We couldn't start BusLink",
@@ -454,7 +453,7 @@ class StartupFailedScreen extends StatelessWidget {
                     icon: const Icon(Icons.refresh, size: 22),
                     label: const Text('Try again'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFBA181B),
+                      backgroundColor: BL.crimson,
                       foregroundColor: Colors.white,
                       textStyle: const TextStyle(
                           fontFamily: 'Outfit',

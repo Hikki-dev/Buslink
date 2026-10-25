@@ -105,8 +105,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: photoUrl == null
                   ? Text(initials.isEmpty ? '?' : initials,
-                      style: const TextStyle(
-                          color: BL.crimsonDark,
+                      style: TextStyle(
+                          color: BL.deep,
                           fontSize: 28,
                           fontWeight: FontWeight.w800))
                   : null,
@@ -118,17 +118,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 button: true,
                 label: 'Change profile picture',
                 child: Material(
-                  color: Colors.white,
+                  color: BL.surface,
                   shape: const CircleBorder(
                       side: BorderSide(color: BL.crimson, width: 3)),
                   child: InkWell(
                     customBorder: const CircleBorder(),
                     onTap: () => _pickAndUploadImage(context, user),
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 36,
                       height: 36,
                       child: Icon(Icons.photo_camera_outlined,
-                          size: 18, color: BL.crimson),
+                          size: 18, color: BL.link),
                     ),
                   ),
                 ),
@@ -144,12 +144,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Container(
                 constraints: const BoxConstraints(minHeight: 64),
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: const BoxDecoration(
-                    border:
-                        Border(bottom: BorderSide(color: Color(0xFFF0E8E9)))),
+                decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: BL.fill))),
                 child: Row(
                   children: [
-                    Icon(icon, color: BL.crimson, size: 26),
+                    Icon(icon, color: BL.link, size: 26),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text(label,
@@ -158,11 +157,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     if (value != null)
                       Text(value,
-                          style:
-                              const TextStyle(fontSize: 17, color: BL.muted)),
+                          style: TextStyle(fontSize: 17, color: BL.muted)),
                     trailing ??
-                        const Icon(Icons.chevron_right,
-                            color: BL.muted, size: 26),
+                        Icon(Icons.chevron_right, color: BL.muted, size: 26),
                   ],
                 ),
               ),
@@ -225,7 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: const Icon(Icons.logout),
                   label: const Text('Log Out'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: BL.crimson,
+                    foregroundColor: BL.link,
                     side: const BorderSide(color: BL.crimson, width: 2),
                     shape: const StadiumBorder(),
                     textStyle: const TextStyle(
@@ -288,7 +285,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (!isDesktop) {
           return Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: BL.surface,
             body: Column(children: [
               header,
               Expanded(child: SingleChildScrollView(child: list)),
@@ -296,7 +293,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         }
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: BL.surface,
           body: SingleChildScrollView(
             child: Column(
               children: [

@@ -144,7 +144,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if ((controller.selectedTrip == null || controller.selectedSeats.isEmpty) &&
         widget.trip == null) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: BL.surface,
         body: SafeArea(
           child: Center(
             child: Padding(
@@ -188,15 +188,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
         Container(
           padding: EdgeInsets.all(isDesktop ? 20 : 16),
           decoration: BoxDecoration(
-            color: const Color(0xFFFDEEEE),
+            color: BL.tint,
             borderRadius: BorderRadius.circular(isDesktop ? 16 : 14),
             border: Border.all(color: BL.crimson, width: 2),
           ),
           child: Row(
             children: [
-              const Icon(Icons.credit_card, color: BL.crimson, size: 32),
+              Icon(Icons.credit_card, color: BL.link, size: 32),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -230,7 +230,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           onTap: _isProcessing ? null : _handleCheckoutRedirect,
         ),
         const SizedBox(height: 12),
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.lock_outline, size: 18, color: BL.muted),
@@ -244,7 +244,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           child: TextButton(
             onPressed: () => Navigator.pop(context),
             style: TextButton.styleFrom(
-                foregroundColor: BL.crimson,
+                foregroundColor: BL.link,
                 textStyle: const TextStyle(
                     fontFamily: 'Outfit',
                     fontSize: 17,
@@ -257,7 +257,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     if (!isDesktop) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: BL.surface,
         body: Column(
           children: [
             Container(
@@ -301,7 +301,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             Container(
               padding: EdgeInsets.fromLTRB(
                   16, 14, 16, 8 + MediaQuery.paddingOf(context).bottom),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                   border: Border(top: BorderSide(color: BL.hairline))),
               child: pay,
             ),
@@ -311,15 +311,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: FooterScroll(children: [
         Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
               border: Border(bottom: BorderSide(color: BL.hairline))),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1200, minHeight: 72),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 24),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -328,7 +328,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
-                            color: BL.crimson)),
+                            color: BL.link)),
                     Row(children: [
                       Icon(Icons.lock_outline, size: 20, color: BL.muted),
                       SizedBox(width: 8),
@@ -404,7 +404,7 @@ class _Summary extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l, style: const TextStyle(fontSize: 17, color: BL.muted)),
+              Text(l, style: TextStyle(fontSize: 17, color: BL.muted)),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(v,
@@ -418,7 +418,7 @@ class _Summary extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BL.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: BL.hairline),
         boxShadow: const [
@@ -497,7 +497,7 @@ class _Summary extends StatelessWidget {
                               ..sort((a, b) => (int.tryParse(a) ?? 0)
                                   .compareTo(int.tryParse(b) ?? 0)))
                             .join(', ')),
-                const Divider(height: 24, color: BL.hairline),
+                Divider(height: 24, color: BL.hairline),
                 row('${seats.length} seat${seats.length == 1 ? '' : 's'} × LKR ${fmt.format(trip.price)}${bulk ? ' × ${days.length} days' : ''}',
                     'LKR ${fmt.format(totalAmount)}'),
                 Padding(
@@ -512,10 +512,10 @@ class _Summary extends StatelessWidget {
                                 fontSize: 18, fontWeight: FontWeight.w800)),
                       ),
                       Text('LKR ${fmt.format(totalAmount)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w800,
-                              color: BL.crimson)),
+                              color: BL.link)),
                     ],
                   ),
                 ),
@@ -562,7 +562,7 @@ class PaymentStateCard extends StatelessWidget {
         title: 'Verification Failed',
         message:
             'We could not confirm your payment. If money left your account, please contact support. Your seats are not lost.',
-        tint: const Color(0xFFFDEEEE),
+        tint: BL.tint,
         border: const Color(0xFFE5383B),
         actions: [
           Expanded(child: _outlined('Go Home', onHome)),
@@ -575,8 +575,7 @@ class PaymentStateCard extends StatelessWidget {
 
   factory PaymentStateCard.expired({required VoidCallback onHome}) =>
       PaymentStateCard._(
-        icon: _badge(
-            const Color(0xFFFFF1DB), const Color(0xFF7A4300), Icons.schedule),
+        icon: _badge(BL.warnTint, BL.warnInk, Icons.schedule),
         title: 'Session Expired',
         message:
             'Your session has expired or no seats are selected. Please start again.',
@@ -599,7 +598,7 @@ class PaymentStateCard extends StatelessWidget {
         child: OutlinedButton(
           onPressed: onTap,
           style: OutlinedButton.styleFrom(
-            foregroundColor: BL.crimson,
+            foregroundColor: BL.link,
             side: const BorderSide(color: BL.crimson, width: 2),
             shape: const StadiumBorder(),
             textStyle: const TextStyle(
@@ -632,8 +631,7 @@ class PaymentStateCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(message,
               textAlign: TextAlign.center,
-              style:
-                  const TextStyle(fontSize: 16, height: 1.4, color: BL.muted)),
+              style: TextStyle(fontSize: 16, height: 1.4, color: BL.muted)),
           if (actions.isNotEmpty) ...[
             const SizedBox(height: 14),
             Row(children: actions),

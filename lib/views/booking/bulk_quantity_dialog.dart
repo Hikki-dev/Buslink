@@ -65,7 +65,7 @@ class _BulkQuantityDialogState extends State<BulkQuantityDialog> {
     return Dialog(
       insetPadding: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 440),
         child: Padding(
@@ -79,7 +79,7 @@ class _BulkQuantityDialogState extends State<BulkQuantityDialog> {
               const SizedBox(height: 4),
               Text(
                   'How many people are travelling on each of the ${widget.days} days?',
-                  style: const TextStyle(fontSize: 17, color: BL.muted)),
+                  style: TextStyle(fontSize: 17, color: BL.muted)),
               const SizedBox(height: 22),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -96,8 +96,7 @@ class _BulkQuantityDialogState extends State<BulkQuantityDialog> {
                               height: 1,
                               fontWeight: FontWeight.w800)),
                       Text(_qty == 1 ? 'passenger' : 'passengers',
-                          style:
-                              const TextStyle(fontSize: 16, color: BL.muted)),
+                          style: TextStyle(fontSize: 16, color: BL.muted)),
                     ],
                   ),
                   const SizedBox(width: 28),
@@ -110,8 +109,7 @@ class _BulkQuantityDialogState extends State<BulkQuantityDialog> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                    color: const Color(0xFFFDEEEE),
-                    borderRadius: BorderRadius.circular(14)),
+                    color: BL.tint, borderRadius: BorderRadius.circular(14)),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
@@ -125,16 +123,15 @@ class _BulkQuantityDialogState extends State<BulkQuantityDialog> {
                                   fontSize: 16, fontWeight: FontWeight.w800)),
                           Text(
                               '$_qty × ${widget.days} days × LKR ${fmt.format(widget.trip.price)}',
-                              style: const TextStyle(
-                                  fontSize: 14, color: BL.muted)),
+                              style: TextStyle(fontSize: 14, color: BL.muted)),
                         ],
                       ),
                     ),
                     Text('LKR ${fmt.format(total)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
-                            color: BL.crimson)),
+                            color: BL.link)),
                   ],
                 ),
               ),

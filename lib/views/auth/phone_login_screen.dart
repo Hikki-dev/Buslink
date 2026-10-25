@@ -88,7 +88,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           const BlHeader(title: 'Phone Login'),
@@ -108,11 +108,10 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                           child: Container(
                             width: 72,
                             height: 72,
-                            decoration: const BoxDecoration(
-                                color: Color(0xFFFDEEEE),
-                                shape: BoxShape.circle),
-                            child: const Icon(Icons.phone_iphone,
-                                size: 36, color: BL.crimson),
+                            decoration: BoxDecoration(
+                                color: BL.tint, shape: BoxShape.circle),
+                            child: Icon(Icons.phone_iphone,
+                                size: 36, color: BL.link),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -120,8 +119,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                             style: TextStyle(
                                 fontSize: 28, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 8),
-                        const Text(
-                            'We will send you a 6-digit verification code.',
+                        Text('We will send you a 6-digit verification code.',
                             style: TextStyle(
                                 fontSize: 18, height: 1.4, color: BL.muted)),
                         const SizedBox(height: 22),
@@ -139,17 +137,17 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                             errorStyle: const TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w700),
                             filled: true,
-                            fillColor: const Color(0xFFF5F3F4),
+                            fillColor: BL.fill,
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 18),
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                    color: BL.hairline, width: 1.5)),
+                                borderSide:
+                                    BorderSide(color: BL.hairline, width: 1.5)),
                             enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                    color: BL.hairline, width: 1.5)),
+                                borderSide:
+                                    BorderSide(color: BL.hairline, width: 1.5)),
                             focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
@@ -169,7 +167,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                         TextButton(
                           onPressed: () => Navigator.maybePop(context),
                           style: TextButton.styleFrom(
-                              foregroundColor: BL.crimson,
+                              foregroundColor: BL.link,
                               minimumSize: const Size(0, 52),
                               textStyle: const TextStyle(
                                   fontFamily: 'Outfit',

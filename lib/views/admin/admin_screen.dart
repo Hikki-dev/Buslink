@@ -1,5 +1,6 @@
 import 'layout/admin_shell.dart';
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -585,16 +586,14 @@ class _AdminScreenState extends State<AdminScreen> {
                                               padding: const EdgeInsets.all(16),
                                               decoration: BoxDecoration(
                                                 border: Border.all(
-                                                    color:
-                                                        Colors.grey.shade400),
+                                                    color: BL.border),
                                                 borderRadius:
                                                     BorderRadius.circular(4),
                                               ),
                                               child: Row(
                                                 children: [
                                                   Icon(Icons.calendar_month,
-                                                      color:
-                                                          Colors.grey.shade600),
+                                                      color: BL.muted),
                                                   const SizedBox(width: 12),
                                                   Text(
                                                     _tripDate == null
@@ -824,7 +823,7 @@ class _AdminScreenState extends State<AdminScreen> {
                   OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               filled: true,
               fillColor: inputFillColor,
-              suffixIcon: const Icon(Icons.search, color: Colors.grey),
+              suffixIcon: Icon(Icons.search, color: BL.faint),
             ),
             validator: (v) => v == null || v.isEmpty ? "Required" : null,
           );
@@ -922,7 +921,7 @@ class _AdminScreenState extends State<AdminScreen> {
                   OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               filled: true,
               fillColor: inputFillColor,
-              suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+              suffixIcon: Icon(Icons.arrow_drop_down, color: BL.faint),
             ),
             validator: (v) => v == null || v.isEmpty ? "Required" : null,
           );
@@ -1070,7 +1069,7 @@ class _AdminScreenState extends State<AdminScreen> {
           enabledBorder:
               OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
           border: const OutlineInputBorder(),
-          suffixIcon: const Icon(Icons.access_time, color: Colors.grey),
+          suffixIcon: Icon(Icons.access_time, color: BL.faint),
         ),
         child: Text(DateFormat('hh:mm a').format(time),
             style: TextStyle(color: textColor)),
@@ -1102,8 +1101,7 @@ class _AdminScreenState extends State<AdminScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         filled: true,
         fillColor: inputFillColor,
-        suffixIcon:
-            icon != null ? Icon(icon, size: 20, color: Colors.grey) : null,
+        suffixIcon: icon != null ? Icon(icon, size: 20, color: BL.faint) : null,
       ),
       validator: (v) => v == null || v.isEmpty ? "Required" : null,
     );
@@ -1149,10 +1147,10 @@ class _AdminScreenState extends State<AdminScreen> {
             width: 340, // Fixed width to match real bus feel
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: BL.surface,
               borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(60), bottom: Radius.circular(30)),
-              border: Border.all(color: Colors.grey.shade300, width: 2),
+              border: Border.all(color: BL.border, width: 2),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
@@ -1193,8 +1191,8 @@ class _AdminScreenState extends State<AdminScreen> {
                         decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.grey)),
-                        child: const Icon(Icons.directions_car,
-                            size: 20, color: Colors.grey),
+                        child: Icon(Icons.directions_car,
+                            size: 20, color: BL.faint),
                       )
                     ],
                   ),
@@ -1300,8 +1298,7 @@ class _AdminScreenState extends State<AdminScreen> {
                   height: 8,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(4)),
+                      color: BL.fill, borderRadius: BorderRadius.circular(4)),
                 )
               ],
             ),

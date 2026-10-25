@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart'; // ignore: unnecessary_import (newer Fl
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'bl_colors.dart';
+
 // This class will manage and notify the app of theme changes
 class ThemeController extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light; // Default to Light Mode as requested
@@ -10,7 +12,20 @@ class ThemeController extends ChangeNotifier {
 
   void setTheme(ThemeMode mode) {
     _themeMode = mode;
+    BL.dark = mode == ThemeMode.dark;
     notifyListeners();
+    // Screens read BL.* directly, so they must all rebuild to pick up the
+    // new palette, not only the ones that watch the Theme.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _rebuildAll());
+  }
+
+  static void _rebuildAll() {
+    void visit(Element e) {
+      e.markNeedsBuild();
+      e.visitChildren(visit);
+    }
+
+    WidgetsBinding.instance.rootElement?.visitChildren(visit);
   }
 
   bool get isDark => _themeMode == ThemeMode.dark;
@@ -182,13 +197,13 @@ class AppTheme {
 
   static final ThemeData darkTheme = ThemeData(
     primaryColor: primaryColor,
-    scaffoldBackgroundColor: const Color(0xFF0D0D0D), // Almost Black
+    scaffoldBackgroundColor: const Color(0xFF100C0D),
     fontFamily: 'Outfit',
     fontFamilyFallback: const ['Montserrat', 'sans-serif'],
     useMaterial3: true,
     brightness: Brightness.dark,
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF0D0D0D),
+      backgroundColor: Color(0xFF100C0D),
       elevation: 0,
       iconTheme: IconThemeData(color: Colors.white, size: 28),
       titleTextStyle: TextStyle(
@@ -202,9 +217,10 @@ class AppTheme {
     colorScheme: ColorScheme.fromSeed(
       seedColor: primaryColor,
       brightness: Brightness.dark,
-      surface: const Color(0xFF1A1A1A), // Dark Grey Surface
+      surface: const Color(0xFF181314),
       onSurface: Colors.white,
       primary: primaryColor,
+      onPrimary: Colors.white,
     ),
     cardTheme: CardThemeData(
       elevation: 0,
@@ -212,7 +228,7 @@ class AppTheme {
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1),
       ),
-      color: const Color(0xFF1A1A1A),
+      color: const Color(0xFF181314),
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
     ),
     textTheme: const TextTheme(
@@ -277,7 +293,7 @@ class AppTheme {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: const Color(0xFF262626), // Lighter than background
+      fillColor: const Color(0xFF221C1D),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),

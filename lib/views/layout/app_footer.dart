@@ -22,7 +22,7 @@ class AppFooter extends StatelessWidget {
         heightFactor: 1,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1200),
-          child: const Padding(
+          child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 24, vertical: 28),
             child: Column(
               // As tall as its text and no taller. A Column otherwise fills
@@ -38,8 +38,8 @@ class AppFooter extends StatelessWidget {
                         fontWeight: FontWeight.w700)),
                 SizedBox(height: 8),
                 Text(credits,
-                    style:
-                        TextStyle(color: BL.blush, fontSize: 14, height: 1.6)),
+                    style: TextStyle(
+                        color: BL.onCrimson, fontSize: 14, height: 1.6)),
               ],
             ),
           ),

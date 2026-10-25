@@ -3,7 +3,7 @@ import '../../utils/bl_colors.dart';
 
 /// White rounded card with the soft red shadow used across the redesign.
 BoxDecoration blCard(double r) => BoxDecoration(
-      color: Colors.white,
+      color: BL.surface,
       borderRadius: BorderRadius.circular(r),
       boxShadow: const [
         BoxShadow(
@@ -30,7 +30,7 @@ class BlPrimaryButton extends StatelessWidget {
           onPressed: onTap,
           style: FilledButton.styleFrom(
             backgroundColor: color,
-            disabledBackgroundColor: const Color(0xFFE3DADB),
+            disabledBackgroundColor: BL.fill,
             shape: const StadiumBorder(),
             textStyle: const TextStyle(
                 fontFamily: 'Outfit',
@@ -68,7 +68,7 @@ class BookingSteps extends StatelessWidget {
                       : (i == current ? BL.crimson : null),
                   shape: BoxShape.circle,
                   border: i > current
-                      ? Border.all(color: const Color(0xFF8A95A3), width: 2)
+                      ? Border.all(color: BL.faint, width: 2)
                       : null,
                 ),
                 child: i < current
@@ -181,9 +181,9 @@ class BlEmpty extends StatelessWidget {
                 Container(
                   width: 64,
                   height: 64,
-                  decoration: const BoxDecoration(
-                      color: Color(0xFFFDEEEE), shape: BoxShape.circle),
-                  child: Icon(icon, size: 30, color: BL.crimson),
+                  decoration:
+                      BoxDecoration(color: BL.tint, shape: BoxShape.circle),
+                  child: Icon(icon, size: 30, color: BL.link),
                 ),
                 const SizedBox(height: 14),
                 Text(title,
@@ -194,7 +194,7 @@ class BlEmpty extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(message!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 16, height: 1.35, color: BL.muted)),
                 ],
               ],

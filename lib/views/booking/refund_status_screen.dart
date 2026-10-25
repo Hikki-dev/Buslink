@@ -16,7 +16,7 @@ class RefundStatusScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           Container(
@@ -76,7 +76,7 @@ class RefundStatusScreen extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           child: Text(text,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, color: BL.muted)),
+              style: TextStyle(fontSize: 18, color: BL.muted)),
         ),
       );
 }
@@ -93,12 +93,10 @@ class _Body extends StatelessWidget {
         status == RefundStatus.rejected || status == RefundStatus.failed;
     final pending = status == RefundStatus.pending;
 
-    final Color bg = rejected
-        ? const Color(0xFFFBE0DC)
-        : (pending ? const Color(0xFFFFF1DB) : const Color(0xFFDDF1E3));
-    final Color fg = rejected
-        ? const Color(0xFF7F1D14)
-        : (pending ? const Color(0xFF7A4300) : const Color(0xFF14532D));
+    final Color bg =
+        rejected ? BL.tint : (pending ? BL.warnTint : const Color(0xFFDDF1E3));
+    final Color fg =
+        rejected ? BL.dangerInk : (pending ? BL.warnInk : BL.successInk);
     final headline = rejected
         ? 'Refund Rejected'
         : pending
@@ -114,7 +112,7 @@ class _Body extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 5),
           child: Row(
             children: [
-              Text(l, style: const TextStyle(fontSize: 17, color: BL.muted)),
+              Text(l, style: TextStyle(fontSize: 17, color: BL.muted)),
               const Spacer(),
               Text(v,
                   style: const TextStyle(
@@ -183,8 +181,8 @@ class _Body extends StatelessWidget {
                   ),
                   child: Text.rich(
                     TextSpan(
-                      style: const TextStyle(
-                          fontSize: 17, height: 1.5, color: Color(0xFF3A2F31)),
+                      style: TextStyle(
+                          fontSize: 17, height: 1.5, color: BL.inkSoft),
                       children: [
                         const TextSpan(
                             text:
@@ -193,7 +191,7 @@ class _Body extends StatelessWidget {
                             text: refund.ticketId.length > 8
                                 ? firstChars(refund.ticketId, 8)
                                 : refund.ticketId,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontWeight: FontWeight.w700, color: BL.ink)),
                         const TextSpan(text: '.'),
                       ],
@@ -220,7 +218,7 @@ class _Body extends StatelessWidget {
                           'LKR ${fmt.format(refund.tripPrice)}'),
                       row('Cancellation Fee',
                           '− LKR ${fmt.format(refund.cancellationFee)}'),
-                      const Divider(height: 22, color: BL.hairline),
+                      Divider(height: 22, color: BL.hairline),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.baseline,
                         textBaseline: TextBaseline.alphabetic,
@@ -230,17 +228,17 @@ class _Body extends StatelessWidget {
                                   fontSize: 17, fontWeight: FontWeight.w700)),
                           const Spacer(),
                           Text('LKR ${fmt.format(refund.refundAmount)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w800,
-                                  color: BL.crimson)),
+                                  color: BL.link)),
                         ],
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text('Processing time: 5–7 working days',
+                Text('Processing time: 5–7 working days',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: BL.muted)),
               ],
@@ -254,7 +252,7 @@ class _Body extends StatelessWidget {
                               const CustomerMainScreen(initialIndex: 1)),
                       (r) => false),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: BL.crimson,
+                    foregroundColor: BL.link,
                     side: const BorderSide(color: BL.crimson, width: 2),
                     shape: const StadiumBorder(),
                     textStyle: const TextStyle(

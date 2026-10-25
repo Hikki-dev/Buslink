@@ -115,7 +115,7 @@ class BookingDetailsScreen extends StatelessWidget {
               (emailVal == null || emailVal.isEmpty) ? 'N/A' : emailVal;
 
           return Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: BL.surface,
             body: Column(children: [
               const BlHeader(title: 'Booking Details'),
               Expanded(
@@ -204,10 +204,10 @@ class BookingDetailsScreen extends StatelessWidget {
                                   const Text("Total Amount",
                                       style: TextStyle()),
                                   Text("LKR $price",
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          color: BL.crimson)),
+                                          color: BL.link)),
                                 ],
                               ),
                               const SizedBox(height: 8),
@@ -261,7 +261,7 @@ class BookingDetailsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BL.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: BL.hairline),
       ),
@@ -271,11 +271,11 @@ class BookingDetailsScreen extends StatelessWidget {
           Row(
             children: [
               Text(title.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.1,
-                      color: BL.crimson)),
+                      color: BL.link)),
             ],
           ),
           const SizedBox(height: 16),

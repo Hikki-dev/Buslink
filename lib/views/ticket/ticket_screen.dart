@@ -47,10 +47,10 @@ class _TicketScreenState extends State<TicketScreen> {
 
     if (trip == null || tickets.isEmpty) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: BL.surface,
         appBar: AppBar(
-            backgroundColor: Colors.white,
-            iconTheme: const IconThemeData(color: BL.ink)),
+            backgroundColor: BL.surface,
+            iconTheme: IconThemeData(color: BL.ink)),
         body: const Center(
           child: Padding(
             padding: EdgeInsets.all(24),
@@ -74,7 +74,7 @@ class _TicketScreenState extends State<TicketScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l, style: const TextStyle(fontSize: 16, color: BL.muted)),
+              Text(l, style: TextStyle(fontSize: 16, color: BL.muted)),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(v,
@@ -90,7 +90,7 @@ class _TicketScreenState extends State<TicketScreen> {
     final card = Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(20)),
+          color: BL.surface, borderRadius: BorderRadius.circular(20)),
       child: Column(
         children: [
           SizedBox(
@@ -135,7 +135,7 @@ class _TicketScreenState extends State<TicketScreen> {
                         : 'Your ticket',
                     style: const TextStyle(
                         fontSize: 24, fontWeight: FontWeight.w800)),
-                const Text('Show the code or let the conductor scan the QR',
+                Text('Show the code or let the conductor scan the QR',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: BL.muted)),
                 const SizedBox(height: 10),
@@ -149,6 +149,7 @@ class _TicketScreenState extends State<TicketScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: QrImageView(
+                      backgroundColor: Colors.white,
                       data: ticket.ticketId,
                       version: QrVersions.auto,
                       size: isDesktop ? 180 : 130,
@@ -165,32 +166,31 @@ class _TicketScreenState extends State<TicketScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                      color: const Color(0xFFFDEEEE),
-                      borderRadius: BorderRadius.circular(14)),
+                      color: BL.tint, borderRadius: BorderRadius.circular(14)),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('CODE',
+                      Text('CODE',
                           style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.6,
-                              color: BL.crimsonDark)),
+                              color: BL.deep)),
                       const SizedBox(width: 12),
                       Semantics(
                         label: 'Verified code $code',
                         excludeSemantics: true,
                         child: Text(code,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 30,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 5,
-                                color: BL.crimson)),
+                                color: BL.link)),
                       ),
                     ],
                   ),
                 ),
-                const Divider(height: 28, color: BL.hairline),
+                Divider(height: 28, color: BL.hairline),
                 row('Trip', '${trip.fromCity} to ${trip.toCity}'),
                 if (trip.via.isNotEmpty && trip.via != 'Direct')
                   row('Via', trip.via),

@@ -26,7 +26,7 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
     return Dialog(
       insetPadding: const EdgeInsets.all(20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 440),
         child: SingleChildScrollView(
@@ -61,10 +61,10 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
                   child: Text(
                       '$_rating star${_rating == 1 ? '' : 's'}: ${_words[_rating]}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
-                          color: BL.crimson)),
+                          color: BL.link)),
                 ),
               TextField(
                 controller: _commentController,
@@ -73,15 +73,13 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
                 decoration: InputDecoration(
                   hintText: 'Tell us what you think...',
                   filled: true,
-                  fillColor: const Color(0xFFF5F3F4),
+                  fillColor: BL.fill,
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: BL.hairline, width: 1.5)),
+                      borderSide: BorderSide(color: BL.hairline, width: 1.5)),
                   enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: BL.hairline, width: 1.5)),
+                      borderSide: BorderSide(color: BL.hairline, width: 1.5)),
                 ),
               ),
               InkWell(

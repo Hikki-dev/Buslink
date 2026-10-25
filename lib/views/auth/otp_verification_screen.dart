@@ -105,7 +105,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           const BlHeader(title: 'Verify Phone'),
@@ -123,13 +123,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               fontSize: 28, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 8),
                       Text.rich(TextSpan(
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 18, height: 1.4, color: BL.muted),
                         children: [
                           const TextSpan(text: 'Type the 6 digits we sent to '),
                           TextSpan(
                               text: widget.phoneNumber,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: BL.ink, fontWeight: FontWeight.w700)),
                         ],
                       )),
@@ -151,15 +151,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               decoration: InputDecoration(
                                 counterText: '',
                                 filled: true,
-                                fillColor: const Color(0xFFF5F3F4),
+                                fillColor: BL.fill,
                                 contentPadding: EdgeInsets.zero,
                                 border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
+                                    borderSide: BorderSide(
                                         color: BL.border, width: 1.5)),
                                 enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
+                                    borderSide: BorderSide(
                                         color: BL.border, width: 1.5)),
                                 focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -184,18 +184,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                              color: const Color(0xFFFBE0DC),
+                              color: BL.tint,
                               borderRadius: BorderRadius.circular(12)),
                           child: Row(children: [
-                            const Icon(Icons.error_outline,
-                                color: Color(0xFF7F1D14)),
+                            Icon(Icons.error_outline, color: BL.dangerInk),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(_error!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF7F1D14))),
+                                      color: BL.dangerInk)),
                             ),
                           ]),
                         ),
@@ -207,7 +206,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         onTap: _isLoading ? null : _verifyCode,
                       ),
                       const SizedBox(height: 14),
-                      const Text('Did not get it?',
+                      Text('Did not get it?',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 16, color: BL.muted)),
                       const SizedBox(height: 8),
@@ -218,7 +217,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               ? () => Navigator.pop(context)
                               : null,
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: BL.crimson,
+                            foregroundColor: BL.link,
                             side: BorderSide(
                                 color:
                                     _resendTimer == 0 ? BL.crimson : BL.border,
@@ -235,8 +234,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      const Text(
-                          'Code expired? Tap Resend Code to get a new one.',
+                      Text('Code expired? Tap Resend Code to get a new one.',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 15, color: BL.muted)),
                     ],

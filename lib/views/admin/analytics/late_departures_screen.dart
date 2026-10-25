@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/bl_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
@@ -238,7 +239,7 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
       // 2. Filter Chips
       final filterChips = Container(
           decoration: BoxDecoration(
-            color: Colors.grey.shade100,
+            color: BL.fill,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -288,7 +289,7 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade400),
+              border: Border.all(color: BL.border),
               borderRadius: BorderRadius.circular(12)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -416,9 +417,9 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BL.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8E0E1)),
+        border: Border.all(color: BL.hairline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,10 +448,8 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
               style:
                   const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
           Text(title,
-              style: const TextStyle(
-                  color: Color(0xFF4A5560),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500)),
+              style: TextStyle(
+                  color: BL.muted, fontSize: 16, fontWeight: FontWeight.w500)),
         ],
       ),
     );

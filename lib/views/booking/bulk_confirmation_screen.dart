@@ -87,11 +87,11 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.1,
-                      color: BL.crimson)),
+                      color: BL.link)),
               const SizedBox(height: 8),
               child,
             ],
@@ -100,7 +100,7 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
     Widget row(String l, String v) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 5),
           child: Row(children: [
-            Text(l, style: const TextStyle(fontSize: 17, color: BL.muted)),
+            Text(l, style: TextStyle(fontSize: 17, color: BL.muted)),
             const Spacer(),
             Text(v,
                 style:
@@ -109,7 +109,7 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
         );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           const BlHeader(title: 'Bulk Booking Summary'),
@@ -131,8 +131,7 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
                                   fontSize: 22, fontWeight: FontWeight.w800)),
                           Text(
                               '${widget.trip.operatorName} · Leaves ${DateFormat('hh:mm a').format(widget.trip.departureTime)}',
-                              style: const TextStyle(
-                                  fontSize: 16, color: BL.muted)),
+                              style: TextStyle(fontSize: 16, color: BL.muted)),
                         ],
                       ),
                     ),
@@ -154,8 +153,8 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
                                   '+ ${dates.length - shown.length} more days',
-                                  style: const TextStyle(
-                                      fontSize: 17, color: BL.muted)),
+                                  style:
+                                      TextStyle(fontSize: 17, color: BL.muted)),
                             ),
                         ],
                       ),
@@ -169,7 +168,7 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
                               'LKR ${fmt.format(widget.trip.price)}'),
                           row('Passengers', '${tripCtrl.bulkPassengers}'),
                           row('Total days', '${dates.length}'),
-                          const Divider(height: 22, color: BL.hairline),
+                          Divider(height: 22, color: BL.hairline),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
@@ -180,10 +179,10 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
                                       fontWeight: FontWeight.w700)),
                               const Spacer(),
                               Text('LKR ${fmt.format(total)}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.w800,
-                                      color: BL.crimson)),
+                                      color: BL.link)),
                             ],
                           ),
                         ],
@@ -197,7 +196,7 @@ class _BulkConfirmationScreenState extends State<BulkConfirmationScreen> {
           Container(
             padding: EdgeInsets.fromLTRB(
                 16, 12, 16, 12 + MediaQuery.paddingOf(context).bottom),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: BL.hairline))),
             child: Center(
               child: ConstrainedBox(

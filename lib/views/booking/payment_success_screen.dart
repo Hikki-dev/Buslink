@@ -373,7 +373,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   }
 
   Widget _stateScaffold(Widget card) => Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: BL.surface,
         body: SafeArea(
           child: Center(
             child: Padding(
@@ -415,11 +415,12 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: BL.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: BL.hairline),
           ),
           child: QrImageView(
+              backgroundColor: Colors.white,
               data: t.shortId ?? t.ticketId,
               version: QrVersions.auto,
               size: size),
@@ -430,13 +431,12 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       Container(
         padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: line && !last
-            ? const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFF3EDEE))))
+            ? BoxDecoration(border: Border(bottom: BorderSide(color: BL.fill)))
             : null,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l, style: const TextStyle(fontSize: 17, color: BL.muted)),
+            Text(l, style: TextStyle(fontSize: 17, color: BL.muted)),
             const SizedBox(width: 16),
             Expanded(
               child: Text(v,
@@ -458,7 +458,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(20)),
+          color: BL.surface, borderRadius: BorderRadius.circular(20)),
       child: Column(
         children: [
           SizedBox(
@@ -500,45 +500,44 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                 const Text('Booking Confirmed',
                     style:
                         TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-                const Text('Show the code or let the conductor scan the QR',
+                Text('Show the code or let the conductor scan the QR',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: BL.muted)),
                 const SizedBox(height: 10),
                 _qr(t, 112),
                 const SizedBox(height: 4),
                 Text('E-TICKET · ${t.shortId ?? firstChars(t.ticketId, 8)}',
-                    style: const TextStyle(fontSize: 14, color: BL.muted)),
+                    style: TextStyle(fontSize: 14, color: BL.muted)),
                 const SizedBox(height: 10),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                      color: const Color(0xFFFDEEEE),
-                      borderRadius: BorderRadius.circular(14)),
+                      color: BL.tint, borderRadius: BorderRadius.circular(14)),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('CODE',
+                      Text('CODE',
                           style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.6,
-                              color: BL.crimsonDark)),
+                              color: BL.deep)),
                       const SizedBox(width: 12),
                       Semantics(
                         label: 'Verified code ${t.shortId ?? ''}',
                         excludeSemantics: true,
                         child: Text(t.shortId ?? '----',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 30,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 5,
-                                color: BL.crimson)),
+                                color: BL.link)),
                       ),
                     ],
                   ),
                 ),
-                const Divider(height: 28, color: BL.hairline),
+                Divider(height: 28, color: BL.hairline),
                 if (bus.isNotEmpty) _row('Bus number', bus),
                 if (platformOf(t.tripData).isNotEmpty)
                   _row('Platform', platformOf(t.tripData)),
@@ -593,7 +592,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(28)),
+          color: BL.surface, borderRadius: BorderRadius.circular(28)),
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -608,7 +607,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                     Container(
                       width: 60,
                       height: 60,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                           color: BL.success, shape: BoxShape.circle),
                       child: const Icon(Icons.check,
                           color: Colors.white, size: 34),
@@ -618,8 +617,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                         style: TextStyle(
                             fontSize: 34, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 4),
-                    const Text(
-                        'Payment Confirmed! Your ticket is saved in My Trips.',
+                    Text('Payment Confirmed! Your ticket is saved in My Trips.',
                         style: TextStyle(fontSize: 18, color: BL.muted)),
                     const SizedBox(height: 18),
                     _row('Trip', '${_from(t)} to ${_to(t)}', line: true),
@@ -647,21 +645,21 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
             Expanded(
               flex: 5,
               child: Container(
-                color: const Color(0xFFFDEEEE),
+                color: BL.tint,
                 padding: const EdgeInsets.all(36),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('E-TICKET',
+                    Text('E-TICKET',
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.1,
-                            color: BL.crimsonDark)),
+                            color: BL.deep)),
                     const SizedBox(height: 12),
                     _qr(t, 200),
                     const SizedBox(height: 12),
-                    const Text('Show the code or let the conductor scan the QR',
+                    Text('Show the code or let the conductor scan the QR',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 16, color: BL.muted)),
                     const SizedBox(height: 8),
@@ -669,11 +667,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                       label: 'Verified code ${t.shortId ?? ''}',
                       excludeSemantics: true,
                       child: Text(t.shortId ?? '----',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 44,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 9,
-                              color: BL.crimson)),
+                              color: BL.link)),
                     ),
                   ],
                 ),
