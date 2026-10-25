@@ -1,5 +1,6 @@
 // For rootBundle
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -110,25 +111,35 @@ class NotificationService {
   // The prompt is requested from more than one screen; ask once per run.
   static bool _asked = false;
 
+  @visibleForTesting
+  static void forgetAskedThisRun() => _asked = false;
+  static const _answerKey = 'notification_prompt_answer';
+  static const _laterKey = 'notification_prompt_later_at';
+  static const _snooze = Duration(days: 7);
+
+  /// True when this device already answered, so the friendly prompt must not
+  /// come back: "Allow" is final, "Later" waits a week.
+  static Future<bool> _alreadyAnswered() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getString(_answerKey) == 'allowed') return true;
+    final later = prefs.getInt(_laterKey);
+    return later != null &&
+        DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(later)) <
+            _snooze;
+  }
+
   /// UX-Friendly Permission Request
   static Future<void> requestPermissionWithDialog(BuildContext context) async {
     if (const bool.fromEnvironment('IS_TESTING') || _asked) return;
     _asked = true;
+    if (await _alreadyAnswered()) return;
     NotificationSettings settings =
         await _firebaseMessaging.getNotificationSettings();
 
-    // Android 13+ Local Notification Permission
-    // We do NOT request it here immediately. We wait for user to click "Allow".
-
+    // The system permission is requested only after the user taps "Allow".
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
-      if (kDebugMode) {
-        print('User already granted permission (Loop Prevention)');
-      }
       return;
-    } else if (settings.authorizationStatus == AuthorizationStatus.denied) {
-      // If denied, maybe show rationale? But for now, respect decision or show custom dialog if we really want to push.
-      // User complained "asking them 2wice".
     }
 
     if (context.mounted) {
@@ -159,12 +170,19 @@ class NotificationService {
           actions: [
             TextButton(
               key: const Key('permission_later_btn'),
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setInt(
+                    _laterKey, DateTime.now().millisecondsSinceEpoch);
+              },
               child: const Text("Later"),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(ctx);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString(_answerKey, 'allowed');
                 _triggerSystemRequest();
               },
               child: const Text("Allow Notifications"),
