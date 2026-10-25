@@ -343,14 +343,23 @@ class TripController extends ChangeNotifier {
     await _firestoreService.updateTripDetails(tripId, data);
   }
 
-  // Ticket Verification
-  Future<Ticket?> verifyTicket(String ticketId) async {
+  // Ticket Verification. [code] is the ticket's id (what the QR holds) or the
+  // 4 character code printed on the passenger's ticket.
+  Future<Ticket?> verifyTicket(String code) async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection('tickets')
-          .doc(ticketId)
-          .get();
-      if (!snap.exists) return null;
+      final tickets = FirebaseFirestore.instance.collection('tickets');
+      var snap = await tickets.doc(code).get();
+      if (!snap.exists) {
+        final byCode = await tickets
+            .where('shortId', isEqualTo: code.trim().toUpperCase())
+            .get();
+        // The same 4 characters can exist on an old ticket: take the live one.
+        final live =
+            byCode.docs.where((d) => d.data()['status'] != 'cancelled');
+        if (live.isEmpty) return null;
+        snap = live.firstWhere((d) => d.data()['status'] == 'confirmed',
+            orElse: () => live.first);
+      }
 
       final data = snap.data()!;
       if (data['status'] == 'cancelled') return null;

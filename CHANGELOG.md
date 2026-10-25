@@ -4,6 +4,9 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 ## 25 October 2026
 
+* **Seats and the phone's bottom tabs work with screen readers.** Both hid their own tap from the accessibility tree, so a screen reader or switch device could not choose a seat or change tab. They now expose the tap (two new tests).
+* **Conductor can verify the 4 character code.** Passengers are shown a 4 character code (and the confirmation screen's QR can hold it), but the conductor lookup only searched by the long ticket id, so a typed code said "Ticket not found". It now tries the id first, then the code (ignoring cancelled tickets). The verified-ticket box also read old field names and showed N/A for origin and destination; it now shows the real cities.
+
 * **Text weights now work.** The fonts were variable files that start at weight 100, so every bold and medium style drew as thin text. Outfit, Montserrat and Cormorant are now static files with real weights (300 to 800), so headings are bold and body text is regular, as in the mockups. `Inter-Variable.ttf` was not a font at all (a saved web page from a failed download), so Inter is gone and those styles use Outfit.
 
 * **"Stay Updated" prompt** is remembered on the device. After **Allow** it never comes back; after **Later** it waits a week. Before, it came back on every start.

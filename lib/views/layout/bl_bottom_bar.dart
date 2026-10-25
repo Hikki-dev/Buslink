@@ -58,6 +58,7 @@ class _Item extends StatelessWidget {
       button: true,
       selected: selected,
       label: item.label,
+      onTap: onTap,
       excludeSemantics: true,
       child: InkWell(
         key: item.key,
