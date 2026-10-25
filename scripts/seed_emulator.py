@@ -106,6 +106,13 @@ put('tickets', 'tk3', {'ticketId': 'tk3', 'tripId': 't4', 'userId': uids['custom
                        'totalAmount': 1200.0, 'status': 'cancelled', 'shortId': 'Z3R5',
                        'tripData': trip_data(d3)})
 
+# a ticket that is waiting for payment (the page Stripe sends people back to confirms it)
+d4 = now + dt.timedelta(days=3)
+put('tickets', 'tpend', {'ticketId': 'tpend', 'tripId': 't3', 'userId': uids['customer'], 'seatNumbers': [14, 15],
+                         'userName': 'Customer Test', 'passengerPhone': '0771234567',
+                         'passengerEmail': 'customer@test.local', 'bookingTime': now, 'totalAmount': 2400.0,
+                         'status': 'pending', 'shortId': 'H5N8', 'tripData': trip_data(d4)})
+
 put('refunds', 'rf1', {'bookingId': 'tk3', 'ticketId': 'tk3', 'tripId': 't4', 'paymentId': 'pay_test',
                        'paymentIntentId': 'pi_test', 'userId': uids['customer'],
                        'passengerName': 'Customer Test', 'passengerPhone': '0771234567',

@@ -4,6 +4,9 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 ## 25 October 2026
 
+* **Bulk booking summary** showed "Passengers 40" (a fixed default bus size) instead of how many people you chose. It now shows your number.
+* The last pictures were added to the README, [Every screen](docs/Every%20screen.md) and the guides: choosing several days, the bulk summary, a booking's details and Booking Confirmed. Only the screen that asks for the text-message sign-in code is still missing, because it needs a real message.
+
 * **The docs show every screen, sharply.** The README is now one long, scrollable walk through 26 steps, each with a computer picture and phone pictures, in three parts: the passenger, the conductor and the admin. The pictures are the real app taken from a running web build at twice the usual sharpness (3200 by 2000 pixels on a computer, 1170 by 2532 on a phone), and the small pieces such as the seat map and the conductor's answers are drawn by the real widgets at three times the sharpness with the app's own fonts. New pages: [Every screen](docs/Every%20screen.md) (each design board next to its finished screen) and [Try it on your computer](docs/Try%20it%20on%20your%20computer.md) (the whole app against a pretend Firebase, with a passenger, a conductor, an admin and a newcomer to sign in as). The tool that takes the pictures is in `tool/live-shots`.
 * **Admin refund details** show the reason in words ("Change of plans") instead of the stored name.
 * **Wording:** the ticket code is called "code", not "4-digit code", because it mixes letters and digits (like K7M2).

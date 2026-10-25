@@ -100,7 +100,9 @@ Prices are in Sri Lankan rupees (LKR). The app asks for at least LKR 150, and St
 <a href="images/passenger-8-ticket-phone.png"><img src="images/passenger-8-ticket-phone.png" alt="The ticket on a phone" width="31%"></a>
 </p>
 
-After paying you see "Payment Confirmed" and your ticket:
+<p align="center"><a href="images/passenger-8-confirmed.png"><img src="images/passenger-8-confirmed.png" alt="Booking Confirmed, straight after paying" width="100%"></a></p>
+
+After paying you see "Booking Confirmed" and your ticket:
 
 * a **QR code** the conductor scans, and
 * a **4-character code** to say out loud or type, if scanning does not work.
@@ -182,5 +184,13 @@ An approved refund is sent back to your card through Stripe. If it fails, the sc
 * **Support** has answers to common questions and emergency hotlines: Police 119, Suwa Seriya ambulance 1990, Fire and Rescue 110 and the NTC hotline 1955.
 
 ## Book several dates at once
+
+<p align="center"><a href="images/bulk-2-dates.jpg"><img src="images/bulk-2-dates.jpg" alt="Choosing several days on a calendar" width="100%"></a></p>
+
+<p align="center">
+<a href="images/bulk-2-dates-phone.png"><img src="images/bulk-2-dates-phone.png" alt="The calendar on a phone" width="31%"></a>
+<a href="images/bulk-3-passengers-phone.png"><img src="images/bulk-3-passengers-phone.png" alt="How many people travel each day" width="31%"></a>
+<a href="images/bulk-4-summary-phone.png"><img src="images/bulk-4-summary-phone.png" alt="The bulk booking summary" width="31%"></a>
+</p>
 
 For a regular journey, use bulk booking on the home screen: pick the dates on a calendar and the number of seats, check the summary, and pay once. Each date gets its own ticket.

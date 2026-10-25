@@ -38,7 +38,7 @@ In another window:
 python3 scripts/seed_emulator.py
 ```
 
-It empties the pretend database first, so you can run it again whenever you want to start fresh. It adds the people below, a Colombo to Kandy route, a daily bus with platform 4, five trips, and some tickets, refunds, feedback, notifications and favourite routes, so that every screen has something to show.
+It empties the pretend database first, so you can run it again whenever you want to start fresh. It adds the people below, a Colombo to Kandy route, a daily bus with platform 4, five trips, and some tickets (including one still waiting for payment), refunds, feedback, notifications and favourite routes, so that every screen has something to show.
 
 ## Run the app
 

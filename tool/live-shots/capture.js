@@ -128,8 +128,27 @@ scenes.bulk = async b => {
   const p = await L.open(b, ...dims);
   await L.login(p, 'customer');
   await L.tap(p, 'Favorites'); await L.tap(p, 'BOOK AGAIN'); await L.sleep(1500);
-  await L.tap(p, 'Bulk booking'); await L.sleep(800);
-  await L.tap(p, 'Search Buses'); await L.sleep(3000); await snap(p, 'bulk-dates');
+  await L.tap(p, 'Bulk booking'); await L.sleep(800); await snap(p, 'bulk-search');
+  await L.tap(p, 'days chosen'); await L.sleep(1500);
+  for (const d of ['25, Sunday', '27, Tuesday', '28, Wednesday', '29, Thursday']) await L.tap(p, d);
+  await snap(p, 'bulk-dates'); await L.tap(p, 'OK'); await L.sleep(1200); await snap(p, 'bulk-chosen');
+  await L.tap(p, 'Search Buses'); await L.sleep(3000); await snap(p, 'bulk-results');
+  await L.tap(p, 'Book Now'); await L.sleep(2500); await snap(p, 'bulk-passengers');
+  await L.tap(p, 'One more passenger'); await L.sleep(800); await snap(p, 'bulk-passengers-2');
+  await L.tap(p, 'Proceed to Payment'); await L.sleep(3500); await snap(p, 'bulk-payment');
+};
+scenes.adminPhoneMore = async b => {
+  const p = await L.open(b, ...dims);
+  await L.login(p, 'admin');
+  await L.tap(p, 'Bookings'); await L.sleep(3000);
+  await L.tap(p, 'Colombo').catch(() => {}); await L.sleep(2500); await snap(p, 'admin-booking-details');
+};
+scenes.confirmed = async b => {
+  const p = await L.open(b, ...dims);
+  await L.login(p, 'customer');
+  await L.gotoRoute(p, '/payment_success?booking_id=tpend&payment_intent=pi_test'); await L.sleep(3000);
+  if (mode === 'phone') await p.setViewport({ width: 390, height: 1050, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  await snap(p, 'confirmed');
 };
 scenes.adminMore = async b => {
   const p = await L.open(b, ...dims);
@@ -140,6 +159,8 @@ scenes.adminMore = async b => {
   await L.tap(p, 'Go back').catch(() => {}); await L.sleep(1500);
   await L.tap(p, 'Bookings'); await L.sleep(3000);
   await snap(p, 'admin-bookings-list');
+  await L.tap(p, 'Colombo').catch(() => {}); await L.sleep(2500); await snap(p, 'admin-booking-details');
+  await L.tap(p, 'Go back').catch(() => {}); await L.sleep(1500);
   await L.tap(p, 'Analytics'); await L.sleep(3000);
   await L.tap(p, 'Late Departures'); await L.sleep(3000); await snap(p, 'admin-late');
 };

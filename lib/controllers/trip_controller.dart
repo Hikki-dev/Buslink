@@ -705,7 +705,6 @@ class TripController extends ChangeNotifier {
 
   User? get _currentUser => _auth.currentUser;
 
-  int get seatsPerTrip => 40; // Default capacity
 
   void setDepartureDate(DateTime date) {
     tripDate = date;
