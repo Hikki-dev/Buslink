@@ -2,6 +2,10 @@
 
 What changed in each step, newest first. Each heading names the pull request it came from. The redesign was built as pull requests on top of each other (#2 to #7) and merged in that order on 22 October 2026.
 
+## 25 October 2026
+
+* **"Stay Updated" prompt** is remembered on the device. After **Allow** it never comes back; after **Later** it waits a week. Before, it came back on every start.
+
 ## 24 October 2026 (checked while signed in)
 
 The app was run against the local Firebase emulators (`scripts/seed_emulator.py` makes test accounts and a little data; build with `--dart-define=USE_EMULATOR=true`) and clicked through as a customer and as an admin. It found three things the tests could not:
