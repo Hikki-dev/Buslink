@@ -12,7 +12,8 @@ import '../../utils/bl_colors.dart';
 import '../../utils/platform_text.dart';
 import '../home/home_sections.dart' show cityPhoto;
 import '../ticket/ticket_screen.dart';
-import '../tracking/track_bus_screen.dart';
+import '../tracking/track_bus_screen.dart' deferred as tracking;
+import '../../app/deferred_screen.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
 import '../analytics/travel_stats_screen.dart';
@@ -844,10 +845,9 @@ class _TicketActions extends StatelessWidget {
                 child: SizedBox(
                   height: 52,
                   child: OutlinedButton(
-                    onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => TrackBusScreen(trip: trip()))),
+                    onPressed: () => pushDeferred(context,
+                        load: tracking.loadLibrary,
+                        build: () => tracking.TrackBusScreen(trip: trip())),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: BL.crimson,
                       side: const BorderSide(color: BL.crimson, width: 2),

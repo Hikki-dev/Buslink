@@ -33,11 +33,10 @@
       does not, the hints waste a little bandwidth and nothing else.
     -->
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://js.stripe.com" />
     <link rel="modulepreload" crossorigin href="https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js" />
     <link rel="modulepreload" crossorigin href="https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js" />
     <link rel="modulepreload" crossorigin href="https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js" />
-    <link rel="preload" as="font" type="font/ttf" crossorigin href="assets/assets/fonts/Outfit-Variable.ttf" />
+    <link rel="preload" as="font" type="font/ttf" crossorigin href="assets/assets/fonts/Outfit/Outfit-ExtraBold.ttf" />
 
     <style>
       /* The splash: drawn by the browser from the first paint, designed in
@@ -45,8 +44,8 @@
          the app always opens in light mode (see ThemeController). */
       @font-face {
         font-family: "BusLinkWord";
-        src: url("assets/assets/fonts/Outfit-Variable.ttf") format("truetype");
-        font-weight: 100 900;
+        src: url("assets/assets/fonts/Outfit/Outfit-ExtraBold.ttf") format("truetype");
+        font-weight: 800;
         font-display: swap;
       }
       html, body { margin: 0; height: 100%; background: #ffffff; }
@@ -197,8 +196,6 @@
       })();
     </script>
 
-    <!-- Stripe is only needed at checkout, so it must not hold up the app: defer. -->
-    <script src="https://js.stripe.com/v3/" defer></script>
     <script src="flutter_bootstrap.js" async onerror="document.getElementById('splash').setAttribute('data-state','failed')"></script>
   </body>
 </html>

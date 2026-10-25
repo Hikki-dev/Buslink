@@ -9,7 +9,8 @@ import '../providers/language_provider.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../utils/app_theme.dart';
-import '../views/admin/admin_dashboard.dart';
+import '../views/admin/admin_dashboard.dart' deferred as admin;
+import 'deferred_screen.dart';
 import '../views/auth/login_screen.dart';
 import '../views/booking/payment_success_screen.dart';
 import 'auth_gate.dart';
@@ -62,7 +63,10 @@ class BusLinkApp extends StatelessWidget {
             routes: {
               '/': (context) => const AuthWrapper(),
               '/login': (context) => const LoginScreen(),
-              '/admin-dashboard': (context) => const AdminDashboard(),
+              '/admin-dashboard': (context) => DeferredScreen(
+                  load: admin.loadLibrary,
+                  build: () => admin.AdminDashboard(),
+                  label: 'Opening the admin screens'),
             },
             onGenerateRoute: (settings) {
               if (settings.name?.startsWith('/payment_success') ?? false) {

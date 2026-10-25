@@ -36,16 +36,11 @@ dependencies:
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
   firebase_messaging: ^16.1.0
-  google_fonts: ^6.1.0
   shared_preferences: ^2.5.4
-  cached_network_image: ^3.4.1
   mobile_scanner: ^7.1.4
   web: ^1.1.1
   googleapis_auth: ^1.4.1 # For FCM V1 Access Token Generation
-  cloud_functions: ^6.0.5
   geolocator: ^14.0.2
-  get: ^4.6.6
-  google_maps_flutter: ^2.5.0
   flutter_local_notifications: ^19.5.0
   timezone: ^0.10.1
   rxdart: ^0.28.0
@@ -72,8 +67,10 @@ flutter:
     - .env
 
   fonts:
-    # Static weights. The old variable files started at weight 100, so every
-    # bold or medium style drew as thin text.
+    # Static weights, with only the letters the app prints (tool/make_fonts.py).
+    # The old variable files started at weight 100, so every bold or medium
+    # style drew as thin text, and the full files cost over a megabyte before
+    # the first screen could draw.
     - family: Outfit
       fonts:
         - asset: assets/fonts/Outfit/Outfit-Light.ttf
@@ -93,8 +90,4 @@ flutter:
         - asset: assets/fonts/Montserrat/Montserrat-Regular.ttf
           weight: 400
         - asset: assets/fonts/Montserrat/Montserrat-Bold.ttf
-          weight: 700
-    - family: Cormorant
-      fonts:
-        - asset: assets/fonts/Cormorant/Cormorant-Bold.ttf
           weight: 700

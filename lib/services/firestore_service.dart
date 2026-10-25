@@ -269,6 +269,38 @@ class FirestoreService {
     return snapshot.docs.map((doc) => Trip.fromFirestore(doc)).toList();
   }
 
+  /// The days in the next [days] days that have buses from [origin] to
+  /// [destination], with how many. Used to say "try Tuesday instead" when a
+  /// search finds nothing. Same query shape (and index) as [searchTrips].
+  Future<Map<DateTime, int>> upcomingDaysForRoute(
+    String origin,
+    String destination, {
+    int days = 14,
+  }) async {
+    String tidy(String v) =>
+        v.isEmpty ? v : v[0].toUpperCase() + v.substring(1).toLowerCase();
+    final now = DateTime.now();
+    final snapshot = await _db
+        .collection(tripCollection)
+        .where('originCity', isEqualTo: tidy(origin))
+        .where('destinationCity', isEqualTo: tidy(destination))
+        .where('departureDateTime', isGreaterThanOrEqualTo: now)
+        .where('departureDateTime',
+            isLessThanOrEqualTo: now.add(Duration(days: days)))
+        .limit(200)
+        .get();
+    final counts = <DateTime, int>{};
+    for (final doc in snapshot.docs) {
+      final t = Trip.fromFirestore(doc);
+      if (t.status.toLowerCase() == 'cancelled') continue;
+      final day = DateTime(t.departureDateTime.year, t.departureDateTime.month,
+          t.departureDateTime.day);
+      counts[day] = (counts[day] ?? 0) + 1;
+    }
+    return Map.fromEntries(
+        counts.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
+  }
+
   // Legacy getTripsByDate adjusted
   Future<List<Trip>> getTripsByDate(DateTime start, DateTime end) async {
     final snapshot = await _db

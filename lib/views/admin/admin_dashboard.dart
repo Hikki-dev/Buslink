@@ -3,7 +3,6 @@ import 'widgets/admin_trips_table.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../controllers/trip_controller.dart';
 import '../../models/trip_model.dart';
 import '../../models/trip_view_model.dart'; // EnrichedTrip
@@ -142,7 +141,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                         children: [
                                           Flexible(
                                             child: Text('Trip Management',
-                                                style: GoogleFonts.outfit(
+                                                style: TextStyle(
+                                                    fontFamily: 'Outfit',
                                                     fontSize: 34,
                                                     height: 1.1,
                                                     fontWeight: FontWeight.w800,
@@ -460,7 +460,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(AppLocalizations.of(context)!.findTrips,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey,

@@ -10,9 +10,10 @@ import '../services/firestore_service.dart';
 import '../services/notification_service.dart';
 import '../services/trip_reminder_service.dart';
 import '../utils/app_theme.dart';
-import '../views/admin/admin_dashboard.dart';
+import '../views/admin/admin_dashboard.dart' deferred as admin;
 import '../views/auth/login_screen.dart';
-import '../views/conductor/conductor_dashboard.dart';
+import '../views/conductor/conductor_dashboard.dart' deferred as conductor;
+import 'deferred_screen.dart';
 import '../views/customer_main_screen.dart';
 import '../views/splash/splash_screen.dart';
 import 'background_services.dart';
@@ -125,9 +126,15 @@ class _RoleDispatcherState extends State<RoleDispatcher> {
   static Widget _homeFor(String role) {
     switch (role) {
       case 'admin':
-        return const AdminDashboard();
+        return DeferredScreen(
+            load: admin.loadLibrary,
+            build: () => admin.AdminDashboard(),
+            label: 'Opening the admin screens');
       case 'conductor':
-        return const ConductorDashboard();
+        return DeferredScreen(
+            load: conductor.loadLibrary,
+            build: () => conductor.ConductorDashboard(),
+            label: 'Opening the conductor screens');
       default:
         return const CustomerMainScreen();
     }

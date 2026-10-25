@@ -22,7 +22,8 @@ import '../widgets/language_selector.dart';
 import '../layout/desktop_navbar.dart';
 import '../layout/app_footer.dart';
 import '../layout/notifications_screen.dart';
-import '../tracking/track_bus_screen.dart'; // Added
+import '../tracking/track_bus_screen.dart' deferred as tracking;
+import '../../app/deferred_screen.dart';
 import 'widgets/news_carousel.dart';
 import 'home_hero.dart';
 import 'home_sections.dart';
@@ -101,6 +102,39 @@ class _HomeScreenState extends State<HomeScreen> {
     // }
 
     final tripController = Provider.of<TripController>(context, listen: false);
+
+    // Check the two cities before searching, so a typo says so straight away
+    // instead of opening a page with no buses and no reason. "colombo" becomes
+    // "Colombo", the way the trips are stored.
+    final cities = tripController.availableCities;
+    if (cities.isNotEmpty) {
+      String? known(String typed) {
+        for (final c in cities) {
+          if (c.toLowerCase() == typed.trim().toLowerCase()) return c;
+        }
+        return null;
+      }
+
+      final from = known(_originController.text);
+      final to = known(_destinationController.text);
+      if (from == null || to == null) {
+        final bad =
+            from == null ? _originController.text : _destinationController.text;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            duration: const Duration(seconds: 6),
+            content: Text(
+                'We do not run buses to or from "${bad.trim()}" yet. Cities with buses: ${cities.join(', ')}.')));
+        return;
+      }
+      if (from == to) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Leaving from and going to are the same place.')));
+        return;
+      }
+      _originController.text = from;
+      _destinationController.text = to;
+    }
+
     tripController.setFromCity(_originController.text);
     tripController.setToCity(_destinationController.text);
     tripController.setDate(_selectedDate);
@@ -629,12 +663,11 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
                     onTap: () {
                       // final ticket = widget.tickets
                       //    .firstWhere((t) => t.tripId == liveTrip!.id);
-                      Navigator.push(
+                      pushDeferred(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => TrackBusScreen(
-                            trip: liveTrip!.trip, // Use inner trip object
-                          ),
+                        load: tracking.loadLibrary,
+                        build: () => tracking.TrackBusScreen(
+                          trip: liveTrip!.trip, // Use inner trip object
                         ),
                       );
                     },

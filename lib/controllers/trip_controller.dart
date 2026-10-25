@@ -51,6 +51,18 @@ class TripController extends ChangeNotifier {
   // --- TRIP SEARCH & ENRICHMENT ---
 
   /// Searches trips and enriches them with Schedule data.
+  /// Days with buses on the searched route soon (see FirestoreService).
+  Future<Map<DateTime, int>> upcomingDaysForRoute() =>
+      (fromCity == null || toCity == null)
+          ? Future.value(const {})
+          : _firestoreService.upcomingDaysForRoute(fromCity!, toCity!);
+
+  /// Searches the same route again on another day.
+  Future<void> searchAgainOn(DateTime date) {
+    setDate(date);
+    return searchTrips(fromCity ?? '', toCity ?? '', date);
+  }
+
   Future<void> searchTrips(String from, String to, DateTime date) async {
     try {
       isLoading = true;

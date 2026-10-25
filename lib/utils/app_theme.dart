@@ -20,6 +20,19 @@ class ThemeController extends ChangeNotifier {
   }
 }
 
+/// One page transition for every kind of device. Without this, a Mac gets the
+/// phone-style sideways slide, which looks odd on a wide window.
+const _pageTransitions = PageTransitionsTheme(
+  builders: {
+    TargetPlatform.android: ZoomPageTransitionsBuilder(),
+    TargetPlatform.fuchsia: ZoomPageTransitionsBuilder(),
+    TargetPlatform.linux: ZoomPageTransitionsBuilder(),
+    TargetPlatform.macOS: ZoomPageTransitionsBuilder(),
+    TargetPlatform.windows: ZoomPageTransitionsBuilder(),
+    TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+  },
+);
+
 class AppTheme {
   // Brand Colors - Crimson Red Theme
   static const Color primaryColor = Color(0xFFBA181B);
@@ -62,7 +75,7 @@ class AppTheme {
     ),
     textTheme: const TextTheme(
       headlineLarge: TextStyle(
-        fontFamily: 'Cormorant',
+        fontFamily: 'Outfit',
         fontSize: 56, // Larger
         fontWeight: FontWeight.w900, // Black
         color: Colors.black,
@@ -164,12 +177,7 @@ class AppTheme {
       color: Colors.white,
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
     ),
-    pageTransitionsTheme: const PageTransitionsTheme(
-      builders: {
-        TargetPlatform.android: ZoomPageTransitionsBuilder(),
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-      },
-    ),
+    pageTransitionsTheme: _pageTransitions,
   );
 
   static final ThemeData darkTheme = ThemeData(
@@ -209,7 +217,7 @@ class AppTheme {
     ),
     textTheme: const TextTheme(
       headlineLarge: TextStyle(
-        fontFamily: 'Cormorant',
+        fontFamily: 'Outfit',
         fontSize: 56,
         fontWeight: FontWeight.w900,
         color: Colors.white,
@@ -294,11 +302,6 @@ class AppTheme {
           color: Colors.white,
           fontWeight: FontWeight.w800),
     ),
-    pageTransitionsTheme: const PageTransitionsTheme(
-      builders: {
-        TargetPlatform.android: ZoomPageTransitionsBuilder(),
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-      },
-    ),
+    pageTransitionsTheme: _pageTransitions,
   );
 }

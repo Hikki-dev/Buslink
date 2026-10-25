@@ -7,6 +7,7 @@ import '../../models/trip_model.dart';
 import '../../models/trip_view_model.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/bl_colors.dart';
+import '../widgets/motion.dart';
 import '../booking/bulk_confirmation_screen.dart';
 import '../booking/bulk_quantity_dialog.dart';
 import '../booking/seat_selection_screen.dart';
@@ -303,41 +304,42 @@ class _BusListScreenState extends State<BusListScreen> {
   List<Widget> _cards(TripController c, List<EnrichedTrip> trips) {
     if (c.isLoading) {
       return const [
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 48),
-          child: Center(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              CircularProgressIndicator(color: BL.crimson),
-              SizedBox(height: 16),
-              Text('Looking for buses...',
-                  style: TextStyle(fontSize: 18, color: BL.muted)),
-            ]),
-          ),
-        )
+        BusCardSkeleton(),
+        SizedBox(height: 16),
+        BusCardSkeleton(),
+        SizedBox(height: 16),
+        BusCardSkeleton(),
       ];
     }
     if (trips.isEmpty) {
-      return const [
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 48),
-          child: Column(children: [
-            Icon(Icons.directions_bus_outlined, size: 64, color: BL.border),
-            SizedBox(height: 12),
-            Text('No buses match',
-                style: TextStyle(
-                    fontSize: 22, fontWeight: FontWeight.w700, color: BL.ink)),
-            SizedBox(height: 6),
-            Text(
-                'Try another day, or loosen the choices under "Narrow it down".',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 17, color: BL.muted)),
-          ]),
-        )
+      final hidden = c.searchResults.length;
+      return [
+        _NoBuses(
+          // A new search starts a new look-up.
+          key: ValueKey('${c.fromCity}|${c.toCity}|${c.travelDate}'),
+          controller: c,
+          hiddenByFilters: hidden,
+          onShowAll: () => setState(() {
+            _times
+              ..clear()
+              ..addAll({'morning', 'afternoon', 'evening'});
+            _types.clear();
+            _hideFull = false;
+          }),
+        ),
       ];
     }
     return [
-      for (final t in trips) ...[
-        BusTicketCard(trip: t),
+      for (var i = 0; i < trips.length; i++) ...[
+        // Each card arrives a moment after the one above it, and gets its own
+        // layer so a live seat count changing does not redraw the others.
+        RepaintBoundary(
+          child: FadeInUp(
+            key: ValueKey(trips[i].trip.id),
+            delay: Duration(milliseconds: 50 * (i < 8 ? i : 8)),
+            child: BusTicketCard(trip: trips[i]),
+          ),
+        ),
         const SizedBox(height: 16),
       ]
     ];
@@ -781,5 +783,140 @@ class _BusTicketCardState extends State<BusTicketCard> {
       Navigator.push(context,
           MaterialPageRoute(builder: (_) => SeatSelectionScreen(trip: trip)));
     }
+  }
+}
+
+/// Says why a search found nothing, and what to do next.
+class _NoBuses extends StatefulWidget {
+  final TripController controller;
+  final int hiddenByFilters;
+  final VoidCallback onShowAll;
+  const _NoBuses(
+      {super.key,
+      required this.controller,
+      required this.hiddenByFilters,
+      required this.onShowAll});
+
+  @override
+  State<_NoBuses> createState() => _NoBusesState();
+}
+
+class _NoBusesState extends State<_NoBuses> {
+  late final Future<Map<DateTime, int>> _days = widget.hiddenByFilters > 0
+      ? Future.value(const {})
+      : widget.controller.upcomingDaysForRoute();
+
+  bool _knownCity(String? name) {
+    final cities = widget.controller.availableCities;
+    if (cities.isEmpty || name == null) return true; // cannot tell: assume yes
+    return cities.any((c) => c.toLowerCase() == name.trim().toLowerCase());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.controller;
+    final from = c.fromCity ?? '', to = c.toCity ?? '';
+    final date = c.travelDate;
+    final today = DateTime.now();
+    final isToday = date != null &&
+        date.year == today.year &&
+        date.month == today.month &&
+        date.day == today.day;
+    final cities = c.availableCities;
+
+    final String title;
+    final String reason;
+    if (widget.hiddenByFilters > 0) {
+      title = widget.hiddenByFilters == 1
+          ? 'Your choices hide 1 bus'
+          : 'Your choices hide ${widget.hiddenByFilters} buses';
+      reason =
+          'There are buses on this day, but not at the times or types you picked.';
+    } else if (!_knownCity(from) || !_knownCity(to)) {
+      final unknown = !_knownCity(from) ? from : to;
+      title = 'We do not run buses to or from "$unknown" yet';
+      reason = cities.isEmpty
+          ? 'Check the spelling, or pick a city from the list on the home page.'
+          : 'Pick one of these cities: ${cities.join(', ')}.';
+    } else {
+      title = date == null
+          ? 'No buses from $from to $to'
+          : 'No buses from $from to $to on ${DateFormat('EEE d MMM').format(date)}';
+      reason = isToday
+          ? 'Buses that have already left today are not shown. Try another day:'
+          : 'Nothing is planned for that day. Try another day:';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 8),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.directions_bus_outlined, size: 64, color: BL.border),
+        const SizedBox(height: 12),
+        Text(title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                fontSize: 22, fontWeight: FontWeight.w700, color: BL.ink)),
+        const SizedBox(height: 6),
+        Text(reason,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 17, color: BL.muted)),
+        const SizedBox(height: 18),
+        if (widget.hiddenByFilters > 0)
+          FilledButton(
+            onPressed: widget.onShowAll,
+            style: FilledButton.styleFrom(
+                backgroundColor: BL.crimson,
+                minimumSize: const Size(0, 52),
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                shape: const StadiumBorder(),
+                textStyle: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700)),
+            child: const Text('Show all buses'),
+          )
+        else if (_knownCity(from) && _knownCity(to))
+          FutureBuilder<Map<DateTime, int>>(
+            future: _days,
+            builder: (context, snap) {
+              if (snap.connectionState != ConnectionState.done) {
+                return const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 3, color: BL.crimson));
+              }
+              final days = snap.data ?? const <DateTime, int>{};
+              if (days.isEmpty) {
+                return const Text(
+                    'There are no buses on this route in the next two weeks. Try a different route.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 17, color: BL.muted));
+              }
+              return Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final e in days.entries.take(8))
+                    ActionChip(
+                      onPressed: () => widget.controller.searchAgainOn(e.key),
+                      avatar:
+                          const Icon(Icons.event, size: 20, color: BL.crimson),
+                      label: Text(
+                          '${DateFormat('EEE d MMM').format(e.key)} · ${e.value} ${e.value == 1 ? 'bus' : 'buses'}'),
+                      labelStyle: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600),
+                      backgroundColor: BL.blush,
+                      side: BorderSide.none,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 10),
+                    ),
+                ],
+              );
+            },
+          ),
+      ]),
+    );
   }
 }
