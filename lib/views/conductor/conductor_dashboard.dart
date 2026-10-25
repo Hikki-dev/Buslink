@@ -645,8 +645,16 @@ class TicketVerifiedCard extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         _row("Bus No", ticket.tripData['busNumber'] ?? 'N/A'),
-        _row("Origin", ticket.tripData['fromCity'] ?? 'N/A'),
-        _row("Destination", ticket.tripData['toCity'] ?? 'N/A'),
+        _row(
+            "Origin",
+            ticket.tripData['originCity'] ??
+                ticket.tripData['fromCity'] ??
+                'N/A'),
+        _row(
+            "Destination",
+            ticket.tripData['destinationCity'] ??
+                ticket.tripData['toCity'] ??
+                'N/A'),
         const SizedBox(height: 8),
         const Text("Seat Location:",
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
