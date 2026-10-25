@@ -144,8 +144,7 @@ class _TicketScreenState extends State<TicketScreen> {
                         : 'Your ticket',
                     style: const TextStyle(
                         fontSize: 24, fontWeight: FontWeight.w800)),
-                const Text(
-                    'Show the 4-digit code or let the conductor scan the QR',
+                const Text('Show the code or let the conductor scan the QR',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: BL.muted)),
                 const SizedBox(height: 10),
@@ -180,7 +179,7 @@ class _TicketScreenState extends State<TicketScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('4-DIGIT CODE',
+                      const Text('CODE',
                           style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,

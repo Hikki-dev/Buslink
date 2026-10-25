@@ -79,3 +79,8 @@ scripts/service-account.json
 assets/service_account.json
 # Xcode build output that was once committed by mistake
 scripts/build/
+
+# Live shots tool
+tool/live-shots/node_modules/
+tool/live-shots/out/
+tool/live-shots/labels-*.txt

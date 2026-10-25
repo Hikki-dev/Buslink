@@ -1,6 +1,6 @@
 # Design
 
-The look of BusLink, and the rules every screen follows. The app is for people of every age and comfort with technology, so the rules are simple on purpose.
+The look of BusLink, and the rules every screen follows. Every screen, with the design board it came from, is in [Every screen](Every%20screen.md). The app is for people of every age and comfort with technology, so the rules are simple on purpose.
 
 ## On this page
 
@@ -28,8 +28,8 @@ Green is used only for good news (valid ticket, confirmed, seats available), amb
 
 ## Type
 
-* **Outfit** for headings, prices and big numbers.
-* **Inter** for body text.
+* **Outfit** for nearly everything: headings, prices, body text and buttons. It is bundled as separate files for each weight (light to extra bold), so bold text really is bold. Variable font files start at the thinnest weight, which is why they are not used.
+* **Montserrat** for the big titles on the sign-in pages and for a few headings.
 
 Nothing is set smaller than 12 pixels. Body text is 14 to 17.
 

@@ -537,7 +537,7 @@ String alreadyBoardedMessage(DateTime at) =>
     "This ticket was already checked in at ${DateFormat('h:mm a').format(at)}. "
     "Each ticket can board only once.";
 
-/// Shown when a ticket checks out. The 4-digit code is the thing the
+/// Shown when a ticket checks out. The code is the thing the
 /// conductor must compare with the passenger's own screen, so it is the
 /// biggest item.
 class TicketVerifiedCard extends StatelessWidget {
@@ -624,7 +624,7 @@ class TicketVerifiedCard extends StatelessWidget {
           child: Column(
             children: [
               const Text(
-                "Ask the passenger for their 4-digit code. It must match:",
+                "Ask the passenger for their code. It must match:",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),

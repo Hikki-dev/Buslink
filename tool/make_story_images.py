@@ -48,13 +48,15 @@ def phone(img_path, box_w, box_h, crop_h=None):
 
 
 # (number, title, sentence, picture, crop height or None)
+# The phone pictures are 1170 pixels wide and are shrunk to fit the frame.
 SCENES = [
-    ("1", "Sign in", "Choose English, Sinhala or Tamil, then sign in with email, Google or your phone.", "login-live.png", 1500),
-    ("2", "Choose a bus", "Real times, how long it takes, and how many seats are left. A late bus says so in words.", "bus-card-delayed.png", None),
-    ("3", "Pick your seats", "Taken seats are grey with a cross. Yours show a tick. The map is live.", "seat-map.png", 560),
-    ("4", "Keep your ticket", "One big View button. Track bus appears when the bus is on its way.", "my-trips-card.png", None),
-    ("5", "The conductor checks it", "Name, seats and a big 4-digit code to compare. Then Approve Boarding.", "conductor-verified.png", 640),
-    ("6", "Once only", "Show the same ticket again and the app refuses it, and says when it first boarded.", "conductor-already-boarded.png", None),
+    ("1", "Sign in", "Choose English, Sinhala or Tamil, then sign in with email, Google or your phone.", "passenger-1-sign-in-phone.png", None),
+    ("2", "Find a bus", "Choose where from, where to and the day. Your favourite routes are one tap away.", "passenger-2-search-phone.png", None),
+    ("3", "Choose a bus", "Real times, how long it takes, and how many seats are left. A late bus says so in words.", "passenger-4-results-phone.png", None),
+    ("4", "Pick your seats", "Taken seats are grey with a cross. Yours show a tick. The map is live.", "passenger-6-seats-chosen-phone.png", None),
+    ("5", "Keep your ticket", "A QR code and a short code. It is always in My Trips, and Track bus shows where the bus is.", "passenger-8-ticket-phone.png", None),
+    ("6", "The conductor checks it", "Name, seats and a big code to compare. Then Approve Boarding.", "conductor-2-verified-phone.png", None),
+    ("7", "Once only", "Show the same ticket again and the app refuses it, and says when it first boarded.", "conductor-already-boarded.png", None),
 ]
 
 
@@ -74,7 +76,7 @@ def frame(n, title, sentence, pic, crop, W=960, H=540):
     for line in wrap(d, sentence, f, 420):
         d.text((56, y), line, font=f, fill=MUTED)
         y += 34
-    ph = phone(f"{IMG}/{pic}", 400, 470, crop)
+    ph = phone(f"{IMG}/{pic}", 400, 480, crop)
     im.paste(ph, (W - ph.width - 70, (H - ph.height) // 2))
     return im
 
@@ -98,8 +100,8 @@ def make_social():
         d.text((80, y), line, font=f, fill=(255, 226, 227))
         y += 52
     d.text((80, 540), "Flutter  ·  Firebase  ·  Stripe", font=font(28), fill=(255, 226, 227))
-    for i, (pic, crop) in enumerate([("bus-card-delayed.png", None), ("conductor-verified.png", 560)]):
-        ph = phone(f"{IMG}/{pic}", 250, 400 - i * 40, crop)
+    for i, (pic, crop) in enumerate([("passenger-2-search-phone.png", None), ("passenger-8-ticket-phone.png", None)]):
+        ph = phone(f"{IMG}/{pic}", 250, 460 - i * 40, crop)
         im.paste(ph, (730 + i * 270, 90 + i * 70))
     im.save(f"{IMG}/social-preview.png", optimize=True)
     print("social-preview.png", os.path.getsize(f"{IMG}/social-preview.png") // 1024, "KB")

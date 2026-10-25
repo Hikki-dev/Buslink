@@ -1,7 +1,7 @@
 // Regenerates the pictures in docs/images/ from the REAL app widgets, so the
 // documentation always shows what the app looks like now.
 //
-//   flutter test tool/doc_screenshots_test.dart --update-goldens
+//   flutter test tool/doc_screenshots_test.dart
 //
 // It is not part of `flutter test` (that only runs test/), and it needs no
 // Firebase or network.
@@ -17,6 +17,7 @@ import 'package:buslink/utils/app_theme.dart';
 import 'package:buslink/views/admin/widgets/status_chip.dart';
 import 'package:buslink/views/booking/bus_layout_widget.dart';
 import 'package:buslink/views/booking/my_trips_screen.dart';
+import 'package:buslink/views/booking/payment_screen.dart';
 import 'package:buslink/views/booking/refund_status_screen.dart';
 import 'package:buslink/views/conductor/conductor_dashboard.dart';
 import 'package:buslink/views/conductor/conductor_trip_management_screen.dart';
@@ -28,40 +29,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
 import 'dart:io';
+import 'dart:ui' as ui;
 
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
-/// The app's variable fonts do not pick a weight in the test engine, so the
-/// pictures use Roboto (shipped with Flutter) under the app's font names, and
-/// the real Material icon font. Layout is the real layout; only the letter
-/// shapes differ from the phone.
+import '../test/helpers/app_fonts.dart';
+
+/// The pictures use the app's own fonts (they are static files with real
+/// weights) and the real Material icon font from the Flutter SDK.
 Future<void> _loadDocFonts() async {
+  await loadAppFonts();
   final root = Platform.environment['FLUTTER_ROOT'] ??
       File(Platform.resolvedExecutable).parent.parent.parent.parent.parent.path;
   final dir = '$root/bin/cache/artifacts/material_fonts';
-  Future<ByteData> load(String f) async =>
-      ByteData.sublistView(await File('$dir/$f').readAsBytes());
-  for (final family in [
-    'Outfit',
-    'Inter',
-    'Montserrat',
-    'NotoSans',
-    'Roboto'
-  ]) {
-    final l = FontLoader(family);
-    for (final f in [
-      'Roboto-Light.ttf',
-      'Roboto-Regular.ttf',
-      'Roboto-Medium.ttf',
-      'Roboto-Bold.ttf',
-      'Roboto-Black.ttf',
-    ]) {
-      l.addFont(load(f));
-    }
-    await l.load();
-  }
   final icons = FontLoader('MaterialIcons')
-    ..addFont(load('MaterialIcons-Regular.otf'));
+    ..addFont(Future.value(ByteData.sublistView(
+        File('$dir/MaterialIcons-Regular.otf').readAsBytesSync())));
   await icons.load();
 }
 
@@ -158,34 +142,17 @@ Ticket _pass() => Ticket(
       },
     );
 
-/// The app theme, with the 800-weight button text (which Roboto has no exact
-/// match for) set to 700 so it draws.
-ThemeData _docTheme() {
-  final t = AppTheme.lightTheme;
-  TextStyle label(double size) => TextStyle(
-      fontFamily: 'Roboto', fontSize: size, fontWeight: FontWeight.w700);
-  return t.copyWith(
-    textTheme: t.textTheme.apply(fontFamily: 'Roboto'),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-        style: t.elevatedButtonTheme.style
-            ?.copyWith(textStyle: WidgetStatePropertyAll(label(18)))),
-    outlinedButtonTheme: OutlinedButtonThemeData(
-        style: t.outlinedButtonTheme.style
-            ?.copyWith(textStyle: WidgetStatePropertyAll(label(16)))),
-  );
-}
-
 final _shot = GlobalKey();
 
 /// Draws [child] on white at phone width and saves it as docs/images/[name].
 Future<void> _shoot(WidgetTester tester, String name, Widget child,
     {double width = 390, double? height}) async {
-  tester.view.physicalSize = Size(width * 2, 2400);
-  tester.view.devicePixelRatio = 2;
+  tester.view.physicalSize = Size(width * 3, 3600);
+  tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(MaterialApp(
     debugShowCheckedModeBanner: false,
-    theme: _docTheme(),
+    theme: AppTheme.lightTheme,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(
@@ -206,8 +173,12 @@ Future<void> _shoot(WidgetTester tester, String name, Widget child,
     ),
   ));
   await tester.pump(const Duration(milliseconds: 300));
-  await expectLater(
-      find.byKey(_shot), matchesGoldenFile('../docs/images/$name.png'));
+  // Three times the sharpness of the phone screen it imitates.
+  final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(_shot));
+  final image = (await tester.runAsync(() => boundary.toImage(pixelRatio: 3)))!;
+  final bytes = (await tester
+      .runAsync(() => image.toByteData(format: ui.ImageByteFormat.png)))!;
+  File('docs/images/$name.png').writeAsBytesSync(bytes.buffer.asUint8List());
 }
 
 void main() {
@@ -322,6 +293,19 @@ void main() {
           TripFormSteps(current: 1),
           SizedBox(height: 20),
           TripFormSteps(current: 2),
+        ]));
+  });
+
+  testWidgets('payment-states', (tester) async {
+    await _shoot(
+        tester,
+        'payment-states',
+        Column(children: [
+          PaymentStateCard.verifying(),
+          const SizedBox(height: 20),
+          PaymentStateCard.failed(onHome: () {}, onSupport: () {}),
+          const SizedBox(height: 20),
+          PaymentStateCard.expired(onHome: () {}),
         ]));
   });
 

@@ -4,7 +4,7 @@
   python3 scripts/seed_emulator.py
 
 Accounts (emulator only, they do not exist in the real project):
-  customer@test.local / admin@test.local / conductor@test.local, password Test1234!
+  customer@, admin@, conductor@ and newcomer@ test.local, password Test1234!
 """
 import json, urllib.request, datetime as dt
 
@@ -110,7 +110,7 @@ put('refunds', 'rf1', {'bookingId': 'tk3', 'ticketId': 'tk3', 'tripId': 't4', 'p
                        'paymentIntentId': 'pi_test', 'userId': uids['customer'],
                        'passengerName': 'Customer Test', 'passengerPhone': '0771234567',
                        'email': 'customer@test.local', 'requestedAt': now, 'createdAt': now, 'updatedAt': now,
-                       'amountRequested': 1200.0, 'tripPrice': 1200.0, 'refundPercentage': 90,
+                       'amountRequested': 1200.0, 'tripPrice': 1200.0, 'refundPercentage': 0.9,
                        'refundAmount': 1080.0, 'cancellationFee': 120.0, 'status': 'pending',
                        'reason': 'changeOfPlans', 'otherReasonText': ''})
 put('refunds', 'rf2', {'bookingId': 'tp1', 'ticketId': 'tp1', 'tripId': 't3', 'paymentId': 'pay_test2',
@@ -118,7 +118,7 @@ put('refunds', 'rf2', {'bookingId': 'tp1', 'ticketId': 'tp1', 'tripId': 't3', 'p
                        'passengerName': 'Kasun Silva', 'passengerPhone': '0723456789',
                        'email': 'kasun@test.local', 'requestedAt': now - dt.timedelta(days=1),
                        'createdAt': now - dt.timedelta(days=1), 'updatedAt': now, 'amountRequested': 2400.0,
-                       'tripPrice': 2400.0, 'refundPercentage': 100, 'refundAmount': 2400.0,
+                       'tripPrice': 2400.0, 'refundPercentage': 1.0, 'refundAmount': 2400.0,
                        'cancellationFee': 0.0, 'status': 'approved', 'reason': 'tripDelay',
                        'otherReasonText': ''})
 
@@ -139,4 +139,7 @@ for i, (typ, title, body, read) in enumerate([
 
 put(f"users/{uids['customer']}/favorite_routes", 'fav1', {'fromCity': 'Colombo', 'toCity': 'Kandy'})
 put(f"users/{uids['customer']}/favorite_routes", 'fav2', {'fromCity': 'Colombo', 'toCity': 'Galle'})
+# someone with nothing yet, for the empty screens
+uid = call(AUTH, {'email': 'newcomer@test.local', 'password': 'Test1234!', 'returnSecureToken': True})['localId']
+put('users', uid, {'uid': uid, 'email': 'newcomer@test.local', 'displayName': 'Newcomer Test', 'role': 'customer'})
 print('seeded', list(uids))

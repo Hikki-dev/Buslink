@@ -17,6 +17,14 @@ Everything a passenger can do, screen by screen, in the order they usually do it
 
 ## Sign in
 
+<p align="center"><a href="images/passenger-1-sign-in.jpg"><img src="images/passenger-1-sign-in.jpg" alt="The sign-in page on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/passenger-1-sign-in-phone.png"><img src="images/passenger-1-sign-in-phone.png" alt="Sign in on a phone" width="31%"></a>
+<a href="images/passenger-1-sign-up-phone.png"><img src="images/passenger-1-sign-up-phone.png" alt="Sign up on a phone" width="31%"></a>
+<a href="images/passenger-1-phone-phone.png"><img src="images/passenger-1-phone-phone.png" alt="Phone login on a phone" width="31%"></a>
+</p>
+
 You can sign in three ways: email and password, a Google account (the button uses the real Google "G"), or a phone number with a code sent by text.
 
 Choose English, Sinhala (සිංහල) or Tamil (தமிழ்) with the three buttons at the top of the sign-in page. Your choice is remembered, and can be changed later in your profile.
@@ -24,6 +32,14 @@ Choose English, Sinhala (සිංහල) or Tamil (தமிழ்) with the th
 A new account is always a passenger. Nobody can pick a higher role for themselves.
 
 ## Find a bus
+
+<p align="center"><a href="images/passenger-2-search.jpg"><img src="images/passenger-2-search.jpg" alt="The home page with the search card, on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/passenger-2-search-phone.png"><img src="images/passenger-2-search-phone.png" alt="The search card on a phone" width="31%"></a>
+<a href="images/passenger-4-results-phone.png"><img src="images/passenger-4-results-phone.png" alt="Search results on a phone" width="31%"></a>
+<a href="images/passenger-5-bus-details-phone.png"><img src="images/passenger-5-bus-details-phone.png" alt="Bus details on a phone" width="31%"></a>
+</p>
 
 On the home screen choose where you are leaving from, where you are going and the date, then press **Search**. The small swap button in the middle turns the two cities around.
 
@@ -44,6 +60,13 @@ A **cancelled** bus and a **full** bus have a grey button that cannot be used. P
 
 ## Choose your seats
 
+<p align="center"><a href="images/passenger-6-seats-chosen.png"><img src="images/passenger-6-seats-chosen.png" alt="Choosing seats on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/passenger-6-seats-phone.png"><img src="images/passenger-6-seats-phone.png" alt="The seat map on a phone" width="31%"></a>
+<a href="images/passenger-6-seats-chosen-phone.png"><img src="images/passenger-6-seats-chosen-phone.png" alt="Two seats chosen on a phone" width="31%"></a>
+</p>
+
 <img src="images/seat-map.png" alt="The seat map: free seats are white, taken seats are grey with a cross, selected seats are red with a tick" width="360">
 
 * White seats are free. Tap to choose.
@@ -56,6 +79,12 @@ Seats are held for you only at the moment you continue. If two people try for th
 
 ## Pay
 
+<p align="center"><a href="images/passenger-7-payment.png"><img src="images/passenger-7-payment.png" alt="The payment page on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/passenger-7-payment-phone.png"><img src="images/passenger-7-payment-phone.png" alt="Payment on a phone" width="31%"></a>
+</p>
+
 Pay by card. Card details go straight to Stripe. BusLink never sees them.
 
 * On the **phone app** a payment sheet opens.
@@ -65,14 +94,26 @@ Prices are in Sri Lankan rupees (LKR). The app asks for at least LKR 150, and St
 
 ## Your ticket
 
+<p align="center"><a href="images/passenger-8-ticket.png"><img src="images/passenger-8-ticket.png" alt="The ticket on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/passenger-8-ticket-phone.png"><img src="images/passenger-8-ticket-phone.png" alt="The ticket on a phone" width="31%"></a>
+</p>
+
 After paying you see "Payment Confirmed" and your ticket:
 
 * a **QR code** the conductor scans, and
-* a **4-digit code** to say out loud or type, if scanning does not work.
+* a **4-character code** to say out loud or type, if scanning does not work.
 
 The ticket can be saved as a PDF. It is also always in **My Trips**.
 
 ## My Trips
+
+<p align="center"><a href="images/passenger-10-my-trips.png"><img src="images/passenger-10-my-trips.png" alt="My Trips on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/passenger-10-my-trips-phone.png"><img src="images/passenger-10-my-trips-phone.png" alt="My Trips on a phone" width="31%"></a>
+</p>
 
 <img src="images/my-trips-card.png" alt="A trip card with a green Scheduled badge, the route, date, seats, price, a View button, a Track bus button and a Refund link" width="360">
 
@@ -86,6 +127,12 @@ The badge at the top uses an icon and a word, never colour alone.
 
 ## Track the bus
 
+<p align="center"><a href="images/passenger-9-tracking.jpg"><img src="images/passenger-9-tracking.jpg" alt="Tracking on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/passenger-9-tracking-phone.jpg"><img src="images/passenger-9-tracking-phone.jpg" alt="Tracking on a phone" width="31%"></a>
+</p>
+
 **Track bus** opens a full-screen map with one card at the bottom.
 
 * The bus appears on the map as a pulsing red dot, using the location the conductor's phone reports for that trip.
@@ -94,6 +141,12 @@ The badge at the top uses an icon and a word, never colour alone.
 * The target button centres the map on the bus again.
 
 ## Ask for a refund
+
+<p align="center"><a href="images/passenger-11-refund.png"><img src="images/passenger-11-refund.png" alt="Request a refund on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/passenger-11-refund-phone.png"><img src="images/passenger-11-refund-phone.png" alt="Request a refund on a phone" width="31%"></a>
+</p>
 
 Press **Refund** on a trip, choose a reason and send it. Then open the refund to see where it is:
 
@@ -106,6 +159,22 @@ Press **Refund** on a trip, choose a reason and send it. Then open the refund to
 An approved refund is sent back to your card through Stripe. If it fails, the screen says so, and you can contact support.
 
 ## Favourites, notifications and settings
+
+<p align="center"><a href="images/passenger-3-favourites.png"><img src="images/passenger-3-favourites.png" alt="Favourites on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/passenger-3-favourites-phone.png"><img src="images/passenger-3-favourites-phone.png" alt="Favourites on a phone" width="31%"></a>
+<a href="images/passenger-13-notifications-phone.png"><img src="images/passenger-13-notifications-phone.png" alt="Notifications on a phone" width="31%"></a>
+<a href="images/passenger-14-profile-phone.png"><img src="images/passenger-14-profile-phone.png" alt="Profile on a phone" width="31%"></a>
+</p>
+
+<p align="center"><a href="images/passenger-14-profile.png"><img src="images/passenger-14-profile.png" alt="Profile on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/passenger-14-settings-phone.png"><img src="images/passenger-14-settings-phone.png" alt="Account settings on a phone" width="31%"></a>
+<a href="images/passenger-15-support-phone.png"><img src="images/passenger-15-support-phone.png" alt="Help and support on a phone" width="31%"></a>
+<a href="images/passenger-12-travel-numbers-phone.png"><img src="images/passenger-12-travel-numbers-phone.png" alt="Your travel numbers on a phone" width="31%"></a>
+</p>
 
 * **Favourites** keep routes you travel often. Press **Book again** on one to search that route.
 * **Notifications** tell you about delays, cancellations and refund updates. You can choose which in **Notification Settings**.

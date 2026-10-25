@@ -1,6 +1,6 @@
 # Getting started
 
-A walk through BusLink from the first screen to a boarded ticket, as each person would meet it. Pick your role, or read all three to see how they fit together. The sign-in picture is the live app, and every other picture is drawn by the real app code. The [README](../README.md#the-story-step-by-step) tells the same story in twelve numbered steps.
+A walk through BusLink from the first screen to a boarded ticket, as each person would meet it. Pick your role, or read all three to see how they fit together. Every picture is the real app, taken from the running web version at twice the usual sharpness. The [README](../README.md#the-story-step-by-step) tells the same story in twenty-six numbered steps, with a picture of every screen on a computer and on a phone.
 
 <p align="center"><img src="images/journey.gif" alt="A short tour from sign-in to a refused second boarding" width="100%"></p>
 
@@ -23,7 +23,7 @@ A walk through BusLink from the first screen to a boarded ticket, as each person
 
 **1. Sign in.** Choose English, Sinhala or Tamil with the three buttons at the top, then sign in with email, Google or your phone number.
 
-<img src="images/login-live.png" alt="The sign-in page with three language buttons and a Continue with Google button" width="320">
+<p align="center"><a href="images/passenger-1-sign-in.jpg"><img src="images/passenger-1-sign-in.jpg" alt="The sign-in page with three language buttons and a Continue with Google button" width="100%"></a></p>
 
 **2. Search.** Choose where from, where to and the date. Press **Search**.
 
@@ -37,11 +37,11 @@ A walk through BusLink from the first screen to a boarded ticket, as each person
 
 **5. Pay.** Pay by card. The card details go straight to Stripe.
 
-**6. Keep your ticket.** It has a QR code and a 4-digit code, and it is always in **My Trips**.
+**6. Keep your ticket.** It has a QR code and a 4-character code, and it is always in **My Trips**.
 
 <img src="images/my-trips-card.png" alt="A trip card with View, Track bus and Refund" width="360">
 
-**7. Board.** Show the QR code or say the 4-digit code to the conductor.
+**7. Board.** Show the QR code or say the 4-character code to the conductor.
 
 Everything about each screen is in the [Passenger guide](Passenger%20guide.md).
 
@@ -49,9 +49,9 @@ Everything about each screen is in the [Passenger guide](Passenger%20guide.md).
 
 **1. Open the scanner** and point the camera at the passenger's QR code. If the camera will not work, type the ticket code instead.
 
-**2. Check three things:** the name, the seats, and that the 4-digit code matches the passenger's own screen.
+**2. Check three things:** the name, the seats, and that the 4-character code matches the passenger's own screen.
 
-<img src="images/conductor-verified.png" alt="A valid ticket with the passenger's name, seats and a large 4-digit code" width="360">
+<img src="images/conductor-verified.png" alt="A valid ticket with the passenger's name, seats and a large 4-character code" width="360">
 
 **3. Press Approve Boarding.** It saves the boarding on the ticket.
 
