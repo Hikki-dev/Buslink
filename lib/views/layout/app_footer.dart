@@ -43,3 +43,28 @@ class AppFooter extends StatelessWidget {
     );
   }
 }
+
+/// A page body that scrolls, with the footer at the bottom of the window when
+/// the page is short and at the end of the page when it is long.
+class FooterScroll extends StatelessWidget {
+  final List<Widget> children;
+  const FooterScroll({super.key, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, box) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: box.maxHeight),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(children: children),
+              const AppFooter(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

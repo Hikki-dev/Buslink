@@ -118,34 +118,29 @@ class FavoritesScreen extends StatelessWidget {
     }
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            DesktopNavBar(selectedIndex: 2, isAdminView: isAdminView),
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
-                child: const Padding(
-                  padding: EdgeInsets.fromLTRB(24, 32, 24, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('My favourites',
-                          style: TextStyle(
-                              fontSize: 34, fontWeight: FontWeight.w700)),
-                      Text('Routes you travel often',
-                          style: TextStyle(fontSize: 18, color: BL.muted)),
-                    ],
-                  ),
-                ),
+      body: FooterScroll(children: [
+        DesktopNavBar(selectedIndex: 2, isAdminView: isAdminView),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: const Padding(
+              padding: EdgeInsets.fromLTRB(24, 32, 24, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('My favourites',
+                      style:
+                          TextStyle(fontSize: 34, fontWeight: FontWeight.w700)),
+                  Text('Routes you travel often',
+                      style: TextStyle(fontSize: 18, color: BL.muted)),
+                ],
               ),
             ),
-            SizedBox(height: 360, child: body),
-            const SizedBox(height: 40),
-            const AppFooter(),
-          ],
+          ),
         ),
-      ),
+        SizedBox(height: 360, child: body),
+        const SizedBox(height: 40),
+      ]),
     );
   }
 }

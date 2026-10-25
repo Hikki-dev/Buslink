@@ -318,74 +318,68 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: BL.hairline))),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(maxWidth: 1200, minHeight: 72),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('BusLink',
-                            style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w800,
-                                color: BL.crimson)),
-                        Row(children: [
-                          Icon(Icons.lock_outline, size: 20, color: BL.muted),
-                          SizedBox(width: 8),
-                          Text('SSL Encrypted Transaction',
-                              style: TextStyle(fontSize: 16, color: BL.muted)),
-                        ]),
-                      ],
-                    ),
-                  ),
+      body: FooterScroll(children: [
+        Container(
+          decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: BL.hairline))),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200, minHeight: 72),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('BusLink',
+                        style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: BL.crimson)),
+                    Row(children: [
+                      Icon(Icons.lock_outline, size: 20, color: BL.muted),
+                      SizedBox(width: 8),
+                      Text('SSL Encrypted Transaction',
+                          style: TextStyle(fontSize: 16, color: BL.muted)),
+                    ]),
+                  ],
                 ),
               ),
             ),
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1100),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 64),
-                  child: Column(
+          ),
+        ),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 64),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const BookingSteps(current: 2),
+                  const SizedBox(height: 24),
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const BookingSteps(current: 2),
-                      const SizedBox(height: 24),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                method,
-                                const SizedBox(height: 20),
-                                pay,
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 28),
-                          SizedBox(width: 420, child: summary),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            method,
+                            const SizedBox(height: 20),
+                            pay,
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 28),
+                      SizedBox(width: 420, child: summary),
                     ],
                   ),
-                ),
+                ],
               ),
             ),
-            const AppFooter(),
-          ],
+          ),
         ),
-      ),
+      ]),
     );
   }
 }

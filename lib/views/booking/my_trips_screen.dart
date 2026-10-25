@@ -374,107 +374,101 @@ class _DesktopTripsState extends State<_DesktopTrips> {
       TripFilter.delayed: l10n.tabDelayed,
     };
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 56),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return FooterScroll(children: [
+      Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 56),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text('My tickets',
-                              style: TextStyle(
-                                  fontSize: 34, fontWeight: FontWeight.w700)),
-                        ),
-                        TextButton.icon(
-                          onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const TravelStatsScreen())),
-                          icon: const Icon(Icons.bar_chart),
-                          label: const Text('Your travel numbers'),
-                          style: TextButton.styleFrom(
-                              foregroundColor: BL.crimson,
-                              minimumSize: const Size(0, 48),
-                              textStyle: const TextStyle(
-                                  fontFamily: 'Outfit',
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700)),
-                        ),
-                      ],
+                    const Expanded(
+                      child: Text('My tickets',
+                          style: TextStyle(
+                              fontSize: 34, fontWeight: FontWeight.w700)),
                     ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 10,
-                      children: [
-                        for (final f in TripFilter.values)
-                          ChoiceChip(
-                            label: Text(labels[f]!,
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color:
-                                        _filter == f ? Colors.white : BL.ink)),
-                            selected: _filter == f,
-                            showCheckmark: false,
-                            selectedColor: BL.crimson,
-                            backgroundColor: Colors.white,
-                            side: const BorderSide(color: BL.border),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 10),
-                            onSelected: (_) => setState(() {
-                              _filter = f;
-                              _selected = 0;
-                            }),
-                          ),
-                      ],
+                    TextButton.icon(
+                      onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const TravelStatsScreen())),
+                      icon: const Icon(Icons.bar_chart),
+                      label: const Text('Your travel numbers'),
+                      style: TextButton.styleFrom(
+                          foregroundColor: BL.crimson,
+                          minimumSize: const Size(0, 48),
+                          textStyle: const TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700)),
                     ),
-                    const SizedBox(height: 20),
-                    if (items.isEmpty)
-                      SizedBox(height: 320, child: _EmptyTrips(filter: _filter))
-                    else
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 400,
-                            child: Column(
-                              children: [
-                                for (var i = 0; i < items.length; i++) ...[
-                                  _ListTile(
-                                    item: items[i],
-                                    selected: i ==
-                                        _selected.clamp(0, items.length - 1),
-                                    onTap: () => setState(() => _selected = i),
-                                  ),
-                                  const SizedBox(height: 14),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 24),
-                          Expanded(
-                            child: sel is List<Ticket>
-                                ? _BulkBoardingPassCard(tickets: sel)
-                                : _Detail(ticket: sel as Ticket),
-                          ),
-                        ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  children: [
+                    for (final f in TripFilter.values)
+                      ChoiceChip(
+                        label: Text(labels[f]!,
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: _filter == f ? Colors.white : BL.ink)),
+                        selected: _filter == f,
+                        showCheckmark: false,
+                        selectedColor: BL.crimson,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: BL.border),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 10),
+                        onSelected: (_) => setState(() {
+                          _filter = f;
+                          _selected = 0;
+                        }),
                       ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 20),
+                if (items.isEmpty)
+                  SizedBox(height: 320, child: _EmptyTrips(filter: _filter))
+                else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 400,
+                        child: Column(
+                          children: [
+                            for (var i = 0; i < items.length; i++) ...[
+                              _ListTile(
+                                item: items[i],
+                                selected:
+                                    i == _selected.clamp(0, items.length - 1),
+                                onTap: () => setState(() => _selected = i),
+                              ),
+                              const SizedBox(height: 14),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: sel is List<Ticket>
+                            ? _BulkBoardingPassCard(tickets: sel)
+                            : _Detail(ticket: sel as Ticket),
+                      ),
+                    ],
+                  ),
+              ],
             ),
           ),
-          const AppFooter(),
-        ],
+        ),
       ),
-    );
+    ]);
   }
 }
 
