@@ -345,6 +345,9 @@ class _SeatItemState extends State<_SeatItem> {
         label: 'Seat ${widget.seatNum}, $stateLabel',
         button: canTap,
         selected: widget.isSelected,
+        // excludeSemantics hides the child's own tap, so give it back here:
+        // screen readers and switch devices choose seats through this.
+        onTap: canTap ? widget.onTap : null,
         excludeSemantics: true,
         child: GestureDetector(
           onTap: isUnavailable && !widget.isReadOnly ? null : widget.onTap,
