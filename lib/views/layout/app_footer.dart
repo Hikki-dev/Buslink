@@ -18,12 +18,17 @@ class AppFooter extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: BL.crimsonDark,
-      child: Center(
+      child: Align(
+        heightFactor: 1,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1200),
           child: const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24, vertical: 28),
             child: Column(
+              // As tall as its text and no taller. A Column otherwise fills
+              // all the height it is offered, and the footer became a giant red
+              // block on short pages.
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('BusLink',

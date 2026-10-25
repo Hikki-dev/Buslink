@@ -18,7 +18,6 @@ Future<void> loadAppFonts() async {
       'assets/fonts/Montserrat/Montserrat-Regular.ttf',
       'assets/fonts/Montserrat/Montserrat-Bold.ttf',
     ],
-    'Cormorant': ['assets/fonts/Cormorant/Cormorant-Bold.ttf'],
   };
   for (final entry in fonts.entries) {
     final loader = FontLoader(entry.key);

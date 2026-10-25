@@ -56,10 +56,12 @@ Future<void> _startFirebase() async {
     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
   }
   try {
-    // Keep data on the device so the app works with a poor connection.
-    FirebaseFirestore.instance.settings = const Settings(
-        persistenceEnabled: true,
-        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED);
+    // On a phone, keep data on the device so the app works with a poor
+    // connection. In a browser the cache lives in IndexedDB, which is slow to
+    // open in Safari and makes the app start late and stutter, so it is off.
+    FirebaseFirestore.instance.settings = Settings(
+        persistenceEnabled: !kIsWeb,
+        cacheSizeBytes: kIsWeb ? null : Settings.CACHE_SIZE_UNLIMITED);
   } catch (e) {
     // Settings can only be set once, before Firestore is first used.
     debugPrint('Firestore settings were already applied: $e');

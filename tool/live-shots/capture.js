@@ -142,6 +142,39 @@ scenes.refundSubmit = async b => {
   await L.tap(p, 'Refund'); await L.sleep(2500);
   await L.tap(p, 'Choose a reason'); await L.sleep(1200); await snap(p, 'refund-reasons');
 };
+// Every main screen with dark mode switched on (a theme check, not for the docs).
+scenes.dark = async b => {
+  const p = await L.open(b, ...dims);
+  await L.login(p, 'customer');
+  if (mode === 'desktop') { await L.tap(p, 'Account menu'); await L.tap(p, 'Dark mode'); await L.sleep(1500); await L.tap(p, 'Dismiss menu').catch(() => {}); }
+  else { await L.tap(p, 'Profile'); await L.sleep(1500); await L.tap(p, 'Dark Mode'); await L.sleep(1500); await L.tap(p, 'Home'); }
+  await L.sleep(1500); await snap(p, 'dark-home');
+  await L.tap(p, 'Favorites'); await L.sleep(1500); await snap(p, 'dark-favourites');
+  await L.tap(p, 'BOOK AGAIN'); await L.sleep(1500);
+  await L.tap(p, 'Day of travel: '); await L.tap(p, '27, Tuesday'); await L.tap(p, 'OK');
+  await L.tap(p, 'Search Buses'); await L.sleep(3000); await snap(p, 'dark-results');
+  await L.tap(p, 'Stops and what is on the bus'); await L.sleep(2500); await snap(p, 'dark-bus-details');
+  await L.tap(p, 'Choose seats'); await L.sleep(2500); await L.tap(p, 'Seat 9, free'); await snap(p, 'dark-seats');
+  await L.tap(p, 'Continue to payment'); await L.sleep(3000); await snap(p, 'dark-payment');
+};
+scenes.dark2 = async b => {
+  const p = await L.open(b, ...dims);
+  await L.login(p, 'customer');
+  if (mode === 'desktop') { await L.tap(p, 'Account menu'); await L.tap(p, 'Dark mode'); await L.sleep(1500); await L.tap(p, 'Dismiss menu').catch(() => {}); }
+  else { await L.tap(p, 'Profile'); await L.sleep(1500); await L.tap(p, 'Dark Mode'); await L.sleep(1500); }
+  await L.tap(p, 'My Trips'); await L.sleep(2000); await snap(p, 'dark-my-trips');
+  await L.tap(p, 'VIEW TICKET'); await L.sleep(2500); await snap(p, 'dark-ticket');
+  await L.tap(p, 'Close').catch(() => {}); await L.sleep(1500);
+  if (mode === 'desktop') { await L.tap(p, 'Support'); await L.sleep(2500); await snap(p, 'dark-support'); await L.tap(p, 'Account menu'); await L.tap(p, 'Profile'); await L.sleep(2500); await snap(p, 'dark-profile'); }
+  else { await L.tap(p, 'Profile'); await L.sleep(2000); await snap(p, 'dark-profile'); await L.tap(p, 'Support & FAQs'); await L.sleep(2500); await snap(p, 'dark-support'); }
+};
+scenes.noBuses = async b => {
+  const p = await L.open(b, ...dims);
+  await L.login(p, 'customer');
+  await L.tap(p, 'Favorites'); await L.tap(p, 'BOOK AGAIN'); await L.sleep(1500);
+  await L.tap(p, 'Search Buses'); await L.sleep(3500); await snap(p, 'nobuses-today');
+  await L.tap(p, 'buses').catch(() => {}); await L.sleep(3500); await snap(p, 'nobuses-then-day');
+};
 scenes.empty = async b => {
   const p = await L.open(b, ...dims);
   await L.login(p, 'newcomer');

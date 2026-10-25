@@ -96,6 +96,9 @@ class BackgroundServices {
   }
 
   static Future<void> _setUpStripe() async {
+    // On the web, paying means going to Stripe's own checkout page, so Stripe's
+    // script (a quarter of a megabyte) is not needed here at all.
+    if (kIsWeb) return;
     if (!dotenv.isInitialized) return;
     final key = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
     if (key == null || key.isEmpty) return;

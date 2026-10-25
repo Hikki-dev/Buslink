@@ -29,6 +29,8 @@ Green is used only for good news (valid ticket, confirmed, seats available), amb
 ## Type
 
 * **Outfit** for nearly everything: headings, prices, body text and buttons. It is bundled as separate files for each weight (light to extra bold), so bold text really is bold. Variable font files start at the thinnest weight, which is why they are not used.
+
+The font files hold only the letters the app prints, because the app downloads every font before it draws its first screen. If you add a symbol that is not plain Latin, add it to `KEEP` in `tool/make_fonts.py` and run `python3 tool/make_fonts.py` (it needs `fonttools` and `brotli`).
 * **Montserrat** for the big titles on the sign-in pages and for a few headings.
 
 Nothing is set smaller than 12 pixels. Body text is 14 to 17.
