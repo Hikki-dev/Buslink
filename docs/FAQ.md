@@ -18,7 +18,7 @@ No. When you continue, the app checks the seats and reserves them in one step on
 No. When a conductor approves boarding, the ticket is stamped with the time and the conductor. Showing it again is refused with "Already boarded" and the time of the first boarding.
 
 **The passenger's phone is dead. Can they still board?**
-If they know the 4-digit code on their ticket, or the ticket code, the conductor can type it in. The ticket is also in My Trips on any device they sign in to.
+If they know the 4-character code on their ticket, or the ticket code, the conductor can type it in. The ticket is also in My Trips on any device they sign in to.
 
 **What do the three language buttons do?**
 They switch the whole app between English, Sinhala and Tamil. The choice is remembered.

@@ -4,6 +4,10 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 ## 25 October 2026
 
+* **The docs show every screen, sharply.** The README is now one long, scrollable walk through 26 steps, each with a computer picture and phone pictures, in three parts: the passenger, the conductor and the admin. The pictures are the real app taken from a running web build at twice the usual sharpness (3200 by 2000 pixels on a computer, 1170 by 2532 on a phone), and the small pieces such as the seat map and the conductor's answers are drawn by the real widgets at three times the sharpness with the app's own fonts. New pages: [Every screen](docs/Every%20screen.md) (each design board next to its finished screen) and [Try it on your computer](docs/Try%20it%20on%20your%20computer.md) (the whole app against a pretend Firebase, with a passenger, a conductor, an admin and a newcomer to sign in as). The tool that takes the pictures is in `tool/live-shots`.
+* **Admin refund details** show the reason in words ("Change of plans") instead of the stored name.
+* **Wording:** the ticket code is called "code", not "4-digit code", because it mixes letters and digits (like K7M2).
+
 * **Phone layout fixes found by looking at every screen.** The admin Routes page had no header or way back on a phone, and its title and table headings broke words ("Dura tion"); it now has the red header with a back button, a smaller title, tabs that slide sideways and a table that slides sideways. The role chip on the Users page no longer breaks "Customer" into two lines. On wide screens the footer now sits at the bottom of short pages (it floated half way up, with white space under it), and the Travel Trends page stays phone-width instead of stretching.
 
 * **Seats and the phone's bottom tabs work with screen readers.** Both hid their own tap from the accessibility tree, so a screen reader or switch device could not choose a seat or change tab. They now expose the tap (two new tests).

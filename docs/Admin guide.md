@@ -17,6 +17,13 @@ An account becomes an admin when its `role` is `admin` (see [Roles](Installing.m
 
 ## Add or edit a trip
 
+<p align="center"><a href="images/admin-2-trip-form.png"><img src="images/admin-2-trip-form.png" alt="The trip form on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/admin-1-trips-phone.png"><img src="images/admin-1-trips-phone.png" alt="The admin home on a phone" width="31%"></a>
+<a href="images/admin-2-trip-form-phone.png"><img src="images/admin-2-trip-form-phone.png" alt="The trip form on a phone" width="31%"></a>
+</p>
+
 The trip form has three short steps, shown at the top:
 
 <img src="images/trip-form-steps.png" alt="The step indicator: 1 Route, 2 Schedule, 3 Fare and bus" width="360">
@@ -49,11 +56,23 @@ One thing to know: in the **Via** box, choose an option from the list (or press 
 
 ## Routes and timetables
 
+<p align="center"><a href="images/admin-3-routes.png"><img src="images/admin-3-routes.png" alt="Routes and schedules on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/admin-3-routes-phone.png"><img src="images/admin-3-routes-phone.png" alt="Routes on a phone" width="31%"></a>
+</p>
+
 A **route** is a city-to-city line (origin, destination, via, distance, usual travel time, active or not). A **schedule** is a bus on a route with its weekly days, departure time, base price and seats. **Trips** are the individual runs on specific dates, made from schedules.
 
 Create and edit routes from the routes screens on the dashboard. A script (`scripts/generate_trips.js`) creates the next 30 days of trips from the schedules. Run it again from time to time so future dates stay available. See [Installing](Installing.md#6-seed-data).
 
 ## Bookings
+
+<p align="center"><a href="images/admin-4-bookings.png"><img src="images/admin-4-bookings.png" alt="Bookings on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/admin-4-bookings-phone.png"><img src="images/admin-4-bookings-phone.png" alt="Bookings on a phone" width="31%"></a>
+</p>
 
 The bookings list shows every ticket. Search by passenger, and filter by status.
 
@@ -62,6 +81,12 @@ Each row shows the passenger, the route, the departure time, the amount and a **
 <img src="images/status-chips.png" alt="Status chips used in admin lists" width="360">
 
 ## Refunds
+
+<p align="center"><a href="images/admin-5-refunds.png"><img src="images/admin-5-refunds.png" alt="Refunds on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/admin-5-refunds-phone.png"><img src="images/admin-5-refunds-phone.png" alt="Refunds on a phone" width="31%"></a>
+</p>
 
 Passengers send refund requests. The list has three tabs: **Pending**, **Approved** and **Rejected**. Each card shows the date, the passenger, the amount, the reason and a status chip.
 
@@ -74,16 +99,34 @@ Every refund sent to Stripe is also recorded in an admin-only list, `refund_tran
 
 ## Roles and users
 
+<p align="center"><a href="images/admin-8-users.png"><img src="images/admin-8-users.png" alt="Users and roles on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/admin-8-users-phone.png"><img src="images/admin-8-users-phone.png" alt="Users and roles on a phone" width="31%"></a>
+</p>
+
 Open **Roles** in the menu to see everyone and change who is a conductor or admin. The change takes effect the next time that person's app checks, which is immediately for anyone with the app open.
 
 Only admins can change roles. A person can never change their own.
 
 ## Reports
 
+<p align="center"><a href="images/admin-7-analytics.png"><img src="images/admin-7-analytics.png" alt="Analytics on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/admin-7-analytics-phone.png"><img src="images/admin-7-analytics-phone.png" alt="Analytics on a phone" width="31%"></a>
+</p>
+
 * **Revenue:** how much has been paid, over time.
 * **Late departures:** which trips left late and by how much, to spot routes that need attention.
 
 ## Feedback
+
+<p align="center"><a href="images/admin-6-feedback.png"><img src="images/admin-6-feedback.png" alt="Feedback on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/admin-6-feedback-phone.png"><img src="images/admin-6-feedback-phone.png" alt="Feedback on a phone" width="31%"></a>
+</p>
 
 The feedback inbox lists what passengers sent from the profile screen. Only admins can read it.
 

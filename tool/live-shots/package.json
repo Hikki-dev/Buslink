@@ -1,0 +1,6 @@
+{
+  "name": "buslink-live-shots",
+  "private": true,
+  "description": "Takes the sharp screenshots in docs/images from a running BusLink web build",
+  "dependencies": { "puppeteer-core": "^23.0.0" }
+}

@@ -54,7 +54,7 @@ It runs on every pull request as the `rules` job. See [Data and rules](Data%20an
 | File | What it checks |
 |---|---|
 | `test/boarding_test.dart` | The boarding rule: a fresh ticket boards, a missing one is not found, an already-boarded one is refused with its time, a cancelled one cannot board. Ticket parsing. The Approve button taps and shows a spinner. |
-| `test/conductor_visuals_test.dart` | The valid-ticket card (name, seats, the 4-digit code), a missing code, the rejected card |
+| `test/conductor_visuals_test.dart` | The valid-ticket card (name, seats, the 4-character code), a missing code, the rejected card |
 | `test/passenger_visuals_test.dart` | Bus cards (city names, times, delayed, full, cancelled, and long names on a 390 px phone), My Trips cards (when Track bus and Refund show), the seat map's spoken labels |
 | `test/admin_trip_form_test.dart` | The real three-step trip form: Next blocked until required fields are filled, Back keeps text, the last step shows Save |
 | `test/admin_visuals_test.dart` | Status chips and the step indicator |
@@ -87,23 +87,29 @@ The tests prove the start-up rules, not how fast it feels. To measure speed, fol
 
 ## Remake the pictures in the docs
 
-The pictures in `docs/images/` are drawn by the real widgets, so they never go out of date. To redraw them after a design change:
+There are two kinds of picture in `docs/images/`, and each has its own tool.
+
+**Whole screens, taken from the running app.** The files named `passenger-…`, `conductor-…`, `admin-…`, `bulk-…` and `empty-…` (and their `-phone` twins) are real screenshots, twice as sharp as a normal screen: 3200 by 2000 pixels for the computer view and 1170 by 2532 for the phone view. The tool in `tool/live-shots` makes them. It needs [Try it on your computer](Try%20it%20on%20your%20computer.md) running first:
+
+```bash
+firebase emulators:start --only auth,firestore --project buslink-416e1
+python3 scripts/seed_emulator.py
+flutter build web --release --dart-define=USE_EMULATOR=true -o /tmp/bl_web
+cd /tmp/bl_web && python3 -m http.server 5055      # in another window
+cd tool/live-shots && npm install && node capture.js desktop passenger   # then the other scenes
+python3 finish.py ../../docs/images
+```
+
+`finish.py` saves each picture as a lossless PNG, and as a very high quality JPEG only when a photo makes the PNG larger than about 1.3 MB. The scenes and the files they make are listed in the README of that folder.
+
+**Small pieces.** The bus card, the seat map, the conductor's answers, the refund steps and the like are drawn by the real widgets, with the app's own fonts at three times the sharpness:
 
 ```bash
 flutter test tool/doc_screenshots_test.dart --update-goldens
 python3 tool/trim_screenshots.py
-```
-
-The second command needs Python with Pillow (`python3 -m pip install pillow`). It trims the empty space under each picture.
-
-`docs/images/login-live.png` is not drawn by a test. It is a real screenshot of the live sign-in page, taken at 390 by 844 pixels at 2x. To retake it, open https://buslink-eta.vercel.app in a browser with a phone-sized window (the Chrome DevTools device toolbar works) and save the screenshot.
-
-The hero animation `journey.gif` and `social-preview.png` are made from those pictures:
-
-```bash
 python3 tool/make_story_images.py
 ```
 
-The test uses Roboto in place of the app's own fonts, because the app's variable fonts do not pick a weight in the test engine. The layout is the real layout; only the letter shapes differ from a phone. A few pictures stop just above a button for the same reason: some button labels draw as blank boxes in the test engine.
+The second command needs Python with Pillow (`python3 -m pip install pillow`). It cuts the empty white space around each piece. The third makes the animated tour `journey.gif` and `social-preview.png` from the pictures above.
 
 `tool/check_docs.py` is the checker for the written docs. It needs only Python, no packages.

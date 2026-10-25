@@ -203,7 +203,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
           _row('Refund Amount', "LKR ${refund.refundAmount.toStringAsFixed(2)}",
               isBold: true),
           const SizedBox(height: 16),
-          _row("Reason", refund.reason.name),
+          _row("Reason", _reasonText(refund.reason)),
           if (refund.otherReasonText != null &&
               refund.otherReasonText!.isNotEmpty)
             _row('Comment', refund.otherReasonText!),
@@ -470,3 +470,14 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
     }
   }
 }
+
+/// The reason the passenger chose, in words (not the stored name).
+String _reasonText(RefundReason r) => switch (r) {
+      RefundReason.changeOfPlans => 'Change of plans',
+      RefundReason.personalEmergency => 'Personal emergency',
+      RefundReason.tripDelay => 'Trip delay',
+      RefundReason.tripCancelledByOperator => 'Trip cancelled by the operator',
+      RefundReason.bookingMistake => 'Booking mistake',
+      RefundReason.seatOrBusIssue => 'Seat or bus issue',
+      RefundReason.other => 'Other',
+    };

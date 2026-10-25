@@ -17,11 +17,24 @@ An account becomes a conductor when an admin sets its role (see [Roles](Installi
 
 ## Find your trip
 
+<p align="center"><a href="images/conductor-4-results.png"><img src="images/conductor-4-results.png" alt="Finding a trip on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/conductor-1-home-phone.png"><img src="images/conductor-1-home-phone.png" alt="The conductor's home on a phone" width="31%"></a>
+<a href="images/conductor-4-find-trips-phone.png"><img src="images/conductor-4-find-trips-phone.png" alt="Finding a trip on a phone" width="31%"></a>
+</p>
+
 On the dashboard, use **Find Trip** to search for your bus. The results list the trips that match. If nothing matches, the screen says "No active trips found" and offers **Search Again**. **Back to Search** returns to the search from a result.
 
 Open a trip to manage it: status, delays and platform.
 
 ## Check a ticket
+
+<p align="center"><a href="images/conductor-2-verified.png"><img src="images/conductor-2-verified.png" alt="A valid ticket on a computer" width="100%"></a></p>
+
+<p align="center">
+<a href="images/conductor-2-verified-phone.png"><img src="images/conductor-2-verified-phone.png" alt="A valid ticket on a phone" width="31%"></a>
+</p>
 
 You have two ways to check a ticket:
 
@@ -32,13 +45,13 @@ If the camera cannot start, the scanner says why in plain words, for example tha
 
 A good ticket opens a green card:
 
-<img src="images/conductor-verified.png" alt="A valid ticket: Ticket is valid, the passenger's name, seat chips, a large 4-digit code, bus number, origin, destination and the seat map" width="360">
+<img src="images/conductor-verified.png" alt="A valid ticket: Ticket is valid, the passenger's name, seat chips, a large 4-character code, bus number, origin, destination and the seat map" width="360">
 
 Check these three things:
 
 1. **The name** matches the person in front of you.
 2. **The seats** are the ones they are sitting in. The seat map below highlights them.
-3. **The 4-digit code** matches the code on the passenger's own screen. Ask them to read it out. It is shown very large on purpose.
+3. **The 4-character code** matches the code on the passenger's own screen. Ask them to read it out. It is shown very large on purpose.
 
 ## Approve boarding
 

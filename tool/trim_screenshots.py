@@ -1,39 +1,32 @@
-"""Tidies the pictures in docs/images/ after the screenshot test.
+"""Tidies the pictures that tool/doc_screenshots_test.dart draws in docs/images/.
 
   flutter test tool/doc_screenshots_test.dart --update-goldens
   python3 tool/trim_screenshots.py
 
-1. Cuts the empty white space under each picture.
-2. Cuts the pictures that end in a button just above that button. In the test
-   renderer, button labels set in weight 800 draw as blank boxes, so those
-   pictures stop above the button instead of showing it broken.
+The test draws each small piece on a tall white screen. This cuts the empty
+white space around it, keeping a little margin, so a card is only as tall as
+the card. Only those pictures are touched. The screens taken from the running
+app (passenger-*, conductor-*, admin-* and so on) are left exactly as taken.
 """
-import glob
 import os
 from PIL import Image, ImageChops
 
-# picture name -> y (in pixels) to cut at, measured from the top
-CUT_ABOVE_BUTTON = {
-    "bus-card": 296,
-    "bus-card-delayed": 346,
-    "conductor-rejected": 222,
-    "conductor-already-boarded": 222,
-    "seat-map": 900,
-}
+PIECES = [
+    "bus-card", "bus-card-delayed", "my-trips-card", "seat-map",
+    "conductor-verified", "conductor-already-boarded", "conductor-rejected",
+    "delay-dialog", "refund-progress", "status-chips", "trip-form-steps",
+    "payment-states", "splash", "splash-slow", "startup-failed",
+]
+MARGIN = 24  # pixels, at three times the sharpness
 
-# picture name -> y to start at (dialogs are centred in a tall empty screen)
-CUT_FROM_TOP = {"delay-dialog": 285}
-
-for path in sorted(glob.glob("docs/images/*.png")):
-    name = os.path.splitext(os.path.basename(path))[0]
+for name in PIECES:
+    path = f"docs/images/{name}.png"
+    if not os.path.exists(path):
+        continue
     im = Image.open(path).convert("RGB")
-    bottom = im.height
-    if name in CUT_ABOVE_BUTTON:
-        bottom = min(bottom, CUT_ABOVE_BUTTON[name])
-    else:
-        bg = Image.new("RGB", im.size, (255, 255, 255))
-        box = ImageChops.difference(im, bg).getbbox()
-        if box:
-            bottom = min(bottom, box[3] + 16)
-    top = CUT_FROM_TOP.get(name, 0)
+    box = ImageChops.difference(im, Image.new("RGB", im.size, (255, 255, 255))).getbbox()
+    if not box:
+        continue
+    top = max(0, box[1] - MARGIN)
+    bottom = min(im.height, box[3] + MARGIN)
     im.crop((0, top, im.width, bottom)).save(path, optimize=True)

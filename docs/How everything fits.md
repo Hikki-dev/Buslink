@@ -74,7 +74,7 @@ Conductors can also create **offline bookings** (`createOfflineBooking`) for wal
 
 1. The conductor scans the QR code or types the ticket code. `TripController.verifyTicket` reads `tickets/{id}`. It returns nothing if the ticket is missing or cancelled.
 2. The dashboard refuses a ticket whose trip left more than 12 hours ago, and a ticket that already has `boardedAt` ("Already boarded", with the time).
-3. Otherwise it shows the ticket: passenger, seats, the 4-digit code and the seat map.
+3. Otherwise it shows the ticket: passenger, seats, the 4-character code and the seat map.
 4. **Approve Boarding** calls `TripController.approveBoarding`, which calls `FirestoreService.recordBoarding`. That runs one **Firestore transaction**: read the ticket, ask `decideBoarding` (a small pure function in `lib/models/boarding_result.dart`) whether it may board, and if yes write `boardedAt` and `boardedBy`.
 5. Because the read and the write are one transaction, two conductors approving at once cannot both succeed: the second sees `boardedAt` and gets "Already boarded".
 6. If the write fails (for example no connection), the card stays open and says so. Nothing is shown as boarded unless it was saved.
