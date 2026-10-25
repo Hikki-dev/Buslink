@@ -10,6 +10,7 @@ import '../../services/location_service.dart';
 import '../../utils/location_permission_helper.dart';
 
 import '../booking/seat_selection_screen.dart';
+import '../../utils/text_utils.dart';
 
 class ConductorTripManagementScreen extends StatefulWidget {
   final EnrichedTrip trip;
@@ -120,7 +121,7 @@ class _ConductorTripManagementScreenState
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                              "TRIP T${currentTrip.id.substring(0, 4).toUpperCase()}",
+                              "TRIP T${firstChars(currentTrip.id, 4).toUpperCase()}",
                               style: TextStyle(
                                   fontFamily: 'Outfit',
                                   color: isDark

@@ -26,6 +26,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 // import '../../views/home/home_screen.dart'; // Unused
 import '../customer_main_screen.dart';
+import '../../utils/text_utils.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
   const PaymentSuccessScreen({super.key});
@@ -355,7 +356,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                                       pw.MainAxisAlignment.spaceBetween,
                                   children: [
                                     pw.Text(
-                                        "Ticket Code: ${ticket.shortId ?? ticket.ticketId.substring(0, 8).toUpperCase()}",
+                                        "Ticket Code: ${ticket.shortId ?? firstChars(ticket.ticketId, 8).toUpperCase()}",
                                         style: pw.TextStyle(
                                             fontWeight: pw.FontWeight.bold,
                                             fontSize: 18)),
@@ -779,7 +780,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                 const SizedBox(height: 10),
                 _qr(t, 112),
                 const SizedBox(height: 4),
-                Text('E-TICKET · ${t.shortId ?? t.ticketId.substring(0, 8)}',
+                Text('E-TICKET · ${t.shortId ?? firstChars(t.ticketId, 8)}',
                     style: const TextStyle(fontSize: 14, color: BL.muted)),
                 const SizedBox(height: 10),
                 Container(

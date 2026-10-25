@@ -19,6 +19,7 @@ import 'package:intl/intl.dart';
 import '../widgets/bl_widgets.dart';
 import '../../utils/bl_colors.dart';
 import '../home/home_sections.dart' show cityPhoto;
+import '../../utils/text_utils.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
   final EnrichedTrip trip;
@@ -414,7 +415,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                               content: Text(
-                                  "Ticket Issued! ID: ${ticket.ticketId.substring(0, 5)}... SMS Sending...")));
+                                  "Ticket Issued! ID: ${firstChars(ticket.ticketId, 5)}... SMS Sending...")));
 
                           await SmsService.sendTicketCopy(ticket);
 

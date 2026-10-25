@@ -6,6 +6,7 @@ import '../../utils/bl_colors.dart';
 import '../customer_main_screen.dart';
 import '../support/support_screen.dart';
 import '../widgets/bl_widgets.dart';
+import '../../utils/text_utils.dart';
 
 class RefundStatusScreen extends StatelessWidget {
   final String refundId;
@@ -190,7 +191,7 @@ class _Body extends StatelessWidget {
                                 'If you think this is a mistake, contact support and quote your ticket ID '),
                         TextSpan(
                             text: refund.ticketId.length > 8
-                                ? refund.ticketId.substring(0, 8)
+                                ? firstChars(refund.ticketId, 8)
                                 : refund.ticketId,
                             style: const TextStyle(
                                 fontWeight: FontWeight.w700, color: BL.ink)),

@@ -129,6 +129,12 @@ While the app opens, a short scene plays: a bus drives from Colombo through Kand
 
 Choose English, Sinhala or Tamil with the three buttons at the top. Sign in with email, with Google, or with a phone number: you type your number, and a six-digit code arrives by text. **Sign Up** makes a new account. A new account is always a passenger. Nobody can pick a higher role for themselves.
 
+<p align="center">
+<a href="docs/images/passenger-1-code-phone.png"><img src="docs/images/passenger-1-code-phone.png" alt="Verify Phone on a phone: six empty boxes for the code, a Verify button and a Resend timer" width="31%"></a>
+<a href="docs/images/passenger-1-code-filled-phone.png"><img src="docs/images/passenger-1-code-filled-phone.png" alt="Verify Phone with the six digits typed in" width="31%"></a>
+</p>
+
+
 #### 2. Find a bus
 
 <p align="center"><a href="docs/images/passenger-2-search.jpg"><img src="docs/images/passenger-2-search.jpg" alt="The home page: a photo of the tea hills, the search card with Leaving from, Going to and Day of travel, and Your Favorites below" width="100%"></a></p>
@@ -140,6 +146,8 @@ Choose English, Sinhala or Tamil with the three buttons at the top. Sign in with
 Choose where from, where to and the day, then press **Search Buses**. The little arrows swap the two cities. Tick **Bulk booking** to book several days in one go. Below the search, your favourite routes and your next trips are one tap away.
 
 **Booking several days at once.** Tick **Bulk booking**, press the box that now says "days chosen", and tap each day you travel. Press **Search Buses**, choose a bus, and say how many people are travelling each day. A summary lists every date, the price per ticket and the total before you pay once. Each day gets its own ticket.
+
+<p align="center"><a href="docs/images/bulk-1-search.jpg"><img src="docs/images/bulk-1-search.jpg" alt="The search card with Bulk booking ticked and a box that says how many days are chosen" width="100%"></a></p>
 
 <p align="center"><a href="docs/images/bulk-2-dates.jpg"><img src="docs/images/bulk-2-dates.jpg" alt="Choosing several days on a calendar: three days are selected" width="100%"></a></p>
 
@@ -261,6 +269,8 @@ Every ticket is one card with one big **View ticket** button. Before the first b
 
 Press **Refund**, read how much you get back (the earlier you cancel, the more), choose a reason and send it. A three-step line then shows where it is: Sent, In review, then Approved or Rejected.
 
+<p align="center"><a href="docs/images/passenger-11-refund-reasons.png"><img src="docs/images/passenger-11-refund-reasons.png" alt="The list of reasons: change of plans, personal emergency, the trip was delayed, cancelled by the operator, booking mistake, seat or bus problem, something else" width="100%"></a></p>
+
 <img src="docs/images/refund-progress.png" alt="Refund progress shown as Sent, In review and Decision, in three states" width="360">
 
 #### 12. Your travel numbers
@@ -338,13 +348,19 @@ Approving saves the time and the conductor on the ticket. If there is no signal,
 
 #### 18. Once only
 
-<p align="center"><a href="docs/images/conductor-3-boarded.png"><img src="docs/images/conductor-3-boarded.png" alt="After approving: back at the conductor's home, ready for the next passenger" width="100%"></a></p>
+<p align="center"><a href="docs/images/conductor-3-boarded.png"><img src="docs/images/conductor-3-boarded.png" alt="After approving: back at the conductor's home with an empty code box, ready for the next passenger" width="100%"></a></p>
 
 <p align="center">
 <a href="docs/images/conductor-3-boarded-phone.png"><img src="docs/images/conductor-3-boarded-phone.png" alt="Back at the conductor's home on a phone" width="31%"></a>
 </p>
 
 A ticket boards once. If someone shows the same ticket again, even to a different conductor a moment later, the conductor sees this instead:
+
+<p align="center"><a href="docs/images/conductor-3-already-boarded.png"><img src="docs/images/conductor-3-already-boarded.png" alt="Already boarded: this ticket was already checked in, each ticket can board only once" width="100%"></a></p>
+
+<p align="center">
+<a href="docs/images/conductor-3-already-boarded-phone.png"><img src="docs/images/conductor-3-already-boarded-phone.png" alt="Already boarded on a phone" width="31%"></a>
+</p>
 
 <img src="docs/images/conductor-already-boarded.png" alt="Already boarded: this ticket was already checked in at 6:31 AM. Each ticket can board only once." width="360">
 
@@ -360,6 +376,14 @@ The check and the stamp happen together on the server, and the database rules en
 </p>
 
 Choose where from, where to and the day, then pick the trip. If the bus is late, press the delay button and choose 15, 30, 45, 60 or 90 minutes, or type your own. Passengers with a ticket are told straight away, and their bus card says "Running 30 minutes late".
+
+Open a trip to change its status with four big buttons: **Departed**, **On Way**, **Arrived** and **Delayed**. **Issue Cash Ticket** books a walk-up passenger who has no app.
+
+<p align="center"><a href="docs/images/conductor-5-update-status.png"><img src="docs/images/conductor-5-update-status.png" alt="Update Status: the trip, the Issue Cash Ticket button, and the Departed, On Way, Arrived and Delayed buttons" width="100%"></a></p>
+
+<p align="center">
+<a href="docs/images/conductor-5-update-status-phone.png"><img src="docs/images/conductor-5-update-status-phone.png" alt="Update Status on a phone" width="31%"></a>
+</p>
 
 <img src="docs/images/delay-dialog.png" alt="Report Delay dialog with quick minute choices" width="300">
 

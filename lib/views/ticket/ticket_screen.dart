@@ -20,6 +20,7 @@ import '../home/home_sections.dart' show cityPhoto;
 import '../../services/notification_service.dart'; // Added
 import '../tracking/track_bus_screen.dart'; // Added
 import '../profile/feedback_dialog.dart';
+import '../../utils/text_utils.dart';
 // Added
 
 // import '../home/home_screen.dart'; // Unused
@@ -76,7 +77,7 @@ class _TicketScreenState extends State<TicketScreen> {
     final ticket = tickets[_index.clamp(0, tickets.length - 1)];
     final isDesktop = MediaQuery.of(context).size.width > 900;
     final live = trip.status != 'completed' && trip.status != 'cancelled';
-    final code = ticket.shortId ?? ticket.ticketId.substring(0, 4);
+    final code = ticket.shortId ?? firstChars(ticket.ticketId, 4);
 
     Widget row(String l, String v) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
@@ -456,7 +457,7 @@ class _TicketScreenState extends State<TicketScreen> {
                       ],
                       data: tickets
                           .map((t) => [
-                                t.ticketId.substring(0, 8).toUpperCase(),
+                                firstChars(t.ticketId, 8).toUpperCase(),
                                 t.passengerName,
                                 t.passengerPhone,
                                 t.seatNumbers.join(','),

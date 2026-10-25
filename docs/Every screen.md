@@ -2,7 +2,7 @@
 
 One table for every design board, with the finished screen beside it. Use it to find a screen by the name it has in the design, or to see how a design turned out.
 
-Each picture is the real app, taken from the running web version at twice the usual sharpness (the small pieces at three times). Click a picture to see it full size. A dash means the screen cannot be reached on a computer without something real, such as the text message that carries a sign-in code, and the step is explained in the guide instead.
+Each picture is the real app, taken from the running web version at twice the usual sharpness (the small pieces at three times). Click a picture to see it full size. Every screen now has a picture. (The sign-in code screen was reached with the test Firebase, which hands out its codes without sending a text.)
 
 ## On this page
 
@@ -29,7 +29,7 @@ Each picture is the real app, taken from the running web version at twice the us
 | Login, Desktop-Login | Sign in | <a href="images/passenger-1-sign-in-phone.png"><img src="images/passenger-1-sign-in-phone.png" alt="Sign in" width="150"></a> | <a href="images/passenger-1-sign-in.jpg"><img src="images/passenger-1-sign-in.jpg" alt="Sign in" width="150"></a> |
 | SignUp | Make an account | <a href="images/passenger-1-sign-up-phone.png"><img src="images/passenger-1-sign-up-phone.png" alt="Make an account" width="150"></a> | <a href="images/passenger-1-sign-up.jpg"><img src="images/passenger-1-sign-up.jpg" alt="Make an account" width="150"></a> |
 | PhoneLogin | Sign in with a phone number | <a href="images/passenger-1-phone-phone.png"><img src="images/passenger-1-phone-phone.png" alt="Sign in with a phone number" width="150"></a> | <a href="images/passenger-1-phone.png"><img src="images/passenger-1-phone.png" alt="Sign in with a phone number" width="150"></a> |
-| Otp | Type the six-digit code that was texted | - | - |
+| Otp | Type the six-digit code that was texted | <a href="images/passenger-1-code-filled-phone.png"><img src="images/passenger-1-code-filled-phone.png" alt="Type the six-digit code" width="150"></a> | <a href="images/passenger-1-code-filled.png"><img src="images/passenger-1-code-filled.png" alt="Type the six-digit code" width="150"></a> |
 
 ## Finding and booking a bus
 
@@ -80,6 +80,7 @@ Each picture is the real app, taken from the running web version at twice the us
 | ConductorVerify | A valid ticket | <a href="images/conductor-2-verified-phone.png"><img src="images/conductor-2-verified-phone.png" alt="A valid ticket" width="150"></a> | <a href="images/conductor-2-verified.png"><img src="images/conductor-2-verified.png" alt="A valid ticket" width="150"></a> |
 | ConductorVerify (rejected) | A ticket that is not accepted | <a href="images/conductor-rejected.png"><img src="images/conductor-rejected.png" alt="A ticket that is not accepted" width="150"></a> | - |
 | ConductorStatus | Find a trip and change its status | <a href="images/conductor-4-find-trips-phone.png"><img src="images/conductor-4-find-trips-phone.png" alt="Find a trip and change its status" width="150"></a> | <a href="images/conductor-4-results.png"><img src="images/conductor-4-results.png" alt="Find a trip and change its status" width="150"></a> |
+| ConductorStatus (trip) | Change a trip\'s status and issue a cash ticket | <a href="images/conductor-5-update-status-phone.png"><img src="images/conductor-5-update-status-phone.png" alt="Update Status" width="150"></a> | <a href="images/conductor-5-update-status.png"><img src="images/conductor-5-update-status.png" alt="Update Status" width="150"></a> |
 | ConductorDelay | Report a delay | <a href="images/delay-dialog.png"><img src="images/delay-dialog.png" alt="Report a delay" width="150"></a> | - |
 
 ## Admin

@@ -105,7 +105,7 @@ python3 finish.py ../../docs/images
 **Small pieces.** The bus card, the seat map, the conductor's answers, the refund steps and the like are drawn by the real widgets, with the app's own fonts at three times the sharpness:
 
 ```bash
-flutter test tool/doc_screenshots_test.dart --update-goldens
+flutter test tool/doc_screenshots_test.dart
 python3 tool/trim_screenshots.py
 python3 tool/make_story_images.py
 ```

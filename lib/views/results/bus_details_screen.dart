@@ -149,58 +149,57 @@ class BusDetailsScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: blCard(16),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  stat(
-                                      'Depart',
-                                      time.format(trip.departureTime),
-                                      trip.fromCity,
-                                      CrossAxisAlignment.start),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 6),
-                                    child: Column(children: [
-                                      Text(
-                                          busDuration(trip.arrivalTime
-                                              .difference(trip.departureTime)),
-                                          style: const TextStyle(
-                                              fontSize: 14, color: BL.muted)),
-                                      const SizedBox(height: 4),
-                                      Container(
-                                          width: 44,
-                                          height: 2,
-                                          color: BL.border),
-                                    ]),
-                                  ),
-                                  Flexible(
-                                    child: stat(
-                                        'Arrive',
-                                        time.format(trip.arrivalTime),
-                                        trip.toCity,
-                                        CrossAxisAlignment.end),
-                                  ),
-                                  if (trip.platformNumber.isNotEmpty)
-                                    Flexible(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text('Platform',
-                                              style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: BL.muted)),
-                                          Text(trip.platformNumber,
-                                              style: const TextStyle(
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: BL.crimson)),
-                                        ],
-                                      ),
+                              child: Column(children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    stat(
+                                        'Depart',
+                                        time.format(trip.departureTime),
+                                        trip.fromCity,
+                                        CrossAxisAlignment.start),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Column(children: [
+                                        Text(
+                                            busDuration(trip.arrivalTime
+                                                .difference(
+                                                    trip.departureTime)),
+                                            style: const TextStyle(
+                                                fontSize: 14, color: BL.muted)),
+                                        const SizedBox(height: 4),
+                                        Container(
+                                            width: 44,
+                                            height: 2,
+                                            color: BL.border),
+                                      ]),
                                     ),
+                                    Flexible(
+                                      child: stat(
+                                          'Arrive',
+                                          time.format(trip.arrivalTime),
+                                          trip.toCity,
+                                          CrossAxisAlignment.end),
+                                    ),
+                                  ],
+                                ),
+                                if (trip.platformNumber.isNotEmpty) ...[
+                                  const Divider(height: 24, color: BL.hairline),
+                                  Row(children: [
+                                    const Text('Platform',
+                                        style: TextStyle(
+                                            fontSize: 14, color: BL.muted)),
+                                    const SizedBox(width: 10),
+                                    Text(trip.platformNumber,
+                                        style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w800,
+                                            color: BL.crimson)),
+                                  ]),
                                 ],
-                              ),
+                              ]),
                             ),
                             if (trip.amenities.isNotEmpty) ...[
                               const SizedBox(height: 18),

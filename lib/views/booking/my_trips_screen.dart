@@ -18,6 +18,7 @@ import '../layout/app_footer.dart';
 import '../analytics/travel_stats_screen.dart';
 import 'refund_request_screen.dart';
 import 'package:buslink/l10n/app_localizations.dart';
+import '../../utils/text_utils.dart';
 
 enum TripFilter { upcoming, completed, cancelled, delayed }
 
@@ -707,8 +708,7 @@ class _Detail extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                        'Ticket ID: ${t.shortId ?? t.ticketId.substring(0, 8)}',
+                    Text('Ticket ID: ${t.shortId ?? firstChars(t.ticketId, 8)}',
                         style: const TextStyle(fontSize: 15, color: BL.muted)),
                   ],
                 ),

@@ -4,6 +4,11 @@ What changed in each step, newest first. Each heading names the pull request it 
 
 ## 25 October 2026
 
+* **The conductor's code box empties after a boarding.** It kept the old code, so the next code typed was glued onto it ("K7M2K7M2") and said "Ticket not found". It now clears once a ticket is approved or found already boarded.
+* **Update Status no longer crashes on a short trip id.** Seven places cut the first few letters of an id with `substring`, which throws on a shorter id; they now use one safe helper (`firstChars`).
+* **Bus details:** the platform has its own line, so "Arrive 06:45 PM" no longer breaks onto two lines on a phone.
+* **The last missing picture** is in: the six-digit sign-in code screen, taken from the test Firebase (which hands out its codes without sending a text). The README also shows the real "Already boarded" answer from clicking through the app, the update-status page and the list of refund reasons.
+
 * **Bulk booking summary** showed "Passengers 40" (a fixed default bus size) instead of how many people you chose. It now shows your number.
 * The last pictures were added to the README, [Every screen](docs/Every%20screen.md) and the guides: choosing several days, the bulk summary, a booking's details and Booking Confirmed. Only the screen that asks for the text-message sign-in code is still missing, because it needs a real message.
 
