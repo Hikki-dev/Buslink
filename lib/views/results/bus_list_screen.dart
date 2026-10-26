@@ -361,7 +361,7 @@ class _BusListScreenState extends State<BusListScreen> {
             child: Row(
               children: [
                 Icon(value ? Icons.check_box : Icons.check_box_outline_blank,
-                    size: 26, color: value ? BL.crimson : BL.muted),
+                    size: 26, color: value ? BL.link : BL.muted),
                 const SizedBox(width: 12),
                 Expanded(
                     child: Text(label, style: const TextStyle(fontSize: 17))),

@@ -259,7 +259,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.asset(cityPhoto(trip.destinationCity),
-                width: 64, height: 64, fit: BoxFit.cover),
+                width: 64, height: 64, cacheWidth: 192, fit: BoxFit.cover),
           ),
           const SizedBox(width: 14),
           Expanded(

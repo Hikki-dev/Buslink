@@ -246,7 +246,7 @@ class _SupportScreenState extends State<SupportScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x1A660708), blurRadius: 24, offset: Offset(0, 6))
+                color: Color(0x1A660708), blurRadius: 12, offset: Offset(0, 6))
           ],
         ),
         child: Column(

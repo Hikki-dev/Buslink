@@ -48,7 +48,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
             padding: const EdgeInsets.symmetric(horizontal: 22),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: on ? BL.crimson : Colors.white,
+              color: on ? BL.crimson : BL.surface,
               borderRadius: BorderRadius.circular(24),
               border:
                   Border.all(color: on ? BL.crimson : BL.border, width: 1.5),

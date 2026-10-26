@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../utils/bl_colors.dart';
 import 'package:intl/intl.dart';
 import '../../../models/trip_view_model.dart';
-import '../../../utils/app_theme.dart';
 import 'package:buslink/l10n/app_localizations.dart';
 
 class OngoingTripCard extends StatelessWidget {
@@ -32,7 +32,7 @@ class OngoingTripCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
+            blurRadius: 12,
             offset: const Offset(0, 8),
           ),
         ],
@@ -192,7 +192,7 @@ class OngoingTripCard extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryColor)),
+                          color: BL.link)),
                 ],
               ),
             ],

@@ -51,7 +51,7 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
                     icon: Icon(
                         on ? Icons.star_rounded : Icons.star_outline_rounded,
                         size: 40,
-                        color: on ? BL.crimson : const Color(0xFFB5ABAC)),
+                        color: on ? BL.link : const Color(0xFFB5ABAC)),
                   );
                 }),
               ),
@@ -93,7 +93,7 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
                               ? Icons.check_box
                               : Icons.check_box_outline_blank,
                           size: 26,
-                          color: _anonymous ? BL.crimson : BL.muted),
+                          color: _anonymous ? BL.link : BL.muted),
                       const SizedBox(width: 10),
                       const Text('Send as Anonymous',
                           style: TextStyle(fontSize: 17)),

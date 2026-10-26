@@ -568,7 +568,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
                   fontSize: 17,
                   fontWeight: FontWeight.w800))
           : OutlinedButton.styleFrom(
-              foregroundColor: border == BL.crimson ? BL.crimson : BL.ink,
+              foregroundColor: border == BL.link ? BL.link : BL.ink,
               side: BorderSide(color: border ?? BL.border, width: 2),
               minimumSize: const Size(0, 56),
               padding: const EdgeInsets.symmetric(horizontal: 26),

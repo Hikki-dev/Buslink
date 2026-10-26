@@ -243,8 +243,8 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              border: Border.all(
-                  color: widget.isDark ? Colors.white24 : Colors.black12),
+              border:
+                  Border.all(color: BL.dark ? Colors.white24 : Colors.black12),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Column(
@@ -255,7 +255,7 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
                 Text("Exit",
                     style: TextStyle(
                         fontSize: 12,
-                        color: widget.isDark ? Colors.white70 : Colors.black54,
+                        color: BL.dark ? Colors.white70 : Colors.black54,
                         fontWeight: FontWeight.bold)),
               ],
             ),

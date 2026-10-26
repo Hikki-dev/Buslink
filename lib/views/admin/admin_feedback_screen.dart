@@ -51,7 +51,7 @@ class _FeedbackBodyState extends State<_FeedbackBody> {
         children: [
           for (var i = 1; i <= 5; i++)
             Icon(i <= n ? Icons.star_rounded : Icons.star_outline_rounded,
-                size: 24, color: i <= n ? BL.crimson : const Color(0xFFB5ABAC)),
+                size: 24, color: i <= n ? BL.link : const Color(0xFFB5ABAC)),
         ],
       );
 

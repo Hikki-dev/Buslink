@@ -151,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 48,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: on ? BL.crimson : Colors.white,
+                color: on ? BL.crimson : BL.surface,
                 borderRadius: BorderRadius.circular(24),
                 border:
                     Border.all(color: on ? BL.crimson : BL.border, width: 1.5),

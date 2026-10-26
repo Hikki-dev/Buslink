@@ -540,7 +540,8 @@ class _ListTile extends StatelessWidget {
                           ])
                         : const ColorFilter.mode(
                             Colors.transparent, BlendMode.dst),
-                    child: Image.asset(cityPhoto(_toOf(t)), fit: BoxFit.cover),
+                    child: Image.asset(cityPhoto(_toOf(t)),
+                        cacheWidth: 400, fit: BoxFit.cover),
                   ),
                 ),
               ),
@@ -751,8 +752,7 @@ _Chip _chip(Ticket t, DateTime dep, {Map<String, dynamic>? live}) {
     return _Chip('Completed', BL.fill, BL.inkSoft, Icons.check, done: true);
   }
   if (raw == 'started' || raw == 'departed') {
-    return _Chip(
-        'Active', Color(0xFFDDF1E3), BL.successInk, Icons.directions_bus);
+    return _Chip('Active', BL.successTint, BL.successInk, Icons.directions_bus);
   }
   if (dep.isBefore(DateTime.now())) {
     return _Chip('Completed', BL.fill, BL.inkSoft, Icons.check, done: true);
@@ -935,6 +935,7 @@ class BoardingPassCard extends StatelessWidget {
             height: 88,
             width: double.infinity,
             child: Image.asset(cityPhoto(to),
+                cacheWidth: 800,
                 fit: BoxFit.cover,
                 alignment: const Alignment(0, -0.4),
                 semanticLabel: to),
@@ -1003,7 +1004,9 @@ class _BulkBoardingPassCard extends StatelessWidget {
             height: 88,
             width: double.infinity,
             child: Image.asset(cityPhoto(_toOf(first)),
-                fit: BoxFit.cover, alignment: const Alignment(0, -0.4)),
+                cacheWidth: 800,
+                fit: BoxFit.cover,
+                alignment: const Alignment(0, -0.4)),
           ),
           Padding(
             padding: const EdgeInsets.all(16),

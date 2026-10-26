@@ -6,7 +6,6 @@ import '../../../utils/bl_colors.dart';
 import '../../widgets/bl_widgets.dart';
 import 'package:intl/intl.dart';
 import '../../../models/refund_model.dart';
-import '../../../utils/app_theme.dart';
 
 import 'admin_refund_details.dart';
 
@@ -46,7 +45,7 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 22),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: on ? BL.crimson : Colors.white,
+              color: on ? BL.crimson : BL.surface,
               borderRadius: BorderRadius.circular(24),
               border:
                   Border.all(color: on ? BL.crimson : BL.border, width: 1.5),
@@ -302,9 +301,8 @@ class _AdminRefundListScreenState extends State<AdminRefundListScreen> {
                         const SizedBox(height: 4),
                         Text(
                             "${"Refund Amount"}: LKR ${refund.refundAmount.toStringAsFixed(2)}",
-                            style: const TextStyle(
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.bold)),
+                            style: TextStyle(
+                                color: BL.link, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         Text("${"Reason"}: ${_getDisplayReason(refund)}",
                             style: const TextStyle(fontSize: 13)),

@@ -84,7 +84,7 @@ class BookingSteps extends StatelessWidget {
                       fontSize: 17,
                       fontWeight:
                           i == current ? FontWeight.w700 : FontWeight.w400,
-                      color: i == current ? BL.crimson : BL.muted)),
+                      color: i == current ? BL.link : BL.muted)),
             ],
           ),
       ],

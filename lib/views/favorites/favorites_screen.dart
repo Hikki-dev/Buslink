@@ -169,7 +169,9 @@ class _FavCard extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Image.asset(cityPhoto(to),
-              fit: BoxFit.cover, alignment: const Alignment(0, -0.4)),
+              cacheWidth: 800,
+              fit: BoxFit.cover,
+              alignment: const Alignment(0, -0.4)),
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -236,7 +238,7 @@ class _FavCard extends StatelessWidget {
                     onPressed: onBook,
                     style: FilledButton.styleFrom(
                       backgroundColor: BL.surface,
-                      foregroundColor: BL.crimson,
+                      foregroundColor: BL.link,
                       padding: const EdgeInsets.symmetric(horizontal: 18),
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(

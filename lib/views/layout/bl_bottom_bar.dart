@@ -53,7 +53,7 @@ class _Item extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? BL.crimson : BL.muted;
+    final color = selected ? BL.link : BL.muted;
     return Semantics(
       button: true,
       selected: selected,

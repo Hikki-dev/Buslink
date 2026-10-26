@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import '../../../utils/app_theme.dart';
 import '../../../utils/bl_colors.dart';
 import '../../widgets/bl_widgets.dart';
 
@@ -587,10 +586,10 @@ class _AdminBookingListScreenState extends State<AdminBookingListScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text("LKR ${data['totalAmount'] ?? data['price'] ?? 0}",
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
-                          color: AppTheme.primaryColor)),
+                          color: BL.link)),
                   const SizedBox(height: 4),
                   StatusChip(
                       statusNorm == 'confirmed' && data['boardedAt'] != null
