@@ -119,29 +119,32 @@ It starts with someone who wants to get from Colombo to Kandy.
 
 <p align="center"><a href="docs/images/passenger-1-sign-in.jpg"><img src="docs/images/passenger-1-sign-in.jpg" alt="The sign-in page: three language buttons, email and password boxes, Continue with Google and Log in with phone number, beside a photo of the Nine Arches Bridge" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/passenger-1-sign-in-phone.png"><img src="docs/images/passenger-1-sign-in-phone.png" alt="The sign-in page on a phone" width="31%"></a>
-<a href="docs/images/passenger-1-sign-up-phone.png"><img src="docs/images/passenger-1-sign-up-phone.png" alt="The sign-up page on a phone" width="31%"></a>
-<a href="docs/images/passenger-1-phone-phone.png"><img src="docs/images/passenger-1-phone-phone.png" alt="Phone login on a phone: enter a phone number and press Send Code" width="31%"></a>
-</p>
-
 While the app opens, a short scene plays: a bus drives from Colombo through Kandy to Ella, and a line says what is happening (more in [Starting up](docs/Starting%20up.md)).
 
 Choose English, Sinhala or Tamil with the three buttons at the top. Sign in with email, with Google, or with a phone number: you type your number, and a six-digit code arrives by text. **Sign Up** makes a new account. A new account is always a passenger. Nobody can pick a higher role for themselves.
 
-<p align="center">
-<a href="docs/images/passenger-1-code-phone.png"><img src="docs/images/passenger-1-code-phone.png" alt="Verify Phone on a phone: six empty boxes for the code, a Verify button and a Resend timer" width="31%"></a>
-<a href="docs/images/passenger-1-code-filled-phone.png"><img src="docs/images/passenger-1-code-filled-phone.png" alt="Verify Phone with the six digits typed in" width="31%"></a>
-</p>
+**On a phone: steps The sign-in page to Verify Phone with the six digits typed in.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
 
+<table>
+<tr>
+<td valign="top"><a href="docs/images/passenger-1-sign-in-phone.png"><img src="docs/images/passenger-1-sign-in-phone.png" alt="The sign-in page on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-1-sign-up-phone.png"><img src="docs/images/passenger-1-sign-up-phone.png" alt="The sign-up page on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-1-phone-phone.png"><img src="docs/images/passenger-1-phone-phone.png" alt="Phone login on a phone: enter a phone number and press Send Code" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-1-code-phone.png"><img src="docs/images/passenger-1-code-phone.png" alt="Verify Phone on a phone: six empty boxes for the code, a Verify button and a Resend timer" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-1-code-filled-phone.png"><img src="docs/images/passenger-1-code-filled-phone.png" alt="Verify Phone with the six digits typed in" width="145"></a></td>
+</tr>
+<tr>
+<td align="center" valign="top"><b>1</b><br><sub>The sign-in page</sub></td>
+<td align="center" valign="top"><b>2</b><br><sub>The sign-up page</sub></td>
+<td align="center" valign="top"><b>3</b><br><sub>Phone login</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>Verify Phone</sub></td>
+<td align="center" valign="top"><b>5</b><br><sub>Verify Phone with the six digits typed in</sub></td>
+</tr>
+</table>
 
 #### 2. Find a bus
 
 <p align="center"><a href="docs/images/passenger-2-search.jpg"><img src="docs/images/passenger-2-search.jpg" alt="The home page: a photo of the tea hills, the search card with Leaving from, Going to and Day of travel, and Your Favorites below" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/passenger-2-search-phone.png"><img src="docs/images/passenger-2-search-phone.png" alt="The home page on a phone, with the search card and the favourite routes" width="31%"></a>
-</p>
 
 Choose where from, where to and the day, then press **Search Buses**. The little arrows swap the two cities. Tick **Bulk booking** to book several days in one go. Below the search, your favourite routes and your next trips are one tap away.
 
@@ -151,29 +154,34 @@ Choose where from, where to and the day, then press **Search Buses**. The little
 
 <p align="center"><a href="docs/images/bulk-2-dates.jpg"><img src="docs/images/bulk-2-dates.jpg" alt="Choosing several days on a calendar: three days are selected" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/bulk-2-dates-phone.png"><img src="docs/images/bulk-2-dates-phone.png" alt="The calendar on a phone" width="31%"></a>
-<a href="docs/images/bulk-3-passengers-phone.png"><img src="docs/images/bulk-3-passengers-phone.png" alt="Choosing how many people travel each day, with the total price" width="31%"></a>
-<a href="docs/images/bulk-4-summary-phone.png"><img src="docs/images/bulk-4-summary-phone.png" alt="The bulk booking summary: the dates, the price per ticket, the number of passengers and the total" width="31%"></a>
-</p>
-
 #### 3. Your favourite routes
 
 <p align="center"><a href="docs/images/passenger-3-favourites.png"><img src="docs/images/passenger-3-favourites.png" alt="My favourites: a card for each saved route with a Book again button" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/passenger-3-favourites-phone.png"><img src="docs/images/passenger-3-favourites-phone.png" alt="My favourites on a phone" width="31%"></a>
-</p>
-
 Press the heart on any trip to keep the route. **Book again** fills in the search for you.
+
+**On a phone: steps The home page to My favourites.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+
+<table>
+<tr>
+<td valign="top"><a href="docs/images/passenger-2-search-phone.png"><img src="docs/images/passenger-2-search-phone.png" alt="The home page on a phone, with the search card and the favourite routes" width="145"></a></td>
+<td valign="top"><a href="docs/images/bulk-2-dates-phone.png"><img src="docs/images/bulk-2-dates-phone.png" alt="The calendar on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/bulk-3-passengers-phone.png"><img src="docs/images/bulk-3-passengers-phone.png" alt="Choosing how many people travel each day, with the total price" width="145"></a></td>
+<td valign="top"><a href="docs/images/bulk-4-summary-phone.png"><img src="docs/images/bulk-4-summary-phone.png" alt="The bulk booking summary: the dates, the price per ticket, the number of passengers and the total" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-3-favourites-phone.png"><img src="docs/images/passenger-3-favourites-phone.png" alt="My favourites on a phone" width="145"></a></td>
+</tr>
+<tr>
+<td align="center" valign="top"><b>1</b><br><sub>The home page</sub></td>
+<td align="center" valign="top"><b>2</b><br><sub>The calendar</sub></td>
+<td align="center" valign="top"><b>3</b><br><sub>Choosing how many people travel each day</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>The bulk booking summary</sub></td>
+<td align="center" valign="top"><b>5</b><br><sub>My favourites</sub></td>
+</tr>
+</table>
 
 #### 4. Choose a bus
 
 <p align="center"><a href="docs/images/passenger-4-results.png"><img src="docs/images/passenger-4-results.png" alt="Search results: the filters on the left and one bus card with its times, price, seats left and a Book Now button" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/passenger-4-results-phone.png"><img src="docs/images/passenger-4-results-phone.png" alt="Search results on a phone" width="31%"></a>
-</p>
 
 Each result is one card: who runs the bus, the times in plain 12-hour format, how long it takes and how many seats are left. The filters narrow the list by time of day and hide full buses. If something is wrong, the card says so in words.
 
@@ -185,20 +193,11 @@ A cancelled or full bus has a grey button that cannot be pressed, and pressing i
 
 <p align="center"><a href="docs/images/passenger-5-bus-details.png"><img src="docs/images/passenger-5-bus-details.png" alt="Bus details: departure, arrival and platform, what is on the bus, and the stops on the way" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/passenger-5-bus-details-phone.png"><img src="docs/images/passenger-5-bus-details-phone.png" alt="Bus details on a phone" width="31%"></a>
-</p>
-
 You see the times, the **platform** when the operator has set one, what is on the bus (air conditioning, WiFi) and every stop on the way. Press **Choose seats** to carry on.
 
 #### 6. Choose your seats
 
 <p align="center"><a href="docs/images/passenger-6-seats-chosen.png"><img src="docs/images/passenger-6-seats-chosen.png" alt="Choosing seats: the seat map with two seats chosen, and a summary with the total price" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/passenger-6-seats-phone.png"><img src="docs/images/passenger-6-seats-phone.png" alt="The seat map on a phone" width="31%"></a>
-<a href="docs/images/passenger-6-seats-chosen-phone.png"><img src="docs/images/passenger-6-seats-chosen-phone.png" alt="Two seats chosen on a phone, with the total at the bottom" width="31%"></a>
-</p>
 
 The seat map is live. Seats someone else has taken are grey with a cross. Your seats show a tick. You can choose up to six. Every seat can be read out by a screen reader ("Seat 9, selected"), and every seat can be chosen with one, too.
 
@@ -210,21 +209,32 @@ When you continue, the seats are checked and reserved together in one step, so t
 
 <p align="center"><a href="docs/images/passenger-7-payment.png"><img src="docs/images/passenger-7-payment.png" alt="Payment: the booking summary on the right and a Proceed to Pay button" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/passenger-7-payment-phone.png"><img src="docs/images/passenger-7-payment-phone.png" alt="Payment on a phone" width="31%"></a>
-</p>
-
 Check the summary, then press **Proceed to Pay**. On the phone a payment sheet opens. On the web you are taken to Stripe's secure page and sent back. Card details go straight to Stripe. If a payment fails or is cancelled, a card says what happened and offers the way on.
 
 <img src="docs/images/payment-states.png" alt="Payment states: processing, paid, cancelled and failed, each with a clear next step" width="360">
 
+**On a phone: steps Search results to Payment.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+
+<table>
+<tr>
+<td valign="top"><a href="docs/images/passenger-4-results-phone.png"><img src="docs/images/passenger-4-results-phone.png" alt="Search results on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-5-bus-details-phone.png"><img src="docs/images/passenger-5-bus-details-phone.png" alt="Bus details on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-6-seats-phone.png"><img src="docs/images/passenger-6-seats-phone.png" alt="The seat map on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-6-seats-chosen-phone.png"><img src="docs/images/passenger-6-seats-chosen-phone.png" alt="Two seats chosen on a phone, with the total at the bottom" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-7-payment-phone.png"><img src="docs/images/passenger-7-payment-phone.png" alt="Payment on a phone" width="145"></a></td>
+</tr>
+<tr>
+<td align="center" valign="top"><b>1</b><br><sub>Search results</sub></td>
+<td align="center" valign="top"><b>2</b><br><sub>Bus details</sub></td>
+<td align="center" valign="top"><b>3</b><br><sub>The seat map</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>Two seats chosen</sub></td>
+<td align="center" valign="top"><b>5</b><br><sub>Payment</sub></td>
+</tr>
+</table>
+
 #### 8. Your ticket
 
 <p align="center"><a href="docs/images/passenger-8-ticket.png"><img src="docs/images/passenger-8-ticket.png" alt="The ticket: a QR code, a 4-character code, the trip, platform, seats and total, with Download PDF and Track bus buttons" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/passenger-8-ticket-phone.png"><img src="docs/images/passenger-8-ticket-phone.png" alt="The ticket on a phone" width="31%"></a>
-</p>
 
 You are shown **Payment Confirmed** and your ticket: a **QR code** for the conductor to scan, and a **4-character code** to read out if scanning does not work. The ticket is also kept in **My Trips**, and can be saved as a PDF.
 
@@ -232,17 +242,9 @@ Straight after paying you land on **Booking Confirmed**, with the same QR code a
 
 <p align="center"><a href="docs/images/passenger-8-confirmed.png"><img src="docs/images/passenger-8-confirmed.png" alt="Booking Confirmed: the trip, the platform, the seats and a QR code with the code beside it" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/passenger-8-confirmed-phone.png"><img src="docs/images/passenger-8-confirmed-phone.png" alt="Booking Confirmed on a phone" width="31%"></a>
-</p>
-
 #### 9. Follow the bus
 
 <p align="center"><a href="docs/images/passenger-9-tracking.jpg"><img src="docs/images/passenger-9-tracking.jpg" alt="Tracking: a map with the bus, a card saying how long is left and the next stop" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/passenger-9-tracking-phone.jpg"><img src="docs/images/passenger-9-tracking-phone.jpg" alt="Tracking on a phone" width="31%"></a>
-</p>
 
 **Track bus** opens a full-screen map. The bus shows as a pulsing dot, using the location the conductor's phone reports for that trip. One card says how long is left, worked out from the timetable plus any delay, and names the next stop. When there is no live location yet, it says so and uses the timetable. Within five minutes of arriving it turns into "Your bus is almost here", with a **Show my ticket** button.
 
@@ -250,22 +252,32 @@ Straight after paying you land on **Booking Confirmed**, with the same QR code a
 
 <p align="center"><a href="docs/images/passenger-10-my-trips.png"><img src="docs/images/passenger-10-my-trips.png" alt="My tickets: a list of trips on the left, and the chosen ticket with its QR code on the right" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/passenger-10-my-trips-phone.png"><img src="docs/images/passenger-10-my-trips-phone.png" alt="My Trips on a phone" width="31%"></a>
-<a href="docs/images/empty-trips-phone.png"><img src="docs/images/empty-trips-phone.png" alt="My Trips for someone with no tickets yet: a friendly message" width="31%"></a>
-</p>
-
 Every ticket is one card with one big **View ticket** button. Before the first booking, a short message says what to do. The tabs sort them into Upcoming, Completed, Cancelled and Delayed. **Track bus** appears only when it is useful: the bus is on its way, is running late, or leaves within three hours. **Refund** is a small link, kept quiet on purpose so it is not pressed by accident.
 
 <img src="docs/images/my-trips-card.png" alt="A trip card with a View button, a Track bus button and a Refund link" width="360">
 
+**On a phone: steps The ticket to My Trips for someone with no tickets yet.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+
+<table>
+<tr>
+<td valign="top"><a href="docs/images/passenger-8-ticket-phone.png"><img src="docs/images/passenger-8-ticket-phone.png" alt="The ticket on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-8-confirmed-phone.png"><img src="docs/images/passenger-8-confirmed-phone.png" alt="Booking Confirmed on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-9-tracking-phone.jpg"><img src="docs/images/passenger-9-tracking-phone.jpg" alt="Tracking on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-10-my-trips-phone.png"><img src="docs/images/passenger-10-my-trips-phone.png" alt="My Trips on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/empty-trips-phone.png"><img src="docs/images/empty-trips-phone.png" alt="My Trips for someone with no tickets yet: a friendly message" width="145"></a></td>
+</tr>
+<tr>
+<td align="center" valign="top"><b>1</b><br><sub>The ticket</sub></td>
+<td align="center" valign="top"><b>2</b><br><sub>Booking Confirmed</sub></td>
+<td align="center" valign="top"><b>3</b><br><sub>Tracking</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>My Trips</sub></td>
+<td align="center" valign="top"><b>5</b><br><sub>My Trips for someone with no tickets yet</sub></td>
+</tr>
+</table>
+
 #### 11. If plans change
 
 <p align="center"><a href="docs/images/passenger-11-refund.png"><img src="docs/images/passenger-11-refund.png" alt="Request a refund: the refund policy, a reason to choose, and how much you receive" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/passenger-11-refund-phone.png"><img src="docs/images/passenger-11-refund-phone.png" alt="Request a refund on a phone" width="31%"></a>
-</p>
 
 Press **Refund**, read how much you get back (the earlier you cancel, the more), choose a reason and send it. A three-step line then shows where it is: Sent, In review, then Approved or Rejected.
 
@@ -277,20 +289,11 @@ Press **Refund**, read how much you get back (the earlier you cancel, the more),
 
 <p align="center"><a href="docs/images/passenger-12-travel-numbers.png"><img src="docs/images/passenger-12-travel-numbers.png" alt="Travel Trends: how many trips are upcoming, arrived, delayed and cancelled, and the total spent" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/passenger-12-travel-numbers-phone.png"><img src="docs/images/passenger-12-travel-numbers-phone.png" alt="Travel Trends on a phone" width="31%"></a>
-</p>
-
 A friendly summary of your trips: how many are coming up, how many you have taken, what you have spent, your favourite destination and your busiest month.
 
 #### 13. Notifications
 
 <p align="center"><a href="docs/images/passenger-13-notifications.png"><img src="docs/images/passenger-13-notifications.png" alt="Notifications: a list of messages about a bus being on time, a delay and an approved refund" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/passenger-13-notifications-phone.png"><img src="docs/images/passenger-13-notifications-phone.png" alt="Notifications on a phone" width="31%"></a>
-<a href="docs/images/passenger-14-notification-settings-phone.png"><img src="docs/images/passenger-14-notification-settings-phone.png" alt="Notification settings on a phone" width="31%"></a>
-</p>
 
 You hear about delays, cancellations, refunds and reminders. The bell shows how many are new. Press **Mark all as read**, or open the settings to choose what you want to hear about. The first time, the app asks if it may send notifications. Answer once: **Allow** is remembered for good, and **Later** waits a week.
 
@@ -298,25 +301,56 @@ You hear about delays, cancellations, refunds and reminders. The bell shows how 
 
 <p align="center"><a href="docs/images/passenger-14-profile.png"><img src="docs/images/passenger-14-profile.png" alt="The profile page: name, email and a list of Account Settings, Notification Settings, Language, Dark Mode, My Favourites, Support and Send Feedback" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/passenger-14-profile-phone.png"><img src="docs/images/passenger-14-profile-phone.png" alt="The profile page on a phone" width="31%"></a>
-<a href="docs/images/passenger-14-settings-phone.png"><img src="docs/images/passenger-14-settings-phone.png" alt="Account settings on a phone" width="31%"></a>
-<a href="docs/images/passenger-14-feedback-phone.png"><img src="docs/images/passenger-14-feedback-phone.png" alt="The feedback form on a phone" width="31%"></a>
-</p>
-
 Change your name and phone number, link your Google account, switch the language or dark mode, and tell us what you think with **Send Feedback**.
+
+**On a phone: steps Request a refund to The feedback form.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+
+<table>
+<tr>
+<td valign="top"><a href="docs/images/passenger-11-refund-phone.png"><img src="docs/images/passenger-11-refund-phone.png" alt="Request a refund on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-12-travel-numbers-phone.png"><img src="docs/images/passenger-12-travel-numbers-phone.png" alt="Travel Trends on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-13-notifications-phone.png"><img src="docs/images/passenger-13-notifications-phone.png" alt="Notifications on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-14-notification-settings-phone.png"><img src="docs/images/passenger-14-notification-settings-phone.png" alt="Notification settings on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-14-profile-phone.png"><img src="docs/images/passenger-14-profile-phone.png" alt="The profile page on a phone" width="145"></a></td>
+</tr>
+<tr>
+<td align="center" valign="top"><b>1</b><br><sub>Request a refund</sub></td>
+<td align="center" valign="top"><b>2</b><br><sub>Travel Trends</sub></td>
+<td align="center" valign="top"><b>3</b><br><sub>Notifications</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>Notification settings</sub></td>
+<td align="center" valign="top"><b>5</b><br><sub>The profile page</sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td valign="top"><a href="docs/images/passenger-14-settings-phone.png"><img src="docs/images/passenger-14-settings-phone.png" alt="Account settings on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/passenger-14-feedback-phone.png"><img src="docs/images/passenger-14-feedback-phone.png" alt="The feedback form on a phone" width="145"></a></td>
+</tr>
+<tr>
+<td align="center" valign="top"><b>6</b><br><sub>Account settings</sub></td>
+<td align="center" valign="top"><b>7</b><br><sub>The feedback form</sub></td>
+</tr>
+</table>
 
 #### 15. Help and support
 
 <p align="center"><a href="docs/images/passenger-15-support.png"><img src="docs/images/passenger-15-support.png" alt="Help and support: common questions, a message form, emergency hotlines and a Call Support button" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/passenger-15-support-phone.png"><img src="docs/images/passenger-15-support-phone.png" alt="Help and support on a phone" width="31%"></a>
-</p>
-
 Answers to the questions people ask most, a message form that opens your email app, the emergency numbers for Sri Lanka, and one-tap buttons to call or email support.
 
 That is the passenger's whole journey. More detail is in the [Passenger guide](docs/Passenger%20guide.md). Now the other person in the story: the conductor, at the door of the bus.
+
+**On a phone: step Help and support.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+
+<table>
+<tr>
+<td valign="top"><a href="docs/images/passenger-15-support-phone.png"><img src="docs/images/passenger-15-support-phone.png" alt="Help and support on a phone" width="145"></a></td>
+</tr>
+<tr>
+<td align="center" valign="top"><b>1</b><br><sub>Help and support</sub></td>
+</tr>
+</table>
 
 ### Part 2: The conductor
 
@@ -326,19 +360,11 @@ The passenger walks up with a phone. The conductor has about five seconds.
 
 <p align="center"><a href="docs/images/conductor-1-home.png"><img src="docs/images/conductor-1-home.png" alt="The conductor's home: Scan Ticket with a box for a ticket code, and Find Trips" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/conductor-1-home-phone.png"><img src="docs/images/conductor-1-home-phone.png" alt="The conductor's home on a phone" width="31%"></a>
-</p>
-
 Two big jobs, one under the other: **Scan Ticket** (use the camera, or type the code and press **Verify**) and **Find Trips**. The app asks to use the phone's location so passengers can see where their bus is. Saying no is fine, and nothing else changes.
 
 #### 17. Check a ticket
 
 <p align="center"><a href="docs/images/conductor-2-verified.png"><img src="docs/images/conductor-2-verified.png" alt="A valid ticket: the passenger's name, their seats, the 4-character code and the seat map, with an Approve Boarding button" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/conductor-2-verified-phone.png"><img src="docs/images/conductor-2-verified-phone.png" alt="A valid ticket on a phone" width="31%"></a>
-</p>
 
 The answer is a big green "Ticket is valid" with the passenger's name, their seats, and the code to compare with the passenger's own screen. The same works for the long ticket number in the QR code and for the short code on the ticket. When they match, press **Approve Boarding**.
 
@@ -350,17 +376,9 @@ Approving saves the time and the conductor on the ticket. If there is no signal,
 
 <p align="center"><a href="docs/images/conductor-3-boarded.png"><img src="docs/images/conductor-3-boarded.png" alt="After approving: back at the conductor's home with an empty code box, ready for the next passenger" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/conductor-3-boarded-phone.png"><img src="docs/images/conductor-3-boarded-phone.png" alt="Back at the conductor's home on a phone" width="31%"></a>
-</p>
-
 A ticket boards once. If someone shows the same ticket again, even to a different conductor a moment later, the conductor sees this instead:
 
 <p align="center"><a href="docs/images/conductor-3-already-boarded.png"><img src="docs/images/conductor-3-already-boarded.png" alt="Already boarded: this ticket was already checked in, each ticket can board only once" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/conductor-3-already-boarded-phone.png"><img src="docs/images/conductor-3-already-boarded-phone.png" alt="Already boarded on a phone" width="31%"></a>
-</p>
 
 <img src="docs/images/conductor-already-boarded.png" alt="Already boarded: this ticket was already checked in at 6:31 AM. Each ticket can board only once." width="360">
 
@@ -370,24 +388,45 @@ The check and the stamp happen together on the server, and the database rules en
 
 <p align="center"><a href="docs/images/conductor-4-results.png"><img src="docs/images/conductor-4-results.png" alt="Finding a trip: choose the origin, the destination and the day, then pick the trip" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/conductor-4-find-trips-phone.png"><img src="docs/images/conductor-4-find-trips-phone.png" alt="Find a trip on a phone" width="31%"></a>
-<a href="docs/images/conductor-4-results-phone.png"><img src="docs/images/conductor-4-results-phone.png" alt="The trips that match, on a phone" width="31%"></a>
-</p>
-
 Choose where from, where to and the day, then pick the trip. If the bus is late, press the delay button and choose 15, 30, 45, 60 or 90 minutes, or type your own. Passengers with a ticket are told straight away, and their bus card says "Running 30 minutes late".
 
 Open a trip to change its status with four big buttons: **Departed**, **On Way**, **Arrived** and **Delayed**. **Issue Cash Ticket** books a walk-up passenger who has no app.
 
 <p align="center"><a href="docs/images/conductor-5-update-status.png"><img src="docs/images/conductor-5-update-status.png" alt="Update Status: the trip, the Issue Cash Ticket button, and the Departed, On Way, Arrived and Delayed buttons" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/conductor-5-update-status-phone.png"><img src="docs/images/conductor-5-update-status-phone.png" alt="Update Status on a phone" width="31%"></a>
-</p>
-
 <img src="docs/images/delay-dialog.png" alt="Report Delay dialog with quick minute choices" width="300">
 
 More in the [Conductor guide](docs/Conductor%20guide.md). The last person in the story never sees a bus at all, but makes the whole thing possible.
+
+**On a phone: steps The conductor's home to Update Status.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+
+<table>
+<tr>
+<td valign="top"><a href="docs/images/conductor-1-home-phone.png"><img src="docs/images/conductor-1-home-phone.png" alt="The conductor's home on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/conductor-2-verified-phone.png"><img src="docs/images/conductor-2-verified-phone.png" alt="A valid ticket on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/conductor-3-boarded-phone.png"><img src="docs/images/conductor-3-boarded-phone.png" alt="Back at the conductor's home on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/conductor-3-already-boarded-phone.png"><img src="docs/images/conductor-3-already-boarded-phone.png" alt="Already boarded on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/conductor-4-find-trips-phone.png"><img src="docs/images/conductor-4-find-trips-phone.png" alt="Find a trip on a phone" width="145"></a></td>
+</tr>
+<tr>
+<td align="center" valign="top"><b>1</b><br><sub>The conductor's home</sub></td>
+<td align="center" valign="top"><b>2</b><br><sub>A valid ticket</sub></td>
+<td align="center" valign="top"><b>3</b><br><sub>Back at the conductor's home</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>Already boarded</sub></td>
+<td align="center" valign="top"><b>5</b><br><sub>Find a trip</sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td valign="top"><a href="docs/images/conductor-4-results-phone.png"><img src="docs/images/conductor-4-results-phone.png" alt="The trips that match, on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/conductor-5-update-status-phone.png"><img src="docs/images/conductor-5-update-status-phone.png" alt="Update Status on a phone" width="145"></a></td>
+</tr>
+<tr>
+<td align="center" valign="top"><b>6</b><br><sub>The trips that match</sub></td>
+<td align="center" valign="top"><b>7</b><br><sub>Update Status</sub></td>
+</tr>
+</table>
 
 ### Part 3: The admin
 
@@ -397,19 +436,11 @@ Before any passenger can book, someone has to have planned the trips. On a compu
 
 <p align="center"><a href="docs/images/admin-1-trips.png"><img src="docs/images/admin-1-trips.png" alt="Upcoming trips: a table of the next trips with the route, time, bus, seats taken, status and Edit, Seats and Delete buttons" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/admin-1-trips-phone.png"><img src="docs/images/admin-1-trips-phone.png" alt="The admin home on a phone: tiles for Add New Trip, Add Route, Manage Routes, Bookings, Refunds, Analytics and App Feedback" width="31%"></a>
-</p>
-
 The next 30 days of trips, with how many seats are taken and whether each is on time. Deleting a trip tells you how many seats are already booked before it asks you to confirm.
 
 #### 21. Add a trip
 
 <p align="center"><a href="docs/images/admin-2-trip-form.png"><img src="docs/images/admin-2-trip-form.png" alt="The Add New Trip form, step 1 of 3: choose or type the route" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/admin-2-trip-form-phone.png"><img src="docs/images/admin-2-trip-form-phone.png" alt="The Add New Trip form on a phone" width="31%"></a>
-</p>
 
 The trip form has three short steps: Route, then Schedule, then Fare and bus. You can fill in the **platform** (optional) so passengers know where to wait. **Next** checks only what you can see, and **Back** keeps what you typed. Nothing is saved until the last step.
 
@@ -419,19 +450,11 @@ The trip form has three short steps: Route, then Schedule, then Fare and bus. Yo
 
 <p align="center"><a href="docs/images/admin-3-routes.png"><img src="docs/images/admin-3-routes.png" alt="Route and schedule management: two tabs, and a table of routes with Edit and Delete" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/admin-3-routes-phone.png"><img src="docs/images/admin-3-routes-phone.png" alt="Routes on a phone: the table slides sideways" width="31%"></a>
-</p>
-
 A **route** is the path. A **schedule** says which bus runs it and when, and can carry a default platform. **Generate Trips** makes the trips for the coming days from a schedule.
 
 #### 23. Bookings
 
 <p align="center"><a href="docs/images/admin-4-bookings.png"><img src="docs/images/admin-4-bookings.png" alt="Booking management: a search box, filters and a card for each booking with its status" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/admin-4-bookings-phone.png"><img src="docs/images/admin-4-bookings-phone.png" alt="Bookings on a phone" width="31%"></a>
-</p>
 
 Every booking has a status you can read at a glance. Each is an icon, a word and a colour together, so it works for everyone, including people who cannot tell red from green. A checked-in ticket shows **Boarded**.
 
@@ -439,20 +462,30 @@ Open a booking to see the trip, the passenger and what was paid.
 
 <p align="center"><a href="docs/images/admin-4-booking-details.png"><img src="docs/images/admin-4-booking-details.png" alt="Booking details: the route, date, bus and seats, the passenger, and the payment summary" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/admin-4-booking-details-phone.png"><img src="docs/images/admin-4-booking-details-phone.png" alt="Booking details on a phone" width="31%"></a>
-</p>
-
 <img src="docs/images/status-chips.png" alt="Status chips: Confirmed, Boarded, Cancelled, Refund requested, Refunded, Pending, Approved, Rejected and Delayed" width="360">
+
+**On a phone: steps The admin home to Booking details.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+
+<table>
+<tr>
+<td valign="top"><a href="docs/images/admin-1-trips-phone.png"><img src="docs/images/admin-1-trips-phone.png" alt="The admin home on a phone: tiles for Add New Trip, Add Route, Manage Routes, Bookings, Refunds, Analytics and App Feedback" width="145"></a></td>
+<td valign="top"><a href="docs/images/admin-2-trip-form-phone.png"><img src="docs/images/admin-2-trip-form-phone.png" alt="The Add New Trip form on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/admin-3-routes-phone.png"><img src="docs/images/admin-3-routes-phone.png" alt="Routes on a phone: the table slides sideways" width="145"></a></td>
+<td valign="top"><a href="docs/images/admin-4-bookings-phone.png"><img src="docs/images/admin-4-bookings-phone.png" alt="Bookings on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/admin-4-booking-details-phone.png"><img src="docs/images/admin-4-booking-details-phone.png" alt="Booking details on a phone" width="145"></a></td>
+</tr>
+<tr>
+<td align="center" valign="top"><b>1</b><br><sub>The admin home</sub></td>
+<td align="center" valign="top"><b>2</b><br><sub>The Add New Trip form</sub></td>
+<td align="center" valign="top"><b>3</b><br><sub>Routes</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>Bookings</sub></td>
+<td align="center" valign="top"><b>5</b><br><sub>Booking details</sub></td>
+</tr>
+</table>
 
 #### 24. Refunds
 
 <p align="center"><a href="docs/images/admin-5-refunds.png"><img src="docs/images/admin-5-refunds.png" alt="Refund management: three tabs, Pending, Approved and Rejected, and a card for each request with a Review button" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/admin-5-refunds-phone.png"><img src="docs/images/admin-5-refunds-phone.png" alt="Refunds on a phone" width="31%"></a>
-<a href="docs/images/admin-5-refund-details-phone.png"><img src="docs/images/admin-5-refund-details-phone.png" alt="Refund details on a phone" width="31%"></a>
-</p>
 
 Refund requests arrive in a list with three tabs, Pending, Approved and Rejected. Open one to see why the passenger asked and how much they get back. Approving one returns the money to the passenger's card through Stripe. Rejecting asks for a reason from a short list.
 
@@ -461,11 +494,6 @@ Refund requests arrive in a list with three tabs, Pending, Approved and Rejected
 #### 25. Feedback and analytics
 
 <p align="center"><a href="docs/images/admin-6-feedback.png"><img src="docs/images/admin-6-feedback.png" alt="Customer feedback: a card for each message with the star rating and the comment" width="100%"></a></p>
-
-<p align="center">
-<a href="docs/images/admin-6-feedback-phone.png"><img src="docs/images/admin-6-feedback-phone.png" alt="Feedback on a phone" width="31%"></a>
-<a href="docs/images/admin-7-analytics-phone.png"><img src="docs/images/admin-7-analytics-phone.png" alt="Analytics on a phone: net revenue and top routes" width="31%"></a>
-</p>
 
 Read what passengers wrote and how many stars they gave. **Analytics** shows net revenue over time and the top routes, with a second tab for late departures.
 
@@ -477,13 +505,28 @@ Read what passengers wrote and how many stars they gave. **Analytics** shows net
 
 <p align="center"><a href="docs/images/admin-8-users.png"><img src="docs/images/admin-8-users.png" alt="User management: a search box and a table of people with their role and Edit and Delete buttons" width="100%"></a></p>
 
-<p align="center">
-<a href="docs/images/admin-8-users-phone.png"><img src="docs/images/admin-8-users-phone.png" alt="Users and roles on a phone" width="31%"></a>
-</p>
-
 A new account is a passenger. Only an admin can make someone a conductor or admin, here. The app notices a role change at once, with no sign-out. This is enforced by the database rules, not just the screens, and the rules have their own tests.
 
 That closes the loop: the admin's trips are what the passenger searched for in step 2. More in the [Admin guide](docs/Admin%20guide.md).
+
+**On a phone: steps Refunds to Users and roles.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+
+<table>
+<tr>
+<td valign="top"><a href="docs/images/admin-5-refunds-phone.png"><img src="docs/images/admin-5-refunds-phone.png" alt="Refunds on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/admin-5-refund-details-phone.png"><img src="docs/images/admin-5-refund-details-phone.png" alt="Refund details on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/admin-6-feedback-phone.png"><img src="docs/images/admin-6-feedback-phone.png" alt="Feedback on a phone" width="145"></a></td>
+<td valign="top"><a href="docs/images/admin-7-analytics-phone.png"><img src="docs/images/admin-7-analytics-phone.png" alt="Analytics on a phone: net revenue and top routes" width="145"></a></td>
+<td valign="top"><a href="docs/images/admin-8-users-phone.png"><img src="docs/images/admin-8-users-phone.png" alt="Users and roles on a phone" width="145"></a></td>
+</tr>
+<tr>
+<td align="center" valign="top"><b>1</b><br><sub>Refunds</sub></td>
+<td align="center" valign="top"><b>2</b><br><sub>Refund details</sub></td>
+<td align="center" valign="top"><b>3</b><br><sub>Feedback</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>Analytics</sub></td>
+<td align="center" valign="top"><b>5</b><br><sub>Users and roles</sub></td>
+</tr>
+</table>
 
 ## Every screen in one place
 
