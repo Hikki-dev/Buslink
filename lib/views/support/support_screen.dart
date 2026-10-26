@@ -116,8 +116,8 @@ class _SupportScreenState extends State<SupportScreen> {
                       fontSize: 17, fontWeight: FontWeight.w700)),
               children: [
                 Text(a,
-                    style: const TextStyle(
-                        fontSize: 16, height: 1.45, color: BL.muted)),
+                    style:
+                        TextStyle(fontSize: 16, height: 1.45, color: BL.muted)),
               ],
             ),
           ),
@@ -142,9 +142,9 @@ class _SupportScreenState extends State<SupportScreen> {
                 Container(
                   width: 44,
                   height: 44,
-                  decoration: const BoxDecoration(
-                      color: Color(0xFFFDEEEE), shape: BoxShape.circle),
-                  child: Icon(h.$3, color: BL.crimson, size: 22),
+                  decoration:
+                      BoxDecoration(color: BL.tint, shape: BoxShape.circle),
+                  child: Icon(h.$3, color: BL.link, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -153,10 +153,10 @@ class _SupportScreenState extends State<SupportScreen> {
                           fontSize: 17, fontWeight: FontWeight.w700)),
                 ),
                 Text(h.$2,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        color: BL.crimson)),
+                        color: BL.link)),
               ],
             ),
           ),
@@ -189,7 +189,7 @@ class _SupportScreenState extends State<SupportScreen> {
             child: OutlinedButton(
               onPressed: () => _mail(),
               style: OutlinedButton.styleFrom(
-                foregroundColor: BL.crimson,
+                foregroundColor: BL.link,
                 side: const BorderSide(color: BL.crimson, width: 2),
                 shape: const StadiumBorder(),
                 textStyle: const TextStyle(
@@ -218,17 +218,17 @@ class _SupportScreenState extends State<SupportScreen> {
           style: const TextStyle(fontSize: 17),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: BL.muted),
+            hintStyle: TextStyle(color: BL.muted),
             filled: true,
-            fillColor: const Color(0xFFF5F3F4),
+            fillColor: BL.fill,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+                borderSide: BorderSide(color: BL.hairline, width: 1.5)),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+                borderSide: BorderSide(color: BL.hairline, width: 1.5)),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: BL.crimson, width: 2)),
@@ -241,7 +241,7 @@ class _SupportScreenState extends State<SupportScreen> {
   Widget _form() => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: BL.surface,
           border: Border.all(color: BL.hairline),
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
@@ -271,15 +271,14 @@ class _SupportScreenState extends State<SupportScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.error_outline,
-                        size: 18, color: Color(0xFF7F1D14)),
+                    Icon(Icons.error_outline, size: 18, color: BL.dangerInk),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(_error!,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF7F1D14))),
+                              color: BL.dangerInk)),
                     ),
                   ],
                 ),
@@ -288,8 +287,7 @@ class _SupportScreenState extends State<SupportScreen> {
             BlPrimaryButton(
                 label: 'Send message', color: BL.crimson, onTap: _send),
             const SizedBox(height: 6),
-            const Text(
-                'This opens your email app with the message ready to send.',
+            Text('This opens your email app with the message ready to send.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: BL.muted)),
           ],
@@ -329,7 +327,7 @@ class _SupportScreenState extends State<SupportScreen> {
 
     if (!isDesktop) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: BL.surface,
         body: Column(children: [
           const BlHeader(title: 'Help & Support'),
           Expanded(
@@ -354,7 +352,7 @@ class _SupportScreenState extends State<SupportScreen> {
       );
     }
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: FooterScroll(children: [
         const DesktopNavBar(selectedIndex: -2),
         Center(

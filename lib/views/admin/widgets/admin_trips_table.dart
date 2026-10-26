@@ -52,8 +52,7 @@ class AdminTripsTableState extends State<AdminTripsTable> {
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Cancel')),
           FilledButton(
-              style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFA3281C)),
+              style: FilledButton.styleFrom(backgroundColor: BL.dangerInk),
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Delete')),
         ],
@@ -71,31 +70,26 @@ class AdminTripsTableState extends State<AdminTripsTable> {
       return (
         label: 'Cancelled',
         icon: Icons.close,
-        bg: const Color(0xFFFBE0DC),
-        fg: const Color(0xFF7F1D14)
+        bg: BL.tint,
+        fg: BL.dangerInk
       );
     }
     if (t.delayMinutes > 0) {
       return (
         label: 'Late ${t.delayMinutes} min',
         icon: Icons.schedule,
-        bg: const Color(0xFFFFF1DB),
-        fg: const Color(0xFF7A4300)
+        bg: BL.warnTint,
+        fg: BL.warnInk
       );
     }
     if (t.bookedSeats.length >= t.totalSeats) {
-      return (
-        label: 'Full',
-        icon: Icons.block,
-        bg: const Color(0xFFE9EDF2),
-        fg: const Color(0xFF3A444F)
-      );
+      return (label: 'Full', icon: Icons.block, bg: BL.fill, fg: BL.inkSoft);
     }
     return (
       label: 'On time',
       icon: Icons.check,
       bg: const Color(0xFFDDF1E3),
-      fg: const Color(0xFF14532D)
+      fg: BL.successInk
     );
   }
 
@@ -125,20 +119,20 @@ class AdminTripsTableState extends State<AdminTripsTable> {
         }
         final trips = snap.data ?? [];
         if (trips.isEmpty) {
-          return const Padding(
+          return Padding(
             padding: EdgeInsets.all(32),
             child: Text(
                 'No upcoming trips yet. Tap "Add new trip" to create one.',
                 style: TextStyle(fontSize: 18, color: BL.muted)),
           );
         }
-        const head = TextStyle(
+        final head = TextStyle(
             fontSize: 14, fontWeight: FontWeight.w700, color: BL.muted);
         Widget cell(Widget c, int flex) => Expanded(flex: flex, child: c);
         Widget headCell(String t, int flex) => cell(Text(t, style: head), flex);
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: BL.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: const [
               BoxShadow(
@@ -151,7 +145,7 @@ class AdminTripsTableState extends State<AdminTripsTable> {
           child: Column(
             children: [
               Container(
-                color: const Color(0xFFF5F3F4),
+                color: BL.fill,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 child: Row(children: [
@@ -169,9 +163,8 @@ class AdminTripsTableState extends State<AdminTripsTable> {
                   return Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
-                    decoration: const BoxDecoration(
-                        border:
-                            Border(top: BorderSide(color: Color(0xFFEDE6E7)))),
+                    decoration: BoxDecoration(
+                        border: Border(top: BorderSide(color: BL.fill))),
                     child: Row(children: [
                       cell(
                         Row(children: [
@@ -201,8 +194,8 @@ class AdminTripsTableState extends State<AdminTripsTable> {
                             Text(t.operatorName,
                                 style: const TextStyle(fontSize: 16)),
                             Text(t.busNumber,
-                                style: const TextStyle(
-                                    fontSize: 15, color: BL.muted)),
+                                style:
+                                    TextStyle(fontSize: 15, color: BL.muted)),
                           ],
                         ),
                         3,
@@ -242,8 +235,7 @@ class AdminTripsTableState extends State<AdminTripsTable> {
                         Wrap(spacing: 8, runSpacing: 8, children: [
                           _btn('Edit', BL.ink, () => widget.onEdit(t)),
                           _btn('Seats', BL.ink, () => widget.onSeats(t.trip)),
-                          _btn('Delete', const Color(0xFFA3281C),
-                              () => _delete(t)),
+                          _btn('Delete', BL.dangerInk, () => _delete(t)),
                         ]),
                         4,
                       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import '../../models/trip_model.dart';
 import '../../utils/app_theme.dart';
 import '../../services/firestore_service.dart';
@@ -54,13 +55,12 @@ class _BusLayoutWidgetState extends State<BusLayoutWidget> {
   }
 
   Widget _buildDriverArea() {
-    const grey = Color(0xFF4A5560);
+    final grey = BL.muted;
     return Container(
       padding: const EdgeInsets.only(bottom: 8),
-      decoration: const BoxDecoration(
-          border:
-              Border(bottom: BorderSide(color: Color(0xFFCFC4C5), width: 2))),
-      child: const Row(
+      decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: BL.border, width: 2))),
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
@@ -320,7 +320,7 @@ class _SeatItemState extends State<_SeatItem> {
     } else if (widget.isSelected) {
       seatColor = AppTheme.primaryColor;
     } else {
-      seatColor = isHovered ? const Color(0xFFFDEEEE) : Colors.white;
+      seatColor = isHovered ? BL.tint : Colors.white;
     }
 
     final String stateLabel = widget.isHighlighted
@@ -365,15 +365,14 @@ class _SeatItemState extends State<_SeatItem> {
                           : AppTheme.primaryColor)
                       : isUnavailable
                           ? Colors.transparent
-                          : const Color(0xFF8A95A3),
+                          : BL.faint,
                   width: 1.5),
             ),
             child: Center(
               child: isBlocked
-                  ? const Icon(Icons.block, size: 20, color: Colors.black54)
+                  ? Icon(Icons.block, size: 20, color: BL.muted)
                   : (isBooked && !widget.isHighlighted)
-                      ? const Icon(Icons.close,
-                          size: 22, color: Color(0xFF4A5560))
+                      ? Icon(Icons.close, size: 22, color: BL.muted)
                       : Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [

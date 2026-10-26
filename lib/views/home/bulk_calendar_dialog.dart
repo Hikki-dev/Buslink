@@ -1,5 +1,6 @@
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import 'package:intl/intl.dart';
 import '../../utils/app_theme.dart';
 
@@ -32,7 +33,7 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
     const onHeaderColor = Colors.white;
 
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       surfaceTintColor: Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
@@ -98,8 +99,8 @@ class _BulkCalendarDialogState extends State<BulkCalendarDialog> {
                           color: primaryColor,
                           fontWeight: FontWeight.bold,
                         ),
-                        controlsTextStyle: const TextStyle(
-                          color: Colors.black87,
+                        controlsTextStyle: TextStyle(
+                          color: BL.ink,
                           fontWeight: FontWeight.bold,
                         ),
                         // Mimic Material 3 rounded selection

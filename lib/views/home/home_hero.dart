@@ -324,7 +324,7 @@ class HomeHero extends StatelessWidget {
 }
 
 BoxDecoration _cardDecoration(double radius) => BoxDecoration(
-      color: Colors.white,
+      color: BL.surface,
       borderRadius: BorderRadius.circular(radius),
       boxShadow: const [
         BoxShadow(
@@ -367,7 +367,7 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 4),
         child: Text(text,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.w500, color: BL.ink)),
       );
 }
@@ -405,7 +405,7 @@ class _CityField extends StatelessWidget {
           decoration: _fieldBox(),
           child: Row(
             children: [
-              Icon(icon, color: BL.crimson, size: 22),
+              Icon(icon, color: BL.link, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: LayoutBuilder(builder: (context, box) {
@@ -424,11 +424,10 @@ class _CityField extends StatelessWidget {
                       focusNode: f,
                       textInputAction: TextInputAction.next,
                       onSubmitted: (_) => onSubmit(),
-                      style: const TextStyle(fontSize: 18, color: BL.ink),
+                      style: TextStyle(fontSize: 18, color: BL.ink),
                       decoration: InputDecoration(
                         hintText: hint,
-                        hintStyle: const TextStyle(
-                            fontSize: 18, color: Color(0xFF6B7480)),
+                        hintStyle: TextStyle(fontSize: 18, color: BL.faint),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -441,7 +440,7 @@ class _CityField extends StatelessWidget {
                       alignment: Alignment.topLeft,
                       child: Material(
                         elevation: 6,
-                        color: Colors.white,
+                        color: BL.surface,
                         borderRadius: BorderRadius.circular(12),
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
@@ -463,7 +462,7 @@ class _CityField extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 16),
                                   child: Text(city,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 18, color: BL.ink)),
                                 ),
                               );
@@ -512,13 +511,12 @@ class _DateField extends StatelessWidget {
               decoration: _fieldBox(),
               child: Row(
                 children: [
-                  const Icon(Icons.calendar_today_outlined,
-                      color: BL.crimson, size: 22),
+                  Icon(Icons.calendar_today_outlined, color: BL.link, size: 22),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(value,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 18, color: BL.ink)),
+                        style: TextStyle(fontSize: 18, color: BL.ink)),
                   ),
                 ],
               ),
@@ -555,7 +553,7 @@ class _SwapButton extends StatelessWidget {
                 ],
         ),
         child: Material(
-          color: Colors.white,
+          color: BL.surface,
           shape: CircleBorder(
               side: BorderSide(
                   color: outlined ? BL.crimson : BL.border, width: 1.5)),
@@ -566,7 +564,7 @@ class _SwapButton extends StatelessWidget {
               width: size,
               height: size,
               child: Icon(outlined ? Icons.swap_horiz : Icons.swap_vert,
-                  color: BL.crimson, size: 26),
+                  color: BL.link, size: 26),
             ),
           ),
         ),
@@ -593,7 +591,7 @@ class _BulkToggle extends StatelessWidget {
             Icon(value ? Icons.check_box : Icons.check_box_outline_blank,
                 color: value ? BL.crimson : BL.muted, size: 26),
             const SizedBox(width: 10),
-            const Flexible(
+            Flexible(
               child: Text('Bulk booking (several days)',
                   style: TextStyle(fontSize: 16, color: BL.ink)),
             ),
@@ -625,7 +623,7 @@ class _SearchButton extends StatelessWidget {
         style: FilledButton.styleFrom(
           backgroundColor: BL.crimson,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFFE3DADB),
+          disabledBackgroundColor: BL.fill,
           disabledForegroundColor: BL.muted,
           shape: const StadiumBorder(),
           textStyle: const TextStyle(

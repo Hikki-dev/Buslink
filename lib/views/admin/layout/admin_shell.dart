@@ -89,12 +89,12 @@ class _Side extends StatelessWidget {
                 children: [
                   icon != null
                       ? Icon(icon,
-                          size: 20, color: on ? Colors.white : BL.blush)
+                          size: 20, color: on ? Colors.white : BL.onCrimson)
                       : Container(
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: (on ? Colors.white : BL.blush)
+                            color: (on ? Colors.white : BL.onCrimson)
                                 .withValues(alpha: 0.8),
                             shape: BoxShape.circle,
                           ),
@@ -105,7 +105,7 @@ class _Side extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 17,
                             fontWeight: on ? FontWeight.w700 : FontWeight.w400,
-                            color: on ? Colors.white : BL.blush)),
+                            color: on ? Colors.white : BL.onCrimson)),
                   ),
                 ],
               ),
@@ -131,10 +131,10 @@ class _Side extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     color: Colors.white)),
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.fromLTRB(10, 0, 10, 20),
-            child:
-                Text('Admin', style: TextStyle(fontSize: 15, color: BL.blush)),
+            child: Text('Admin',
+                style: TextStyle(fontSize: 15, color: BL.onCrimson)),
           ),
           Expanded(
             child: ListView(

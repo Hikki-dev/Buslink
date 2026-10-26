@@ -60,8 +60,8 @@ class DesktopNavBar extends StatelessWidget {
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: BL.surface,
         border: Border(bottom: BorderSide(color: BL.hairline)),
       ),
       child: Center(
@@ -73,11 +73,11 @@ class DesktopNavBar extends StatelessWidget {
               children: [
                 InkWell(
                   onTap: () => _go(context, 0),
-                  child: const Text('BusLink',
+                  child: Text('BusLink',
                       style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
-                          color: BL.crimson)),
+                          color: BL.link)),
                 ),
                 const Spacer(),
                 _link(context, l10n.navHome, 0),
@@ -93,8 +93,8 @@ class DesktopNavBar extends StatelessWidget {
                 const LanguageSelector(),
                 if (user != null) ...[
                   IconButton(
-                    icon: const Icon(Icons.notifications_none_rounded,
-                        color: BL.crimson, size: 26),
+                    icon: Icon(Icons.notifications_none_rounded,
+                        color: BL.link, size: 26),
                     tooltip: 'Notifications',
                     onPressed: () => Navigator.push(
                         context,
@@ -110,7 +110,7 @@ class DesktopNavBar extends StatelessWidget {
                       minimumSize: const Size(0, 48),
                       padding: const EdgeInsets.symmetric(horizontal: 18),
                       foregroundColor: BL.ink,
-                      side: const BorderSide(color: BL.border, width: 1.5),
+                      side: BorderSide(color: BL.border, width: 1.5),
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(
                           fontFamily: 'Outfit',
@@ -167,7 +167,7 @@ class DesktopNavBar extends StatelessWidget {
               style: TextStyle(
                   fontSize: 17,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                  color: active ? BL.crimson : const Color(0xFF3A444F))),
+                  color: active ? BL.crimson : BL.inkSoft)),
         ),
       ),
     );
@@ -213,19 +213,19 @@ class DesktopNavBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(shown,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: BL.ink)),
                   if (email != null)
                     Text(email,
-                        style: const TextStyle(fontSize: 14, color: BL.muted)),
+                        style: TextStyle(fontSize: 14, color: BL.muted)),
                   if (isAdmin)
-                    const Text('Administrator',
+                    Text('Administrator',
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: BL.crimson)),
+                            color: BL.link)),
                 ],
               ),
             ),
@@ -248,11 +248,9 @@ class DesktopNavBar extends StatelessWidget {
             width: 44,
             height: 44,
             alignment: Alignment.center,
-            decoration:
-                const BoxDecoration(color: BL.blush, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: BL.blush, shape: BoxShape.circle),
             child: Text(_initials(shown),
-                style: const TextStyle(
-                    color: BL.crimsonDark, fontWeight: FontWeight.w700)),
+                style: TextStyle(color: BL.deep, fontWeight: FontWeight.w700)),
           ),
         );
       },

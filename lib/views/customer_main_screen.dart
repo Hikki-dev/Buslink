@@ -1,6 +1,7 @@
 import 'dart:async'; // For StreamSubscription
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../utils/bl_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'home/home_screen.dart';
@@ -274,11 +275,11 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                                   color: Colors.black.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: const Icon(Icons.admin_panel_settings,
-                                    size: 20, color: Colors.black87),
+                                child: Icon(Icons.admin_panel_settings,
+                                    size: 20, color: BL.ink),
                               ),
                               const SizedBox(width: 8),
-                              const Flexible(
+                              Flexible(
                                 child: Text(
                                   "Admin Preview", // Shortened - localizing might be tricky if context is needed but it's inside build.
                                   // AppLocalizations.of(context)!.adminPreview
@@ -290,7 +291,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                                     fontFamily: 'Outfit',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13, // Reduced size
-                                    color: Colors.black87,
+                                    color: BL.ink,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -310,16 +311,16 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                                   .pushReplacementNamed('/admin-dashboard');
                             }
                           },
-                          icon: const Icon(
+                          icon: Icon(
                               Icons
                                   .exit_to_app, // Changed Icon to meaningful "Exit" from preview
                               size: 18,
-                              color: Colors.black87),
+                              color: BL.ink),
                           label: Text(AppLocalizations.of(context)!.exitPreview,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontFamily: 'Outfit',
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87)),
+                                  color: BL.ink)),
                           style: TextButton.styleFrom(
                             backgroundColor:
                                 Colors.white.withValues(alpha: 0.25),

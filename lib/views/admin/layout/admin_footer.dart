@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/bl_colors.dart';
 
 class AdminFooter extends StatelessWidget {
   const AdminFooter({super.key});
@@ -7,11 +8,11 @@ class AdminFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
-      color: Colors.grey.shade100,
-      child: const Center(
+      color: BL.fill,
+      child: Center(
         child: Text(
           "© 2025 BusLink Admin Panel. Restricted Access.",
-          style: TextStyle(color: Colors.grey, fontSize: 12),
+          style: TextStyle(color: BL.faint, fontSize: 12),
         ),
       ),
     );

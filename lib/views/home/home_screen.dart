@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:buslink/l10n/app_localizations.dart';
 
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import '../../models/trip_view_model.dart';
 
 import 'package:provider/provider.dart';
@@ -503,8 +504,7 @@ class _HomeFavoriteCard extends StatelessWidget {
                   onToggle: onRemove,
                 ),
                 const Spacer(),
-                const Icon(Icons.arrow_outward_rounded,
-                    size: 16, color: Colors.grey),
+                Icon(Icons.arrow_outward_rounded, size: 16, color: BL.faint),
               ],
             ),
             const Spacer(),
@@ -516,10 +516,9 @@ class _HomeFavoriteCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         color: Theme.of(context).colorScheme.onSurface)),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),
-                  child:
-                      Icon(Icons.arrow_forward, size: 14, color: Colors.grey),
+                  child: Icon(Icons.arrow_forward, size: 14, color: BL.faint),
                 ),
                 Text(to,
                     style: TextStyle(
@@ -897,7 +896,7 @@ class LiveJourneyCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: BL.surface,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(

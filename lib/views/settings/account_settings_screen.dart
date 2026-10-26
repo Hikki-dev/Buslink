@@ -117,19 +117,19 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   Widget build(BuildContext context) {
     InputDecoration deco(String? helper) => InputDecoration(
           helperText: helper,
-          helperStyle: const TextStyle(fontSize: 14, color: BL.muted),
+          helperStyle: TextStyle(fontSize: 14, color: BL.muted),
           errorStyle:
               const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
           filled: true,
-          fillColor: const Color(0xFFF5F3F4),
+          fillColor: BL.fill,
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+              borderSide: BorderSide(color: BL.hairline, width: 1.5)),
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+              borderSide: BorderSide(color: BL.hairline, width: 1.5)),
           focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: BL.crimson, width: 2)),
@@ -142,7 +142,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           const BlHeader(title: 'Account Settings'),
@@ -192,7 +192,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           color: BL.crimson,
                           onTap: _isLoading ? null : _saveProfile,
                         ),
-                        const Divider(height: 44, color: BL.hairline),
+                        Divider(height: 44, color: BL.hairline),
                         const Text('Linked Accounts',
                             style: TextStyle(
                                 fontSize: 20, fontWeight: FontWeight.w800)),
@@ -219,7 +219,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                     Row(
                                       children: [
                                         if (_isGoogleLinked)
-                                          const Icon(Icons.check,
+                                          Icon(Icons.check,
                                               size: 16, color: BL.success),
                                         if (_isGoogleLinked)
                                           const SizedBox(width: 4),
@@ -231,7 +231,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.w700,
                                                 color: _isGoogleLinked
-                                                    ? const Color(0xFF14532D)
+                                                    ? BL.successInk
                                                     : BL.muted)),
                                       ],
                                     ),
@@ -243,7 +243,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                   onPressed: _isLoading ? null : _linkGoogle,
                                   style: OutlinedButton.styleFrom(
                                     minimumSize: const Size(0, 48),
-                                    foregroundColor: BL.crimson,
+                                    foregroundColor: BL.link,
                                     side: const BorderSide(
                                         color: BL.crimson, width: 2),
                                     shape: const StadiumBorder(),

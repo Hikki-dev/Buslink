@@ -91,19 +91,19 @@ class _NotificationSettingsScreenState
     Widget section(String t) => Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
           child: Text(t,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.1,
-                  color: BL.crimson)),
+                  color: BL.link)),
         );
     Widget row(String title, String sub, bool value, String key) => InkWell(
           onTap: () => _savePreference(key, !value),
           child: Container(
             constraints: const BoxConstraints(minHeight: 72),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFF0E8E9)))),
+            decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: BL.fill))),
             child: Row(
               children: [
                 Expanded(
@@ -114,8 +114,7 @@ class _NotificationSettingsScreenState
                           style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.w700)),
                       Text(sub,
-                          style:
-                              const TextStyle(fontSize: 15, color: BL.muted)),
+                          style: TextStyle(fontSize: 15, color: BL.muted)),
                     ],
                   ),
                 ),
@@ -136,7 +135,7 @@ class _NotificationSettingsScreenState
         );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           const BlHeader(title: 'Notification Settings'),

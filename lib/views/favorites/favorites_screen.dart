@@ -105,7 +105,7 @@ class FavoritesScreen extends StatelessWidget {
 
     if (!isDesktop) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: BL.surface,
         body: Column(children: [
           BlHeader(
               title: 'My Favourites',
@@ -117,13 +117,13 @@ class FavoritesScreen extends StatelessWidget {
       );
     }
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: FooterScroll(children: [
         DesktopNavBar(selectedIndex: 2, isAdminView: isAdminView),
         Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1200),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.fromLTRB(24, 32, 24, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,10 +192,10 @@ class _FavCard extends StatelessWidget {
                 child: InkWell(
                   customBorder: const CircleBorder(),
                   onTap: onRemove,
-                  child: const SizedBox(
+                  child: SizedBox(
                     width: 48,
                     height: 48,
-                    child: Icon(Icons.favorite, color: BL.crimson, size: 24),
+                    child: Icon(Icons.favorite, color: BL.link, size: 24),
                   ),
                 ),
               ),
@@ -235,7 +235,7 @@ class _FavCard extends StatelessWidget {
                   child: FilledButton(
                     onPressed: onBook,
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.white,
+                      backgroundColor: BL.surface,
                       foregroundColor: BL.crimson,
                       padding: const EdgeInsets.symmetric(horizontal: 18),
                       shape: const StadiumBorder(),

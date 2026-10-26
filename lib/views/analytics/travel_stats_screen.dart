@@ -28,7 +28,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           const BlHeader(title: 'Travel Trends'),
@@ -81,13 +81,13 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
                                 context,
                                 'Delayed',
                                 "${stats['delayed']}",
-                                const Color(0xFF7A4300),
+                                BL.warnInk,
                                 Icons.timer_off),
                             _statusBox(
                                 context,
                                 'Cancelled',
                                 "${stats['cancelled']}",
-                                const Color(0xFF7F1D14),
+                                BL.dangerInk,
                                 Icons.cancel),
                           ],
                         ),
@@ -242,7 +242,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
           Text(count,
               style: TextStyle(
                   color: color, fontWeight: FontWeight.w800, fontSize: 30)),
-          Text(label, style: const TextStyle(fontSize: 16, color: BL.muted)),
+          Text(label, style: TextStyle(fontSize: 16, color: BL.muted)),
         ],
       ),
     );
@@ -278,7 +278,7 @@ class _TravelStatsScreenState extends State<TravelStatsScreen> {
           initiallyExpanded: true,
           title: Text('Travel Trends',
               style: const TextStyle(fontWeight: FontWeight.bold)),
-          leading: const Icon(Icons.trending_up, color: BL.crimson),
+          leading: Icon(Icons.trending_up, color: BL.link),
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -446,7 +446,7 @@ class _SimpleScatterChart extends StatelessWidget {
                     // Show every 2 months
                     final m = index * 2 + 1;
                     return Text(DateFormat('MMM').format(DateTime(year, m)),
-                        style: TextStyle(fontSize: 12, color: Colors.grey));
+                        style: TextStyle(fontSize: 12, color: BL.faint));
                   }),
                 ))
           ],

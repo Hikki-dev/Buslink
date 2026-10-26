@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/bl_colors.dart';
 
 /// Colour, icon and label for a booking / trip / refund status. Every status
 /// gets an icon and a word as well as a colour, so it still reads for people
@@ -103,7 +104,7 @@ class TripFormSteps extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const red = Color(0xFFBA181B);
+    const red = BL.crimson;
     final muted =
         Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
     return Semantics(

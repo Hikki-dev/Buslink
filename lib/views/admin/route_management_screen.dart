@@ -62,24 +62,24 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
         ),
       );
 
-  Widget _obtn(String label, VoidCallback onTap, {Color color = BL.ink}) =>
-      SizedBox(
-        height: 44,
-        child: OutlinedButton(
-          onPressed: onTap,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: color,
-            side: BorderSide(color: color, width: 1.5),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            shape: const StadiumBorder(),
-            textStyle: const TextStyle(
-                fontFamily: 'Outfit',
-                fontSize: 16,
-                fontWeight: FontWeight.w700),
-          ),
-          child: Text(label),
+  Widget _obtn(String label, VoidCallback onTap, {Color? color}) {
+    color ??= BL.ink;
+    return SizedBox(
+      height: 44,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: color,
+          side: BorderSide(color: color, width: 1.5),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          shape: const StadiumBorder(),
+          textStyle: const TextStyle(
+              fontFamily: 'Outfit', fontSize: 16, fontWeight: FontWeight.w700),
         ),
-      );
+        child: Text(label),
+      ),
+    );
+  }
 
   /// A bordered table: [head] titles with flex widths, then one row per item.
   Widget _table(List<(String, int)> head, List<List<Widget>> rows) {
@@ -91,14 +91,14 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
       clipBehavior: Clip.antiAlias,
       child: Column(children: [
         Container(
-          color: const Color(0xFFF5F3F4),
+          color: BL.fill,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(children: [
             for (final h in head)
               Expanded(
                 flex: h.$2,
                 child: Text(h.$1,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: BL.muted)),
@@ -108,8 +108,8 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
         for (final r in rows)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFFEDE6E7)))),
+            decoration:
+                BoxDecoration(border: Border(top: BorderSide(color: BL.fill))),
             child: Row(children: [
               for (var i = 0; i < r.length; i++)
                 Expanded(flex: head[i].$2, child: r[i]),
@@ -127,7 +127,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
   Widget _buildPage(BuildContext context) {
     final desktop = MediaQuery.sizeOf(context).width > 900;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(children: [
         if (!desktop) const BlHeader(title: 'Routes and schedules'),
         Expanded(
@@ -152,7 +152,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                               fontSize: desktop ? 34 : 24,
                               fontWeight: FontWeight.w800)),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                           'A route is the path. A schedule says which bus runs it and when.',
                           style: TextStyle(fontSize: 17, color: BL.muted)),
                     ],
@@ -163,7 +163,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                       child: OutlinedButton(
                         onPressed: () => _showRouteDialog(),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: BL.crimson,
+                          foregroundColor: BL.link,
                           side: const BorderSide(color: BL.crimson, width: 2),
                           padding: const EdgeInsets.symmetric(horizontal: 22),
                           shape: const StadiumBorder(),
@@ -260,13 +260,13 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.w700)),
               Text(r.via.isEmpty ? 'Direct' : r.via,
-                  style: const TextStyle(fontSize: 16, color: BL.muted)),
+                  style: TextStyle(fontSize: 16, color: BL.muted)),
               Text(_formatDuration(r.estimatedDurationMins),
                   style: const TextStyle(fontSize: 16)),
               Wrap(spacing: 8, runSpacing: 8, children: [
                 _obtn('Edit', () => _showRouteDialog(route: r)),
                 _obtn('Delete', () => _confirmDelete(routeId: r.id),
-                    color: const Color(0xFFA3281C)),
+                    color: BL.dangerInk),
               ]),
             ]
         ]);
@@ -466,8 +466,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                                 fontSize: 16, fontWeight: FontWeight.w700)),
                         if (route != null)
                           Text(route.via.isEmpty ? 'Direct' : route.via,
-                              style: const TextStyle(
-                                  fontSize: 15, color: BL.muted)),
+                              style: TextStyle(fontSize: 15, color: BL.muted)),
                       ],
                     ),
                     Text(sc.operatorName, style: const TextStyle(fontSize: 16)),
@@ -487,7 +486,7 @@ class _RouteManagementScreenState extends State<RouteManagementScreen>
                           () => _showGenerateDialog(sc, route),
                           color: BL.crimson),
                       _obtn('Delete', () => _confirmDelete(scheduleId: sc.id),
-                          color: const Color(0xFFA3281C)),
+                          color: BL.dangerInk),
                     ]),
                   ];
                 }()

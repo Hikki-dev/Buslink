@@ -17,10 +17,10 @@ class BlBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: BL.surface,
       child: Container(
-        decoration: const BoxDecoration(
-            border: Border(top: BorderSide(color: BL.hairline))),
+        decoration:
+            BoxDecoration(border: Border(top: BorderSide(color: BL.hairline))),
         child: SafeArea(
           top: false,
           child: SizedBox(

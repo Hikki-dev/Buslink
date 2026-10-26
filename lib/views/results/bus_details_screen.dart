@@ -45,15 +45,15 @@ class BusDetailsScreen extends StatelessWidget {
         );
     Widget stat(String label, String value, String sub, CrossAxisAlignment a) =>
         Column(crossAxisAlignment: a, children: [
-          Text(label, style: const TextStyle(fontSize: 14, color: BL.muted)),
+          Text(label, style: TextStyle(fontSize: 14, color: BL.muted)),
           Text(value,
               style:
                   const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-          Text(sub, style: const TextStyle(fontSize: 15, color: BL.muted)),
+          Text(sub, style: TextStyle(fontSize: 15, color: BL.muted)),
         ]);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           Expanded(
@@ -167,7 +167,7 @@ class BusDetailsScreen extends StatelessWidget {
                                             busDuration(trip.arrivalTime
                                                 .difference(
                                                     trip.departureTime)),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 14, color: BL.muted)),
                                         const SizedBox(height: 4),
                                         Container(
@@ -186,17 +186,17 @@ class BusDetailsScreen extends StatelessWidget {
                                   ],
                                 ),
                                 if (trip.platformNumber.isNotEmpty) ...[
-                                  const Divider(height: 24, color: BL.hairline),
+                                  Divider(height: 24, color: BL.hairline),
                                   Row(children: [
-                                    const Text('Platform',
+                                    Text('Platform',
                                         style: TextStyle(
                                             fontSize: 14, color: BL.muted)),
                                     const SizedBox(width: 10),
                                     Text(trip.platformNumber,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.w800,
-                                            color: BL.crimson)),
+                                            color: BL.link)),
                                   ]),
                                 ],
                               ]),
@@ -213,14 +213,14 @@ class BusDetailsScreen extends StatelessWidget {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 14, vertical: 8),
                                       decoration: BoxDecoration(
-                                          color: const Color(0xFFFDEEEE),
+                                          color: BL.tint,
                                           borderRadius:
                                               BorderRadius.circular(18)),
                                       child: Text(a,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w500,
-                                              color: BL.crimsonDark)),
+                                              color: BL.deep)),
                                     ),
                                 ],
                               ),
@@ -249,7 +249,7 @@ class BusDetailsScreen extends StatelessWidget {
                                 Container(
                                     width: 12,
                                     height: 12,
-                                    decoration: const BoxDecoration(
+                                    decoration: BoxDecoration(
                                         color: BL.ink, shape: BoxShape.circle)),
                                 trip.toCity),
                           ],
@@ -264,7 +264,7 @@ class BusDetailsScreen extends StatelessWidget {
           Container(
             padding: EdgeInsets.fromLTRB(
                 16, 12, 16, 12 + MediaQuery.paddingOf(context).bottom),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: BL.hairline))),
             child: BlPrimaryButton(
               label: 'Choose seats',

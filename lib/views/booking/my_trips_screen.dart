@@ -131,10 +131,10 @@ class MyTripsScreen extends StatelessWidget {
               : _PhoneTrips(all: all, onBack: showBackButton ? onBack : null);
         }
         if (!isDesktop) {
-          return Scaffold(backgroundColor: Colors.white, body: body);
+          return Scaffold(backgroundColor: BL.surface, body: body);
         }
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: BL.surface,
           body: Column(children: [
             DesktopNavBar(selectedIndex: 1, isAdminView: isAdminView),
             Expanded(child: body),
@@ -154,7 +154,7 @@ class MyTripsScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Text(text,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18, color: BL.muted)),
+                  style: TextStyle(fontSize: 18, color: BL.muted)),
             ],
           ),
         ),
@@ -400,7 +400,7 @@ class _DesktopTripsState extends State<_DesktopTrips> {
                       icon: const Icon(Icons.bar_chart),
                       label: const Text('Your travel numbers'),
                       style: TextButton.styleFrom(
-                          foregroundColor: BL.crimson,
+                          foregroundColor: BL.link,
                           minimumSize: const Size(0, 48),
                           textStyle: const TextStyle(
                               fontFamily: 'Outfit',
@@ -423,8 +423,8 @@ class _DesktopTripsState extends State<_DesktopTrips> {
                         selected: _filter == f,
                         showCheckmark: false,
                         selectedColor: BL.crimson,
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: BL.border),
+                        backgroundColor: BL.surface,
+                        side: BorderSide(color: BL.border),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 10),
                         onSelected: (_) => setState(() {
@@ -496,7 +496,7 @@ class _ListTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: BL.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
                 color: selected ? BL.crimson : Colors.transparent, width: 3),
@@ -560,7 +560,7 @@ class _ListTile extends StatelessWidget {
                             ? '${(item as List).length} trips'
                             : DateFormat('EEE, d MMM · hh:mm a')
                                 .format(_depOf(t)),
-                        style: const TextStyle(fontSize: 16, color: BL.muted)),
+                        style: TextStyle(fontSize: 16, color: BL.muted)),
                     const SizedBox(height: 8),
                     _StatusChip(st),
                   ],
@@ -590,7 +590,7 @@ class _Detail extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 7),
           child: Row(
             children: [
-              Text(l, style: const TextStyle(fontSize: 18, color: BL.muted)),
+              Text(l, style: TextStyle(fontSize: 18, color: BL.muted)),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(v,
@@ -604,7 +604,7 @@ class _Detail extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BL.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
@@ -678,14 +678,12 @@ class _Detail extends StatelessWidget {
                         width: double.infinity,
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                            color: const Color(0xFFFDEEEE),
+                            color: BL.tint,
                             borderRadius: BorderRadius.circular(12)),
-                        child: const Text(
+                        child: Text(
                             'Show the QR code to the conductor when you get on the bus.',
                             style: TextStyle(
-                                fontSize: 17,
-                                height: 1.4,
-                                color: BL.crimsonDark)),
+                                fontSize: 17, height: 1.4, color: BL.deep)),
                       ),
                     ],
                   ),
@@ -703,6 +701,7 @@ class _Detail extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: QrImageView(
+                            backgroundColor: Colors.white,
                             data: t.ticketId,
                             version: QrVersions.auto,
                             size: 200),
@@ -710,7 +709,7 @@ class _Detail extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text('Ticket ID: ${t.shortId ?? firstChars(t.ticketId, 8)}',
-                        style: const TextStyle(fontSize: 15, color: BL.muted)),
+                        style: TextStyle(fontSize: 15, color: BL.muted)),
                   ],
                 ),
               ],
@@ -742,29 +741,23 @@ _Chip _chip(Ticket t, DateTime dep, {Map<String, dynamic>? live}) {
   final raw = (data['status'] ?? t.status).toString().toLowerCase();
   final delay = (data['delayMinutes'] ?? 0) as num;
   if (raw == 'cancelled') {
-    return const _Chip('Cancelled', Color(0xFFFBE0DC), Color(0xFF7F1D14),
-        Icons.cancel_outlined);
+    return _Chip('Cancelled', BL.tint, BL.dangerInk, Icons.cancel_outlined);
   }
   if (raw == 'delayed' || delay > 0) {
-    return _Chip(delay > 0 ? 'Late +${delay}m' : 'Delayed',
-        const Color(0xFFFFF1DB), const Color(0xFF7A4300), Icons.schedule);
+    return _Chip(delay > 0 ? 'Late +${delay}m' : 'Delayed', BL.warnTint,
+        BL.warnInk, Icons.schedule);
   }
   if (raw == 'completed' || raw == 'arrived') {
-    return const _Chip(
-        'Completed', Color(0xFFE9EDF2), Color(0xFF3A444F), Icons.check,
-        done: true);
+    return _Chip('Completed', BL.fill, BL.inkSoft, Icons.check, done: true);
   }
   if (raw == 'started' || raw == 'departed') {
-    return const _Chip(
-        'Active', Color(0xFFDDF1E3), Color(0xFF14532D), Icons.directions_bus);
+    return _Chip(
+        'Active', Color(0xFFDDF1E3), BL.successInk, Icons.directions_bus);
   }
   if (dep.isBefore(DateTime.now())) {
-    return const _Chip(
-        'Completed', Color(0xFFE9EDF2), Color(0xFF3A444F), Icons.check,
-        done: true);
+    return _Chip('Completed', BL.fill, BL.inkSoft, Icons.check, done: true);
   }
-  return const _Chip(
-      'Upcoming', BL.blush, BL.crimsonDark, Icons.event_available);
+  return _Chip('Upcoming', BL.blush, BL.deep, Icons.event_available);
 }
 
 class _StatusChip extends StatelessWidget {
@@ -849,7 +842,7 @@ class _TicketActions extends StatelessWidget {
                         load: tracking.loadLibrary,
                         build: () => tracking.TrackBusScreen(trip: trip())),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: BL.crimson,
+                      foregroundColor: BL.link,
                       side: const BorderSide(color: BL.crimson, width: 2),
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(
@@ -927,7 +920,7 @@ class BoardingPassCard extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BL.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: BL.hairline),
         boxShadow: const [
@@ -965,7 +958,7 @@ class BoardingPassCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                     '${DateFormat('EEE d MMM · hh:mm a').format(depLive)}${bus.isEmpty ? '' : ' · Bus $bus'} · Seats $seats',
-                    style: const TextStyle(fontSize: 16, color: BL.muted)),
+                    style: TextStyle(fontSize: 16, color: BL.muted)),
                 const SizedBox(height: 14),
                 _TicketActions(ticket: ticket, tripData: data),
               ],
@@ -995,7 +988,7 @@ class _BulkBoardingPassCard extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BL.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: BL.hairline),
         boxShadow: const [
@@ -1023,7 +1016,7 @@ class _BulkBoardingPassCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                     '${sorted.length} trips · $range · LKR ${NumberFormat('#,###').format(total)}',
-                    style: const TextStyle(fontSize: 16, color: BL.muted)),
+                    style: TextStyle(fontSize: 16, color: BL.muted)),
                 const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,
@@ -1041,7 +1034,7 @@ class _BulkBoardingPassCard extends StatelessWidget {
                     icon: const Icon(Icons.download),
                     label: const Text('View All Tickets & Download PDF'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: BL.crimson,
+                      foregroundColor: BL.link,
                       side: const BorderSide(color: BL.crimson, width: 2),
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(

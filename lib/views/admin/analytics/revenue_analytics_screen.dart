@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/bl_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:buslink/l10n/app_localizations.dart';
@@ -315,22 +316,21 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BL.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8E0E1)),
+        border: Border.all(color: BL.hairline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(fontSize: 16, color: Color(0xFF4A5560))),
+          Text(title, style: TextStyle(fontSize: 16, color: BL.muted)),
           const SizedBox(height: 4),
           Text(value,
               style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
                   color: color == Colors.green
-                      ? const Color(0xFFBA181B)
+                      ? BL.crimson
                       : const Color(0xFF0B090A))),
         ],
       ),
@@ -443,8 +443,7 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
 
                   if (index % step == 0 || index == keys.length - 1) {
                     return Text(keys[index],
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.grey));
+                        style: TextStyle(fontSize: 12, color: BL.faint));
                   }
                   return const SizedBox.shrink();
                 }),

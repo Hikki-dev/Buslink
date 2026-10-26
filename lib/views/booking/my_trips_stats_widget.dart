@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/trip_model.dart';
@@ -84,7 +85,7 @@ class TripsStatsWidget extends StatelessWidget {
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(label,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 12, color: BL.muted),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis)

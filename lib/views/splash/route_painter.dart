@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 
 import 'splash_screen.dart' show SplashColors;
 
@@ -163,8 +164,8 @@ class RoutePainter extends CustomPainter {
   void _bus(Canvas canvas, double opacity) {
     final body = RRect.fromRectAndRadius(
         const Rect.fromLTWH(-13, -10, 26, 15), const Radius.circular(4.5));
-    canvas.drawRRect(body,
-        Paint()..color = const Color(0xFFBA181B).withValues(alpha: opacity));
+    canvas.drawRRect(
+        body, Paint()..color = BL.crimson.withValues(alpha: opacity));
     canvas.drawRRect(
       body,
       Paint()

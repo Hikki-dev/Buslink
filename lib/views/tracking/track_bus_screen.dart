@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
@@ -237,7 +238,7 @@ class _TrackBusScreenState extends State<TrackBusScreen>
               height: 22,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: BL.surface,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.black, width: 4),
                 ),
@@ -249,8 +250,7 @@ class _TrackBusScreenState extends State<TrackBusScreen>
               width: 44,
               height: 44,
               alignment: Alignment.topCenter,
-              child: const Icon(Icons.location_on,
-                  size: 44, color: Colors.black87),
+              child: Icon(Icons.location_on, size: 44, color: BL.ink),
             ),
           if (_busPos != null)
             Marker(
@@ -389,15 +389,15 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                       width: 40,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade400,
+                        color: BL.border,
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(headline,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                          fontSize: 17, color: Colors.grey.shade700)),
+                      style: theme.textTheme.bodyLarge
+                          ?.copyWith(fontSize: 17, color: BL.muted)),
                   if (!cancelled)
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -425,9 +425,8 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text('Expected',
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey.shade700)),
+                                  style:
+                                      TextStyle(fontSize: 14, color: BL.muted)),
                               Text(DateFormat('h:mm a').format(eta.expected),
                                   style: const TextStyle(
                                       fontSize: 20,
@@ -444,10 +443,8 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(_trip.fromCity,
-                            style: TextStyle(color: Colors.grey.shade700)),
-                        Text(_trip.toCity,
-                            style: TextStyle(color: Colors.grey.shade700)),
+                        Text(_trip.fromCity, style: TextStyle(color: BL.muted)),
+                        Text(_trip.toCity, style: TextStyle(color: BL.muted)),
                       ],
                     ),
                   ],
@@ -473,8 +470,8 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                                 style: const TextStyle(
                                     fontSize: 20, fontWeight: FontWeight.w800)),
                             Text(_trip.operatorName,
-                                style: TextStyle(
-                                    fontSize: 16, color: Colors.grey.shade700)),
+                                style:
+                                    TextStyle(fontSize: 16, color: BL.muted)),
                           ],
                         ),
                       ),
@@ -548,10 +545,9 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Center(
+                    Center(
                       child: Text('Get your ticket ready to show the conductor',
-                          style:
-                              TextStyle(fontSize: 16, color: Colors.black54)),
+                          style: TextStyle(fontSize: 16, color: BL.muted)),
                     ),
                   ],
                 ],
@@ -579,7 +575,7 @@ class _RoundButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: BL.surface,
       shape: const CircleBorder(),
       elevation: 4,
       child: IconButton(
@@ -609,7 +605,7 @@ class _ProgressBar extends StatelessWidget {
             Container(
               height: 12,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: BL.border,
                 borderRadius: BorderRadius.circular(6),
               ),
             ),
@@ -629,7 +625,7 @@ class _ProgressBar extends StatelessWidget {
                 width: 26,
                 height: 26,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: BL.surface,
                   shape: BoxShape.circle,
                   border: Border.all(color: AppTheme.primaryColor, width: 3),
                 ),
@@ -655,24 +651,19 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, icon, bg, fg) = cancelled
-        ? (
-            'Cancelled',
-            Icons.cancel,
-            const Color(0xFFFBE0DC),
-            const Color(0xFF7F1D14)
-          )
+        ? ('Cancelled', Icons.cancel, BL.tint, BL.dangerInk)
         : late
             ? (
                 delayMinutes > 0 ? 'Late $delayMinutes min' : 'Delayed',
                 Icons.schedule,
-                const Color(0xFFFFF1DB),
-                const Color(0xFF7A4300)
+                BL.warnTint,
+                BL.warnInk
               )
             : (
                 'On time',
                 Icons.check_circle,
                 const Color(0xFFDDF1E3),
-                const Color(0xFF14532D)
+                BL.successInk
               );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

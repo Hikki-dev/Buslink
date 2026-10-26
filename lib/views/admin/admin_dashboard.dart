@@ -1,6 +1,7 @@
 import 'layout/admin_shell.dart';
 import 'widgets/admin_trips_table.dart';
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/trip_controller.dart';
@@ -85,7 +86,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
                                     children: [
-                                      const Expanded(
+                                      Expanded(
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -100,7 +101,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                                 'Add, change or remove the trips passengers can book.',
                                                 style: TextStyle(
                                                     fontSize: 17,
-                                                    color: Color(0xFF4A5560))),
+                                                    color: BL.muted)),
                                           ],
                                         ),
                                       ),
@@ -343,8 +344,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   child: Column(
                                     children: [
                                       Icon(Icons.search_off,
-                                          size: 64,
-                                          color: Colors.grey.shade300),
+                                          size: 64, color: BL.border),
                                       const SizedBox(height: 16),
                                       Text(
                                           AppLocalizations.of(context)!
@@ -352,7 +352,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           style: TextStyle(
                                               fontFamily: 'Outfit',
                                               fontSize: 16,
-                                              color: Colors.grey
+                                              color: BL.faint
                                                   .withValues(alpha: 0.2))),
                                       const SizedBox(height: 8),
                                       Text(
@@ -361,7 +361,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           style: TextStyle(
                                               fontFamily: 'Outfit',
                                               fontSize: 14,
-                                              color: Colors.grey)),
+                                              color: BL.faint)),
                                       const SizedBox(height: 24),
                                       // Preview Action
                                       ElevatedButton.icon(
@@ -394,7 +394,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                             AppLocalizations.of(context)!
                                                 .previewApp),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.white,
+                                          backgroundColor: BL.surface,
                                           foregroundColor: Colors.black,
                                         ),
                                       ),
@@ -464,7 +464,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       fontFamily: 'Outfit',
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey,
+                      color: BL.faint,
                       letterSpacing: 1)),
               const SizedBox(height: 20),
               if (isDesktop)
@@ -570,7 +570,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         height: 50,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: BL.border),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -653,7 +653,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               labelText: label,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300)),
+                  borderSide: BorderSide(color: BL.border)),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               suffixIcon: const Icon(Icons.search, size: 20),
@@ -740,16 +740,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 const SizedBox(height: 8),
                 Text(
                   "Departs: ${DateFormat('HH:mm').format(trip.departureTime)} • Arrives: ${DateFormat('HH:mm').format(trip.arrivalTime)}",
-                  style: TextStyle(
-                      fontFamily: 'Outfit', color: Colors.grey.shade600),
+                  style: TextStyle(fontFamily: 'Outfit', color: BL.muted),
                 ),
                 if (trip.via.isNotEmpty)
                   Text(
                     "Via: ${trip.via}",
                     style: TextStyle(
-                        fontFamily: 'Outfit',
-                        color: Colors.grey.shade500,
-                        fontSize: 12),
+                        fontFamily: 'Outfit', color: BL.faint, fontSize: 12),
                   ),
               ],
             ),

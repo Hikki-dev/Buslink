@@ -271,7 +271,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
                         fontSize: 18, fontWeight: FontWeight.w800)),
                 Text(
                     '${DateFormat('EEE d MMM').format(trip.departureTime)} · Seats $seats',
-                    style: const TextStyle(fontSize: 16, color: BL.muted)),
+                    style: TextStyle(fontSize: 16, color: BL.muted)),
                 Text('Paid LKR ${fmt.format(paid)}',
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w700)),
@@ -285,9 +285,8 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
     final policy = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: const Color(0xFFF5F3F4),
-          borderRadius: BorderRadius.circular(14)),
-      child: const Column(
+          color: BL.fill, borderRadius: BorderRadius.circular(14)),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Refund Policy',
@@ -295,8 +294,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
           SizedBox(height: 6),
           Text(
               'The earlier you cancel, the more you get back. More than 24 hours before the bus leaves: 90% back. Between 6 and 24 hours: 50% back. Less than 6 hours: no refund.',
-              style: TextStyle(
-                  fontSize: 16, height: 1.45, color: Color(0xFF3A2F31))),
+              style: TextStyle(fontSize: 16, height: 1.45, color: BL.inkSoft)),
         ],
       ),
     );
@@ -306,17 +304,16 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-              color: const Color(0xFFFBE0DC),
-              borderRadius: BorderRadius.circular(12)),
+              color: BL.tint, borderRadius: BorderRadius.circular(12)),
           child: Row(children: [
-            const Icon(Icons.block, color: Color(0xFF7F1D14)),
+            Icon(Icons.block, color: BL.dangerInk),
             const SizedBox(width: 10),
             Expanded(
                 child: Text(reasonText,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF7F1D14)))),
+                        color: BL.dangerInk))),
           ]),
         ),
       if (isEligible) ...[
@@ -328,16 +325,16 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
           isExpanded: true,
           hint: const Text('Choose a reason'),
           icon: const Icon(Icons.expand_more),
-          style: const TextStyle(fontSize: 17, color: BL.ink),
+          style: TextStyle(fontSize: 17, color: BL.ink),
           decoration: InputDecoration(
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: BL.border, width: 1.5)),
+                borderSide: BorderSide(color: BL.border, width: 1.5)),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: BL.border, width: 1.5)),
+                borderSide: BorderSide(color: BL.border, width: 1.5)),
           ),
           items: [
             for (final r in RefundReason.values)
@@ -362,7 +359,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFFDEEEE),
+            color: BL.tint,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: const Color(0xFFE5383B), width: 1.5),
           ),
@@ -376,10 +373,10 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
                         letterSpacing: 0.8)),
               ),
               Text('LKR ${fmt.format(paid * refundPct)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: BL.crimson)),
+                      color: BL.link)),
             ],
           ),
         ),
@@ -396,7 +393,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
             onPressed: (_isLoading || !isEligible) ? null : _submitRefund,
             style: FilledButton.styleFrom(
               backgroundColor: BL.crimson,
-              disabledBackgroundColor: const Color(0xFFE3DADB),
+              disabledBackgroundColor: BL.fill,
               shape: const StadiumBorder(),
               textStyle: const TextStyle(
                   fontFamily: 'Outfit',
@@ -413,13 +410,13 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        const Text('Processing time: 5–7 working days',
+        Text('Processing time: 5–7 working days',
             style: TextStyle(fontSize: 15, color: BL.muted)),
       ],
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: Column(
         children: [
           Container(
@@ -468,7 +465,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
           Container(
             padding: EdgeInsets.fromLTRB(
                 16, 14, 16, 14 + MediaQuery.paddingOf(context).bottom),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: BL.hairline))),
             child: Center(
               child: ConstrainedBox(

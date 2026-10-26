@@ -212,10 +212,10 @@ class _LoginScreenState extends State<LoginScreen> {
           decoration: InputDecoration(
             hintText: hint,
             helperText: helper,
-            helperStyle: const TextStyle(fontSize: 14, color: BL.muted),
+            helperStyle: TextStyle(fontSize: 14, color: BL.muted),
             errorStyle:
                 const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-            hintStyle: const TextStyle(fontSize: 17, color: BL.muted),
+            hintStyle: TextStyle(fontSize: 17, color: BL.muted),
             prefixIcon: Icon(icon, color: BL.muted),
             suffixIcon: password
                 ? IconButton(
@@ -227,14 +227,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   )
                 : null,
             filled: true,
-            fillColor: const Color(0xFFF5F3F4),
+            fillColor: BL.fill,
             contentPadding: EdgeInsets.symmetric(vertical: (height - 24) / 2),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+                borderSide: BorderSide(color: BL.hairline, width: 1.5)),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: BL.hairline, width: 1.5)),
+                borderSide: BorderSide(color: BL.hairline, width: 1.5)),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: BL.crimson, width: 2)),
@@ -326,7 +326,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: TextButton(
                 onPressed: _forgotPassword,
                 style: TextButton.styleFrom(
-                    foregroundColor: BL.crimson,
+                    foregroundColor: BL.link,
                     minimumSize: const Size(0, 44),
                     textStyle: const TextStyle(
                         fontFamily: 'Outfit',
@@ -360,13 +360,13 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 12),
           Row(children: [
-            const Expanded(child: Divider(color: BL.hairline)),
+            Expanded(child: Divider(color: BL.hairline)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(l10n.orDivider,
-                  style: const TextStyle(fontSize: 15, color: BL.muted)),
+                  style: TextStyle(fontSize: 15, color: BL.muted)),
             ),
-            const Expanded(child: Divider(color: BL.hairline)),
+            Expanded(child: Divider(color: BL.hairline)),
           ]),
           const SizedBox(height: 12),
           OutlinedButton(
@@ -404,7 +404,7 @@ class _LoginScreenState extends State<LoginScreen> {
   ButtonStyle get _outline => OutlinedButton.styleFrom(
         minimumSize: const Size(0, 54),
         foregroundColor: BL.ink,
-        side: const BorderSide(color: BL.border, width: 1.5),
+        side: BorderSide(color: BL.border, width: 1.5),
         shape: const StadiumBorder(),
         textStyle: const TextStyle(
             fontFamily: 'Outfit', fontSize: 17, fontWeight: FontWeight.w700),
@@ -419,11 +419,11 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text(_isLogin ? l10n.noAccount : l10n.alreadyHaveAccount,
-              style: const TextStyle(fontSize: 16, color: BL.muted)),
+              style: TextStyle(fontSize: 16, color: BL.muted)),
           TextButton(
             onPressed: () => setState(() => _isLogin = !_isLogin),
             style: TextButton.styleFrom(
-                foregroundColor: BL.crimson,
+                foregroundColor: BL.link,
                 minimumSize: const Size(0, 48),
                 textStyle: const TextStyle(
                     fontFamily: 'Outfit',
@@ -446,7 +446,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BL.surface,
       body: LayoutBuilder(
         builder: (context, box) {
           if (box.maxWidth > 900) {
@@ -462,11 +462,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Text('BusLink',
+                            Text('BusLink',
                                 style: TextStyle(
                                     fontSize: 30,
                                     fontWeight: FontWeight.w800,
-                                    color: BL.crimson)),
+                                    color: BL.link)),
                             const SizedBox(height: 18),
                             Text(l10n.welcome,
                                 style: const TextStyle(
@@ -476,8 +476,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 _isLogin
                                     ? l10n.loginSubtitle
                                     : l10n.signupSubtitle,
-                                style: const TextStyle(
-                                    fontSize: 18, color: BL.muted)),
+                                style:
+                                    TextStyle(fontSize: 18, color: BL.muted)),
                             const SizedBox(height: 18),
                             _form(true),
                             const SizedBox(height: 8),

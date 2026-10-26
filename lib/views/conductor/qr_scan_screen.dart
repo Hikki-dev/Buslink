@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -243,7 +244,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: BL.surface,
                     borderRadius:
                         BorderRadius.vertical(top: Radius.circular(16)),
                   ),
@@ -253,7 +254,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                       Text(
                         "Scanning failed?",
                         style: TextStyle(
-                            color: Colors.grey.shade800,
+                            color: BL.inkSoft,
                             fontSize: 15,
                             fontWeight: FontWeight.bold),
                       ),
@@ -266,7 +267,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                         decoration: InputDecoration(
                           hintText: "Enter Ticket ID Manually",
                           filled: true,
-                          fillColor: Colors.grey.shade100,
+                          fillColor: BL.fill,
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
                           border: OutlineInputBorder(
@@ -277,7 +278,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                           suffixIcon: IconButton(
                             tooltip: 'Check this ticket',
                             style: IconButton.styleFrom(
-                                backgroundColor: Colors.black,
+                                backgroundColor: BL.ink,
                                 foregroundColor: Colors.white,
                                 minimumSize: const Size(48, 48)),
                             icon: const Icon(Icons.arrow_forward, size: 22),
@@ -316,7 +317,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                   icon: const Icon(Icons.camera_alt),
                   label: const Text("Tap to Start Camera"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
+                    backgroundColor: BL.surface,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 12),
