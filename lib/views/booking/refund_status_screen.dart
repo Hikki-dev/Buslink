@@ -94,7 +94,7 @@ class _Body extends StatelessWidget {
     final pending = status == RefundStatus.pending;
 
     final Color bg =
-        rejected ? BL.tint : (pending ? BL.warnTint : const Color(0xFFDDF1E3));
+        rejected ? BL.tint : (pending ? BL.warnTint : BL.successTint);
     final Color fg =
         rejected ? BL.dangerInk : (pending ? BL.warnInk : BL.successInk);
     final headline = rejected
@@ -342,7 +342,7 @@ class _Dot extends StatelessWidget {
             height: 28,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: done ? color : Colors.white,
+              color: done ? color : BL.surface,
               border: Border.all(
                 color: done || current ? color : Colors.grey.shade400,
                 width: 3,

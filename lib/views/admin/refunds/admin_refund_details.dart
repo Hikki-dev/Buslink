@@ -68,9 +68,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                                 decoration: BoxDecoration(
                                   color: pending
                                       ? BL.warnTint
-                                      : (approved
-                                          ? const Color(0xFFDDF1E3)
-                                          : BL.tint),
+                                      : (approved ? BL.successTint : BL.tint),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Text(

@@ -13,8 +13,10 @@ exports.sleep = sleep;
 exports.open = async (browser, w, h, dsf, mobile, semantics = true) => {
   const page = await browser.newPage();
   await page.setViewport({ width: w, height: h, deviceScaleFactor: dsf, isMobile: !!mobile, hasTouch: !!mobile });
+  if (process.env.THEME === 'dark') await page.evaluateOnNewDocument(() => { window.__dark = true; });
   await page.evaluateOnNewDocument(() => {
     localStorage.setItem('flutter.notification_prompt_answer', '"allowed"');
+    if (window.__dark) localStorage.setItem('flutter.theme_mode', '"dark"');
   });
   await page.goto(APP, { waitUntil: 'networkidle2', timeout: 90000 });
   await sleep(6000);

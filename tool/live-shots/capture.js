@@ -82,6 +82,31 @@ scenes.conductor = async b => {
   await L.tap(p, 'Origin'); await L.sleep(1200); await snap(p, 'conductor-origin'); await L.tap(p, 'Colombo'); await L.sleep(1000); await L.tap(p, 'Destination'); await L.sleep(1200); await L.tap(p, 'Kandy'); await L.sleep(1000); await L.tap(p, '2026-10-25'); await L.sleep(1500); await L.tap(p, '27, Tuesday'); await L.tap(p, 'OK'); await L.sleep(1000); await L.tap(p, 'Search', 0); await L.sleep(3500); await snap(p, 'conductor-trips');
   await L.tap(p, 'Colombo -> Kandy'); await L.sleep(3500); await L.tap(p, 'Decline'); await L.sleep(2500); await snap(p, 'conductor-manage');
 };
+// Admin and conductor screens in dark mode: run with THEME=dark so the app starts with the dark choice saved.
+scenes.darkAdmin = async b => {
+  const p = await L.open(b, ...dims);
+  await L.login(p, 'admin');
+  if (mode === 'desktop') await p.setViewport({ width: 1600, height: 1100, deviceScaleFactor: 2 });
+  await snap(p, 'dark-admin-dashboard');
+  const pages = mode === 'desktop'
+    ? [['Routes', 'routes'], ['Bookings', 'bookings'], ['Refunds', 'refunds'], ['Feedback', 'feedback'], ['Analytics', 'analytics'], ['Users and roles', 'users']]
+    : [['Manage Routes', 'routes'], ['Bookings', 'bookings'], ['Refunds', 'refunds'], ['Analytics', 'analytics'], ['App Feedback', 'feedback'], ['Add New Trip', 'trip-form']];
+  for (const [lab, name] of pages) {
+    await L.tap(p, lab); await L.sleep(3000); await snap(p, 'dark-admin-' + name);
+    if (mode === 'phone') { await L.tap(p, 'Go back').catch(() => L.tap(p, 'Admin', 0)); await L.sleep(2000); }
+  }
+  if (mode === 'desktop') { await L.tap(p, 'Trips'); await L.sleep(2500); await L.tap(p, 'Add new trip'); await L.sleep(2500); await snap(p, 'dark-admin-trip-form'); }
+};
+scenes.darkConductor = async b => {
+  const p = await L.open(b, ...dims);
+  await L.login(p, 'conductor'); await L.sleep(2000);
+  await L.tap(p, 'Decline').catch(() => {}); await L.sleep(2500);
+  await snap(p, 'dark-conductor-home');
+  await L.fill(p, 0, 'K7M2'); await L.tap(p, 'Verify'); await L.sleep(3000); await snap(p, 'dark-conductor-verified');
+  await L.tap(p, 'Approve Boarding'); await L.sleep(3000); await snap(p, 'dark-conductor-boarded');
+  await L.tap(p, 'Search Trips').catch(async () => { await L.tap(p, 'Close').catch(() => {}); await L.sleep(1500); await L.tap(p, 'Search Trips'); });
+  await L.sleep(2500); await snap(p, 'dark-conductor-find');
+};
 scenes.phoneAccount = async b => {
   const p = await L.open(b, ...dims);
   await L.login(p, 'customer');

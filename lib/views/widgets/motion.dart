@@ -84,7 +84,7 @@ class _SkeletonState extends State<Skeleton>
           height: widget.height,
           width: widget.width,
           decoration: BoxDecoration(
-            color: Color.lerp(BL.hairline, const Color(0xFFF4EFEF),
+            color: Color.lerp(BL.hairline, BL.fill,
                 still ? 0.5 : Curves.easeInOut.transform(_c.value)),
             borderRadius: BorderRadius.circular(widget.radius),
           ),

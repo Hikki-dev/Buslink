@@ -373,12 +373,12 @@ class _LateDeparturesViewState extends State<LateDeparturesView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.black : Colors.transparent,
+          color: isSelected ? BL.ink : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(label,
             style: TextStyle(
-                color: isSelected ? Colors.white : Colors.black,
+                color: isSelected ? BL.surface : BL.ink,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
       ),
     );
@@ -680,8 +680,7 @@ Future<DateTime?> showMonthYearPicker({
                                   .substring(0, 3), // Show "Jan", "Feb", etc.
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color:
-                                    isSelected ? Colors.white : Colors.black87,
+                                color: isSelected ? BL.surface : BL.ink,
                               ),
                             ),
                           ),

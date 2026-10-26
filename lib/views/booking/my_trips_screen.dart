@@ -751,8 +751,7 @@ _Chip _chip(Ticket t, DateTime dep, {Map<String, dynamic>? live}) {
     return _Chip('Completed', BL.fill, BL.inkSoft, Icons.check, done: true);
   }
   if (raw == 'started' || raw == 'departed') {
-    return _Chip(
-        'Active', Color(0xFFDDF1E3), BL.successInk, Icons.directions_bus);
+    return _Chip('Active', BL.successTint, BL.successInk, Icons.directions_bus);
   }
   if (dep.isBefore(DateTime.now())) {
     return _Chip('Completed', BL.fill, BL.inkSoft, Icons.check, done: true);

@@ -30,6 +30,7 @@ The computer size is 1600 by 1000 at twice the sharpness (3200 by 2000 pixels). 
 | `confirmed` | Customer | Booking Confirmed, reached the way Stripe's return link reaches it |
 | `adminPhoneMore` | Admin | a booking's details on a phone |
 | `extras` | Nobody | sign up, phone login |
+| `darkAdmin`, `darkConductor` | Admin, Conductor | the same screens in dark mode. Run with `THEME=dark node capture.js <desktop\|phone> darkAdmin`: the dark choice is saved in the browser before the app starts |
 
 ## Things to know
 

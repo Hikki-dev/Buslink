@@ -50,6 +50,8 @@ class BL {
       _pick(const Color(0xFF7F1D14), const Color(0xFFF4A59C));
   static Color get warnInk =>
       _pick(const Color(0xFF7A4300), const Color(0xFFF2C07A));
+  static Color get successTint =>
+      _pick(const Color(0xFFDDF1E3), const Color(0xFF16301F));
   static Color get warnTint =>
       _pick(const Color(0xFFFFF1DB), const Color(0xFF362711));
 }

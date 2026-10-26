@@ -659,12 +659,7 @@ class _StatusPill extends StatelessWidget {
                 BL.warnTint,
                 BL.warnInk
               )
-            : (
-                'On time',
-                Icons.check_circle,
-                const Color(0xFFDDF1E3),
-                BL.successInk
-              );
+            : ('On time', Icons.check_circle, BL.successTint, BL.successInk);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration:

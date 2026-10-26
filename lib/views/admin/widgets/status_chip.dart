@@ -67,6 +67,10 @@ class StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = statusStyle(status);
+    // The strong shades read well on light, but not on dark: lighten them.
+    final ink = BL.dark
+        ? HSLColor.fromColor(s.color).withLightness(0.75).toColor()
+        : s.color;
     return Semantics(
       label: 'Status: ${s.label}',
       excludeSemantics: true,
@@ -79,15 +83,13 @@ class StatusChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(s.icon, size: 16, color: s.color),
+            Icon(s.icon, size: 16, color: ink),
             const SizedBox(width: 5),
             Flexible(
               child: Text(s.label,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: s.color)),
+                      fontSize: 13, fontWeight: FontWeight.w700, color: ink)),
             ),
           ],
         ),

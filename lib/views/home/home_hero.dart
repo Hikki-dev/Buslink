@@ -145,7 +145,8 @@ class HomeHero extends StatelessWidget {
                               height: 50),
                         ],
                       ),
-                      Positioned(top: 62, child: _SwapButton(onTap: _swap)),
+                      Positioned(
+                          top: 48, right: 8, child: _SwapButton(onTap: _swap)),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -544,8 +545,8 @@ class _SwapButton extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: outlined
               ? null
-              : const [
-                  BoxShadow(color: Colors.white, spreadRadius: 4),
+              : [
+                  BoxShadow(color: BL.surface, spreadRadius: 4),
                   BoxShadow(
                       color: Color(0x2E660708),
                       blurRadius: 6,

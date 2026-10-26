@@ -88,7 +88,7 @@ class AdminTripsTableState extends State<AdminTripsTable> {
     return (
       label: 'On time',
       icon: Icons.check,
-      bg: const Color(0xFFDDF1E3),
+      bg: BL.successTint,
       fg: BL.successInk
     );
   }

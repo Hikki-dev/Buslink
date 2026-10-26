@@ -44,7 +44,7 @@ class _BulkQuantityDialogState extends State<BulkQuantityDialog> {
           button: true,
           label: tip,
           child: Material(
-            color: filled ? BL.crimson : Colors.white,
+            color: filled ? BL.crimson : BL.surface,
             shape: CircleBorder(
                 side: filled
                     ? BorderSide.none

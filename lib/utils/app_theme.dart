@@ -2,16 +2,41 @@
 import 'package:flutter/cupertino.dart'; // ignore: unnecessary_import (newer Flutter needs it)
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'bl_colors.dart';
 
 // This class will manage and notify the app of theme changes
 class ThemeController extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.light; // Default to Light Mode as requested
+  static const _key = 'theme_mode';
+
+  ThemeMode _themeMode = ThemeMode.light; // Light until the person chooses
   ThemeMode get themeMode => _themeMode;
 
-  void setTheme(ThemeMode mode) {
+  ThemeController() {
+    _restore();
+  }
+
+  /// Brings back the person's last choice. Without a saved choice it stays light.
+  Future<void> _restore() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getString(_key) == 'dark') {
+        setTheme(ThemeMode.dark, save: false);
+      }
+    } catch (_) {
+      // No storage (a test, a private window): keep light.
+    }
+  }
+
+  void setTheme(ThemeMode mode, {bool save = true}) {
     _themeMode = mode;
+    if (save) {
+      SharedPreferences.getInstance()
+          .then((p) =>
+              p.setString(_key, mode == ThemeMode.dark ? 'dark' : 'light'))
+          .catchError((_) => false);
+    }
     BL.dark = mode == ThemeMode.dark;
     notifyListeners();
     // Screens read BL.* directly, so they must all rebuild to pick up the
