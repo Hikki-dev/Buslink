@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// The BusLink bus, drawn the same way as the logo in web/index.html:
-/// a rounded white body with a window, two lights and two feet.
+/// a rounded white body with a window, two lights, a bumper bar and two feet.
 class BusGlyph extends StatelessWidget {
   const BusGlyph({
     super.key,
@@ -33,20 +33,21 @@ class _BusGlyphPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Drawn on a 64 x 64 grid, then scaled to fit.
-    canvas.scale(size.width / 64, size.height / 64);
+    // Drawn on a 100 x 100 grid, then scaled to fit.
+    canvas.scale(size.width / 100, size.height / 100);
     final fill = Paint()..color = body;
     final hole = Paint()..color = cutout;
     RRect r(double x, double y, double w, double h, double radius) =>
         RRect.fromRectAndRadius(
             Rect.fromLTWH(x, y, w, h), Radius.circular(radius));
 
-    canvas.drawRRect(r(12, 8, 40, 42, 11), fill);
-    canvas.drawRRect(r(17, 14, 30, 14, 4), hole);
-    canvas.drawCircle(const Offset(22, 38), 3.6, hole);
-    canvas.drawCircle(const Offset(42, 38), 3.6, hole);
-    canvas.drawRRect(r(17, 49, 8, 9, 3), fill);
-    canvas.drawRRect(r(39, 49, 8, 9, 3), fill);
+    canvas.drawRRect(r(24, 20, 52, 56, 11), fill);
+    canvas.drawRRect(r(31, 28, 38, 24, 5), hole);
+    canvas.drawCircle(const Offset(37, 63), 5, hole);
+    canvas.drawCircle(const Offset(63, 63), 5, hole);
+    canvas.drawRRect(r(40, 56, 20, 4, 2), hole);
+    canvas.drawRRect(r(29, 76, 10, 8, 2), fill);
+    canvas.drawRRect(r(61, 76, 10, 8, 2), fill);
   }
 
   @override
