@@ -130,22 +130,28 @@ Choose English, Sinhala or Tamil with the three buttons at the top. Sign in with
 <td valign="top" width="25%"><a href="docs/images/passenger-1-sign-in-phone.png"><img src="docs/images/passenger-1-sign-in-phone.png" alt="The sign-in page on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/passenger-1-sign-up-phone.png"><img src="docs/images/passenger-1-sign-up-phone.png" alt="The sign-up page on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/passenger-1-phone-phone.png"><img src="docs/images/passenger-1-phone-phone.png" alt="Phone login on a phone: enter a phone number and press Send Code" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-1-code-phone.png"><img src="docs/images/passenger-1-code-phone.png" alt="Verify Phone on a phone: six empty boxes for the code, a Verify button and a Resend timer" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>The sign-in page</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>The sign-up page</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Phone login</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>Verify Phone</sub></td>
 </tr>
 </table>
 
 <table>
 <tr>
-<td valign="top" width="25%"><a href="docs/images/passenger-1-code-phone.png"><img src="docs/images/passenger-1-code-phone.png" alt="Verify Phone on a phone: six empty boxes for the code, a Verify button and a Resend timer" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/passenger-1-code-filled-phone.png"><img src="docs/images/passenger-1-code-filled-phone.png" alt="Verify Phone with the six digits typed in" width="185"></a></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
-<td align="center" valign="top"><b>4</b><br><sub>Verify Phone</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>Verify Phone with the six digits typed in</sub></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 </table>
 
@@ -174,22 +180,28 @@ Press the heart on any trip to keep the route. **Book again** fills in the searc
 <td valign="top" width="25%"><a href="docs/images/passenger-2-search-phone.png"><img src="docs/images/passenger-2-search-phone.png" alt="The home page on a phone, with the search card and the favourite routes" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/bulk-2-dates-phone.png"><img src="docs/images/bulk-2-dates-phone.png" alt="The calendar on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/bulk-3-passengers-phone.png"><img src="docs/images/bulk-3-passengers-phone.png" alt="Choosing how many people travel each day, with the total price" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/bulk-4-summary-phone.png"><img src="docs/images/bulk-4-summary-phone.png" alt="The bulk booking summary: the dates, the price per ticket, the number of passengers and the total" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>The home page</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>The calendar</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Choosing how many people travel each day</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>The bulk booking summary</sub></td>
 </tr>
 </table>
 
 <table>
 <tr>
-<td valign="top" width="25%"><a href="docs/images/bulk-4-summary-phone.png"><img src="docs/images/bulk-4-summary-phone.png" alt="The bulk booking summary: the dates, the price per ticket, the number of passengers and the total" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/passenger-3-favourites-phone.png"><img src="docs/images/passenger-3-favourites-phone.png" alt="My favourites on a phone" width="185"></a></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
-<td align="center" valign="top"><b>4</b><br><sub>The bulk booking summary</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>My favourites</sub></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 </table>
 
@@ -234,22 +246,28 @@ Check the summary, then press **Proceed to Pay**. On the phone a payment sheet o
 <td valign="top" width="25%"><a href="docs/images/passenger-4-results-phone.png"><img src="docs/images/passenger-4-results-phone.png" alt="Search results on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/passenger-5-bus-details-phone.png"><img src="docs/images/passenger-5-bus-details-phone.png" alt="Bus details on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/passenger-6-seats-phone.png"><img src="docs/images/passenger-6-seats-phone.png" alt="The seat map on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-6-seats-chosen-phone.png"><img src="docs/images/passenger-6-seats-chosen-phone.png" alt="Two seats chosen on a phone, with the total at the bottom" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>Search results</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>Bus details</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>The seat map</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>Two seats chosen</sub></td>
 </tr>
 </table>
 
 <table>
 <tr>
-<td valign="top" width="25%"><a href="docs/images/passenger-6-seats-chosen-phone.png"><img src="docs/images/passenger-6-seats-chosen-phone.png" alt="Two seats chosen on a phone, with the total at the bottom" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/passenger-7-payment-phone.png"><img src="docs/images/passenger-7-payment-phone.png" alt="Payment on a phone" width="185"></a></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
-<td align="center" valign="top"><b>4</b><br><sub>Two seats chosen</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>Payment</sub></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 </table>
 
@@ -284,22 +302,28 @@ Every ticket is one card with one big **View ticket** button. Before the first b
 <td valign="top" width="25%"><a href="docs/images/passenger-8-ticket-phone.png"><img src="docs/images/passenger-8-ticket-phone.png" alt="The ticket on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/passenger-8-confirmed-phone.png"><img src="docs/images/passenger-8-confirmed-phone.png" alt="Booking Confirmed on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/passenger-9-tracking-phone.jpg"><img src="docs/images/passenger-9-tracking-phone.jpg" alt="Tracking on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-10-my-trips-phone.png"><img src="docs/images/passenger-10-my-trips-phone.png" alt="My Trips on a phone" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>The ticket</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>Booking Confirmed</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Tracking</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>My Trips</sub></td>
 </tr>
 </table>
 
 <table>
 <tr>
-<td valign="top" width="25%"><a href="docs/images/passenger-10-my-trips-phone.png"><img src="docs/images/passenger-10-my-trips-phone.png" alt="My Trips on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/empty-trips-phone.png"><img src="docs/images/empty-trips-phone.png" alt="My Trips for someone with no tickets yet: a friendly message" width="185"></a></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
-<td align="center" valign="top"><b>4</b><br><sub>My Trips</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>My Trips for someone with no tickets yet</sub></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 </table>
 
@@ -353,11 +377,13 @@ Change your name and phone number, link your Google account, switch the language
 <td valign="top" width="25%"><a href="docs/images/passenger-14-profile-phone.png"><img src="docs/images/passenger-14-profile-phone.png" alt="The profile page on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/passenger-14-settings-phone.png"><img src="docs/images/passenger-14-settings-phone.png" alt="Account settings on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/passenger-14-feedback-phone.png"><img src="docs/images/passenger-14-feedback-phone.png" alt="The feedback form on a phone" width="185"></a></td>
+<td></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>5</b><br><sub>The profile page</sub></td>
 <td align="center" valign="top"><b>6</b><br><sub>Account settings</sub></td>
 <td align="center" valign="top"><b>7</b><br><sub>The feedback form</sub></td>
+<td></td>
 </tr>
 </table>
 
@@ -374,9 +400,15 @@ That is the passenger's whole journey. More detail is in the [Passenger guide](d
 <table>
 <tr>
 <td valign="top" width="25%"><a href="docs/images/passenger-15-support-phone.png"><img src="docs/images/passenger-15-support-phone.png" alt="Help and support on a phone" width="185"></a></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>Help and support</sub></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 </table>
 
@@ -448,11 +480,13 @@ More in the [Conductor guide](docs/Conductor%20guide.md). The last person in the
 <td valign="top" width="25%"><a href="docs/images/conductor-4-find-trips-phone.png"><img src="docs/images/conductor-4-find-trips-phone.png" alt="Find a trip on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/conductor-4-results-phone.png"><img src="docs/images/conductor-4-results-phone.png" alt="The trips that match, on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/conductor-5-update-status-phone.png"><img src="docs/images/conductor-5-update-status-phone.png" alt="Update Status on a phone" width="185"></a></td>
+<td></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>5</b><br><sub>Find a trip</sub></td>
 <td align="center" valign="top"><b>6</b><br><sub>The trips that match</sub></td>
 <td align="center" valign="top"><b>7</b><br><sub>Update Status</sub></td>
+<td></td>
 </tr>
 </table>
 
@@ -499,22 +533,28 @@ Open a booking to see the trip, the passenger and what was paid.
 <td valign="top" width="25%"><a href="docs/images/admin-1-trips-phone.png"><img src="docs/images/admin-1-trips-phone.png" alt="The admin home on a phone: tiles for Add New Trip, Add Route, Manage Routes, Bookings, Refunds, Analytics and App Feedback" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/admin-2-trip-form-phone.png"><img src="docs/images/admin-2-trip-form-phone.png" alt="The Add New Trip form on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/admin-3-routes-phone.png"><img src="docs/images/admin-3-routes-phone.png" alt="Routes on a phone: the table slides sideways" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/admin-4-bookings-phone.png"><img src="docs/images/admin-4-bookings-phone.png" alt="Bookings on a phone" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>The admin home</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>The Add New Trip form</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Routes</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>Bookings</sub></td>
 </tr>
 </table>
 
 <table>
 <tr>
-<td valign="top" width="25%"><a href="docs/images/admin-4-bookings-phone.png"><img src="docs/images/admin-4-bookings-phone.png" alt="Bookings on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/admin-4-booking-details-phone.png"><img src="docs/images/admin-4-booking-details-phone.png" alt="Booking details on a phone" width="185"></a></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
-<td align="center" valign="top"><b>4</b><br><sub>Bookings</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>Booking details</sub></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 </table>
 
@@ -551,22 +591,28 @@ That closes the loop: the admin's trips are what the passenger searched for in s
 <td valign="top" width="25%"><a href="docs/images/admin-5-refunds-phone.png"><img src="docs/images/admin-5-refunds-phone.png" alt="Refunds on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/admin-5-refund-details-phone.png"><img src="docs/images/admin-5-refund-details-phone.png" alt="Refund details on a phone" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/admin-6-feedback-phone.png"><img src="docs/images/admin-6-feedback-phone.png" alt="Feedback on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/admin-7-analytics-phone.png"><img src="docs/images/admin-7-analytics-phone.png" alt="Analytics on a phone: net revenue and top routes" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>Refunds</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>Refund details</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Feedback</sub></td>
+<td align="center" valign="top"><b>4</b><br><sub>Analytics</sub></td>
 </tr>
 </table>
 
 <table>
 <tr>
-<td valign="top" width="25%"><a href="docs/images/admin-7-analytics-phone.png"><img src="docs/images/admin-7-analytics-phone.png" alt="Analytics on a phone: net revenue and top routes" width="185"></a></td>
 <td valign="top" width="25%"><a href="docs/images/admin-8-users-phone.png"><img src="docs/images/admin-8-users-phone.png" alt="Users and roles on a phone" width="185"></a></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
-<td align="center" valign="top"><b>4</b><br><sub>Analytics</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>Users and roles</sub></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 </table>
 
