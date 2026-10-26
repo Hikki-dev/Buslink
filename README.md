@@ -123,20 +123,27 @@ While the app opens, a short scene plays: a bus drives from Colombo through Kand
 
 Choose English, Sinhala or Tamil with the three buttons at the top. Sign in with email, with Google, or with a phone number: you type your number, and a six-digit code arrives by text. **Sign Up** makes a new account. A new account is always a passenger. Nobody can pick a higher role for themselves.
 
-**On a phone: steps The sign-in page to Verify Phone with the six digits typed in.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+**On a phone: step 1.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
 
 <table>
 <tr>
-<td valign="top"><a href="docs/images/passenger-1-sign-in-phone.png"><img src="docs/images/passenger-1-sign-in-phone.png" alt="The sign-in page on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-1-sign-up-phone.png"><img src="docs/images/passenger-1-sign-up-phone.png" alt="The sign-up page on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-1-phone-phone.png"><img src="docs/images/passenger-1-phone-phone.png" alt="Phone login on a phone: enter a phone number and press Send Code" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-1-code-phone.png"><img src="docs/images/passenger-1-code-phone.png" alt="Verify Phone on a phone: six empty boxes for the code, a Verify button and a Resend timer" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-1-code-filled-phone.png"><img src="docs/images/passenger-1-code-filled-phone.png" alt="Verify Phone with the six digits typed in" width="145"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-1-sign-in-phone.png"><img src="docs/images/passenger-1-sign-in-phone.png" alt="The sign-in page on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-1-sign-up-phone.png"><img src="docs/images/passenger-1-sign-up-phone.png" alt="The sign-up page on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-1-phone-phone.png"><img src="docs/images/passenger-1-phone-phone.png" alt="Phone login on a phone: enter a phone number and press Send Code" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>The sign-in page</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>The sign-up page</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Phone login</sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td valign="top" width="25%"><a href="docs/images/passenger-1-code-phone.png"><img src="docs/images/passenger-1-code-phone.png" alt="Verify Phone on a phone: six empty boxes for the code, a Verify button and a Resend timer" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-1-code-filled-phone.png"><img src="docs/images/passenger-1-code-filled-phone.png" alt="Verify Phone with the six digits typed in" width="185"></a></td>
+</tr>
+<tr>
 <td align="center" valign="top"><b>4</b><br><sub>Verify Phone</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>Verify Phone with the six digits typed in</sub></td>
 </tr>
@@ -160,20 +167,27 @@ Choose where from, where to and the day, then press **Search Buses**. The little
 
 Press the heart on any trip to keep the route. **Book again** fills in the search for you.
 
-**On a phone: steps The home page to My favourites.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+**On a phone: steps 2 to 3.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
 
 <table>
 <tr>
-<td valign="top"><a href="docs/images/passenger-2-search-phone.png"><img src="docs/images/passenger-2-search-phone.png" alt="The home page on a phone, with the search card and the favourite routes" width="145"></a></td>
-<td valign="top"><a href="docs/images/bulk-2-dates-phone.png"><img src="docs/images/bulk-2-dates-phone.png" alt="The calendar on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/bulk-3-passengers-phone.png"><img src="docs/images/bulk-3-passengers-phone.png" alt="Choosing how many people travel each day, with the total price" width="145"></a></td>
-<td valign="top"><a href="docs/images/bulk-4-summary-phone.png"><img src="docs/images/bulk-4-summary-phone.png" alt="The bulk booking summary: the dates, the price per ticket, the number of passengers and the total" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-3-favourites-phone.png"><img src="docs/images/passenger-3-favourites-phone.png" alt="My favourites on a phone" width="145"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-2-search-phone.png"><img src="docs/images/passenger-2-search-phone.png" alt="The home page on a phone, with the search card and the favourite routes" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/bulk-2-dates-phone.png"><img src="docs/images/bulk-2-dates-phone.png" alt="The calendar on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/bulk-3-passengers-phone.png"><img src="docs/images/bulk-3-passengers-phone.png" alt="Choosing how many people travel each day, with the total price" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>The home page</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>The calendar</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Choosing how many people travel each day</sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td valign="top" width="25%"><a href="docs/images/bulk-4-summary-phone.png"><img src="docs/images/bulk-4-summary-phone.png" alt="The bulk booking summary: the dates, the price per ticket, the number of passengers and the total" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-3-favourites-phone.png"><img src="docs/images/passenger-3-favourites-phone.png" alt="My favourites on a phone" width="185"></a></td>
+</tr>
+<tr>
 <td align="center" valign="top"><b>4</b><br><sub>The bulk booking summary</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>My favourites</sub></td>
 </tr>
@@ -213,20 +227,27 @@ Check the summary, then press **Proceed to Pay**. On the phone a payment sheet o
 
 <img src="docs/images/payment-states.png" alt="Payment states: processing, paid, cancelled and failed, each with a clear next step" width="360">
 
-**On a phone: steps Search results to Payment.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+**On a phone: steps 4 to 7.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
 
 <table>
 <tr>
-<td valign="top"><a href="docs/images/passenger-4-results-phone.png"><img src="docs/images/passenger-4-results-phone.png" alt="Search results on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-5-bus-details-phone.png"><img src="docs/images/passenger-5-bus-details-phone.png" alt="Bus details on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-6-seats-phone.png"><img src="docs/images/passenger-6-seats-phone.png" alt="The seat map on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-6-seats-chosen-phone.png"><img src="docs/images/passenger-6-seats-chosen-phone.png" alt="Two seats chosen on a phone, with the total at the bottom" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-7-payment-phone.png"><img src="docs/images/passenger-7-payment-phone.png" alt="Payment on a phone" width="145"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-4-results-phone.png"><img src="docs/images/passenger-4-results-phone.png" alt="Search results on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-5-bus-details-phone.png"><img src="docs/images/passenger-5-bus-details-phone.png" alt="Bus details on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-6-seats-phone.png"><img src="docs/images/passenger-6-seats-phone.png" alt="The seat map on a phone" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>Search results</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>Bus details</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>The seat map</sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td valign="top" width="25%"><a href="docs/images/passenger-6-seats-chosen-phone.png"><img src="docs/images/passenger-6-seats-chosen-phone.png" alt="Two seats chosen on a phone, with the total at the bottom" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-7-payment-phone.png"><img src="docs/images/passenger-7-payment-phone.png" alt="Payment on a phone" width="185"></a></td>
+</tr>
+<tr>
 <td align="center" valign="top"><b>4</b><br><sub>Two seats chosen</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>Payment</sub></td>
 </tr>
@@ -256,20 +277,27 @@ Every ticket is one card with one big **View ticket** button. Before the first b
 
 <img src="docs/images/my-trips-card.png" alt="A trip card with a View button, a Track bus button and a Refund link" width="360">
 
-**On a phone: steps The ticket to My Trips for someone with no tickets yet.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+**On a phone: steps 8 to 10.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
 
 <table>
 <tr>
-<td valign="top"><a href="docs/images/passenger-8-ticket-phone.png"><img src="docs/images/passenger-8-ticket-phone.png" alt="The ticket on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-8-confirmed-phone.png"><img src="docs/images/passenger-8-confirmed-phone.png" alt="Booking Confirmed on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-9-tracking-phone.jpg"><img src="docs/images/passenger-9-tracking-phone.jpg" alt="Tracking on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-10-my-trips-phone.png"><img src="docs/images/passenger-10-my-trips-phone.png" alt="My Trips on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/empty-trips-phone.png"><img src="docs/images/empty-trips-phone.png" alt="My Trips for someone with no tickets yet: a friendly message" width="145"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-8-ticket-phone.png"><img src="docs/images/passenger-8-ticket-phone.png" alt="The ticket on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-8-confirmed-phone.png"><img src="docs/images/passenger-8-confirmed-phone.png" alt="Booking Confirmed on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-9-tracking-phone.jpg"><img src="docs/images/passenger-9-tracking-phone.jpg" alt="Tracking on a phone" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>The ticket</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>Booking Confirmed</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Tracking</sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td valign="top" width="25%"><a href="docs/images/passenger-10-my-trips-phone.png"><img src="docs/images/passenger-10-my-trips-phone.png" alt="My Trips on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/empty-trips-phone.png"><img src="docs/images/empty-trips-phone.png" alt="My Trips for someone with no tickets yet: a friendly message" width="185"></a></td>
+</tr>
+<tr>
 <td align="center" valign="top"><b>4</b><br><sub>My Trips</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>My Trips for someone with no tickets yet</sub></td>
 </tr>
@@ -303,31 +331,31 @@ You hear about delays, cancellations, refunds and reminders. The bell shows how 
 
 Change your name and phone number, link your Google account, switch the language or dark mode, and tell us what you think with **Send Feedback**.
 
-**On a phone: steps Request a refund to The feedback form.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+**On a phone: steps 11 to 14.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
 
 <table>
 <tr>
-<td valign="top"><a href="docs/images/passenger-11-refund-phone.png"><img src="docs/images/passenger-11-refund-phone.png" alt="Request a refund on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-12-travel-numbers-phone.png"><img src="docs/images/passenger-12-travel-numbers-phone.png" alt="Travel Trends on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-13-notifications-phone.png"><img src="docs/images/passenger-13-notifications-phone.png" alt="Notifications on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-14-notification-settings-phone.png"><img src="docs/images/passenger-14-notification-settings-phone.png" alt="Notification settings on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-14-profile-phone.png"><img src="docs/images/passenger-14-profile-phone.png" alt="The profile page on a phone" width="145"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-11-refund-phone.png"><img src="docs/images/passenger-11-refund-phone.png" alt="Request a refund on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-12-travel-numbers-phone.png"><img src="docs/images/passenger-12-travel-numbers-phone.png" alt="Travel Trends on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-13-notifications-phone.png"><img src="docs/images/passenger-13-notifications-phone.png" alt="Notifications on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-14-notification-settings-phone.png"><img src="docs/images/passenger-14-notification-settings-phone.png" alt="Notification settings on a phone" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>Request a refund</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>Travel Trends</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Notifications</sub></td>
 <td align="center" valign="top"><b>4</b><br><sub>Notification settings</sub></td>
-<td align="center" valign="top"><b>5</b><br><sub>The profile page</sub></td>
 </tr>
 </table>
 
 <table>
 <tr>
-<td valign="top"><a href="docs/images/passenger-14-settings-phone.png"><img src="docs/images/passenger-14-settings-phone.png" alt="Account settings on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/passenger-14-feedback-phone.png"><img src="docs/images/passenger-14-feedback-phone.png" alt="The feedback form on a phone" width="145"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-14-profile-phone.png"><img src="docs/images/passenger-14-profile-phone.png" alt="The profile page on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-14-settings-phone.png"><img src="docs/images/passenger-14-settings-phone.png" alt="Account settings on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-14-feedback-phone.png"><img src="docs/images/passenger-14-feedback-phone.png" alt="The feedback form on a phone" width="185"></a></td>
 </tr>
 <tr>
+<td align="center" valign="top"><b>5</b><br><sub>The profile page</sub></td>
 <td align="center" valign="top"><b>6</b><br><sub>Account settings</sub></td>
 <td align="center" valign="top"><b>7</b><br><sub>The feedback form</sub></td>
 </tr>
@@ -341,11 +369,11 @@ Answers to the questions people ask most, a message form that opens your email a
 
 That is the passenger's whole journey. More detail is in the [Passenger guide](docs/Passenger%20guide.md). Now the other person in the story: the conductor, at the door of the bus.
 
-**On a phone: step Help and support.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+**On a phone: step 15.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
 
 <table>
 <tr>
-<td valign="top"><a href="docs/images/passenger-15-support-phone.png"><img src="docs/images/passenger-15-support-phone.png" alt="Help and support on a phone" width="145"></a></td>
+<td valign="top" width="25%"><a href="docs/images/passenger-15-support-phone.png"><img src="docs/images/passenger-15-support-phone.png" alt="Help and support on a phone" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>Help and support</sub></td>
@@ -398,31 +426,31 @@ Open a trip to change its status with four big buttons: **Departed**, **On Way**
 
 More in the [Conductor guide](docs/Conductor%20guide.md). The last person in the story never sees a bus at all, but makes the whole thing possible.
 
-**On a phone: steps The conductor's home to Update Status.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+**On a phone: steps 16 to 19.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
 
 <table>
 <tr>
-<td valign="top"><a href="docs/images/conductor-1-home-phone.png"><img src="docs/images/conductor-1-home-phone.png" alt="The conductor's home on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/conductor-2-verified-phone.png"><img src="docs/images/conductor-2-verified-phone.png" alt="A valid ticket on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/conductor-3-boarded-phone.png"><img src="docs/images/conductor-3-boarded-phone.png" alt="Back at the conductor's home on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/conductor-3-already-boarded-phone.png"><img src="docs/images/conductor-3-already-boarded-phone.png" alt="Already boarded on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/conductor-4-find-trips-phone.png"><img src="docs/images/conductor-4-find-trips-phone.png" alt="Find a trip on a phone" width="145"></a></td>
+<td valign="top" width="25%"><a href="docs/images/conductor-1-home-phone.png"><img src="docs/images/conductor-1-home-phone.png" alt="The conductor's home on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/conductor-2-verified-phone.png"><img src="docs/images/conductor-2-verified-phone.png" alt="A valid ticket on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/conductor-3-boarded-phone.png"><img src="docs/images/conductor-3-boarded-phone.png" alt="Back at the conductor's home on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/conductor-3-already-boarded-phone.png"><img src="docs/images/conductor-3-already-boarded-phone.png" alt="Already boarded on a phone" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>The conductor's home</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>A valid ticket</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Back at the conductor's home</sub></td>
 <td align="center" valign="top"><b>4</b><br><sub>Already boarded</sub></td>
-<td align="center" valign="top"><b>5</b><br><sub>Find a trip</sub></td>
 </tr>
 </table>
 
 <table>
 <tr>
-<td valign="top"><a href="docs/images/conductor-4-results-phone.png"><img src="docs/images/conductor-4-results-phone.png" alt="The trips that match, on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/conductor-5-update-status-phone.png"><img src="docs/images/conductor-5-update-status-phone.png" alt="Update Status on a phone" width="145"></a></td>
+<td valign="top" width="25%"><a href="docs/images/conductor-4-find-trips-phone.png"><img src="docs/images/conductor-4-find-trips-phone.png" alt="Find a trip on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/conductor-4-results-phone.png"><img src="docs/images/conductor-4-results-phone.png" alt="The trips that match, on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/conductor-5-update-status-phone.png"><img src="docs/images/conductor-5-update-status-phone.png" alt="Update Status on a phone" width="185"></a></td>
 </tr>
 <tr>
+<td align="center" valign="top"><b>5</b><br><sub>Find a trip</sub></td>
 <td align="center" valign="top"><b>6</b><br><sub>The trips that match</sub></td>
 <td align="center" valign="top"><b>7</b><br><sub>Update Status</sub></td>
 </tr>
@@ -464,20 +492,27 @@ Open a booking to see the trip, the passenger and what was paid.
 
 <img src="docs/images/status-chips.png" alt="Status chips: Confirmed, Boarded, Cancelled, Refund requested, Refunded, Pending, Approved, Rejected and Delayed" width="360">
 
-**On a phone: steps The admin home to Booking details.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+**On a phone: steps 20 to 23.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
 
 <table>
 <tr>
-<td valign="top"><a href="docs/images/admin-1-trips-phone.png"><img src="docs/images/admin-1-trips-phone.png" alt="The admin home on a phone: tiles for Add New Trip, Add Route, Manage Routes, Bookings, Refunds, Analytics and App Feedback" width="145"></a></td>
-<td valign="top"><a href="docs/images/admin-2-trip-form-phone.png"><img src="docs/images/admin-2-trip-form-phone.png" alt="The Add New Trip form on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/admin-3-routes-phone.png"><img src="docs/images/admin-3-routes-phone.png" alt="Routes on a phone: the table slides sideways" width="145"></a></td>
-<td valign="top"><a href="docs/images/admin-4-bookings-phone.png"><img src="docs/images/admin-4-bookings-phone.png" alt="Bookings on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/admin-4-booking-details-phone.png"><img src="docs/images/admin-4-booking-details-phone.png" alt="Booking details on a phone" width="145"></a></td>
+<td valign="top" width="25%"><a href="docs/images/admin-1-trips-phone.png"><img src="docs/images/admin-1-trips-phone.png" alt="The admin home on a phone: tiles for Add New Trip, Add Route, Manage Routes, Bookings, Refunds, Analytics and App Feedback" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/admin-2-trip-form-phone.png"><img src="docs/images/admin-2-trip-form-phone.png" alt="The Add New Trip form on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/admin-3-routes-phone.png"><img src="docs/images/admin-3-routes-phone.png" alt="Routes on a phone: the table slides sideways" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>The admin home</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>The Add New Trip form</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Routes</sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td valign="top" width="25%"><a href="docs/images/admin-4-bookings-phone.png"><img src="docs/images/admin-4-bookings-phone.png" alt="Bookings on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/admin-4-booking-details-phone.png"><img src="docs/images/admin-4-booking-details-phone.png" alt="Booking details on a phone" width="185"></a></td>
+</tr>
+<tr>
 <td align="center" valign="top"><b>4</b><br><sub>Bookings</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>Booking details</sub></td>
 </tr>
@@ -509,20 +544,27 @@ A new account is a passenger. Only an admin can make someone a conductor or admi
 
 That closes the loop: the admin's trips are what the passenger searched for in step 2. More in the [Admin guide](docs/Admin%20guide.md).
 
-**On a phone: steps Refunds to Users and roles.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
+**On a phone: steps 24 to 26.** Left to right, in order. Each caption names the screen. Click a picture to see it full size.
 
 <table>
 <tr>
-<td valign="top"><a href="docs/images/admin-5-refunds-phone.png"><img src="docs/images/admin-5-refunds-phone.png" alt="Refunds on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/admin-5-refund-details-phone.png"><img src="docs/images/admin-5-refund-details-phone.png" alt="Refund details on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/admin-6-feedback-phone.png"><img src="docs/images/admin-6-feedback-phone.png" alt="Feedback on a phone" width="145"></a></td>
-<td valign="top"><a href="docs/images/admin-7-analytics-phone.png"><img src="docs/images/admin-7-analytics-phone.png" alt="Analytics on a phone: net revenue and top routes" width="145"></a></td>
-<td valign="top"><a href="docs/images/admin-8-users-phone.png"><img src="docs/images/admin-8-users-phone.png" alt="Users and roles on a phone" width="145"></a></td>
+<td valign="top" width="25%"><a href="docs/images/admin-5-refunds-phone.png"><img src="docs/images/admin-5-refunds-phone.png" alt="Refunds on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/admin-5-refund-details-phone.png"><img src="docs/images/admin-5-refund-details-phone.png" alt="Refund details on a phone" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/admin-6-feedback-phone.png"><img src="docs/images/admin-6-feedback-phone.png" alt="Feedback on a phone" width="185"></a></td>
 </tr>
 <tr>
 <td align="center" valign="top"><b>1</b><br><sub>Refunds</sub></td>
 <td align="center" valign="top"><b>2</b><br><sub>Refund details</sub></td>
 <td align="center" valign="top"><b>3</b><br><sub>Feedback</sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td valign="top" width="25%"><a href="docs/images/admin-7-analytics-phone.png"><img src="docs/images/admin-7-analytics-phone.png" alt="Analytics on a phone: net revenue and top routes" width="185"></a></td>
+<td valign="top" width="25%"><a href="docs/images/admin-8-users-phone.png"><img src="docs/images/admin-8-users-phone.png" alt="Users and roles on a phone" width="185"></a></td>
+</tr>
+<tr>
 <td align="center" valign="top"><b>4</b><br><sub>Analytics</sub></td>
 <td align="center" valign="top"><b>5</b><br><sub>Users and roles</sub></td>
 </tr>
