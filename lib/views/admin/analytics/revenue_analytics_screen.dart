@@ -329,7 +329,7 @@ class _RevenueAnalyticsScreenState extends State<RevenueAnalyticsScreen> {
               style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
-                  color: color == Colors.green ? BL.crimson : BL.ink)),
+                  color: color == Colors.green ? BL.link : BL.ink)),
         ],
       ),
     );

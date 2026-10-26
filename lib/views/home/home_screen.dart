@@ -741,7 +741,7 @@ class _TripsCarouselWidgetState extends State<_TripsCarouselWidget> {
                   blurRadius: 10,
                   offset: const Offset(0, 4))
             ]),
-        child: Icon(icon, size: 16, color: AppTheme.primaryColor),
+        child: Icon(icon, size: 16, color: BL.link),
       ),
     );
   }

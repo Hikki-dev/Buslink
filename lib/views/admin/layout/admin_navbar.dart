@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/bl_colors.dart';
 import 'package:provider/provider.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_theme.dart';
@@ -55,8 +56,8 @@ class AdminNavBar extends StatelessWidget {
                             color: AppTheme.primaryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.admin_panel_settings,
-                              color: AppTheme.primaryColor),
+                          child:
+                              Icon(Icons.admin_panel_settings, color: BL.link),
                         ),
                         const SizedBox(width: 12),
                         Column(
@@ -230,7 +231,7 @@ class AdminNavBar extends StatelessWidget {
           label,
           style: TextStyle(
             color: isActive
-                ? AppTheme.primaryColor
+                ? BL.link
                 : (Theme.of(context).brightness == Brightness.dark
                     ? Colors.white70
                     : Colors.grey[700]),

@@ -59,7 +59,7 @@ class ConductorNavBar extends StatelessWidget {
                             fontFamily: 'Outfit',
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
+                            color: BL.link,
                             letterSpacing: 2)),
                   ],
                 ),
@@ -87,8 +87,7 @@ class ConductorNavBar extends StatelessWidget {
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                  child: const Icon(Icons.person,
-                      size: 20, color: AppTheme.primaryColor),
+                  child: Icon(Icons.person, size: 20, color: BL.link),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -185,17 +184,13 @@ class ConductorNavBar extends StatelessWidget {
           child: Row(
             children: [
               Icon(icon,
-                  size: 18,
-                  color:
-                      isActive ? AppTheme.primaryColor : Colors.grey.shade600),
+                  size: 18, color: isActive ? BL.link : Colors.grey.shade600),
               const SizedBox(width: 8),
               Text(label,
                   style: TextStyle(
                       fontFamily: 'Outfit',
                       fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                      color: isActive
-                          ? AppTheme.primaryColor
-                          : Colors.grey.shade700)),
+                      color: isActive ? BL.link : Colors.grey.shade700)),
             ],
           ),
         ),

@@ -48,6 +48,9 @@ exports.shot = async (page, name) => {
   await sleep(1500);
   fs.mkdirSync(OUT, { recursive: true });
   await page.screenshot({ path: `${OUT}/${name}.png` });
+  // Where every piece of text is, so audit.py can measure its contrast.
+  const boxes = await page.evaluate(`${leaf}.map(e => { const r = e.getBoundingClientRect(); return { t: (e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\\n/g, ' '), x: r.x, y: r.y, w: r.width, h: r.height }; }).filter(b => b.t && b.w > 4 && b.h > 4)`);
+  fs.writeFileSync(`${OUT}/${name}.json`, JSON.stringify({ dsf: page.viewport().deviceScaleFactor, boxes }));
   console.log('shot', name);
 };
 // Fill the nth text box on screen (Flutter exposes real inputs for them).

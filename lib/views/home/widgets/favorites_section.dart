@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/bl_colors.dart';
 import '../../../utils/app_theme.dart';
 
 class FavoritesSection extends StatelessWidget {
@@ -137,8 +138,7 @@ class FavoritesSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.directions_bus,
-                      color: AppTheme.primaryColor, size: 20),
+                  Icon(Icons.directions_bus, color: BL.link, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -186,7 +186,7 @@ class FavoritesSection extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Outfit',
                     fontSize: 12,
-                    color: AppTheme.primaryColor,
+                    color: BL.link,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/bl_colors.dart';
 import 'package:provider/provider.dart';
 //
 import 'notifications_screen.dart';
@@ -44,15 +45,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.directions_bus,
-                  color: AppTheme.primaryColor, size: 28),
+              Icon(Icons.directions_bus, color: BL.link, size: 28),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 "BusLink",
                 style: TextStyle(
                     fontFamily: 'AudioWide',
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor),
+                    color: BL.link),
               ),
             ],
           ),

@@ -170,7 +170,10 @@ class AdminTripsTableState extends State<AdminTripsTable> {
                         Row(children: [
                           ClipOval(
                             child: Image.asset(cityPhoto(t.toCity),
-                                width: 44, height: 44, fit: BoxFit.cover),
+                                width: 44,
+                                height: 44,
+                                cacheWidth: 132,
+                                fit: BoxFit.cover),
                           ),
                           const SizedBox(width: 12),
                           Expanded(

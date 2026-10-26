@@ -223,7 +223,7 @@ class _AdminRefundDetailsScreenState extends State<AdminRefundDetailsScreen> {
                 textAlign: TextAlign.end,
                 style: TextStyle(
                     fontWeight: isBold ? FontWeight.w800 : FontWeight.w700,
-                    color: isBold ? BL.crimson : BL.ink,
+                    color: isBold ? BL.link : BL.ink,
                     fontSize: isBold ? 26 : 17)),
           ),
         ],

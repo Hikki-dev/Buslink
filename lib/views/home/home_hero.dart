@@ -329,7 +329,7 @@ BoxDecoration _cardDecoration(double radius) => BoxDecoration(
       borderRadius: BorderRadius.circular(radius),
       boxShadow: const [
         BoxShadow(
-            color: Color(0x29660708), blurRadius: 24, offset: Offset(0, 8))
+            color: Color(0x29660708), blurRadius: 12, offset: Offset(0, 8))
       ],
     );
 
@@ -590,7 +590,7 @@ class _BulkToggle extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(value ? Icons.check_box : Icons.check_box_outline_blank,
-                color: value ? BL.crimson : BL.muted, size: 26),
+                color: value ? BL.link : BL.muted, size: 26),
             const SizedBox(width: 10),
             Flexible(
               child: Text('Bulk booking (several days)',

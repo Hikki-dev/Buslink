@@ -167,7 +167,7 @@ class DesktopNavBar extends StatelessWidget {
               style: TextStyle(
                   fontSize: 17,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                  color: active ? BL.crimson : BL.inkSoft)),
+                  color: active ? BL.link : BL.inkSoft)),
         ),
       ),
     );

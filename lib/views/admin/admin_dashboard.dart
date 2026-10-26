@@ -147,8 +147,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                                     fontSize: 34,
                                                     height: 1.1,
                                                     fontWeight: FontWeight.w800,
-                                                    color:
-                                                        AppTheme.primaryColor)),
+                                                    color: BL.link)),
                                           ),
                                           Consumer<ThemeController>(
                                             builder:
@@ -352,8 +351,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           style: TextStyle(
                                               fontFamily: 'Outfit',
                                               fontSize: 16,
-                                              color: BL.faint
-                                                  .withValues(alpha: 0.2))),
+                                              color: BL.muted)),
                                       const SizedBox(height: 8),
                                       Text(
                                           AppLocalizations.of(context)!
@@ -395,7 +393,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                                 .previewApp),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: BL.surface,
-                                          foregroundColor: Colors.black,
+                                          foregroundColor: BL.ink,
                                         ),
                                       ),
                                     ],
@@ -715,8 +713,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               color: AppTheme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child:
-                const Icon(Icons.directions_bus, color: AppTheme.primaryColor),
+            child: Icon(Icons.directions_bus, color: BL.link),
           ),
           const SizedBox(width: 20),
 
@@ -885,9 +882,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon,
-                    size: 28,
-                    color: isPrimary ? Colors.white : AppTheme.primaryColor),
+                Icon(icon, size: 28, color: isPrimary ? Colors.white : BL.link),
                 const SizedBox(height: 12),
                 Text(label,
                     style: TextStyle(

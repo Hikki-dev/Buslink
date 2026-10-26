@@ -32,6 +32,10 @@ The computer size is 1600 by 1000 at twice the sharpness (3200 by 2000 pixels). 
 | `extras` | Nobody | sign up, phone login |
 | `darkAdmin`, `darkConductor` | Admin, Conductor | the same screens in dark mode. Run with `THEME=dark node capture.js <desktop\|phone> darkAdmin`: the dark choice is saved in the browser before the app starts |
 
+## Contrast check
+
+Each picture is saved with a `.json` of where its text is. `python3 audit.py out` measures the contrast of every piece of text and lists the ones under 4.5 to 1. Run the scenes once with `THEME=dark` and once without, each with its own `SHOTS_OUT` folder.
+
 ## Things to know
 
 * Run `python3 scripts/seed_emulator.py` before each scene, so every scene starts from the same data.

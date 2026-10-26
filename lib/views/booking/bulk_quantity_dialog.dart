@@ -56,7 +56,7 @@ class _BulkQuantityDialogState extends State<BulkQuantityDialog> {
                 width: 64,
                 height: 64,
                 child: Icon(icon,
-                    size: 28, color: filled ? Colors.white : BL.crimson),
+                    size: 28, color: filled ? Colors.white : BL.link),
               ),
             ),
           ),

@@ -62,7 +62,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
           automaticallyImplyLeading: false, // No back button on dashboard
           title: Row(
             children: [
-              const Icon(Icons.directions_bus, color: AppTheme.primaryColor),
+              Icon(Icons.directions_bus, color: BL.link),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -178,7 +178,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -273,7 +273,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -288,8 +288,7 @@ class _ConductorDashboardState extends State<ConductorDashboard> {
               color: AppTheme.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.qr_code_scanner,
-                size: 48, color: AppTheme.primaryColor),
+            child: Icon(Icons.qr_code_scanner, size: 48, color: BL.link),
           ),
           const SizedBox(height: 24),
           Text(AppLocalizations.of(context)!.scanTicket,
@@ -634,12 +633,12 @@ class TicketVerifiedCard extends StatelessWidget {
                 label: 'Verified code ${code ?? 'not available'}',
                 excludeSemantics: true,
                 child: Text(code ?? 'N/A',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontFamily: 'Outfit',
                         fontSize: 44,
                         letterSpacing: 8,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor)),
+                        color: BL.link)),
               ),
             ],
           ),

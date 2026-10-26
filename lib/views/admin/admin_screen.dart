@@ -326,7 +326,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                     BoxShadow(
                                       color:
                                           Colors.black.withValues(alpha: 0.05),
-                                      blurRadius: 20,
+                                      blurRadius: 12,
                                       offset: const Offset(0, 4),
                                     ),
                                   ],
@@ -363,7 +363,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                 isEditing
                                                     ? Icons.edit
                                                     : Icons.add_road,
-                                                color: AppTheme.primaryColor),
+                                                color: BL.link),
                                           ),
                                           const SizedBox(width: 16),
                                           Expanded(
@@ -715,7 +715,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 icon: const Icon(Icons.arrow_back),
                 label: const Text("Back"),
                 style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.primaryColor,
+                    foregroundColor: BL.link,
                     side: const BorderSide(color: AppTheme.primaryColor),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
@@ -983,13 +983,12 @@ class _AdminScreenState extends State<AdminScreen> {
             Row(
               children: [
                 Icon(Icons.alt_route,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.8),
-                    size: 20),
+                    color: BL.link.withValues(alpha: 0.8), size: 20),
                 const SizedBox(width: 8),
                 Text(
                   "Load details from saved route",
                   style: TextStyle(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                      color: BL.link.withValues(alpha: 0.8),
                       fontWeight: FontWeight.bold,
                       fontSize: 14),
                 ),
@@ -1154,7 +1153,7 @@ class _AdminScreenState extends State<AdminScreen> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 20,
+                  blurRadius: 12,
                   offset: const Offset(0, 10),
                 ),
               ],

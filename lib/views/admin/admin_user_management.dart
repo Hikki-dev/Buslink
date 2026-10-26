@@ -280,7 +280,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
 
   Widget _buildRoleBadge(BuildContext context, String role) {
     final (label, bg, fg) = switch (role.toLowerCase()) {
-      'admin' => ('Admin', const Color(0xFFFBE3E4), BL.deep),
+      'admin' => ('Admin', BL.blush, BL.deep),
       'conductor' => ('Conductor', BL.warnTint, BL.warnInk),
       _ => ('Customer', BL.fill, BL.inkSoft),
     };
@@ -563,7 +563,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
           children: [
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: isSelected ? AppTheme.primaryColor : Colors.grey,
+              color: isSelected ? BL.link : Colors.grey,
               size: 20,
             ),
             const SizedBox(width: 12),

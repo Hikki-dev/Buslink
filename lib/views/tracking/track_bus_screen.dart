@@ -369,7 +369,7 @@ class _TrackBusScreenState extends State<TrackBusScreen>
               : const BorderRadius.vertical(top: Radius.circular(28)),
           boxShadow: const [
             BoxShadow(
-                color: Colors.black26, blurRadius: 24, offset: Offset(0, -6)),
+                color: Colors.black26, blurRadius: 12, offset: Offset(0, -6)),
           ],
         ),
         child: SafeArea(
@@ -415,7 +415,7 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                               height: 1.1,
                               fontWeight: FontWeight.w800,
                               letterSpacing: -0.5,
-                              color: almost ? AppTheme.primaryColor : null,
+                              color: almost ? BL.link : null,
                             ),
                           ),
                         ),
@@ -458,8 +458,8 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                           color: AppTheme.primaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(Icons.directions_bus,
-                            color: AppTheme.primaryColor, size: 28),
+                        child: Icon(Icons.directions_bus,
+                            color: BL.link, size: 28),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -497,12 +497,12 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 14),
                             decoration: BoxDecoration(
-                              color: AppTheme.surfaceColor,
+                              color: BL.fill,
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Row(children: [
-                              const Icon(Icons.place_outlined,
-                                  size: 22, color: AppTheme.primaryColor),
+                              Icon(Icons.place_outlined,
+                                  size: 22, color: BL.link),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text.rich(TextSpan(
@@ -516,10 +516,10 @@ class _TrackBusScreenState extends State<TrackBusScreen>
                                     ])),
                               ),
                               Text('about ${formatEta(next.$2)}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
-                                      color: AppTheme.primaryColor)),
+                                      color: BL.link)),
                             ]),
                           ),
                         );
@@ -686,7 +686,7 @@ class _SignalRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? Colors.white10
-            : AppTheme.surfaceColor,
+            : BL.fill,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(children: [

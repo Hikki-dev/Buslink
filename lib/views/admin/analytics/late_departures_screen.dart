@@ -748,7 +748,7 @@ Future<DateTime?> showYearPicker({
                   style: TextStyle(
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? AppTheme.primaryColor : null,
+                    color: isSelected ? BL.link : null,
                   ),
                 ),
                 selected: isSelected,
